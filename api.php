@@ -28,19 +28,25 @@ if (empty($tables)) {
     echo '{';
 }
 
-$first = true;
+$first_table = true;
 foreach ($tables as $table) {
-    if ($first) $first = false;
+    if ($first_table) $first_table = false;
     else echo ',';
-    echo '"'.$table.'":[';
+    echo '"'.$table.'":{"columns":';
     if ($result = $mysqli->query("SELECT * FROM `$table`")) {
         $fields = array();
         foreach ($result->fetch_fields() as $field) $fields[] = $field->name;
         echo json_encode($fields);
-        while ($row = $result->fetch_row()) echo ','.json_encode($row);
+        echo ',"records":';
+        $first_row = true;
+        while ($row = $result->fetch_row()) {
+            if ($first_row) $first_row = false;
+            else echo ',';
+            echo json_encode($row);
+        }
         $result->close();
     }
-    echo ']';
+    echo '}';
 }
 
 if ($callback) {
