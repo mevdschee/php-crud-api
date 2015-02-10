@@ -5,7 +5,7 @@ $table = str_replace('*','%',preg_replace('/[^a-zA-Z0-9\-_*,]/','',isset($_GET["
 $callback = preg_replace('/[^a-zA-Z0-9\-_]/','',isset($_GET["callback"])?$_GET["callback"]:false);
 $page = preg_replace('/[^0-9:]/','',isset($_GET["page"])?$_GET["page"]:false);
 $filter = isset($_GET["filter"])?$_GET["filter"]:false;
-$match = isset($_GET["match"])&&in_array($_GET["match"],array('any','start','end','exact'))?$_GET["match"]:'start';
+$match = isset($_GET["match"])&&in_array($_GET["match"],array('any','start','end','exact','lower','upto','from','higher'))?$_GET["match"]:'start';
 
 $mysqli = new mysqli($config["hostname"], $config["username"], $config["password"], $config["database"]);
 
@@ -38,8 +38,14 @@ if ($filter) {
     if (count($filter)==2) {
         $filter[0] = preg_replace('/[^a-zA-Z0-9\-_]/','',$filter[0]);
         $filter[1] = $mysqli->real_escape_string($filter[1]);
+        $filter[2] = 'LIKE';
         if ($match=='any'||$match=='start') $filter[1] .= '%';
         if ($match=='any'||$match=='end') $filter[1] = '%'.$filter[1];
+        if ($match=='exact') $filter[2] = '=';
+        if ($match=='lower') $filter[2] = '<';
+        if ($match=='upto') $filter[2] = '<=';
+        if ($match=='from') $filter[2] = '>=';
+        if ($match=='higher') $filter[2] = '>';
     } else {
         $filter = false;
     }
@@ -59,7 +65,7 @@ foreach ($tables as $table) {
     echo '"'.$table.'":{';
     if (is_array($page)) {
         $sql = "SELECT COUNT(*) FROM `$table`";
-        if (is_array($filter)) $sql .= " WHERE `$filter[0]` LIKE '$filter[1]'";
+        if (is_array($filter)) $sql .= " WHERE `$filter[0]` $filter[2] '$filter[1]'";
         if ($result = $mysqli->query($sql)) {
             $pages = $result->fetch_row();
             $pages = floor($pages[0]/$page[1])+1;
@@ -68,7 +74,7 @@ foreach ($tables as $table) {
     }
     echo '"columns":';
     $sql = "SELECT * FROM `$table`";
-    if (is_array($filter)) $sql .= " WHERE `$filter[0]` LIKE '$filter[1]'";
+    if (is_array($filter)) $sql .= " WHERE `$filter[0]` $filter[2] '$filter[1]'";
     if (is_array($page)) $sql .= " LIMIT $page[1] OFFSET $page[0]";
     if ($result = $mysqli->query($sql)) {
         $fields = array();
