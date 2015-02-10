@@ -16,10 +16,17 @@ if ($result = $mysqli->query("SELECT `TABLE_NAME` FROM `INFORMATION_SCHEMA`.`TAB
     $result->close();
 }
 
+$columns = array();
+
+if ($result = $mysqli->query("SELECT `COLUMN_NAME` FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `COLUMN_KEY` = 'PRI' AND `TABLE_NAME` = '$table' AND `TABLE_SCHEMA` = '$config[database]'")) {
+	while ($row = $result->fetch_row()) $columns[] = $row[0];
+	$result->close();
+}
+
 if ($config["read_whitelist"]) $tables = array_intersect($tables, $config["read_whitelist"]);
 if ($config["read_blacklist"]) $tables = array_diff($tables, $config["read_blacklist"]);
 
-if (empty($tables)) {
+if (empty($tables) || empty($columns)) {
     die(header("Content-Type:",true,404));
 } if ($callback) {
     header("Content-Type: application/javascript");
@@ -28,7 +35,7 @@ if (empty($tables)) {
     header("Content-Type: application/json");
 }
 
-if ($result = $mysqli->query("SELECT * FROM `$table` WHERE id = $id")) {
+if ($result = $mysqli->query("SELECT * FROM `$tables[0]` WHERE `$columns[0]` = $id")) {
     echo json_encode($result->fetch_assoc());
 }
 
