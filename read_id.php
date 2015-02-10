@@ -36,7 +36,10 @@ if (empty($tables) || empty($keys)) {
 }
 
 if ($result = $mysqli->query("SELECT * FROM `$tables[0]` WHERE `$keys[0]` = '$key'")) {
-    echo json_encode($result->fetch_assoc());
+	$value = $result->fetch_assoc();
+    if ($value) echo json_encode($value);
+    else die(header("Content-Type:",true,404));
+    $result->close();
 }
 
 if ($callback) {
