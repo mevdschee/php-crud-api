@@ -3,11 +3,11 @@ RewriteBase /api/
 
 RewriteCond %{REQUEST_METHOD} GET
 RewriteCond %{REQUEST_FILENAME} !-f
-RewriteRule ^(.*)/(.*)$ read_key.php?table=$1&key=$2 [L,QSA]
+RewriteRule ^(.*)/(.*)$ read.php?table=$1&key=$2 [L,QSA]
 
 RewriteCond %{REQUEST_METHOD} GET
 RewriteCond %{REQUEST_FILENAME} !-f
-RewriteRule ^(.*)$ read.php?table=$1 [L,QSA]
+RewriteRule ^(.*)$ list.php?table=$1 [L,QSA]
 
 RewriteCond %{REQUEST_METHOD} POST
 RewriteCond %{REQUEST_FILENAME} !-f
@@ -15,8 +15,8 @@ RewriteRule ^(.*)$ create.php?table=$1 [L,QSA]
 
 RewriteCond %{REQUEST_METHOD} PUT
 RewriteCond %{REQUEST_FILENAME} !-f
-RewriteRule ^(.*)/(.*)$ update_key.php?table=$1&key=$2 [L,QSA]
+RewriteRule ^(.*)/(.*)$ update.php?table=$1&key=$2 [L,QSA]
 
 RewriteCond %{REQUEST_METHOD} DELETE
 RewriteCond %{REQUEST_FILENAME} !-f
-RewriteRule ^(.*)/(.*)$ delete_key.php?table=$1&key=$2 [L,QSA]
+RewriteRule ^(.*)/(.*)$ delete.php?table=$1&key=$2 [L,QSA]
