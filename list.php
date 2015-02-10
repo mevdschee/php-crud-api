@@ -3,6 +3,8 @@ include "config.php";
 
 $table = str_replace('*','%',preg_replace('/[^a-zA-Z0-9\-_*,]/','',isset($_GET["table"])?$_GET["table"]:'*'));
 $callback = preg_replace('/[^a-zA-Z0-9\-_]/','',isset($_GET["callback"])?$_GET["callback"]:false);
+$page = preg_replace('/[^0-9:]/','',isset($_GET["page"])?$_GET["page"]:false);
+$filter = str_replace('*','%',preg_replace('/[^a-zA-Z0-9\-_*:]/','',isset($_GET["filter"])?$_GET["filter"]:false));
 
 $mysqli = new mysqli($config["hostname"], $config["username"], $config["password"], $config["database"]);
 
@@ -18,8 +20,8 @@ foreach ($tablelist as $table) {
     }
 }
 
-if ($config["read_whitelist"]) $tables = array_intersect($tables, $config["read_whitelist"]);
-if ($config["read_blacklist"]) $tables = array_diff($tables, $config["read_blacklist"]);
+if ($config["list_whitelist"]) $tables = array_intersect($tables, $config["list_whitelist"]);
+if ($config["list_blacklist"]) $tables = array_diff($tables, $config["list_blacklist"]);
 
 if (empty($tables)) {
     die(header("Content-Type:",true,404));
@@ -30,13 +32,27 @@ if (empty($tables)) {
     header("Content-Type: application/json");
 }
 
+if ($filter) {
+    $filter = explode(':',$filter,2);
+    if (count($filter)<2) $filter = false;
+}
+
+if ($page) {
+    $page = explode(':',$page,2);
+    if (count($page)<2) $page[1]=20;
+    $page[0] *= $page[1];
+}
+
 echo '{';
 $first_table = true;
 foreach ($tables as $table) {
     if ($first_table) $first_table = false;
     else echo ',';
     echo '"'.$table.'":{"columns":';
-    if ($result = $mysqli->query("SELECT * FROM `$table`")) {
+    $sql = "SELECT * FROM `$table`";
+    if ($filter) $sql .= " WHERE `$filter[0]` LIKE '$filter[1]'";
+    if ($page) $sql .= " LIMIT $page[1] OFFSET $page[0]";
+    if ($result = $mysqli->query($sql)) {
         $fields = array();
         foreach ($result->fetch_fields() as $field) $fields[] = $field->name;
         echo json_encode($fields);
