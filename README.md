@@ -44,6 +44,12 @@ URL: http://localhost/api/cate*
 {"categories":{"columns":["id","name"],"records":[["1","Internet"],["3","Web development"]]}}
 ```
 
+URL: http://localhost/api/categories/1
+
+```
+{"id":"1","name":"Internet"}
+```
+
 ## Installation
 
 Put the files in a folder named "api" and edit config.php.dist and rename it to config.php. Let Apache serve the parent folder or configure the .htaccess RewriteBase to match the exposed part of the path.
