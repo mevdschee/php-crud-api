@@ -1,14 +1,14 @@
 <?php
 include "config.php";
 
-$table = str_replace('*','%',preg_replace('/[^a-zA-Z0-9\-_*\/]/','',isset($_GET["table"])?$_GET["table"]:'*'));
+$table = str_replace('*','%',preg_replace('/[^a-zA-Z0-9\-_*,]/','',isset($_GET["table"])?$_GET["table"]:'*'));
 $callback = preg_replace('/[^a-zA-Z0-9\-_]/','',isset($_GET["callback"])?$_GET["callback"]:false);
 
 $mysqli = new mysqli($config["hostname"], $config["username"], $config["password"], $config["database"]);
 
 if ($mysqli->connect_errno) die('Connect failed: '.$mysqli->connect_error);
 
-$tablelist = explode('/',$table);
+$tablelist = explode(',',$table);
 $tables = array();
 
 foreach ($tablelist as $table) {
