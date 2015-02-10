@@ -15,8 +15,8 @@ RewriteRule ^(.*)$ create.php?table=$1 [L,QSA]
 
 RewriteCond %{REQUEST_METHOD} PUT
 RewriteCond %{REQUEST_FILENAME} !-f
-RewriteRule ^(.*)/(.*)$ update_id.php?table=$1&key=$2 [L,QSA]
+RewriteRule ^(.*)/(.*)$ update_key.php?table=$1&key=$2 [L,QSA]
 
 RewriteCond %{REQUEST_METHOD} DELETE
 RewriteCond %{REQUEST_FILENAME} !-f
-RewriteRule ^(.*)/(.*)$ delete_id.php?table=$1&key=$2 [L,QSA]
+RewriteRule ^(.*)/(.*)$ delete_key.php?table=$1&key=$2 [L,QSA]
