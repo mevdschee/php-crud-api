@@ -46,7 +46,7 @@ URL: http://localhost/api/cate*
 
 ## Installation
 
-Put the files in a folder and edit config.php.dist and rename it to config.php. Let Apache serve the folder and configure the .htaccess RewriteBase to match the exposed part of the path.
+Put the files in a folder named "api" and edit config.php.dist and rename it to config.php. Let Apache serve the parent folder or configure the .htaccess RewriteBase to match the exposed part of the path.
 
 ## License
 
