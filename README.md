@@ -18,7 +18,7 @@ Simple PHP script that adds a very basic API to a MySQL database
   - Very little code, easy to maintain
   - Streaming data, low memory footprint
   - Condensed JSON: first row contains field names
-  - Table white- and blacklist support
+  - Optional white- and blacklist support for tables
   - JSONP support for cross-domain requests
   - Combined requests with wildcard support for table names
 
