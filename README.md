@@ -30,7 +30,7 @@ $config = array(
     "hostname"=>"localhost",
     "username"=>"root",
     "password"=>"root",
-    "database"=>"cravetivity",
+    "database"=>"blog",
     "whitelist"=>false,
     "blacklist"=>array("users"),
 );
