@@ -38,13 +38,24 @@ $config = array(
 
 ## Example output
 
+### List
+
+```
+GET http://localhost/api/categories
+GET http://localhost/api/categories,users
 GET http://localhost/api/cate*
+GET http://localhost/api/cate*,user*
+```
 
 ```
 {"categories":{"columns":["id","name"],"records":[["1","Internet"],["3","Web development"]]}}
 ```
 
+### Read
+
+```
 GET http://localhost/api/categories/1
+```
 
 ```
 {"id":"1","name":"Internet"}
