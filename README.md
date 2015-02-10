@@ -11,7 +11,7 @@ Simple PHP script that adds a very basic API to a MySQL database
 
   - Public API only: no authentication or authorization
   - Read-only: no write or delete supported
-  - No pagination or column selection: always returns full table
+  - No column selection: always returns full table
   - Single database
 
 ## Features
@@ -22,6 +22,7 @@ Simple PHP script that adds a very basic API to a MySQL database
   - Optional white- and blacklist support for tables
   - JSONP support for cross-domain requests
   - Combined requests with wildcard support for table names
+  - Pagination and search support
 
 ## Configuration
 
@@ -31,8 +32,10 @@ $config = array(
     "username"=>"root",
     "password"=>"root",
     "database"=>"blog",
-    "whitelist"=>false,
-    "blacklist"=>array("users"),
+    "read_whitelist"=>false,
+    "read_blacklist"=>array("users"),
+    "list_whitelist"=>false,
+    "list_blacklist"=>array("users"),
 );
 ```
 
@@ -49,6 +52,30 @@ GET http://localhost/api/cate*,user*
 
 ```
 {"categories":{"columns":["id","name"],"records":[["1","Internet"],["3","Web development"]]}}
+```
+
+### List + Pagination
+
+```
+GET http://localhost/api/categories?page=1
+GET http://localhost/api/categories?page=1:50
+```
+
+```
+{"categories":{"pages":"1","columns":["id","name"],"records":[["1","Internet"],["3","Web development"]]}}
+```
+
+### List + Filter
+
+```
+GET http://localhost/api/categories?filter=name:Inter
+GET http://localhost/api/categories?filter=name:Internet&match=exact
+GET http://localhost/api/categories?filter=id:1&match=upto
+GET http://localhost/api/categories?filter=id:2&match=lower
+```
+
+```
+{"categories":{"pages":"1","columns":["id","name"],"records":[["1","Internet"]]}}
 ```
 
 ### Read
