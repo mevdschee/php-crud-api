@@ -22,6 +22,14 @@ Simple PHP script that adds a very basic API to a MySQL database
   - JSONP support for cross-domain requests
   - Combined requests with wildcard support for table names
 
+## Example output
+
+URL: http://localhost/api/cate*
+
+'''
+{"categories":[["id","name"],["1","Internet \/ ICT \/ Technology"],["3","Web development \/ Programming"]]}
+'''
+
 ## Installation
 
 Put the files in a folder and edit config.php.dist and rename it to config.php. Let Apache serve the folder and configure the .htaccess RewriteBase to match the exposed part of the path.
