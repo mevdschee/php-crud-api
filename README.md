@@ -27,7 +27,7 @@ Simple PHP script that adds a very basic API to a MySQL database
 URL: http://localhost/api/cate*
 
 ```
-{"categories":[["id","name"],["1","Internet \/ ICT \/ Technology"],["3","Web development \/ Programming"]]}
+{"categories":[["id","name"],["1","Internet \/ Technology"],["3","Web development \/ Programming"]]}
 ```
 
 ## Installation
