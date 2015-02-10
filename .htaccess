@@ -3,7 +3,7 @@ RewriteBase /api/
 
 RewriteCond %{REQUEST_METHOD} GET
 RewriteCond %{REQUEST_FILENAME} !-f
-RewriteRule ^(.*)/(.*)$ read_id.php?table=$1&key=$2 [L,QSA]
+RewriteRule ^(.*)/(.*)$ read_key.php?table=$1&key=$2 [L,QSA]
 
 RewriteCond %{REQUEST_METHOD} GET
 RewriteCond %{REQUEST_FILENAME} !-f
