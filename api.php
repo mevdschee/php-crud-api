@@ -37,7 +37,7 @@ foreach ($tables as $table) {
         $fields = array();
         foreach ($result->fetch_fields() as $field) $fields[] = $field->name;
         echo json_encode($fields);
-        echo ',"records":';
+        echo ',"records":[';
         $first_row = true;
         while ($row = $result->fetch_row()) {
             if ($first_row) $first_row = false;
@@ -46,7 +46,7 @@ foreach ($tables as $table) {
         }
         $result->close();
     }
-    echo '}';
+    echo ']}';
 }
 
 if ($callback) {
