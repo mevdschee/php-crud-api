@@ -23,8 +23,8 @@ if ($result = $mysqli->query("SELECT `COLUMN_NAME` FROM `INFORMATION_SCHEMA`.`CO
 	$result->close();
 }
 
-if ($config["read_whitelist"]) $tables = array_intersect($tables, $config["read_whitelist"]);
-if ($config["read_blacklist"]) $tables = array_diff($tables, $config["read_blacklist"]);
+if ($config["read_whitelist"]!==false) $tables = array_intersect($tables, $config["read_whitelist"]);
+if ($config["read_blacklist"]!==false) $tables = array_diff($tables, $config["read_blacklist"]);
 
 if (empty($tables) || empty($keys)) {
     die(header("Content-Type:",true,404));
