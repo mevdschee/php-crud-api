@@ -40,7 +40,7 @@ $config = array(
 URL: http://localhost/api/cate*
 
 ```
-{"categories":[["id","name"],["1","Internet \/ Technology"],["3","Web development \/ Programming"]]}
+{"categories":[["id","name"],["1","Internet"],["3","Web development"]]}
 ```
 
 ## Installation
