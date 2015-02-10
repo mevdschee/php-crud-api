@@ -1,4 +1,4 @@
-# MySQL-read-API
+# MySQL-crud-API
 
 Simple PHP script that adds a very basic API to a MySQL database
 
