@@ -75,7 +75,7 @@ GET http://localhost/api/categories?filter=id:2&match=lower
 ```
 
 ```
-{"categories":{"pages":"1","columns":["id","name"],"records":[["1","Internet"]]}}
+{"categories":{"columns":["id","name"],"records":[["1","Internet"]]}}
 ```
 
 ### Read
