@@ -22,6 +22,19 @@ Simple PHP script that adds a very basic API to a MySQL database
   - JSONP support for cross-domain requests
   - Combined requests with wildcard support for table names
 
+## Configuration
+
+```
+$config = array(
+    "hostname"=>"localhost",
+    "username"=>"root",
+    "password"=>"root",
+    "database"=>"cravetivity",
+    "whitelist"=>false,
+    "blacklist"=>array("users"),
+);
+```
+
 ## Example output
 
 URL: http://localhost/api/cate*
