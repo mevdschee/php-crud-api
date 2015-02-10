@@ -25,12 +25,12 @@ if (empty($tables)) {
     die(header("Content-Type:",true,404));
 } if ($callback) {
     header("Content-Type: application/javascript");
-    echo $callback.'({';
+    echo $callback.'(';
 } else {
     header("Content-Type: application/json");
-    echo '{';
 }
 
+echo '{';
 $first_table = true;
 foreach ($tables as $table) {
     if ($first_table) $first_table = false;
@@ -51,9 +51,8 @@ foreach ($tables as $table) {
     }
     echo ']}';
 }
+echo '}';
 
 if ($callback) {
-    echo '});';
-} else {
-    echo '}';
+    echo ');';
 }

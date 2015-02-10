@@ -2,4 +2,21 @@ RewriteEngine On
 RewriteBase /api/
 
 RewriteCond %{REQUEST_METHOD} GET
-RewriteRule (.*) read.php?table=$1 [L,QSA]
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^(.*)/(.*)$ read_id.php?table=$1&id=$2 [L,QSA]
+
+RewriteCond %{REQUEST_METHOD} GET
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^(.*)$ read.php?table=$1 [L,QSA]
+
+RewriteCond %{REQUEST_METHOD} POST
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^(.*)$ create.php?table=$1 [L,QSA]
+
+RewriteCond %{REQUEST_METHOD} PUT
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^(.*)/(.*)$ update_id.php?table=$1&id=$2 [L,QSA]
+
+RewriteCond %{REQUEST_METHOD} DELETE
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^(.*)/(.*)$ delete_id.php?table=$1&id=$2 [L,QSA]
