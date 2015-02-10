@@ -1,0 +1,7 @@
+RewriteEngine On
+RewriteBase /api/
+
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule (.+) api.php?table=$1 [L,QSA]
+RewriteRule ^$ api.php [L,QSA]

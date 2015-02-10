@@ -1,0 +1,9 @@
+<?php
+$config = array(
+    "hostname"=>"localhost",
+    "username"=>"username",
+    "password"=>"password",
+    "database"=>"database",
+    "whitelist"=>false,
+    "blacklist"=>array("users"),
+);
