@@ -1,6 +1,4 @@
 <?php
-include "config.php";
-
 $table = str_replace('*','%',preg_replace('/[^a-zA-Z0-9\-_*,]/','',isset($_GET["table"])?$_GET["table"]:'*'));
 $callback = preg_replace('/[^a-zA-Z0-9\-_]/','',isset($_GET["callback"])?$_GET["callback"]:false);
 $page = preg_replace('/[^0-9:]/','',isset($_GET["page"])?$_GET["page"]:false);
@@ -8,7 +6,6 @@ $filter = isset($_GET["filter"])?$_GET["filter"]:false;
 $match = isset($_GET["match"])&&in_array($_GET["match"],array('any','start','end','exact','lower','upto','from','higher'))?$_GET["match"]:'start';
 
 $mysqli = new mysqli($config["hostname"], $config["username"], $config["password"], $config["database"]);
-
 if ($mysqli->connect_errno) die('Connect failed: '.$mysqli->connect_error);
 
 $tablelist = explode(',',$table);

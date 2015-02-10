@@ -1,12 +1,9 @@
 <?php
-include "config.php";
-
 $key = preg_replace('/[^a-zA-Z0-9\-_]/','',isset($_GET["key"])?$_GET["key"]:false);
 $table = preg_replace('/[^a-zA-Z0-9\-_]/','',isset($_GET["table"])?$_GET["table"]:false);
 $callback = preg_replace('/[^a-zA-Z0-9\-_]/','',isset($_GET["callback"])?$_GET["callback"]:false);
 
 $mysqli = new mysqli($config["hostname"], $config["username"], $config["password"], $config["database"]);
-
 if ($mysqli->connect_errno) die('Connect failed: '.$mysqli->connect_error);
 
 $tables = array();
