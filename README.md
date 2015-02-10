@@ -54,6 +54,30 @@ GET http://localhost/api/cate*,user*
 {"categories":{"columns":["id","name"],"records":[["1","Internet"],["3","Web development"]]}}
 ```
 
+### List + Pagination
+
+```
+GET http://localhost/api/categories?page=1
+GET http://localhost/api/categories?page=1:50
+```
+
+```
+{"categories":{"pages":"1","columns":["id","name"],"records":[["1","Internet"],["3","Web development"]]}}
+```
+
+### List + Filter
+
+```
+GET http://localhost/api/categories?filter=name:Inter
+GET http://localhost/api/categories?filter=name:Internet&match=exact
+GET http://localhost/api/categories?filter=id:1&match=upto
+GET http://localhost/api/categories?filter=id:2&match=lower
+```
+
+```
+{"categories":{"pages":"1","columns":["id","name"],"records":[["1","Internet"]]}}
+```
+
 ### Read
 
 ```
