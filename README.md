@@ -32,8 +32,10 @@ $config = array(
     "username"=>"root",
     "password"=>"root",
     "database"=>"blog",
-    "whitelist"=>false,
-    "blacklist"=>array("users"),
+    "read_whitelist"=>false,
+    "read_blacklist"=>array("users"),
+    "list_whitelist"=>false,
+    "list_blacklist"=>array("users"),
 );
 ```
 
