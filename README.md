@@ -11,6 +11,7 @@ Simple PHP script that adds a very basic API to a MySQL database
 
   - Public API only: no authentication or authorization
   - Read-only: no write or delete supported
+  - No pagination or column selection: always returns full table
   - Single database
 
 ## Features
