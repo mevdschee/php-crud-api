@@ -1,22 +1,25 @@
 <?php
 include "config.php";
 
-$table = str_replace('*','%',preg_replace('/[^a-zA-Z0-9\-_*]/','',isset($_GET["table"])?$_GET["table"]:'*'));
+$table = str_replace('*','%',preg_replace('/[^a-zA-Z0-9\-_*\/]/','',isset($_GET["table"])?$_GET["table"]:'*'));
 $callback = preg_replace('/[^a-zA-Z0-9\-_]/','',isset($_GET["callback"])?$_GET["callback"]:false);
 
 $mysqli = new mysqli($config["hostname"], $config["username"], $config["password"], $config["database"]);
 
 if ($mysqli->connect_errno) die('Connect failed: '.$mysqli->connect_error);
 
+$tablelist = explode('/',$table);
 $tables = array();
 
-if ($result = $mysqli->query("SELECT `TABLE_NAME` FROM `INFORMATION_SCHEMA`.`TABLES` WHERE `TABLE_NAME` LIKE '$table' AND `TABLE_SCHEMA` = '$config[database]'")) {
-    while ($row = $result->fetch_row()) $tables[] = $row[0];
-    $result->close();
+foreach ($tablelist as $table) {
+    if ($result = $mysqli->query("SELECT `TABLE_NAME` FROM `INFORMATION_SCHEMA`.`TABLES` WHERE `TABLE_NAME` LIKE '$table' AND `TABLE_SCHEMA` = '$config[database]'")) {
+        while ($row = $result->fetch_row()) $tables[] = $row[0];
+        $result->close();
+    }
 }
 
-if ($config["whitelist"]) $tables = array_intersect($tables, $config["whitelist"]);
-if ($config["blacklist"]) $tables = array_diff($tables, $config["blacklist"]);
+if ($config["read_whitelist"]) $tables = array_intersect($tables, $config["read_whitelist"]);
+if ($config["read_blacklist"]) $tables = array_diff($tables, $config["read_blacklist"]);
 
 if (empty($tables)) {
     die(header("Content-Type:",true,404));
