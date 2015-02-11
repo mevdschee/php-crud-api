@@ -37,7 +37,9 @@ $config = array(
 );
 ```
 
-## Example output
+## Usage
+
+You can do all CRUD (Create, Read, Update, Delete) operations and extra List operation. Here is how:
 
 ### List
 
@@ -76,6 +78,17 @@ GET http://localhost/api/categories?filter=id:2&match=lower
 {"categories":{"columns":["id","name"],"records":[["1","Internet"]]}}
 ```
 
+### Create
+
+```
+POST http://localhost/api/categories
+{"id":"1","name":"Internet"}
+```
+
+```
+1
+``
+
 ### Read
 
 ```
@@ -84,6 +97,27 @@ GET http://localhost/api/categories/1
 
 ```
 {"id":"1","name":"Internet"}
+```
+
+### Update
+
+```
+PUT http://localhost/api/categories/2
+{"id":"1","name":"Internet networking"}
+```
+
+```
+1
+``
+
+### Delete
+
+```
+DELETE http://localhost/api/categories/2
+```
+
+```
+1
 ```
 
 ## Installation
