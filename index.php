@@ -158,7 +158,7 @@ switch($action){
 			if ($first_table) $first_table = false;
 			else echo ',';
 			echo '"'.$table.'":{';
-			if (is_array($page)) {
+			if ($first_table && is_array($page)) {
 				$sql = "SELECT COUNT(*) FROM `$table`";
 				if (is_array($filter)) $sql .= " WHERE `$filter[0]` $filter[2] '$filter[1]'";
 				if ($result = $mysqli->query($sql)) {
@@ -169,8 +169,8 @@ switch($action){
 			}
 			echo '"columns":';
 			$sql = "SELECT * FROM `$table`";
-			if (is_array($filter)) $sql .= " WHERE `$filter[0]` $filter[2] '$filter[1]'";
-			if (is_array($page)) $sql .= " LIMIT $page[1] OFFSET $page[0]";
+			if ($first_table && is_array($filter)) $sql .= " WHERE `$filter[0]` $filter[2] '$filter[1]'";
+			if ($first_table && is_array($page)) $sql .= " LIMIT $page[1] OFFSET $page[0]";
 			if ($result = $mysqli->query($sql)) {
 				$fields = array();
 				foreach ($result->fetch_fields() as $field) $fields[] = $field->name;
