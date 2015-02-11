@@ -189,7 +189,8 @@ switch($action){
 		echo '}';
 		endOutput($callback);
 		break;
-	case 'read': 
+	case 'read':
+		if (!$object) exitWith404();
 		startOutput($callback);
 		echo json_encode($object);
 		endOutput($callback);
