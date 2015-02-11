@@ -148,9 +148,9 @@ $table = applyWhitelistAndBlacklist($table,$action,$config['whitelist'],$config[
 
 $object = retrieveObject($key,$table,$mysqli);
 
-startOutput($callback);
 switch($action){
 	case 'list': 
+		startOutput($callback);
 		echo '{';
 		$tables = $table;
 		$first_table = true;
@@ -187,11 +187,15 @@ switch($action){
 			if ($first_table) $first_table = false;				
 		}
 		echo '}';
+		endOutput($callback);
 		break;
-	case 'read': echo json_encode($object);	break;
+	case 'read': 
+		startOutput($callback);
+		echo json_encode($object);
+		endOutput($callback);
+		break;
 	case 'create': break;
 	case 'update': break;
 	case 'delete': break;
 	default: exitWith404();
 }
-endOutput($callback);
