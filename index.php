@@ -155,8 +155,7 @@ switch($action){
 		$tables = $table;
 		$first_table = true;
 		foreach ($tables as $table) {
-			if ($first_table) $first_table = false;
-			else echo ',';
+			if (!$first_table) echo ',';
 			echo '"'.$table.'":{';
 			if ($first_table && is_array($page)) {
 				$sql = "SELECT COUNT(*) FROM `$table`";
@@ -185,6 +184,7 @@ switch($action){
 				$result->close();
 			}
 			echo ']}';
+			if ($first_table) $first_table = false;				
 		}
 		echo '}';
 		break;
