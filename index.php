@@ -131,31 +131,26 @@ function retrieveObject($key,$table,$mysqli) {
 function createObject($input,$table,$mysqli) {
 	if (!$input) return false;
 	$keys = implode('`,`',array_map(function($v){ return preg_replace('/[^a-zA-Z0-9\-_]/','',$v); },array_keys((array)$input)));
-	$values = implode("','",array_map(function($v){ return $mysqli->real_escape_string($v); },array_values((array)$input)));
+	$values = implode("','",array_map(function($v) use ($mysqli){ return $mysqli->real_escape_string($v); },array_values((array)$input)));
 	$mysqli->query("INSERT INTO `$table[0]` (`$keys`) VALUES ('$values')");
 	return $mysqli->insert_id;
 }
 
 function updateObject($key,$input,$table,$mysqli) {
 	if (!$input) return false;
-	$pk = findPrimaryKey($table,$database,$mysqli);
 	$sql = "UPDATE `$table[0]` SET ";
-	foreach (array_keys($input) as $i=>$k) {
+	foreach (array_keys((array)$input) as $i=>$k) {
 		if ($i) $sql .= ",";
-		$v = $input[$k];
+		$v = $input->$k;
 		$sql .= "`$k`='$v'";
 	}
-	$sql .= " WHERE `$pk`='$key'";
+	$sql .= " WHERE `$key[1]`='$key[0]'";
 	$mysqli->query($sql);
 	return $mysqli->affected_rows;
 }
 
-function deleteObject($key,$input,$table,$mysqli) {
-	if (!$input) return false;
-	$pk = findPrimaryKey($table,$database,$mysqli);
-	if (!$pk) return false;
-	$sql = "DELETE FROM `$table[0]` WHERE `$pk`='$key'";
-	$mysqli->query($sql);
+function deleteObject($key,$table,$mysqli) {
+	$mysqli->query("DELETE FROM `$table[0]` WHERE `$key[1]`='$key[0]'");
 	return $mysqli->affected_rows;
 }
 
@@ -238,7 +233,7 @@ switch($action){
 		endOutput($callback);
 		break;
 	case 'delete':
-		if (!$input) exitWith404();
+		if (!$object) exitWith404();
 		startOutput($callback);
 		echo json_encode(deleteObject($key,$table,$mysqli));
 		endOutput($callback);
