@@ -60,7 +60,7 @@ GET http://localhost/api/categories?page=1,50
 ```
 
 ```
-{"categories":{"pages":"1","columns":["id","name"],"records":[["1","Internet"],["3","Web development"]]}}
+{"categories":{"pages":"{"current":1,"records":"1","total":"1"},"columns":["id","name"],"records":[["1","Internet"],["3","Web development"]]}}
 ```
 
 ### List + Filter
