@@ -170,7 +170,6 @@ switch($action){
 			if ($t==0 && is_array($filter)) $sql .= " WHERE `$filter[0]` $filter[2] '$filter[1]'";
 			if ($t==0 && is_array($page)) $sql .= " LIMIT $page[1] OFFSET $page[0]";
 			if ($result = $mysqli->query($sql)) {
-				if (!$results) $results = $result->num_rows;
 				$fields = array();
 				foreach ($result->fetch_fields() as $field) $fields[] = $field->name;
 				echo json_encode($fields);
