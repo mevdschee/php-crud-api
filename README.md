@@ -87,7 +87,7 @@ POST http://localhost/api/categories
 
 ```
 1
-``
+```
 
 ### Read
 
@@ -108,7 +108,7 @@ PUT http://localhost/api/categories/2
 
 ```
 1
-``
+```
 
 ### Delete
 
