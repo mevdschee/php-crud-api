@@ -113,7 +113,7 @@ function processFilterParameter($filter,$mysqli) {
 
 function processPageParameter($page) {
 	if ($page) {
-		$page = explode(':',$page,2);
+		$page = explode(',',$page,2);
 		if (count($page)<2) $page[1]=20;
 		$page[0] = ($page[0]-1)*$page[1];
 	}
@@ -133,7 +133,7 @@ $action   = parseGetParameter('action', 'a-z', 'list');
 $table    = parseGetParameter('table', 'a-zA-Z0-9\-_*,', '*');
 $key      = parseGetParameter('key', 'a-zA-Z0-9\-,', false); // auto-increment or uuid 
 $callback = parseGetParameter('callback', 'a-zA-Z0-9\-_', false);
-$page     = parseGetParameter('page', '0-9', false);
+$page     = parseGetParameter('page', '0-9,', false);
 $filter   = parseGetParameter('filter', false, 'start');
 $match    = parseGetParameter('match', 'a-z', false);
 
@@ -143,7 +143,7 @@ $table = processTableParameter($table,$config["database"],$mysqli);
 $key = processKeyParameter($key,$table,$config["database"],$mysqli);
 $filter = processFilterParameter($filter,$mysqli);
 $page = processPageParameter($page);
-
+	
 $table = applyWhitelistAndBlacklist($table,$action,$config['whitelist'],$config['blacklist']);
 
 $object = retrieveObject($key,$table,$mysqli);
@@ -153,11 +153,10 @@ switch($action){
 		startOutput($callback);
 		echo '{';
 		$tables = $table;
-		$first_table = true;
-		foreach ($tables as $table) {
-			if (!$first_table) echo ',';
+		foreach ($tables as $t=>$table) {
+			if ($t>0) echo ',';
 			echo '"'.$table.'":{';
-			if ($first_table && is_array($page)) {
+			if ($t==0 && is_array($page)) {
 				$sql = "SELECT COUNT(*) FROM `$table`";
 				if (is_array($filter)) $sql .= " WHERE `$filter[0]` $filter[2] '$filter[1]'";
 				if ($result = $mysqli->query($sql)) {
@@ -168,8 +167,8 @@ switch($action){
 			}
 			echo '"columns":';
 			$sql = "SELECT * FROM `$table`";
-			if ($first_table && is_array($filter)) $sql .= " WHERE `$filter[0]` $filter[2] '$filter[1]'";
-			if ($first_table && is_array($page)) $sql .= " LIMIT $page[1] OFFSET $page[0]";
+			if ($t==0 && is_array($filter)) $sql .= " WHERE `$filter[0]` $filter[2] '$filter[1]'";
+			if ($t==0 && is_array($page)) $sql .= " LIMIT $page[1] OFFSET $page[0]";
 			if ($result = $mysqli->query($sql)) {
 				$fields = array();
 				foreach ($result->fetch_fields() as $field) $fields[] = $field->name;
@@ -184,7 +183,6 @@ switch($action){
 				$result->close();
 			}
 			echo ']}';
-			if ($first_table) $first_table = false;				
 		}
 		echo '}';
 		endOutput($callback);
