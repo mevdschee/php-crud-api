@@ -161,8 +161,9 @@ switch($action){
 				if (is_array($filter)) $sql .= " WHERE `$filter[0]` $filter[2] '$filter[1]'";
 				if ($result = $mysqli->query($sql)) {
 					$pages = $result->fetch_row();
-					$pages = floor($pages[0]/$page[1])+1;
-					echo '"pages":"'.$pages.'",';
+					$pages = floor($pages[0]/$page[1]);
+					$pages = array('current'=>$page[0]+1,'records'=>$page[1]+0,"total"=>$pages+0);
+					echo '"pages":"'.json_encode($pages).'",';
 				}
 			}
 			echo '"columns":';
