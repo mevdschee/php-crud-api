@@ -89,12 +89,16 @@ function processKeyParameter($key,$table,$database,$mysqli) {
 	return $key;
 }
 
-function processFilterParameter($filter,$mysqli) {
+function processFilterParameter($filter,$match,$mysqli) {
 	if ($filter) {
 		$filter = explode(':',$filter,2);
 		if (count($filter)==2) {
 			$filter[0] = preg_replace('/[^a-zA-Z0-9\-_]/','',$filter[0]);
-			$filter[1] = $mysqli->real_escape_string($filter[1]);
+			if ($match=='in') {
+				$filter[1] = implode("','",array_map(function($v){ return preg_replace('/[^a-zA-Z0-9\-]/','',$v); },explode(',',$filter[1])));
+			} else {
+				$filter[1] = $mysqli->real_escape_string($filter[1]);
+			}
 			$filter[2] = 'LIKE';
 			if ($match=='any'||$match=='start') $filter[1] .= '%';
 			if ($match=='any'||$match=='end') $filter[1] = '%'.$filter[1];
@@ -103,6 +107,9 @@ function processFilterParameter($filter,$mysqli) {
 			if ($match=='upto') $filter[2] = '<=';
 			if ($match=='from') $filter[2] = '>=';
 			if ($match=='higher') $filter[2] = '>';
+			if ($match=='in') $filter[2] = 'IN';
+			$filter[1]="'$filter[1]'";
+			if ($filter[2]=='IN') $filter[1]="($filter[1])";
 		} else {
 			$filter = false;
 		}
@@ -166,7 +173,7 @@ $mysqli = connectDatabase($config["hostname"], $config["username"], $config["pas
 
 $table  = processTableParameter($table,$config["database"],$mysqli);
 $key    = processKeyParameter($key,$table,$config["database"],$mysqli);
-$filter = processFilterParameter($filter,$mysqli);
+$filter = processFilterParameter($filter,$match,$mysqli);
 $page   = processPageParameter($page);
 
 $table  = applyWhitelistAndBlacklist($table,$action,$config['whitelist'],$config['blacklist']);
@@ -185,7 +192,7 @@ switch($action){
 			echo '"'.$table.'":{';
 			if ($t==0 && is_array($page)) {
 				$sql = "SELECT COUNT(*) FROM `$table`";
-				if (is_array($filter)) $sql .= " WHERE `$filter[0]` $filter[2] '$filter[1]'";
+				if (is_array($filter)) $sql .= " WHERE `$filter[0]` $filter[2] $filter[1]";
 				if ($result = $mysqli->query($sql)) {
 					$pages = $result->fetch_row();
 					$count = $pages[0];
@@ -193,7 +200,7 @@ switch($action){
 			}
 			echo '"columns":';
 			$sql = "SELECT * FROM `$table`";
-			if ($t==0 && is_array($filter)) $sql .= " WHERE `$filter[0]` $filter[2] '$filter[1]'";
+			if ($t==0 && is_array($filter)) $sql .= " WHERE `$filter[0]` $filter[2] $filter[1]";
 			if ($t==0 && is_array($page)) $sql .= " LIMIT $page[1] OFFSET $page[0]";
 			if ($result = $mysqli->query($sql)) {
 				$fields = array();
