@@ -119,6 +119,16 @@ function processPageParameter($page) {
 	}
 	return $page;
 }
+
+function retrieveObject($key,$table,$mysqli) {
+	if (!$key) return false;
+	if ($result = $mysqli->query("SELECT * FROM `$table[0]` WHERE `$key[1]` = '$key[0]'")) {
+		$object = $result->fetch_assoc();
+		$result->close();
+	}
+	return $object;
+}
+
 $action   = parseGetParameter('action', 'a-z', 'list');
 $table    = parseGetParameter('table', 'a-zA-Z0-9\-_*,', '*');
 $key      = parseGetParameter('key', 'a-zA-Z0-9\-,', false); // auto-increment or uuid 
@@ -135,6 +145,8 @@ $filter = processFilterParameter($filter);
 $page = processPageParameter($page);
 
 $table = applyWhitelistAndBlacklist($table,$action,$config['whitelist'],$config['blacklist']);
+
+$object = retrieveObject($key,$table,$mysqli);
 
 startOutput($callback);
 switch($action){
@@ -176,13 +188,7 @@ switch($action){
 		}
 		echo '}';
 		break;
-	case 'read': 
-		if ($result = $mysqli->query("SELECT * FROM `$table[0]` WHERE `$key[1]` = '$key[0]'")) {
-			$value = $result->fetch_assoc();
-			echo json_encode($value);
-			$result->close();
-		}
-		break;
+	case 'read': echo json_encode($object);	break;
 	case 'create': break;
 	case 'update': break;
 	case 'delete': break;
