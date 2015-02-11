@@ -113,7 +113,7 @@ function processFilterParameter($filter,$mysqli) {
 
 function processPageParameter($page) {
 	if ($page) {
-		$page = explode(':',$page,2);
+		$page = explode(',',$page,2);
 		if (count($page)<2) $page[1]=20;
 		$page[0] = ($page[0]-1)*$page[1];
 	}
@@ -133,7 +133,7 @@ $action   = parseGetParameter('action', 'a-z', 'list');
 $table    = parseGetParameter('table', 'a-zA-Z0-9\-_*,', '*');
 $key      = parseGetParameter('key', 'a-zA-Z0-9\-,', false); // auto-increment or uuid 
 $callback = parseGetParameter('callback', 'a-zA-Z0-9\-_', false);
-$page     = parseGetParameter('page', '0-9:', false);
+$page     = parseGetParameter('page', '0-9,', false);
 $filter   = parseGetParameter('filter', false, 'start');
 $match    = parseGetParameter('match', 'a-z', false);
 
