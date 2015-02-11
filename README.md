@@ -56,7 +56,7 @@ GET http://localhost/api/cate*,user*
 
 ```
 GET http://localhost/api/categories?page=1
-GET http://localhost/api/categories?page=1:50
+GET http://localhost/api/categories?page=1,50
 ```
 
 ```
