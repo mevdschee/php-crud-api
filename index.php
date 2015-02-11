@@ -90,7 +90,7 @@ function processKeyParameter($key,$table,$database,$mysqli) {
 	return $key;
 }
 
-function processFilterParameter($filter) {
+function processFilterParameter($filter,$mysqli) {
 	if ($filter) {
 		$filter = explode(':',$filter,2);
 		if (count($filter)==2) {
@@ -141,7 +141,7 @@ $mysqli = connectDatabase($config["hostname"], $config["username"], $config["pas
 
 $table = processTableParameter($table,$config["database"],$mysqli);
 $key = processKeyParameter($key,$table,$config["database"],$mysqli);
-$filter = processFilterParameter($filter);
+$filter = processFilterParameter($filter,$mysqli);
 $page = processPageParameter($page);
 
 $table = applyWhitelistAndBlacklist($table,$action,$config['whitelist'],$config['blacklist']);
