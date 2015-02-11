@@ -1,5 +1,5 @@
 RewriteEngine On
-RewriteBase /api/
+#RewriteBase /api/
 
 RewriteCond %{REQUEST_METHOD} GET
 RewriteCond %{REQUEST_FILENAME} !-f
