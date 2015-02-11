@@ -21,13 +21,13 @@ function applyWhitelist($table,$action,$list) {
 		return strpos($actions,$action[0])!==false;
 	});
 	return array_intersect($table, array_keys($list));
-	
+
 }
 
 function applyBlacklist($table,$action,$list) {
 	if ($list===false) return $table;
-	$list = array_filter($list, function($actions) use ($action) { 
-		return strpos($actions,$action[0])!==false; 
+	$list = array_filter($list, function($actions) use ($action) {
+		return strpos($actions,$action[0])!==false;
 	});
 	return array_diff($table, array_keys($list));
 }
@@ -65,7 +65,7 @@ function findPrimaryKey($table,$database,$mysqli) {
 
 function exitWith404() {
 	die(header("Content-Type:",true,404));
-} 
+}
 
 function startOutput($callback) {
 	if ($callback) {
@@ -131,7 +131,7 @@ function retrieveObject($key,$table,$mysqli) {
 
 $action   = parseGetParameter('action', 'a-z', 'list');
 $table    = parseGetParameter('table', 'a-zA-Z0-9\-_*,', '*');
-$key      = parseGetParameter('key', 'a-zA-Z0-9\-,', false); // auto-increment or uuid 
+$key      = parseGetParameter('key', 'a-zA-Z0-9\-,', false); // auto-increment or uuid
 $callback = parseGetParameter('callback', 'a-zA-Z0-9\-_', false);
 $page     = parseGetParameter('page', '0-9,', false);
 $filter   = parseGetParameter('filter', false, 'start');
@@ -139,21 +139,22 @@ $match    = parseGetParameter('match', 'a-z', false);
 
 $mysqli = connectDatabase($config["hostname"], $config["username"], $config["password"], $config["database"]);
 
-$table = processTableParameter($table,$config["database"],$mysqli);
-$key = processKeyParameter($key,$table,$config["database"],$mysqli);
+$table  = processTableParameter($table,$config["database"],$mysqli);
+$key    = processKeyParameter($key,$table,$config["database"],$mysqli);
 $filter = processFilterParameter($filter,$mysqli);
-$page = processPageParameter($page);
+$page   = processPageParameter($page);
 
 $table = applyWhitelistAndBlacklist($table,$action,$config['whitelist'],$config['blacklist']);
 
 $object = retrieveObject($key,$table,$mysqli);
 
 switch($action){
-	case 'list': 
+	case 'list':
 		startOutput($callback);
 		echo '{';
 		$tables = $table;
 		foreach ($tables as $t=>$table) {
+			$results = false;
 			if ($t>0) echo ',';
 			echo '"'.$table.'":{';
 			if ($t==0 && is_array($page)) {
@@ -161,9 +162,7 @@ switch($action){
 				if (is_array($filter)) $sql .= " WHERE `$filter[0]` $filter[2] '$filter[1]'";
 				if ($result = $mysqli->query($sql)) {
 					$pages = $result->fetch_row();
-					$pages = ceil($pages[0]/$page[1]);
-					$pages = array('current'=>$page[0]+1,'records'=>$page[1]+0,"total"=>$pages+0);
-					echo '"pages":"'.json_encode($pages).'",';
+					$results = $pages[0];
 				}
 			}
 			echo '"columns":';
@@ -171,6 +170,7 @@ switch($action){
 			if ($t==0 && is_array($filter)) $sql .= " WHERE `$filter[0]` $filter[2] '$filter[1]'";
 			if ($t==0 && is_array($page)) $sql .= " LIMIT $page[1] OFFSET $page[0]";
 			if ($result = $mysqli->query($sql)) {
+				if (!$results) $results = $result->num_rows;
 				$fields = array();
 				foreach ($result->fetch_fields() as $field) $fields[] = $field->name;
 				echo json_encode($fields);
@@ -183,6 +183,7 @@ switch($action){
 				}
 				$result->close();
 			}
+			if ($results) echo ',"results":'.$results;
 			echo ']}';
 		}
 		echo '}';
