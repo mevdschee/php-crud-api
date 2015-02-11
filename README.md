@@ -10,7 +10,7 @@ Simple PHP script that adds a very basic API to a MySQL database
 ## Limitations
 
   - Public API only: no authentication or authorization
-  - Read-only: no write or delete supported
+  - No relationship (foreign key) support
   - No column selection: always returns full table
   - Single database
 
