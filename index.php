@@ -21,7 +21,6 @@ function applyWhitelist($table,$action,$list) {
 		return strpos($actions,$action[0])!==false;
 	});
 	return array_intersect($table, array_keys($list));
-
 }
 
 function applyBlacklist($table,$action,$list) {
@@ -78,7 +77,7 @@ function startOutput($callback) {
 
 function endOutput($callback) {
 	if ($callback) {
-	    echo ');';
+		echo ');';
 	}
 }
 
@@ -129,6 +128,37 @@ function retrieveObject($key,$table,$mysqli) {
 	return $object;
 }
 
+function createObject($input,$table,$mysqli) {
+	if (!$input) return false;
+	$keys = implode('`,`',array_map(function($v){ return preg_replace('/[^a-zA-Z0-9\-_]/','',$v); },array_keys((array)$input)));
+	$values = implode("','",array_map(function($v){ return $mysqli->real_escape_string($v); },array_values((array)$input)));
+	$mysqli->query("INSERT INTO `$table[0]` (`$keys`) VALUES ('$values')");
+	return $mysqli->insert_id;
+}
+
+function updateObject($key,$input,$table,$mysqli) {
+	if (!$input) return false;
+	$pk = findPrimaryKey($table,$database,$mysqli);
+	$sql = "UPDATE `$table[0]` SET ";
+	foreach (array_keys($input) as $i=>$k) {
+		if ($i) $sql .= ",";
+		$v = $input[$k];
+		$sql .= "`$k`='$v'";
+	}
+	$sql .= " WHERE `$pk`='$key'";
+	$mysqli->query($sql);
+	return $mysqli->affected_rows;
+}
+
+function deleteObject($key,$input,$table,$mysqli) {
+	if (!$input) return false;
+	$pk = findPrimaryKey($table,$database,$mysqli);
+	if (!$pk) return false;
+	$sql = "DELETE FROM `$table[0]` WHERE `$pk`='$key'";
+	$mysqli->query($sql);
+	return $mysqli->affected_rows;
+}
+
 $action   = parseGetParameter('action', 'a-z', 'list');
 $table    = parseGetParameter('table', 'a-zA-Z0-9\-_*,', '*');
 $key      = parseGetParameter('key', 'a-zA-Z0-9\-,', false); // auto-increment or uuid
@@ -144,9 +174,10 @@ $key    = processKeyParameter($key,$table,$config["database"],$mysqli);
 $filter = processFilterParameter($filter,$mysqli);
 $page   = processPageParameter($page);
 
-$table = applyWhitelistAndBlacklist($table,$action,$config['whitelist'],$config['blacklist']);
+$table  = applyWhitelistAndBlacklist($table,$action,$config['whitelist'],$config['blacklist']);
 
 $object = retrieveObject($key,$table,$mysqli);
+$input  = json_decode(file_get_contents('php://input'));
 
 switch($action){
 	case 'list':
@@ -154,7 +185,7 @@ switch($action){
 		echo '{';
 		$tables = $table;
 		foreach ($tables as $t=>$table) {
-			$results = false;
+			$count = false;
 			if ($t>0) echo ',';
 			echo '"'.$table.'":{';
 			if ($t==0 && is_array($page)) {
@@ -162,7 +193,7 @@ switch($action){
 				if (is_array($filter)) $sql .= " WHERE `$filter[0]` $filter[2] '$filter[1]'";
 				if ($result = $mysqli->query($sql)) {
 					$pages = $result->fetch_row();
-					$results = $pages[0];
+					$count = $pages[0];
 				}
 			}
 			echo '"columns":';
@@ -182,7 +213,7 @@ switch($action){
 				}
 				$result->close();
 			}
-			if ($results) echo ',"results":'.$results;
+			if ($results) echo ',"results":'.$count;
 			echo ']}';
 		}
 		echo '}';
@@ -194,8 +225,23 @@ switch($action){
 		echo json_encode($object);
 		endOutput($callback);
 		break;
-	case 'create': break;
-	case 'update': break;
-	case 'delete': break;
+	case 'create':;
+		if (!$input) exitWith404();
+		startOutput($callback);
+		echo json_encode(createObject($input,$table,$mysqli));
+		endOutput($callback);
+		break;
+	case 'update':
+		if (!$input) exitWith404();
+		startOutput($callback);
+		echo json_encode(updateObject($key,$input,$table,$mysqli));
+		endOutput($callback);
+		break;
+	case 'delete':
+		if (!$input) exitWith404();
+		startOutput($callback);
+		echo json_encode(deleteObject($key,$table,$mysqli));
+		endOutput($callback);
+		break;
 	default: exitWith404();
 }
