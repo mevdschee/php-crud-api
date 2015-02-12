@@ -179,6 +179,15 @@ Output:
 
 Put the file "api.php" somewhere and enjoy!
 
+## Tests
+
+Yes, run phpunit against "test.php"
+
+```
+wget https://phar.phpunit.de/phpunit.phar
+php phpunit.phar test.php
+```
+
 ## License
 
 MIT
