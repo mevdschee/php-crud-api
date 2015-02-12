@@ -26,6 +26,8 @@ Simple PHP script that adds a very basic API to a MySQL database
 
 ## Configuration
 
+Edit the following lines in the bottom of the file "api.php":
+
 ```
 $api = new MySQL_CRUD_API(
 	"localhost",                        // hostname
