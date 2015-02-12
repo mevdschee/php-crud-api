@@ -296,5 +296,9 @@ class MySQL_CRUD_API {
 	}
 }
 
-//$api = new MySQL_CRUD_API("localhost","user","pass","db",false,array("users"=>"crudl"));
-//$api->executeCommand();
+// only execute this when running in stand-alone mode
+if(count(get_required_files())<2) {
+	// parameters: hostname, username, password, database, whitelist, blacklist
+	$api = new MySQL_CRUD_API("localhost","user","pass","db",false,array("users"=>"crudl"));
+	$api->executeCommand();
+}
