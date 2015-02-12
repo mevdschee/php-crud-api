@@ -181,12 +181,14 @@ Put the file "api.php" somewhere and enjoy!
 
 ## Tests
 
-Yes, run phpunit against "test.php"
+Yes, written for PHPUnit. Run:
 
 ```
 wget https://phar.phpunit.de/phpunit.phar
 php phpunit.phar test.php
 ```
+
+No complete coverage yet.
 
 ## License
 
