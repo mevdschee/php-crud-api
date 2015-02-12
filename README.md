@@ -93,6 +93,16 @@ GET http://localhost/api.php/categories?filter=id:2&match=lower
 {"categories":{"columns":["id","name"],"records":[["1","Internet"]]}}
 ```
 
+### List + Order
+
+```
+GET http://localhost/api.php/categories?order=name,desc
+```
+
+```
+{"categories":{"columns":["id","name"],"records":[["3","Web development"],["1","Internet"]]}}
+```
+
 ### Create
 
 ```
