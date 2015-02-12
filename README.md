@@ -1,6 +1,6 @@
 # MySQL-CRUD-API
 
-Simple PHP script that adds a very basic API to a MySQL database
+Simple PHP script that adds a very basic API to a MySQL database.
 
 ## Requirements
 
@@ -10,8 +10,8 @@ Simple PHP script that adds a very basic API to a MySQL database
 ## Limitations
 
   - Public API only: no authentication or authorization
-  - No relationship (foreign key) support
-  - No column selection: always returns full table
+  - No relationship (foreign key) support (todo)
+  - No column selection: always returns full table (todo)
   - Single database
 
 ## Features
@@ -46,6 +46,8 @@ You can do all CRUD (Create, Read, Update, Delete) operations and extra List ope
 
 ### List
 
+List all records of a database table.
+
 ```
 GET http://localhost/api.php/categories
 GET http://localhost/api.php/categories,users
@@ -53,16 +55,22 @@ GET http://localhost/api.php/cate*
 GET http://localhost/api.php/cate*,user*
 ```
 
+Output:
+
 ```
 {"categories":{"columns":["id","name"],"records":[["1","Internet"],["3","Web development"]]}}
 ```
 
 ### List + Pagination
 
+The "page" parameter holds the requested page. The default page size is 20, but can be adjusted (e.g. to 50):
+
 ```
 GET http://localhost/api.php/categories?page=1
 GET http://localhost/api.php/categories?page=1,50
 ```
+
+Output:
 
 ```
 {"categories":{"columns":["id","name"],"records":[["1","Internet"],["3","Web development"]],"results":2}}
@@ -70,7 +78,7 @@ GET http://localhost/api.php/categories?page=1,50
 
 ### List + Filter
 
-Match types supported:
+Search is implemented with the "filter" parameter. You need to specify the column name, a colon and the value you want to filter on. The filter match types is "start" by default, but can easily be adjusted. These are supported:
 
   - start (string starts with value)
   - end (string end with value)
@@ -89,15 +97,21 @@ GET http://localhost/api.php/categories?filter=id:1&match=upto
 GET http://localhost/api.php/categories?filter=id:2&match=lower
 ```
 
+Output:
+
 ```
 {"categories":{"columns":["id","name"],"records":[["1","Internet"]]}}
 ```
 
 ### List + Order
 
+With the "order" parameter you can sort. By default the sort is in ascending order, but by specifying "desc" this can be reversed:
+
 ```
 GET http://localhost/api.php/categories?order=name,desc
 ```
+
+Output:
 
 ```
 {"categories":{"columns":["id","name"],"records":[["3","Web development"],["1","Internet"]]}}
@@ -105,10 +119,14 @@ GET http://localhost/api.php/categories?order=name,desc
 
 ### Create
 
+You can easily add a record using the POST method. The call returns the rows affected.
+
 ```
 POST http://localhost/api.php/categories
 {"id":"1","name":"Internet"}
 ```
+
+Output:
 
 ```
 1
@@ -116,9 +134,13 @@ POST http://localhost/api.php/categories
 
 ### Read
 
+If you want to read a single object you can use:
+
 ```
 GET http://localhost/api.php/categories/1
 ```
+
+Output:
 
 ```
 {"id":"1","name":"Internet"}
@@ -126,10 +148,14 @@ GET http://localhost/api.php/categories/1
 
 ### Update
 
+Editing a record is done with the PUT method. The call returns the rows affected.
+
 ```
 PUT http://localhost/api.php/categories/2
 {"id":"1","name":"Internet networking"}
 ```
+
+Output:
 
 ```
 1
@@ -137,9 +163,13 @@ PUT http://localhost/api.php/categories/2
 
 ### Delete
 
+The DELETE verb is used to delete a record. The call returns the rows affected.
+
 ```
 DELETE http://localhost/api.php/categories/2
 ```
+
+Output:
 
 ```
 1
