@@ -77,7 +77,7 @@ class MySQL_CRUD_API_Test extends PHPUnit_Framework_TestCase
 				array(array('3','value3')),
 			)
 		));
-		$api = new MySQL_CRUD_API('','','','database',false,array("dedicated_server_promo_codes"=>"crudl"));
+		$api = new MySQL_CRUD_API('','','','database',false,array("users"=>"crudl"));
 		$api->mysqli = $mysqli;
 		$api->method = "GET";
 		$api->request = array('table');
