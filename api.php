@@ -2,12 +2,12 @@
 
 class MySQL_CRUD_API {
 
-	private $method;
-	private $request;
-	private $mysqli;
-	private $database;
-	private $whitelist;
-	private $blacklist;
+	public $method;
+	public $request;
+	public $mysqli;
+	public $database;
+	public $whitelist;
+	public $blacklist;
 
 	private function connectDatabase($hostname,$username,$password,$database) {
 		$mysqli = new mysqli($hostname,$username,$password,$database);
@@ -83,15 +83,21 @@ class MySQL_CRUD_API {
 	}
 
 	private function exitWith404() {
-		die(header("Content-Type:",true,404));
+		if (isset($_SERVER['REQUEST_METHOD'])) {
+			die(header("Content-Type:",true,404));
+		} else {
+			throw new \Exception('404');
+		}
 	}
 
 	private function startOutput($callback) {
-		if ($callback) {
-			header("Content-Type: application/javascript");
-			echo $callback.'(';
-		} else {
-			header("Content-Type: application/json");
+		if (isset($_SERVER['REQUEST_METHOD'])) {
+			if ($callback) {
+				header("Content-Type: application/javascript");
+				echo $callback.'(';
+			} else {
+				header("Content-Type: application/json");
+			}
 		}
 	}
 
@@ -227,8 +233,9 @@ class MySQL_CRUD_API {
 				$sql = "SELECT COUNT(*) FROM `$table`";
 				if (is_array($filter)) $sql .= " WHERE `$filter[0]` $filter[2] $filter[1]";
 				if ($result = $mysqli->query($sql)) {
-					$pages = $result->fetch_row();
-					$count = $pages[0];
+					while ($pages = $result->fetch_row()) {
+						$count = $pages[0];
+					}
 				}
 			}
 			echo '"columns":';
@@ -288,9 +295,11 @@ class MySQL_CRUD_API {
 	}
 
 	public function __construct($hostname,$username,$password,$database,$whitelist,$blacklist) {
-		$this->method = $_SERVER['REQUEST_METHOD'];
-		$this->request = explode("/", substr(@$_SERVER['PATH_INFO'], 1));
-		$this->mysqli = $this->connectDatabase($hostname,$username,$password,$database);
+		$this->method = isset($_SERVER['REQUEST_METHOD'])?$_SERVER['REQUEST_METHOD']:'';
+		$this->request = explode("/", isset($_SERVER['PATH_INFO'])?$_SERVER['PATH_INFO']:'', 1);
+		if ($hostname) {
+			$this->mysqli = $this->connectDatabase($hostname,$username,$password,$database);
+		}
 		$this->database = $database;
 		$this->whitelist = $whitelist;
 		$this->blacklist = $blacklist;
