@@ -108,6 +108,15 @@ class MySQL_CRUD_API {
 		}
 		return $key;
 	}
+	
+	private function processOrderParameter($order,$table,$database,$mysqli) {
+		if ($order) {
+			$order = explode(',',$order,2);
+			if (count($order)<2) $order[1]='ASC';
+			$order[1] = strtoupper($order[1])=='DESC'?'DESC':'ASC';
+		}
+		return $order;
+	}	
 
 	private function processFilterParameter($filter,$match,$mysqli) {
 		if ($filter) {
@@ -189,18 +198,20 @@ class MySQL_CRUD_API {
 		$page     = $this->parseGetParameter('page', '0-9,', false);
 		$filter   = $this->parseGetParameter('filter', false, 'start');
 		$match    = $this->parseGetParameter('match', 'a-z', false);
+		$order    = $this->parseGetParameter('order', 'a-zA-Z0-9\-_*,', false);
 
 		$table  = $this->processTableParameter($table,$database,$mysqli);
 		$key    = $this->processKeyParameter($key,$table,$database,$mysqli);
 		$filter = $this->processFilterParameter($filter,$match,$mysqli);
 		$page   = $this->processPageParameter($page);
-
+		$order  = $this->processOrderParameter($order,$table,$database,$mysqli);
+		
 		$table  = $this->applyWhitelistAndBlacklist($table,$action,$whitelist,$blacklist);
 
 		$object = $this->retrieveObject($key,$table,$mysqli);
 		$input  = json_decode(file_get_contents('php://input'));
 
-		return compact('action','table','key','callback','page','filter','match','mysqli','object','input');
+		return compact('action','table','key','callback','page','filter','match','order','mysqli','object','input');
 	}
 
 	private function listCommand($parameters) {
@@ -223,6 +234,7 @@ class MySQL_CRUD_API {
 			echo '"columns":';
 			$sql = "SELECT * FROM `$table`";
 			if ($t==0 && is_array($filter)) $sql .= " WHERE `$filter[0]` $filter[2] $filter[1]";
+			if ($t==0 && is_array($order)) $sql .= " ORDER BY `$order[0]` $order[1]";
 			if ($t==0 && is_array($page)) $sql .= " LIMIT $page[1] OFFSET $page[0]";
 			if ($result = $mysqli->query($sql)) {
 				$fields = array();
