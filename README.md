@@ -67,6 +67,18 @@ GET http://localhost/api/categories?page=1,50
 
 ### List + Filter
 
+Match types supported:
+
+  - start (string starts with value)
+  - end (string end with value)
+  - any (string contains value)
+  - exact (string or number matches exactly)
+  - lower (number is lower than value)
+  - upto (number is lower than or equal to value)
+  - from (number is higher than or equal to value)
+  - higher (number is higher than value)
+  - in (number is in comma seperated list of values)
+
 ```
 GET http://localhost/api/categories?filter=name:Inter
 GET http://localhost/api/categories?filter=name:Internet&match=exact
