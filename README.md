@@ -27,14 +27,15 @@ Simple PHP script that adds a very basic API to a MySQL database
 ## Configuration
 
 ```
-$config = array(
-    "hostname"=>"localhost",
-    "username"=>"root",
-    "password"=>"root",
-    "database"=>"blog",
-    "whitelist"=>false,
-    "blacklist"=>array("users"=>"crudl"),
+$api = new MySQL_CRUD_API(
+	"localhost",                        // hostname
+	"user",                             // username
+	"pass",                             // password
+	"db",                               // database
+	false,                              // whitelist
+	array("users"=>"crudl")             // blacklist
 );
+$api->executeCommand();
 ```
 
 ## Usage
@@ -44,10 +45,10 @@ You can do all CRUD (Create, Read, Update, Delete) operations and extra List ope
 ### List
 
 ```
-GET http://localhost/api/categories
-GET http://localhost/api/categories,users
-GET http://localhost/api/cate*
-GET http://localhost/api/cate*,user*
+GET http://localhost/api.php/categories
+GET http://localhost/api.php/categories,users
+GET http://localhost/api.php/cate*
+GET http://localhost/api.php/cate*,user*
 ```
 
 ```
@@ -57,8 +58,8 @@ GET http://localhost/api/cate*,user*
 ### List + Pagination
 
 ```
-GET http://localhost/api/categories?page=1
-GET http://localhost/api/categories?page=1,50
+GET http://localhost/api.php/categories?page=1
+GET http://localhost/api.php/categories?page=1,50
 ```
 
 ```
@@ -80,10 +81,10 @@ Match types supported:
   - in (number is in comma seperated list of values)
 
 ```
-GET http://localhost/api/categories?filter=name:Inter
-GET http://localhost/api/categories?filter=name:Internet&match=exact
-GET http://localhost/api/categories?filter=id:1&match=upto
-GET http://localhost/api/categories?filter=id:2&match=lower
+GET http://localhost/api.php/categories?filter=name:Inter
+GET http://localhost/api.php/categories?filter=name:Internet&match=exact
+GET http://localhost/api.php/categories?filter=id:1&match=upto
+GET http://localhost/api.php/categories?filter=id:2&match=lower
 ```
 
 ```
@@ -93,7 +94,7 @@ GET http://localhost/api/categories?filter=id:2&match=lower
 ### Create
 
 ```
-POST http://localhost/api/categories
+POST http://localhost/api.php/categories
 {"id":"1","name":"Internet"}
 ```
 
@@ -104,7 +105,7 @@ POST http://localhost/api/categories
 ### Read
 
 ```
-GET http://localhost/api/categories/1
+GET http://localhost/api.php/categories/1
 ```
 
 ```
@@ -114,7 +115,7 @@ GET http://localhost/api/categories/1
 ### Update
 
 ```
-PUT http://localhost/api/categories/2
+PUT http://localhost/api.php/categories/2
 {"id":"1","name":"Internet networking"}
 ```
 
@@ -125,7 +126,7 @@ PUT http://localhost/api/categories/2
 ### Delete
 
 ```
-DELETE http://localhost/api/categories/2
+DELETE http://localhost/api.php/categories/2
 ```
 
 ```
@@ -134,7 +135,7 @@ DELETE http://localhost/api/categories/2
 
 ## Installation
 
-Put the files in a folder named "api" and edit config.php.dist and rename it to config.php. Let Apache serve the parent folder or configure the .htaccess RewriteBase to match the exposed part of the path.
+Put the file "api.php" somewhere and enjoy!
 
 ## License
 
