@@ -16,6 +16,7 @@ Simple PHP script that adds a very basic API to a MySQL database.
 
 ## Features
 
+  - Single PHP file, easy to deploy.
   - Very little code, easy to adapt and maintain
   - Streaming data, low memory footprint
   - Condensed JSON: first row contains field names
