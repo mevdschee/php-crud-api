@@ -22,7 +22,7 @@ Simple PHP script that adds a very basic API to a MySQL database
   - Optional white- and blacklist support for tables
   - JSONP support for cross-domain requests
   - Combined requests with wildcard support for table names
-  - Pagination and search support
+  - Pagination, sorting and search support
 
 ## Configuration
 
