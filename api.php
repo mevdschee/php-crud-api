@@ -298,7 +298,13 @@ class MySQL_CRUD_API {
 
 // only execute this when running in stand-alone mode
 if(count(get_required_files())<2) {
-	// parameters: hostname, username, password, database, whitelist, blacklist
-	$api = new MySQL_CRUD_API("localhost","user","pass","db",false,array("users"=>"crudl"));
+	$api = new MySQL_CRUD_API(
+		"localhost",                        // hostname
+		"user",                             // username
+		"pass",                             // password
+		"db",                               // database
+		false,                              // whitelist
+		array("users"=>"crudl")             // blacklist
+	);
 	$api->executeCommand();
 }
