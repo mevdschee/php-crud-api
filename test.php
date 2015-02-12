@@ -16,7 +16,7 @@ class MySQL_CRUD_API_Test extends PHPUnit_Framework_TestCase
 			->will($this->returnCallback(function() use ($queries) {
 				static $i = 0;
 				$args = func_get_args();
-				list($query,$fields,$results) = $queries[$i];
+				list($query,$fields,$results) = $queries[$i++];
 				$fields = array_map(function($v){ return (object)array('name'=>$v); },$fields);
 				$this->assertEquals($query,$args[0]);
 				$mysqli_result = $this->getMockBuilder('mysqli_result')
@@ -32,7 +32,6 @@ class MySQL_CRUD_API_Test extends PHPUnit_Framework_TestCase
 						static $r = 0;
 						return isset($results[$r])?$results[$r++]:false;
 					}));
-				$i++;
 				return $mysqli_result;
 			}));
 
