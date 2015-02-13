@@ -120,7 +120,7 @@ Output:
 
 ### Create
 
-You can easily add a record using the POST method. The call returns the rows affected.
+You can easily add a record using the POST method. The call returns the "last insert id".
 
 ```
 POST http://localhost/api.php/categories
