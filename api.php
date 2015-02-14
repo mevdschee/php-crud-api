@@ -12,7 +12,7 @@ class MySQL_CRUD_API {
 	private function connectDatabase($hostname,$username,$password,$database) {
 		$mysqli = new mysqli($hostname,$username,$password,$database);
 		if ($mysqli->connect_errno) {
-			die('Connect failed: '.$mysqli->connect_error);
+			throw new \Exception('Connect failed: '.$mysqli->connect_error);
 		}
 		return $mysqli;
 	}
@@ -114,7 +114,7 @@ class MySQL_CRUD_API {
 		}
 		return $key;
 	}
-	
+
 	private function processOrderParameter($order,$table,$database,$mysqli) {
 		if ($order) {
 			$order = explode(',',$order,2);
@@ -122,7 +122,7 @@ class MySQL_CRUD_API {
 			$order[1] = strtoupper($order[1])=='DESC'?'DESC':'ASC';
 		}
 		return $order;
-	}	
+	}
 
 	private function processFilterParameter($filter,$match,$mysqli) {
 		if ($filter) {
@@ -196,6 +196,65 @@ class MySQL_CRUD_API {
 		return $mysqli->affected_rows;
 	}
 
+	private function findRelations($action,$table,$database,$mysqli) {
+		$collect = array();
+		$select = array();
+		if (count($table)>1) {
+			$table0 = array_shift($table);
+			$tables = implode("','",$table);
+			$result = $mysqli->query("SELECT
+								`TABLE_NAME`,`COLUMN_NAME`,
+								`REFERENCED_TABLE_NAME`,`REFERENCED_COLUMN_NAME`
+							FROM
+								`INFORMATION_SCHEMA`.`KEY_COLUMN_USAGE`
+							WHERE
+								`TABLE_NAME` = '$table0' AND
+								`REFERENCED_TABLE_NAME` IN ('$tables') AND
+								`TABLE_SCHEMA` = '$database' AND
+								`REFERENCED_TABLE_SCHEMA` = '$database'");
+			while ($row = $result->fetch_row()) {
+				$collect[$row[0]][$row[1]]=array();
+				$select[$row[2]][$row[3]]=array($row[0],$row[1]);
+			}
+			$result = $mysqli->query("SELECT
+								`TABLE_NAME`,`COLUMN_NAME`,
+								`REFERENCED_TABLE_NAME`,`REFERENCED_COLUMN_NAME`
+							FROM
+								`INFORMATION_SCHEMA`.`KEY_COLUMN_USAGE`
+							WHERE
+								`TABLE_NAME` IN ('$tables') AND
+								`REFERENCED_TABLE_NAME` = '$table0' AND
+								`TABLE_SCHEMA` = '$database' AND
+								`REFERENCED_TABLE_SCHEMA` = '$database'");
+			while ($row = $result->fetch_row()) {
+				$collect[$row[2]][$row[3]]=array();
+				$select[$row[0]][$row[1]]=array($row[2],$row[3]);
+			}
+			$result = $mysqli->query("SELECT
+								k1.`TABLE_NAME`, k1.`COLUMN_NAME`,
+								k1.`REFERENCED_TABLE_NAME`, k1.`REFERENCED_COLUMN_NAME`,
+								k2.`TABLE_NAME`, k2.`COLUMN_NAME`,
+								k2.`REFERENCED_TABLE_NAME`, k2.`REFERENCED_COLUMN_NAME`
+							FROM
+								`INFORMATION_SCHEMA`.`KEY_COLUMN_USAGE` k1, `INFORMATION_SCHEMA`.`KEY_COLUMN_USAGE` k2
+							WHERE
+								k1.`TABLE_SCHEMA` = '$database' AND
+								k2.`TABLE_SCHEMA` = '$database' AND
+								k1.`REFERENCED_TABLE_SCHEMA` = '$database' AND
+								k2.`REFERENCED_TABLE_SCHEMA` = '$database' AND
+								k1.`TABLE_NAME` = k2.`TABLE_NAME` AND
+								k1.`REFERENCED_TABLE_NAME` = '$table0' AND
+								k2.`REFERENCED_TABLE_NAME` in ('$tables')");
+			while ($row = $result->fetch_row()) {
+				$collect[$row[2]][$row[3]]=array();
+				$select[$row[0]][$row[1]]=array($row[2],$row[3]);
+				$collect[$row[4]][$row[5]]=array();
+				$select[$row[6]][$row[7]]=array($row[4],$row[5]);
+			}
+		}
+		return array($collect,$select);
+	}
+
 	private function getParameters($method, $request, $database, $whitelist, $blacklist, $mysqli) {
 		$action   = $this->mapMethodToAction($method, $request);
 		$table    = $this->parseRequestParameter($request, 0, 'a-zA-Z0-9\-_*,', '*');
@@ -211,13 +270,15 @@ class MySQL_CRUD_API {
 		$filter = $this->processFilterParameter($filter,$match,$mysqli);
 		$page   = $this->processPageParameter($page);
 		$order  = $this->processOrderParameter($order,$table,$database,$mysqli);
-		
+
 		$table  = $this->applyWhitelistAndBlacklist($table,$action,$whitelist,$blacklist);
 
 		$object = $this->retrieveObject($key,$table,$mysqli);
 		$input  = json_decode(file_get_contents('php://input'));
 
-		return compact('action','table','key','callback','page','filter','match','order','mysqli','object','input');
+		list($collect,$select) = $this->findRelations($action,$table,$database,$mysqli);
+
+		return compact('action','table','key','callback','page','filter','match','order','mysqli','object','input','collect','select');
 	}
 
 	private function listCommand($parameters) {
@@ -225,39 +286,92 @@ class MySQL_CRUD_API {
 		$this->startOutput($callback);
 		echo '{';
 		$tables = $table;
-		foreach ($tables as $t=>$table) {
-			$count = false;
-			if ($t>0) echo ',';
-			echo '"'.$table.'":{';
-			if ($t==0 && is_array($page)) {
-				$sql = "SELECT COUNT(*) FROM `$table`";
-				if (is_array($filter)) $sql .= " WHERE `$filter[0]` $filter[2] $filter[1]";
-				if ($result = $mysqli->query($sql)) {
-					while ($pages = $result->fetch_row()) {
-						$count = $pages[0];
-					}
+		$table = array_shift($tables);
+		// first table
+		$count = false;
+		echo '"'.$table.'":{';
+		if (is_array($page)) {
+			$sql = "SELECT COUNT(*) FROM `$table`";
+			if (is_array($filter)) $sql .= " WHERE `$filter[0]` $filter[2] $filter[1]";
+			if ($result = $mysqli->query($sql)) {
+				while ($pages = $result->fetch_row()) {
+					$count = $pages[0];
 				}
 			}
+		}
+		$sql = "SELECT * FROM `$table`";
+		if (is_array($filter)) $sql .= " WHERE `$filter[0]` $filter[2] $filter[1]";
+		if (is_array($order)) $sql .= " ORDER BY `$order[0]` $order[1]";
+		if (is_array($page)) $sql .= " LIMIT $page[1] OFFSET $page[0]";
+		if ($result = $mysqli->query($sql)) {
 			echo '"columns":';
+			$fields = array();
+			foreach ($result->fetch_fields() as $field) $fields[] = $field->name;
+			echo json_encode($fields);
+			$fields = array_flip($fields);
+			echo ',"records":[';
+			$first_row = true;
+			while ($row = $result->fetch_row()) {
+				if ($first_row) $first_row = false;
+				else echo ',';
+				if (isset($collect[$table])) {
+					foreach (array_keys($collect[$table]) as $field) {
+						$collect[$table][$field][] = $row[$fields[$field]];
+					}
+				}
+				echo json_encode($row);
+			}
+			$result->close();
+			echo ']';
+		}
+		if ($count) echo ',"results":'.$count;
+		echo '}';
+		// prepare for other tables
+		foreach (array_keys($collect) as $t) {
+			if ($t!=$table && !in_array($t,$tables)) {
+				array_unshift($tables,$t);
+			}
+		}
+		// other tables
+		foreach ($tables as $t=>$table) {
+			echo ',';
+			echo '"'.$table.'":{';
 			$sql = "SELECT * FROM `$table`";
-			if ($t==0 && is_array($filter)) $sql .= " WHERE `$filter[0]` $filter[2] $filter[1]";
-			if ($t==0 && is_array($order)) $sql .= " ORDER BY `$order[0]` $order[1]";
-			if ($t==0 && is_array($page)) $sql .= " LIMIT $page[1] OFFSET $page[0]";
+			if (isset($select[$table])) {
+				$first_row = true;
+				echo '"relations":{';
+				foreach ($select[$table] as $field => $path) {
+					$values = implode("','",$collect[$path[0]][$path[1]]);
+					$sql .= $first_row?' WHERE ':' OR ';
+					$sql .= "`$field` IN ('$values')";
+					if ($first_row) $first_row = false;
+					else echo ',';
+					echo '"'.$field.'":"'.implode('.',$path).'"';
+				}
+				echo '},';
+			}
 			if ($result = $mysqli->query($sql)) {
+				echo '"columns":';
 				$fields = array();
 				foreach ($result->fetch_fields() as $field) $fields[] = $field->name;
 				echo json_encode($fields);
+				$fields = array_flip($fields);
 				echo ',"records":[';
 				$first_row = true;
 				while ($row = $result->fetch_row()) {
 					if ($first_row) $first_row = false;
 					else echo ',';
+					if (isset($collect[$table])) {
+						foreach (array_keys($collect[$table]) as $field) {
+							$collect[$table][$field][]=$row[$fields[$field]];
+						}
+					}
 					echo json_encode($row);
 				}
 				$result->close();
+				echo ']';
 			}
-			if ($count) echo ',"results":'.$count;
-			echo ']}';
+			echo '}';
 		}
 		echo '}';
 		$this->endOutput($callback);
@@ -321,9 +435,9 @@ class MySQL_CRUD_API {
 if(count(get_required_files())<2) {
 	$api = new MySQL_CRUD_API(
 		"localhost",                        // hostname
-		"user",                             // username
-		"pass",                             // password
-		"db",                               // database
+		"root",                             // username
+		"root",                             // password
+		"mysql_crud_api",                   // database
 		false,                              // whitelist
 		array("users"=>"crudl")             // blacklist
 	);
