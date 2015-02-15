@@ -5,13 +5,11 @@ Simple PHP script that adds a very basic API to a MySQL database.
 ## Requirements
 
   - PHP 5.3 or higher with MySQLi enabled
-  - Apache with mod_rewrite enabled (can also run on Nginx)
+  - Apache Lighttpd or Nginx
 
 ## Limitations
 
-  - Public API only: no authentication or authorization
-  - No relationship (foreign key) support (todo)
-  - No column selection: always returns full table (todo)
+  - Authentication or authorization is not included
   - Single database
 
 ## Features
@@ -20,9 +18,10 @@ Simple PHP script that adds a very basic API to a MySQL database.
   - Very little code, easy to adapt and maintain
   - Streaming data, low memory footprint
   - Condensed JSON: first row contains field names
-  - Optional white- and blacklist support for tables
+  - Blacklist support for tables (and columns, todo)
   - JSONP support for cross-domain requests
-  - Combined requests with wildcard support for table names
+  - Combined requests with support for multiple table names
+  - Relationship detection and filtering on foreign keys
   - Pagination, sorting and search support
 
 ## Configuration
