@@ -435,9 +435,9 @@ class MySQL_CRUD_API {
 if(count(get_required_files())<2) {
 	$api = new MySQL_CRUD_API(
 		"localhost",                        // hostname
-		"root",                             // username
-		"root",                             // password
-		"mysql_crud_api",                   // database
+		"user",                             // username
+		"pass",                             // password
+		"db",                               // database
 		false,                              // whitelist
 		array("users"=>"crudl")             // blacklist
 	);
