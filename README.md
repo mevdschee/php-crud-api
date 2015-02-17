@@ -52,9 +52,6 @@ List all records of a database table.
 
 ```
 GET http://localhost/api.php/categories
-GET http://localhost/api.php/categories,users
-GET http://localhost/api.php/cate*
-GET http://localhost/api.php/cate*,user*
 ```
 
 Output:
