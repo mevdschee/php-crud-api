@@ -1,8 +1,15 @@
 <html>
 <head>
-	<script src="client.js"></script>
+<script src="mysql_crud_api_transform.js"></script>
+<script>
+function callback(jsonObject) {
+  jsonObject = mysql_crud_api_transform(jsonObject);
+  document.getElementById('output').innerHTML = JSON.stringify(jsonObject, undefined, 4);
+}
+</script>
+<script src="http://localhost/api.php/posts,categories,tags,comments?filter=id:1&callback=callback" defer="defer"></script>
 </head>
 <body>
-	client.js
+<pre id="output"></pre>
 </body>
 </html>
