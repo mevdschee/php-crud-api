@@ -81,7 +81,7 @@ function get_objects(tables,table_name,where_index,match_value) {
 	var objects = [];
 	for (var record in tables[table_name]['records']) {
 		record = tables[table_name]['records'][record];
-		if (where_index==false || record[where_index]==match_value) {
+		if (!where_index || record[where_index]==match_value) {
 			var object = {};
 			for (var index in tables[table_name]['columns']) {
 				var column = tables[table_name]['columns'][index];
