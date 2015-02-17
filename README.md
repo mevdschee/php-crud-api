@@ -23,8 +23,8 @@ Simple PHP script that adds a very basic API to a MySQL database.
   - JSONP support for cross-domain requests
   - Combined requests with support for multiple table names
   - Pagination, sorting and search support
-  - Relationship detection and filtering on foreign keys
-  - Relationship "transforms" for PHP and JavaScript
+  - Relation detection and filtering on foreign keys
+  - Relation "transforms" for PHP and JavaScript
 
 ## Configuration
 
@@ -174,9 +174,9 @@ Output:
 1
 ```
 
-## Relationships
+## Relations
 
-The explanation of this feature is based on the datastructure from the ```blog.sql``` database file. This database is a very simple blog datastructure with corresponding foreign key relationships between the tables.
+The explanation of this feature is based on the datastructure from the ```blog.sql``` database file. This database is a very simple blog datastructure with corresponding foreign key relations between the tables.
 
 You can get the "post" that has "id" equal to "1" with it's corresponding "categories", "tags" and "comments" using:
 
