@@ -46,7 +46,7 @@ function microAjax(url, callbackFunction)
 	this.callbackFunction=callbackFunction;
 	this.url=url;
 	this.request = this.getRequest();
-	
+
 	if(this.request) {
 		var req = this.request;
 		req.onreadystatechange = this.bindFunction(this.stateChange, this);
@@ -64,42 +64,57 @@ function microAjax(url, callbackFunction)
 	}
 }
 
+//  discuss at: http://phpjs.org/functions/array_flip/
+function array_flip(trans) {
+  var key, tmp_ar = {};
+  for (key in trans) {
+    if (!trans.hasOwnProperty(key)) {
+      continue;
+    }
+    tmp_ar[trans[key]] = key;
+  }
+  return tmp_ar;
+}
+
 // other
-/*
 function get_objects(tables,table_name,where_index,match_value) {
 	var objects = [];
 	for (var record in tables[table_name]['records']) {
-		record = tables[table_name]['records'][records];
+		record = tables[table_name]['records'][record];
 		if (where_index==false || record[where_index]==match_value) {
 			var object = [];
-			for (tables[table_name]['columns'] as index=>column) {
+			for (var index in tables[table_name]['columns']) {
+				var column = tables[table_name]['columns'][index];
 				object[column] = record[index];
-				foreach (tables as relation=>reltable) {
-					foreach (reltable['relations'] as key=>target) {
-						if (target == "table_name.column") {
+				for (var relation in tables) {
+					var reltable = tables[relation];
+					for (var key in reltable['relations']) {
+						var target = reltable['relations'][key];
+						if (target == table_name+'.'+column) {
 							column_indices = array_flip(reltable['columns']);
 							object[relation] = get_objects(tables,relation,column_indices[key],record[index]);
 						}
 					}
 				}
 			}
-			objects[] = object;
+			objects.push(object);
 		}
 	}
 	return objects;
 }
 
-function get_tree(&tables) {
+function get_tree(tables) {
 	tree = [];
-	for (name in tables) {
+	for (var name in tables) {
 		var table = tables[name];
-		if (!isset(table['relations'])) {
+		if (!table['relations']) {
 			tree[name] = get_objects(tables,name);
 		}
 	}
 	return tree;
-}*/
+}
 
-microAjax("http://localhost/api.php/posts,categories,tags,comments?filter=id:1", function (res) {
-  alert (res);
+microAjax("http://localhost/api.php/posts,categories,tags,comments?filter=id:1", function (response) {
+  var jsonObject = eval('(' + response + ')');
+  console.log(get_tree(jsonObject));
 });
