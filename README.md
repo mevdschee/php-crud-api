@@ -5,7 +5,7 @@ Simple PHP script that adds a very basic API to a MySQL database.
 ## Requirements
 
   - PHP 5.3 or higher with MySQLi enabled
-  - Apache Lighttpd or Nginx
+  - Apache, Lighttpd or Nginx
 
 ## Limitations
 
