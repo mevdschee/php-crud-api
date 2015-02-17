@@ -22,8 +22,9 @@ Simple PHP script that adds a very basic API to a MySQL database.
   - Blacklist support for tables (and columns, todo)
   - JSONP support for cross-domain requests
   - Combined requests with support for multiple table names
-  - Relationship detection and filtering on foreign keys
   - Pagination, sorting and search support
+  - Relationship detection and filtering on foreign keys
+  - Relationship "transforms" for PHP and JavaScript
 
 ## Configuration
 
@@ -175,6 +176,176 @@ Output:
 ```
 1
 ```
+
+## Relationships
+
+The explanation of this feature is based on the datastructure from the ```blog.sql``` database file. This database is a very simple blog datastructure with corresponding foreign key relationships between the tables.
+
+You can get the "post" that has "id" equal to "1" with it's corresponding "categories", "tags" and "comments" using:
+
+```
+GET http://localhost/api.php/posts,categories,tags,comments?filter=id:1
+```
+
+Output:
+
+```
+{
+    "posts": {
+        "columns": [
+            "id",
+            "user_id",
+            "category_id",
+            "content"
+        ],
+        "records": [
+            [
+                "1",
+                "1",
+                "1",
+                "blog started"
+            ]
+        ]
+    },
+    "post_tags": {
+        "relations": {
+            "post_id": "posts.id"
+        },
+        "columns": [
+            "id",
+            "post_id",
+            "tag_id"
+        ],
+        "records": [
+            [
+                "1",
+                "1",
+                "1"
+            ],
+            [
+                "2",
+                "1",
+                "2"
+            ]
+        ]
+    },
+    "categories": {
+        "relations": {
+            "id": "posts.category_id"
+        },
+        "columns": [
+            "id",
+            "name"
+        ],
+        "records": [
+            [
+                "1",
+                "anouncement"
+            ]
+        ]
+    },
+    "tags": {
+        "relations": {
+            "id": "post_tags.tag_id"
+        },
+        "columns": [
+            "id",
+            "name"
+        ],
+        "records": [
+            [
+                "1",
+                "funny"
+            ],
+            [
+                "2",
+                "important"
+            ]
+        ]
+    },
+    "comments": {
+        "relations": {
+            "post_id": "posts.id"
+        },
+        "columns": [
+            "id",
+            "post_id",
+            "message"
+        ],
+        "records": [
+            [
+                "1",
+                "1",
+                "great"
+            ],
+            [
+                "2",
+                "1",
+                "fantastic"
+            ]
+        ]
+    }
+}
+```
+
+You can call the ```mysql_crud_api_tranform()``` function to structure the data hierarchical like this:
+
+```
+{
+    "posts": [
+        {
+            "id": "1",
+            "post_tags": [
+                {
+                    "id": "1",
+                    "post_id": "1",
+                    "tag_id": "1",
+                    "tags": [
+                        {
+                            "id": "1",
+                            "name": "funny"
+                        }
+                    ]
+                },
+                {
+                    "id": "2",
+                    "post_id": "1",
+                    "tag_id": "2",
+                    "tags": [
+                        {
+                            "id": "2",
+                            "name": "important"
+                        }
+                    ]
+                }
+            ],
+            "comments": [
+                {
+                    "id": "1",
+                    "post_id": "1",
+                    "message": "great"
+                },
+                {
+                    "id": "2",
+                    "post_id": "1",
+                    "message": "fantastic"
+                }
+            ],
+            "user_id": "1",
+            "category_id": "1",
+            "categories": [
+                {
+                    "id": "1",
+                    "name": "anouncement"
+                }
+            ],
+            "content": "blog started"
+        }
+    ]
+}
+```
+
+This transform function is available for PHP and JavaScript in the files ```mysql_crud_api_tranform.php``` and ```mysql_crud_api_tranform.js```.
 
 ## Installation
 
