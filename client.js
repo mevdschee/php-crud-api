@@ -82,7 +82,7 @@ function get_objects(tables,table_name,where_index,match_value) {
 	for (var record in tables[table_name]['records']) {
 		record = tables[table_name]['records'][record];
 		if (where_index==false || record[where_index]==match_value) {
-			var object = [];
+			var object = {};
 			for (var index in tables[table_name]['columns']) {
 				var column = tables[table_name]['columns'][index];
 				object[column] = record[index];
@@ -104,7 +104,7 @@ function get_objects(tables,table_name,where_index,match_value) {
 }
 
 function get_tree(tables) {
-	tree = [];
+	tree = {};
 	for (var name in tables) {
 		var table = tables[name];
 		if (!table['relations']) {
