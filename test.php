@@ -84,7 +84,7 @@ class MySQL_CRUD_API_Test extends PHPUnit_Framework_TestCase
 		$_GET['filter']='id:3';
 		$_GET['match']='from';
 		$_GET['order']='id,desc';
-		$this->expectOutputString('{"table":{"columns":["id","name"],"records":[["3","value3"],"results":3]}}');
+		$this->expectOutputString('{"table":{"columns":["id","name"],"records":[["3","value3"]],"results":3}}');
 		$api->executeCommand();
 	}
 }
