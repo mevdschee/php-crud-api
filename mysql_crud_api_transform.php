@@ -1,5 +1,4 @@
 <?php
-
 function mysql_crud_api_transform(&$tables) {
 	$get_objects = function (&$tables,$table_name,$where_index=false,$match_value=false) use (&$get_objects) {
 		$objects = array();
