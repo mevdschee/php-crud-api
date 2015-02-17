@@ -10,7 +10,8 @@ Simple PHP script that adds a very basic API to a MySQL database.
 ## Limitations
 
   - Authentication or authorization is not included
-  - Single database
+  - Validation on API input is not included
+  - Only a single database is supported
 
 ## Features
 
