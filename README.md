@@ -77,7 +77,7 @@ Output:
 
 ### List + Filter
 
-Search is implemented with the "filter" parameter. You need to specify the column name, a colon and the value you want to filter on. The filter match type is "start" by default, but can easily be adjusted. These are supported:
+Search is implemented with the "filter" parameter. You need to specify the column name, a colon and the value you want to filter on. The filter match type is "exact" by default, but can easily be adjusted. These are supported:
 
   - start (string starts with value)
   - end (string end with value)
