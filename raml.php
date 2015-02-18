@@ -37,10 +37,13 @@ foreach ($tables as $object_table) {
 	echo "        description: Specify the page that you want to retrieve\n";
 	echo "        required: false\n";
 	echo "      filter:\n";
+	echo "        description: Set to filter the list on a specific field\n";
 	echo "        required: false\n";
 	echo "      match:\n";
+	echo "        description: Adjust the way the filter matches the value to the field\n";
 	echo "        required: false\n";
 	echo "      order:\n";
+	echo "        description: Specify to change the sorting of the list\n";
 	echo "        required: false\n";
 	echo "  post:\n";
 	echo "    description: Create a $object\n";
