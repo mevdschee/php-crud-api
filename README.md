@@ -90,8 +90,8 @@ Search is implemented with the "filter" parameter. You need to specify the colum
   - in (number is in comma seperated list of values)
 
 ```
-GET http://localhost/api.php/categories?filter=name:Inter
-GET http://localhost/api.php/categories?filter=name:Internet&match=exact
+GET http://localhost/api.php/categories?filter=name:Internet
+GET http://localhost/api.php/categories?filter=name:Inter&match=start
 GET http://localhost/api.php/categories?filter=id:1&match=upto
 GET http://localhost/api.php/categories?filter=id:2&match=lower
 ```
