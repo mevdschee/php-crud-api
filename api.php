@@ -135,8 +135,8 @@ class MySQL_CRUD_API {
 					$filter[1] = $mysqli->real_escape_string($filter[1]);
 				}
 				$filter[2] = 'LIKE';
-				if ($match=='any'||$match=='start') $filter[1] .= '%';
-				if ($match=='any'||$match=='end') $filter[1] = '%'.$filter[1];
+				if ($match=='contain'||$match=='start') $filter[1] .= '%';
+				if ($match=='contain'||$match=='end') $filter[1] = '%'.$filter[1];
 				if ($match=='exact') $filter[2] = '=';
 				if ($match=='lower') $filter[2] = '<';
 				if ($match=='upto') $filter[2] = '<=';
@@ -261,7 +261,7 @@ class MySQL_CRUD_API {
 		$key      = $this->parseRequestParameter($request, 1, 'a-zA-Z0-9\-,', false); // auto-increment or uuid
 		$callback = $this->parseGetParameter('callback', 'a-zA-Z0-9\-_', false);
 		$page     = $this->parseGetParameter('page', '0-9,', false);
-		$filter   = $this->parseGetParameter('filter', false, 'start');
+		$filter   = $this->parseGetParameter('filter', false, 'exact');
 		$match    = $this->parseGetParameter('match', 'a-z', false);
 		$order    = $this->parseGetParameter('order', 'a-zA-Z0-9\-_*,', false);
 

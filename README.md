@@ -81,7 +81,7 @@ Search is implemented with the "filter" parameter. You need to specify the colum
 
   - start (string starts with value)
   - end (string end with value)
-  - any (string contains value)
+  - contain (string contains value)
   - exact (string or number matches exactly)
   - lower (number is lower than value)
   - upto (number is lower than or equal to value)
