@@ -38,53 +38,61 @@ class MySQL_CRUD_API_Test extends PHPUnit_Framework_TestCase
 		return $mysqli;
 	}
 
+	private function expect($method,$url,$queries,$output)
+	{
+		$api = new MySQL_CRUD_API('','','','database',false,array("users"=>"crudl"));
+		$api->mysqli = $this->expectQueries($queries);
+		$api->method = "GET";
+		$url = explode('?',$url,2);
+		if (isset($url[1])) {
+			parse_str($url[1],$_GET);
+		}
+		$api->request = explode('/',ltrim($url[0],'/'));
+		$this->expectOutputString($output);
+		$api->executeCommand();
+	}
+
 	public function testList()
 	{
-		$mysqli = $this->expectQueries(array(
+		$this->expect(
+			"GET",
+			"/table",
 			array(
-				"SELECT `TABLE_NAME` FROM `INFORMATION_SCHEMA`.`TABLES` WHERE `TABLE_NAME` LIKE 'table' AND `TABLE_SCHEMA` = 'database'",
-				array('table_name'),
-				array(array('table')),
-			),array(
-				"SELECT * FROM `table`",
-				array('id','name'),
-				array(array('1','value1'),array('2','value2'),array('3','value3'),array('4','value4'),array('5','value5')),
-			)
-		));
-		$api = new MySQL_CRUD_API('','','','database',false,array("users"=>"crudl"));
-		$api->mysqli = $mysqli;
-		$api->method = "GET";
-		$api->request = array('table');
-		$this->expectOutputString('{"table":{"columns":["id","name"],"records":[["1","value1"],["2","value2"],["3","value3"],["4","value4"],["5","value5"]]}}');
-		$api->executeCommand();
+				array(
+					"SELECT `TABLE_NAME` FROM `INFORMATION_SCHEMA`.`TABLES` WHERE `TABLE_NAME` LIKE 'table' AND `TABLE_SCHEMA` = 'database'",
+					array('table_name'),
+					array(array('table')),
+				),array(
+					"SELECT * FROM `table`",
+					array('id','name'),
+					array(array('1','value1'),array('2','value2'),array('3','value3'),array('4','value4'),array('5','value5')),
+				)
+			),
+			'{"table":{"columns":["id","name"],"records":[["1","value1"],["2","value2"],["3","value3"],["4","value4"],["5","value5"]]}}'
+		);
 	}
 
 	public function testListPageFilterMatchOrder()
 	{
-		$mysqli = $this->expectQueries(array(
+		$this->expect(
+			"GET",
+			"/table?page=2,2&filter=id:3&match=from&order=id,desc",
 			array(
-				"SELECT `TABLE_NAME` FROM `INFORMATION_SCHEMA`.`TABLES` WHERE `TABLE_NAME` LIKE 'table' AND `TABLE_SCHEMA` = 'database'",
-				array('table_name'),
-				array(array('table')),
-			),array(
-				"SELECT COUNT(*) FROM `table` WHERE `id` >= '3'",
-				array('count'),
-				array(array('3')),
-			),array(
-				"SELECT * FROM `table` WHERE `id` >= '3' ORDER BY `id` DESC LIMIT 2 OFFSET 2",
-				array('id','name'),
-				array(array('3','value3')),
-			)
-		));
-		$api = new MySQL_CRUD_API('','','','database',false,array("users"=>"crudl"));
-		$api->mysqli = $mysqli;
-		$api->method = "GET";
-		$api->request = array('table');
-		$_GET['page']='2,2';
-		$_GET['filter']='id:3';
-		$_GET['match']='from';
-		$_GET['order']='id,desc';
-		$this->expectOutputString('{"table":{"columns":["id","name"],"records":[["3","value3"]],"results":3}}');
-		$api->executeCommand();
+				array(
+					"SELECT `TABLE_NAME` FROM `INFORMATION_SCHEMA`.`TABLES` WHERE `TABLE_NAME` LIKE 'table' AND `TABLE_SCHEMA` = 'database'",
+					array('table_name'),
+					array(array('table')),
+				),array(
+					"SELECT COUNT(*) FROM `table` WHERE `id` >= '3'",
+					array('count'),
+					array(array('3')),
+				),array(
+					"SELECT * FROM `table` WHERE `id` >= '3' ORDER BY `id` DESC LIMIT 2 OFFSET 2",
+					array('id','name'),
+					array(array('3','value3')),
+				)
+			),
+			'{"table":{"columns":["id","name"],"records":[["3","value3"]],"results":3}}'
+		);
 	}
 }
