@@ -13,6 +13,14 @@ Simple PHP script that adds a very basic API to a MySQL database.
   - Validation on API input is not included
   - Only a single database is supported
 
+## TODO
+
+  - Add column blacklisting
+  - Add created_at and modified_at support
+  - Add basic authentication support
+  - Add user_id and group_id support (multi-tenant)
+  - Add created_by and modified_by support
+
 ## Features
 
   - Single PHP file, easy to deploy.
