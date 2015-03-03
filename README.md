@@ -68,6 +68,20 @@ Output:
 {"categories":{"columns":["id","name"],"records":[["1","Internet"],["3","Web development"]]}}
 ```
 
+### List
+
+List all records of a database table and transform them to objects. NB: This transform is CPU and memory intensive and can also be executed client-side.
+
+```
+GET http://localhost/api.php/categories?transform=1
+```
+
+Output:
+
+```
+{"categories":[{"id":"1","name":"Internet"},{"id":"3","name":"Web development"}]}
+```
+
 ### List + Pagination
 
 The "page" parameter holds the requested page. The default page size is 20, but can be adjusted (e.g. to 50):
