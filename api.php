@@ -256,15 +256,16 @@ class MySQL_CRUD_API {
 	}
 
 	private function getParameters($method, $request, $database, $whitelist, $blacklist, $mysqli) {
-		$action   = $this->mapMethodToAction($method, $request);
-		$table    = $this->parseRequestParameter($request, 0, 'a-zA-Z0-9\-_*,', '*');
-		$key      = $this->parseRequestParameter($request, 1, 'a-zA-Z0-9\-,', false); // auto-increment or uuid
-		$callback = $this->parseGetParameter('callback', 'a-zA-Z0-9\-_', false);
-		$page     = $this->parseGetParameter('page', '0-9,', false);
-		$filter   = $this->parseGetParameter('filter', false, 'exact');
-		$match    = $this->parseGetParameter('match', 'a-z', false);
-		$order    = $this->parseGetParameter('order', 'a-zA-Z0-9\-_*,', false);
-
+		$action    = $this->mapMethodToAction($method, $request);
+		$table     = $this->parseRequestParameter($request, 0, 'a-zA-Z0-9\-_*,', '*');
+		$key       = $this->parseRequestParameter($request, 1, 'a-zA-Z0-9\-,', false); // auto-increment or uuid
+		$callback  = $this->parseGetParameter('callback', 'a-zA-Z0-9\-_', false);
+		$page      = $this->parseGetParameter('page', '0-9,', false);
+		$filter    = $this->parseGetParameter('filter', false, 'exact');
+		$match     = $this->parseGetParameter('match', 'a-z', false);
+		$order     = $this->parseGetParameter('order', 'a-zA-Z0-9\-_*,', false);
+		$transform = $this->parseGetParameter('transform', '1', false);
+		
 		$table  = $this->processTableParameter($table,$database,$mysqli);
 		$key    = $this->processKeyParameter($key,$table,$database,$mysqli);
 		$filter = $this->processFilterParameter($filter,$match,$mysqli);
@@ -278,7 +279,7 @@ class MySQL_CRUD_API {
 
 		list($collect,$select) = $this->findRelations($action,$table,$database,$mysqli);
 
-		return compact('action','table','key','callback','page','filter','match','order','mysqli','object','input','collect','select');
+		return compact('action','table','key','callback','page','filter','match','order','transform','mysqli','object','input','collect','select');
 	}
 
 	private function listCommand($parameters) {
@@ -408,6 +409,18 @@ class MySQL_CRUD_API {
 		$this->endOutput($callback);
 	}
 
+	private function listCommandTransform($parameters) {
+		if ($parameters['transform']) {
+			ob_start();
+		}
+		$this->listCommand($parameters);
+		if ($parameters['transform']) {
+			$content = ob_get_contents();
+			ob_end_clean();
+			echo json_encode(self::mysql_crud_api_transform(json_decode($content,true)));
+		}
+	}
+	
 	public function __construct($hostname,$username,$password,$database,$whitelist,$blacklist) {
 		$this->method = isset($_SERVER['REQUEST_METHOD'])?$_SERVER['REQUEST_METHOD']:'';
 		$this->request = explode("/", isset($_SERVER['PATH_INFO'])?$_SERVER['PATH_INFO']:'', 1);
@@ -417,17 +430,6 @@ class MySQL_CRUD_API {
 		$this->database = $database;
 		$this->whitelist = $whitelist;
 		$this->blacklist = $blacklist;
-	}
-
-	private function execute() {
-		$parameters = $this->getParameters($this->method, $this->request, $this->database, $this->whitelist, $this->blacklist, $this->mysqli);
-		switch($parameters['action']){
-			case 'list': $this->listCommand($parameters); break;
-			case 'read': $this->readCommand($parameters); break;
-			case 'create': $this->readCommand($parameters); break;
-			case 'update': $this->readCommand($parameters); break;
-			case 'delete': $this->readCommand($parameters); break;
-		}
 	}
 
 	public static function mysql_crud_api_transform(&$tables) {
@@ -462,17 +464,16 @@ class MySQL_CRUD_API {
 	}
 	
 	public function executeCommand() {
-		if (isset($_GET['transform']) && $_GET['transform']) {
-			ob_start();
-			$this->execute();
-			$content = ob_get_contents();
-			ob_end_clean();
-			echo json_encode(self::mysql_crud_api_transform(json_decode($content,true)));
-		} else {
-			$this->execute();
-		}			
+		$parameters = $this->getParameters($this->method, $this->request, $this->database, $this->whitelist, $this->blacklist, $this->mysqli);
+		switch($parameters['action']){
+			case 'list': $this->listCommandTransform($parameters); break;
+			case 'read': $this->readCommand($parameters); break;
+			case 'create': $this->readCommand($parameters); break;
+			case 'update': $this->readCommand($parameters); break;
+			case 'delete': $this->readCommand($parameters); break;
+		}
 	}
-	
+
 }
 
 // only execute this when running in stand-alone mode
