@@ -68,7 +68,7 @@ Output:
 {"categories":{"columns":["id","name"],"records":[["1","Internet"],["3","Web development"]]}}
 ```
 
-### List
+### List + Transform
 
 List all records of a database table and transform them to objects. NB: This transform is CPU and memory intensive and can also be executed client-side.
 
