@@ -419,7 +419,7 @@ class MySQL_CRUD_API {
 		$this->blacklist = $blacklist;
 	}
 
-	public function executeCommand() {
+	private function execute() {
 		$parameters = $this->getParameters($this->method, $this->request, $this->database, $this->whitelist, $this->blacklist, $this->mysqli);
 		switch($parameters['action']){
 			case 'list': $this->listCommand($parameters); break;
@@ -429,6 +429,50 @@ class MySQL_CRUD_API {
 			case 'delete': $this->readCommand($parameters); break;
 		}
 	}
+
+	public static function mysql_crud_api_transform(&$tables) {
+		$get_objects = function (&$tables,$table_name,$where_index=false,$match_value=false) use (&$get_objects) {
+			$objects = array();
+			foreach ($tables[$table_name]['records'] as $record) {
+				if ($where_index===false || $record[$where_index]==$match_value) {
+					$object = array();
+					foreach ($tables[$table_name]['columns'] as $index=>$column) {
+						$object[$column] = $record[$index];
+						foreach ($tables as $relation=>$reltable) {
+							foreach ($reltable['relations'] as $key=>$target) {
+								if ($target == "$table_name.$column") {
+									$column_indices = array_flip($reltable['columns']);
+									$object[$relation] = $get_objects($tables,$relation,$column_indices[$key],$record[$index]);
+								}
+							}
+						}
+					}
+					$objects[] = $object;
+				}
+			}
+			return $objects;
+		};
+		$tree = array();
+		foreach ($tables as $name=>$table) {
+			if (!isset($table['relations'])) {
+				$tree[$name] = $get_objects($tables,$name);
+			}
+		}
+		return $tree;
+	}
+	
+	public function executeCommand() {
+		if (isset($_GET['transform']) && $_GET['transform']) {
+			ob_start();
+			$this->execute();
+			$content = ob_get_contents();
+			ob_end_clean();
+			echo json_encode(self::mysql_crud_api_transform(json_decode($content,true)));
+		} else {
+			$this->execute();
+		}			
+	}
+	
 }
 
 // only execute this when running in stand-alone mode
