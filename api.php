@@ -265,7 +265,7 @@ class MySQL_CRUD_API {
 		$match     = $this->parseGetParameter('match', 'a-z', false);
 		$order     = $this->parseGetParameter('order', 'a-zA-Z0-9\-_*,', false);
 		$transform = $this->parseGetParameter('transform', '1', false);
-		
+
 		$table  = $this->processTableParameter($table,$database,$mysqli);
 		$key    = $this->processKeyParameter($key,$table,$database,$mysqli);
 		$filter = $this->processFilterParameter($filter,$match,$mysqli);
@@ -420,7 +420,7 @@ class MySQL_CRUD_API {
 			echo json_encode(self::mysql_crud_api_transform(json_decode($content,true)));
 		}
 	}
-	
+
 	public function __construct($hostname,$username,$password,$database,$whitelist,$blacklist) {
 		$this->method = isset($_SERVER['REQUEST_METHOD'])?$_SERVER['REQUEST_METHOD']:'';
 		$this->request = explode("/", isset($_SERVER['PATH_INFO'])?$_SERVER['PATH_INFO']:'', 1);
@@ -441,10 +441,12 @@ class MySQL_CRUD_API {
 					foreach ($tables[$table_name]['columns'] as $index=>$column) {
 						$object[$column] = $record[$index];
 						foreach ($tables as $relation=>$reltable) {
-							foreach ($reltable['relations'] as $key=>$target) {
-								if ($target == "$table_name.$column") {
-									$column_indices = array_flip($reltable['columns']);
-									$object[$relation] = $get_objects($tables,$relation,$column_indices[$key],$record[$index]);
+							if (isset($reltable['relations'])) {
+								foreach ($reltable['relations'] as $key=>$target) {
+									if ($target == "$table_name.$column") {
+										$column_indices = array_flip($reltable['columns']);
+										$object[$relation] = $get_objects($tables,$relation,$column_indices[$key],$record[$index]);
+									}
 								}
 							}
 						}
@@ -462,7 +464,7 @@ class MySQL_CRUD_API {
 		}
 		return $tree;
 	}
-	
+
 	public function executeCommand() {
 		$parameters = $this->getParameters($this->method, $this->request, $this->database, $this->whitelist, $this->blacklist, $this->mysqli);
 		switch($parameters['action']){
