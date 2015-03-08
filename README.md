@@ -39,14 +39,34 @@ Simple PHP script that adds a very basic API to a MySQL database.
 Edit the following lines in the bottom of the file "api.php":
 
 ```
-$api = new MySQL_CRUD_API(
-	"localhost",                        // hostname
-	"user",                             // username
-	"pass",                             // password
-	"db",                               // database
-	false,                              // whitelist
-	array("users"=>"crudl")             // blacklist
-);
+$api = new MySQL_CRUD_API(array(
+	'username'=>'xxx',
+	'password'=>'xxx',
+	'database'=>'xxx'
+));
+$api->executeCommand();
+```
+
+These are all the configuration options and their default values:
+
+```
+$api = new MySQL_CRUD_API(array(
+	'username=>'root'
+	'password=>null,
+	'database:'',
+	'whitelist=>false,
+	'blacklist=>false,
+// for connectivity (defaults to localhost):
+	'hostname'=>null,
+	'port=>null,
+	'socket=>null,
+// dependencies (added for unit testing):
+	'mysqli'=>null,
+	'method'=>$_SERVER['REQUEST_METHOD'],
+	'request'=>$_SERVER['PATH_INFO'],
+	'get'=>$_GET,
+	'post'=>'php://input',
+));
 $api->executeCommand();
 ```
 
