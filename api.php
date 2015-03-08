@@ -39,7 +39,7 @@ class MySQL_CRUD_API {
 
 	private function applyWhitelist($table,$action,$list) {
 		if ($list===false) return $table;
-		$list = array_filter($list, function($actions){
+		$list = array_filter($list, function($actions) use ($action) {
 			return strpos($actions,$action[0])!==false;
 		});
 		return array_intersect($table, array_keys($list));
