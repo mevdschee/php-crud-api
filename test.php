@@ -40,14 +40,21 @@ class MySQL_CRUD_API_Test extends PHPUnit_Framework_TestCase
 
 	private function expect($method,$url,$queries,$output)
 	{
-		$api = new MySQL_CRUD_API('','','','database',false,array("users"=>"crudl"));
-		$api->mysqli = $this->expectQueries($queries);
-		$api->method = "GET";
 		$url = explode('?',$url,2);
+		$request = $url[0];
+		$get = array();
 		if (isset($url[1])) {
-			parse_str($url[1],$_GET);
+			parse_str($url[1],$get);
 		}
-		$api->request = explode('/',ltrim($url[0],'/'));
+		$parameters = array(
+			'method' =>$method,
+			'request' =>$request,
+			'get' =>$get,
+			'connect'=>false,
+			'database'=>'database'
+		);
+		$api = new MySQL_CRUD_API($parameters);
+		$api->mysqli = $this->expectQueries($queries);
 		$this->expectOutputString($output);
 		$api->executeCommand();
 	}

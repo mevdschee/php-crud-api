@@ -2,22 +2,19 @@
 
 class MySQL_CRUD_API {
 
-	public $method;
-	public $request;
 	public $mysqli;
-	public $database;
-	public $whitelist;
-	public $blacklist;
 
-	private function connectDatabase($hostname,$username,$password,$database) {
-		$mysqli = new mysqli($hostname,$username,$password,$database);
+	protected $config;
+
+	protected function connectDatabase($hostname,$username,$password,$database,$port,$socket) {
+		$mysqli = new mysqli($hostname,$username,$password,$database,$port,$socket);
 		if ($mysqli->connect_errno) {
 			throw new \Exception('Connect failed: '.$mysqli->connect_error);
 		}
 		return $mysqli;
 	}
 
-	private function mapMethodToAction($method,$request) {
+	protected function mapMethodToAction($method,$request) {
 		switch ($method) {
 			case 'GET': return count($request)>1?'read':'list';
 			case 'PUT': return 'update';
@@ -27,17 +24,17 @@ class MySQL_CRUD_API {
 		}
 	}
 
-	private function parseRequestParameter($request,$position,$characters,$default) {
+	protected function parseRequestParameter($request,$position,$characters,$default) {
 		$value = isset($request[$position])?$request[$position]:$default;
 		return $characters?preg_replace("/[^$characters]/",'',$value):$value;
 	}
 
-	private function parseGetParameter($name,$characters,$default) {
-		$value = isset($_GET[$name])?$_GET[$name]:$default;
+	protected function parseGetParameter($get,$name,$characters,$default) {
+		$value = isset($get[$name])?$get[$name]:$default;
 		return $characters?preg_replace("/[^$characters]/",'',$value):$value;
 	}
 
-	private function applyWhitelist($table,$action,$list) {
+	protected function applyWhitelist($table,$action,$list) {
 		if ($list===false) return $table;
 		$list = array_filter($list, function($actions) use ($action) {
 			return strpos($actions,$action[0])!==false;
@@ -45,7 +42,7 @@ class MySQL_CRUD_API {
 		return array_intersect($table, array_keys($list));
 	}
 
-	private function applyBlacklist($table,$action,$list) {
+	protected function applyBlacklist($table,$action,$list) {
 		if ($list===false) return $table;
 		$list = array_filter($list, function($actions) use ($action) {
 			return strpos($actions,$action[0])!==false;
@@ -53,14 +50,14 @@ class MySQL_CRUD_API {
 		return array_diff($table, array_keys($list));
 	}
 
-	private function applyWhitelistAndBlacklist($table, $action, $whitelist, $blacklist) {
+	protected function applyWhitelistAndBlacklist($table, $action, $whitelist, $blacklist) {
 		$table = $this->applyWhitelist($table, $action, $whitelist);
 		$table = $this->applyBlacklist($table, $action, $blacklist);
 		if (empty($table)) $this->exitWith404();
 		return $table;
 	}
 
-	private function processTableParameter($table,$database,$mysqli) {
+	protected function processTableParameter($table,$database,$mysqli) {
 		$tablelist = explode(',',$table);
 		$tables = array();
 		foreach ($tablelist as $table) {
@@ -73,7 +70,7 @@ class MySQL_CRUD_API {
 		return $tables;
 	}
 
-	private function findPrimaryKey($table,$database,$mysqli) {
+	protected function findPrimaryKey($table,$database,$mysqli) {
 		$keys = array();
 		if ($result = $mysqli->query("SELECT `COLUMN_NAME` FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `COLUMN_KEY` = 'PRI' AND `TABLE_NAME` = '$table[0]' AND `TABLE_SCHEMA` = '$database'")) {
 			while ($row = $result->fetch_row()) $keys[] = $row[0];
@@ -82,7 +79,7 @@ class MySQL_CRUD_API {
 		return count($keys)?$keys[0]:false;
 	}
 
-	private function exitWith404() {
+	protected function exitWith404() {
 		if (isset($_SERVER['REQUEST_METHOD'])) {
 			die(header("Content-Type:",true,404));
 		} else {
@@ -90,7 +87,7 @@ class MySQL_CRUD_API {
 		}
 	}
 
-	private function startOutput($callback) {
+	protected function startOutput($callback) {
 		if (isset($_SERVER['REQUEST_METHOD'])) {
 			if ($callback) {
 				header("Content-Type: application/javascript");
@@ -101,13 +98,13 @@ class MySQL_CRUD_API {
 		}
 	}
 
-	private function endOutput($callback) {
+	protected function endOutput($callback) {
 		if ($callback) {
 			echo ');';
 		}
 	}
 
-	private function processKeyParameter($key,$table,$database,$mysqli) {
+	protected function processKeyParameter($key,$table,$database,$mysqli) {
 		if ($key) {
 			$key = array($key,$this->findPrimaryKey($table,$database,$mysqli));
 			if ($key[1]===false) $this->exitWith404();
@@ -115,7 +112,7 @@ class MySQL_CRUD_API {
 		return $key;
 	}
 
-	private function processOrderParameter($order,$table,$database,$mysqli) {
+	protected function processOrderParameter($order,$table,$database,$mysqli) {
 		if ($order) {
 			$order = explode(',',$order,2);
 			if (count($order)<2) $order[1]='ASC';
@@ -124,7 +121,7 @@ class MySQL_CRUD_API {
 		return $order;
 	}
 
-	private function processFilterParameter($filter,$match,$mysqli) {
+	protected function processFilterParameter($filter,$match,$mysqli) {
 		if ($filter) {
 			$filter = explode(':',$filter,2);
 			if (count($filter)==2) {
@@ -152,7 +149,7 @@ class MySQL_CRUD_API {
 		return $filter;
 	}
 
-	private function processPageParameter($page) {
+	protected function processPageParameter($page) {
 		if ($page) {
 			$page = explode(',',$page,2);
 			if (count($page)<2) $page[1]=20;
@@ -161,7 +158,7 @@ class MySQL_CRUD_API {
 		return $page;
 	}
 
-	private function retrieveObject($key,$table,$mysqli) {
+	protected function retrieveObject($key,$table,$mysqli) {
 		if (!$key) return false;
 		if ($result = $mysqli->query("SELECT * FROM `$table[0]` WHERE `$key[1]` = '$key[0]'")) {
 			$object = $result->fetch_assoc();
@@ -170,7 +167,7 @@ class MySQL_CRUD_API {
 		return $object;
 	}
 
-	private function createObject($input,$table,$mysqli) {
+	protected function createObject($input,$table,$mysqli) {
 		if (!$input) return false;
 		$keys = implode('`,`',array_map(function($v){ return preg_replace('/[^a-zA-Z0-9\-_]/','',$v); },array_keys((array)$input)));
 		$values = implode("','",array_map(function($v) use ($mysqli){ return $mysqli->real_escape_string($v); },array_values((array)$input)));
@@ -178,7 +175,7 @@ class MySQL_CRUD_API {
 		return $mysqli->insert_id;
 	}
 
-	private function updateObject($key,$input,$table,$mysqli) {
+	protected function updateObject($key,$input,$table,$mysqli) {
 		if (!$input) return false;
 		$sql = "UPDATE `$table[0]` SET ";
 		foreach (array_keys((array)$input) as $i=>$k) {
@@ -191,12 +188,12 @@ class MySQL_CRUD_API {
 		return $mysqli->affected_rows;
 	}
 
-	private function deleteObject($key,$table,$mysqli) {
+	protected function deleteObject($key,$table,$mysqli) {
 		$mysqli->query("DELETE FROM `$table[0]` WHERE `$key[1]`='$key[0]'");
 		return $mysqli->affected_rows;
 	}
 
-	private function findRelations($action,$table,$database,$mysqli) {
+	protected function findRelations($action,$table,$database,$mysqli) {
 		$collect = array();
 		$select = array();
 		if (count($table)>1) {
@@ -255,16 +252,17 @@ class MySQL_CRUD_API {
 		return array($collect,$select);
 	}
 
-	private function getParameters($method, $request, $database, $whitelist, $blacklist, $mysqli) {
+	protected function getParameters($config, $mysqli) {
+		extract($config);
 		$action    = $this->mapMethodToAction($method, $request);
 		$table     = $this->parseRequestParameter($request, 0, 'a-zA-Z0-9\-_*,', '*');
 		$key       = $this->parseRequestParameter($request, 1, 'a-zA-Z0-9\-,', false); // auto-increment or uuid
-		$callback  = $this->parseGetParameter('callback', 'a-zA-Z0-9\-_', false);
-		$page      = $this->parseGetParameter('page', '0-9,', false);
-		$filter    = $this->parseGetParameter('filter', false, 'exact');
-		$match     = $this->parseGetParameter('match', 'a-z', false);
-		$order     = $this->parseGetParameter('order', 'a-zA-Z0-9\-_*,', false);
-		$transform = $this->parseGetParameter('transform', '1', false);
+		$callback  = $this->parseGetParameter($get, 'callback', 'a-zA-Z0-9\-_', false);
+		$page      = $this->parseGetParameter($get, 'page', '0-9,', false);
+		$filter    = $this->parseGetParameter($get, 'filter', false, 'exact');
+		$match     = $this->parseGetParameter($get, 'match', 'a-z', false);
+		$order     = $this->parseGetParameter($get, 'order', 'a-zA-Z0-9\-_*,', false);
+		$transform = $this->parseGetParameter($get, 'transform', '1', false);
 
 		$table  = $this->processTableParameter($table,$database,$mysqli);
 		$key    = $this->processKeyParameter($key,$table,$database,$mysqli);
@@ -275,14 +273,14 @@ class MySQL_CRUD_API {
 		$table  = $this->applyWhitelistAndBlacklist($table,$action,$whitelist,$blacklist);
 
 		$object = $this->retrieveObject($key,$table,$mysqli);
-		$input  = json_decode(file_get_contents('php://input'));
+		$input  = json_decode(file_get_contents($post));
 
 		list($collect,$select) = $this->findRelations($action,$table,$database,$mysqli);
 
 		return compact('action','table','key','callback','page','filter','match','order','transform','mysqli','object','input','collect','select');
 	}
 
-	private function listCommand($parameters) {
+	protected function listCommand($parameters) {
 		extract($parameters);
 		$this->startOutput($callback);
 		echo '{';
@@ -378,7 +376,7 @@ class MySQL_CRUD_API {
 		$this->endOutput($callback);
 	}
 
-	private function readCommand($parameters) {
+	protected function readCommand($parameters) {
 		extract($parameters);
 		if (!$object) $this->exitWith404();
 		$this->startOutput($callback);
@@ -386,7 +384,7 @@ class MySQL_CRUD_API {
 		$this->endOutput($callback);
 	}
 
-	private function createCommand($parameters) {
+	protected function createCommand($parameters) {
 		extract($parameters);
 		if (!$input) $this->exitWith404();
 		$this->startOutput($callback);
@@ -394,7 +392,7 @@ class MySQL_CRUD_API {
 		$this->endOutput($callback);
 	}
 
-	private function updateCommand($parameters) {
+	protected function updateCommand($parameters) {
 		extract($parameters);
 		if (!$input) $this->exitWith404();
 		$this->startOutput($callback);
@@ -402,14 +400,14 @@ class MySQL_CRUD_API {
 		$this->endOutput($callback);
 	}
 
-	private function deleteCommand($parameters) {
+	protected function deleteCommand($parameters) {
 		extract($parameters);
 		$this->startOutput($callback);
 		echo json_encode($this->deleteObject($key,$table,$mysqli));
 		$this->endOutput($callback);
 	}
 
-	private function listCommandTransform($parameters) {
+	protected function listCommandTransform($parameters) {
 		if ($parameters['transform']) {
 			ob_start();
 		}
@@ -421,15 +419,33 @@ class MySQL_CRUD_API {
 		}
 	}
 
-	public function __construct($hostname,$username,$password,$database,$whitelist,$blacklist) {
-		$this->method = isset($_SERVER['REQUEST_METHOD'])?$_SERVER['REQUEST_METHOD']:'';
-		$this->request = explode('/', isset($_SERVER['PATH_INFO'])?trim($_SERVER['PATH_INFO'],'/'):'');
-		if ($hostname) {
-			$this->mysqli = $this->connectDatabase($hostname,$username,$password,$database);
+	public function __construct($parameters) {
+		extract($parameters);
+
+		$connect = isset($connect)?$connect:true;
+
+		$hostname = isset($hostname)?$hostname:null;
+		$username = isset($username)?$username:'root';
+		$password = isset($password)?$password:null;
+		$database = isset($database)?$database:'';
+		$port = isset($port)?$port:null;
+		$socket = isset($socket)?$socket:null;
+
+		$whitelist = isset($whitelist)?$whitelist:false;
+		$blacklist = isset($blacklist)?$blacklist:false;
+
+		$method = isset($method)?$method:$_SERVER['REQUEST_METHOD'];
+		$request = isset($request)?$request:$_SERVER['PATH_INFO'];
+		$get = isset($get)?$get:$_GET;
+		$post = isset($post)?$post:'php://input';
+
+		$request = explode('/', trim($request,'/'));
+
+		if ($connect) {
+			$this->mysqli = $this->connectDatabase($hostname,$username,$password,$database,$port,$socket);
 		}
-		$this->database = $database;
-		$this->whitelist = $whitelist;
-		$this->blacklist = $blacklist;
+
+		$this->config = compact('method', 'request', 'get', 'post', 'database', 'whitelist', 'blacklist');
 	}
 
 	public static function mysql_crud_api_transform(&$tables) {
@@ -466,7 +482,7 @@ class MySQL_CRUD_API {
 	}
 
 	public function executeCommand() {
-		$parameters = $this->getParameters($this->method, $this->request, $this->database, $this->whitelist, $this->blacklist, $this->mysqli);
+		$parameters = $this->getParameters($this->config, $this->mysqli);
 		switch($parameters['action']){
 			case 'list': $this->listCommandTransform($parameters); break;
 			case 'read': $this->readCommand($parameters); break;
@@ -480,13 +496,10 @@ class MySQL_CRUD_API {
 
 // only execute this when running in stand-alone mode
 if(count(get_required_files())<2) {
-	$api = new MySQL_CRUD_API(
-		"localhost",                        // hostname
-		"user",                             // username
-		"pass",                             // password
-		"db",                               // database
-		false,                              // whitelist
-		array("users"=>"crudl")             // blacklist
-	);
+	$api = new MySQL_CRUD_API(array(
+		'username'=>'xxx',
+		'password'=>'xxx',
+		'database'=>'xxx'
+	));
 	$api->executeCommand();
 }
