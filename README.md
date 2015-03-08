@@ -61,6 +61,7 @@ $api = new MySQL_CRUD_API(array(
 	'port=>null,
 	'socket=>null,
 // added for unit testing
+	'connect'=>true,
 	'method'=>$_SERVER['REQUEST_METHOD'],
 	'request'=>$_SERVER['PATH_INFO'],
 	'get'=>$_GET,
