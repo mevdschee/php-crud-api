@@ -51,17 +51,18 @@ These are all the configuration options and their default values:
 
 ```
 $api = new MySQL_CRUD_API(array(
+// these are normally configured
 	'username=>'root'
 	'password=>null,
 	'database:'',
 	'whitelist=>false,
 	'blacklist=>false,
-// for connectivity
+// for connectivity, leave out for localhost
 	'hostname'=>null,
 	'port=>null,
 	'socket=>null,
-// added for unit testing
-	'connect'=>true,
+// dependencies (added for unit testing)
+	'mysqli'=>null,
 	'method'=>$_SERVER['REQUEST_METHOD'],
 	'request'=>$_SERVER['PATH_INFO'],
 	'get'=>$_GET,
