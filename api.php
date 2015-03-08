@@ -423,7 +423,7 @@ class MySQL_CRUD_API {
 
 	public function __construct($hostname,$username,$password,$database,$whitelist,$blacklist) {
 		$this->method = isset($_SERVER['REQUEST_METHOD'])?$_SERVER['REQUEST_METHOD']:'';
-		$this->request = explode("/", isset($_SERVER['PATH_INFO'])?$_SERVER['PATH_INFO']:'', 1);
+		$this->request = explode('/', isset($_SERVER['PATH_INFO'])?trim($_SERVER['PATH_INFO'],'/'):'');
 		if ($hostname) {
 			$this->mysqli = $this->connectDatabase($hostname,$username,$password,$database);
 		}
