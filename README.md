@@ -49,14 +49,19 @@ $api->executeCommand();
 
 These are all the configuration options and their default values:
 
-	- hostname: null;
-	- username: 'root';
-	- password: null;
-	- database:'';
-	- port: null;
-	- socket: null;
-	- whitelist: false;
-	- blacklist: false;
+```
+$api = new MySQL_CRUD_API(array(
+	'hostname'=>null,
+	'port=>null,
+	'socket=>null,
+	'username=>'root'
+	'password=>null,
+	'database:'',
+	'whitelist=>false,
+	'blacklist=>false,
+));
+$api->executeCommand();
+```
 
 ## Usage
 
