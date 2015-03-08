@@ -46,15 +46,15 @@ class MySQL_CRUD_API_Test extends PHPUnit_Framework_TestCase
 		if (isset($url[1])) {
 			parse_str($url[1],$get);
 		}
-		$parameters = array(
+		$mysqli = $this->expectQueries($queries);
+		$config = array(
 			'method' =>$method,
 			'request' =>$request,
 			'get' =>$get,
-			'connect'=>false,
-			'database'=>'database'
+			'database'=>'database',
+			'mysqli'=>$mysqli,
 		);
-		$api = new MySQL_CRUD_API($parameters);
-		$api->mysqli = $this->expectQueries($queries);
+		$api = new MySQL_CRUD_API($config);
 		$this->expectOutputString($output);
 		$api->executeCommand();
 	}

@@ -2,8 +2,6 @@
 
 class MySQL_CRUD_API {
 
-	public $mysqli;
-
 	protected $config;
 
 	protected function connectDatabase($hostname,$username,$password,$database,$port,$socket) {
@@ -252,7 +250,7 @@ class MySQL_CRUD_API {
 		return array($collect,$select);
 	}
 
-	protected function getParameters($config, $mysqli) {
+	protected function getParameters($config) {
 		extract($config);
 		$action    = $this->mapMethodToAction($method, $request);
 		$table     = $this->parseRequestParameter($request, 0, 'a-zA-Z0-9\-_*,', '*');
@@ -419,10 +417,8 @@ class MySQL_CRUD_API {
 		}
 	}
 
-	public function __construct($parameters) {
-		extract($parameters);
-
-		$connect = isset($connect)?$connect:true;
+	public function __construct($config) {
+		extract($config);
 
 		$hostname = isset($hostname)?$hostname:null;
 		$username = isset($username)?$username:'root';
@@ -434,6 +430,7 @@ class MySQL_CRUD_API {
 		$whitelist = isset($whitelist)?$whitelist:false;
 		$blacklist = isset($blacklist)?$blacklist:false;
 
+		$mysqli = isset($mysqli)?$mysqli:null;
 		$method = isset($method)?$method:$_SERVER['REQUEST_METHOD'];
 		$request = isset($request)?$request:$_SERVER['PATH_INFO'];
 		$get = isset($get)?$get:$_GET;
@@ -441,11 +438,11 @@ class MySQL_CRUD_API {
 
 		$request = explode('/', trim($request,'/'));
 
-		if ($connect) {
-			$this->mysqli = $this->connectDatabase($hostname,$username,$password,$database,$port,$socket);
+		if (!$mysqli) {
+			$mysqli = $this->connectDatabase($hostname,$username,$password,$database,$port,$socket);
 		}
 
-		$this->config = compact('method', 'request', 'get', 'post', 'database', 'whitelist', 'blacklist');
+		$this->config = compact('method', 'request', 'get', 'post', 'database', 'whitelist', 'blacklist', 'mysqli');
 	}
 
 	public static function mysql_crud_api_transform(&$tables) {
@@ -482,7 +479,7 @@ class MySQL_CRUD_API {
 	}
 
 	public function executeCommand() {
-		$parameters = $this->getParameters($this->config, $this->mysqli);
+		$parameters = $this->getParameters($this->config);
 		switch($parameters['action']){
 			case 'list': $this->listCommandTransform($parameters); break;
 			case 'read': $this->readCommand($parameters); break;
