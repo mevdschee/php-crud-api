@@ -60,6 +60,7 @@ $api = new MySQL_CRUD_API(array(
 	'hostname'=>null,
 	'port=>null,
 	'socket=>null,
+	'charset=>'utf8',
 // dependencies (added for unit testing):
 	'mysqli'=>null,
 	'method'=>$_SERVER['REQUEST_METHOD'],

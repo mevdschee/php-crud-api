@@ -4,10 +4,13 @@ class MySQL_CRUD_API {
 
 	protected $config;
 
-	protected function connectDatabase($hostname,$username,$password,$database,$port,$socket) {
+	protected function connectDatabase($hostname,$username,$password,$database,$port,$socket,$charset) {
 		$mysqli = new mysqli($hostname,$username,$password,$database,$port,$socket);
 		if ($mysqli->connect_errno) {
 			throw new \Exception('Connect failed: '.$mysqli->connect_error);
+		}
+		if (!$mysqli->set_charset($charset)) {
+			throw new \Exception('Error setting charset: '.$mysqli->error);
 		}
 		return $mysqli;
 	}
@@ -429,6 +432,7 @@ class MySQL_CRUD_API {
 		$database = isset($database)?$database:'';
 		$port = isset($port)?$port:null;
 		$socket = isset($socket)?$socket:null;
+		$charset = isset($charset)?$charset:'utf8';
 
 		$whitelist = isset($whitelist)?$whitelist:false;
 		$blacklist = isset($blacklist)?$blacklist:false;
@@ -442,7 +446,7 @@ class MySQL_CRUD_API {
 		$request = explode('/', trim($request,'/'));
 
 		if (!$mysqli) {
-			$mysqli = $this->connectDatabase($hostname,$username,$password,$database,$port,$socket);
+			$mysqli = $this->connectDatabase($hostname,$username,$password,$database,$port,$socket,$charset);
 		}
 
 		$this->config = compact('method', 'request', 'get', 'post', 'database', 'whitelist', 'blacklist', 'mysqli');

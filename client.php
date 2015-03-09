@@ -16,8 +16,9 @@ function call($method, $url, $data = false) {
 	return curl_exec($ch);
 }
 
-$response = call('GET','http://localhost/api.php/posts,categories,tags,comments?filter=id:1');
+$response = call('GET','http://leaseweb_pdb.dev/blog.php/posts,categories,tags,comments?filter=id:1');
 $jsonObject = json_decode($response,true);
+
 $jsonObject = mysql_crud_api_transform($jsonObject);
 $output = json_encode($jsonObject,JSON_PRETTY_PRINT);
 ?>
