@@ -21,7 +21,7 @@ class MySQL_CRUD_API {
 			case 'PUT': return 'update';
 			case 'POST': return 'create';
 			case 'DELETE': return 'delete';
-			default: $this->exitWith404();
+			default: $this->exitWith404(5);
 		}
 	}
 
@@ -79,14 +79,12 @@ class MySQL_CRUD_API {
 		return count($keys)?$keys[0]:false;
 	}
 
-	protected function exitWith404() {
-		$trace = debug_backtrace();
-		$line = $trace[0]['line'];
+	protected function exitWith404($code) {
 		if (isset($_SERVER['REQUEST_METHOD'])) {
 			header("Content-Type:",true,404);
-			die("Not found ($line)");
+			die("Not found ($code)");
 		} else {
-			throw new \Exception("Not found ($line)");
+			throw new \Exception("Not found ($code)");
 		}
 	}
 
@@ -110,7 +108,7 @@ class MySQL_CRUD_API {
 	protected function processKeyParameter($key,$table,$database,$mysqli) {
 		if ($key) {
 			$key = array($key,$this->findPrimaryKey($table,$database,$mysqli));
-			if ($key[1]===false) $this->exitWith404();
+			if ($key[1]===false) $this->exitWith404(6);
 		}
 		return $key;
 	}
@@ -274,7 +272,7 @@ class MySQL_CRUD_API {
 		$order  = $this->processOrderParameter($order,$table,$database,$mysqli);
 
 		$table  = $this->applyWhitelistAndBlacklist($table,$action,$whitelist,$blacklist);
-		if (empty($table)) $this->exitWith404();
+		if (empty($table)) $this->exitWith404(7);
 
 		$object = $this->retrieveObject($key,$table,$mysqli);
 		$input  = json_decode(file_get_contents($post));
@@ -382,7 +380,7 @@ class MySQL_CRUD_API {
 
 	protected function readCommand($parameters) {
 		extract($parameters);
-		if (!$object) $this->exitWith404();
+		if (!$object) $this->exitWith404(8);
 		$this->startOutput($callback);
 		echo json_encode($object);
 		$this->endOutput($callback);
@@ -390,7 +388,7 @@ class MySQL_CRUD_API {
 
 	protected function createCommand($parameters) {
 		extract($parameters);
-		if (!$input) $this->exitWith404();
+		if (!$input) $this->exitWith404(9);
 		$this->startOutput($callback);
 		echo json_encode($this->createObject($input,$table,$mysqli));
 		$this->endOutput($callback);
@@ -398,7 +396,7 @@ class MySQL_CRUD_API {
 
 	protected function updateCommand($parameters) {
 		extract($parameters);
-		if (!$input) $this->exitWith404();
+		if (!$input) $this->exitWith404(10);
 		$this->startOutput($callback);
 		echo json_encode($this->updateObject($key,$input,$table,$mysqli));
 		$this->endOutput($callback);
