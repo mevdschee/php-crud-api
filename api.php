@@ -51,7 +51,6 @@ class MySQL_CRUD_API {
 	protected function applyWhitelistAndBlacklist($table, $action, $whitelist, $blacklist) {
 		$table = $this->applyWhitelist($table, $action, $whitelist);
 		$table = $this->applyBlacklist($table, $action, $blacklist);
-		if (empty($table)) $this->exitWith404();
 		return $table;
 	}
 
@@ -78,10 +77,13 @@ class MySQL_CRUD_API {
 	}
 
 	protected function exitWith404() {
+		$trace = debug_backtrace();
+		$line = $trace[0]['line'];
 		if (isset($_SERVER['REQUEST_METHOD'])) {
-			die(header("Content-Type:",true,404));
+			header("Content-Type:",true,404);
+			die("error $line");
 		} else {
-			throw new \Exception('404');
+			throw new \Exception('404',$line);
 		}
 	}
 
@@ -269,6 +271,7 @@ class MySQL_CRUD_API {
 		$order  = $this->processOrderParameter($order,$table,$database,$mysqli);
 
 		$table  = $this->applyWhitelistAndBlacklist($table,$action,$whitelist,$blacklist);
+		if (empty($table)) $this->exitWith404();
 
 		$object = $this->retrieveObject($key,$table,$mysqli);
 		$input  = json_decode(file_get_contents($post));
