@@ -70,13 +70,13 @@ class MySQL_CRUD_API {
 		return $tables;
 	}
 
-	protected function findPrimaryKey($table,$database,$mysqli) {
+	protected function findSinglePrimaryKey($table,$database,$mysqli) {
 		$keys = array();
 		if ($result = $mysqli->query("SELECT `COLUMN_NAME` FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `COLUMN_KEY` = 'PRI' AND `TABLE_NAME` = '$table[0]' AND `TABLE_SCHEMA` = '$database'")) {
 			while ($row = $result->fetch_row()) $keys[] = $row[0];
 			$result->close();
 		}
-		return count($keys)?$keys[0]:false;
+		return count($keys)==1?$keys[0]:false;
 	}
 
 	protected function exitWith404($type) {
@@ -107,8 +107,8 @@ class MySQL_CRUD_API {
 
 	protected function processKeyParameter($key,$table,$database,$mysqli) {
 		if ($key) {
-			$key = array($key,$this->findPrimaryKey($table,$database,$mysqli));
-			if ($key[1]===false) $this->exitWith404('pk');
+			$key = array($key,$this->findSinglePrimaryKey($table,$database,$mysqli));
+			if ($key[1]===false) $this->exitWith404('1pk');
 		}
 		return $key;
 	}
