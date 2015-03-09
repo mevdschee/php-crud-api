@@ -7,6 +7,10 @@ Simple PHP script that adds a very basic API to a MySQL database.
   - PHP 5.3 or higher with MySQLi enabled
   - Apache, Lighttpd or Nginx
 
+## Installation
+
+This is a single file application! Upload "api.php" somewhere and enjoy!
+
 ## Limitations
 
   - Authentication or authorization is not included
@@ -387,9 +391,15 @@ You can call the ```mysql_crud_api_tranform()``` function to structure the data 
 
 This transform function is available for PHP and JavaScript in the files ```mysql_crud_api_tranform.php``` and ```mysql_crud_api_tranform.js```.
 
-## Installation
+## Errors
 
-Put the file "api.php" somewhere and enjoy!
+The following types of 404 'Not found' errors may be reported:
+
+  - entity: could not find entity
+  - object: instance not found on read
+  - input: instance not found on create
+  - subject: instance not found on update
+  - 1pk: primary key not found or composite
 
 ## Tests
 
