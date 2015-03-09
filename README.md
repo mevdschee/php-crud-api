@@ -57,7 +57,7 @@ These are all the configuration options and their default values:
 $api = new MySQL_CRUD_API(array(
 	'username=>'root'
 	'password=>null,
-	'database:'',
+	'database=>'',
 	'whitelist=>false,
 	'blacklist=>false,
 // for connectivity (defaults to localhost):
