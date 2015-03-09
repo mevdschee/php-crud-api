@@ -395,11 +395,11 @@ This transform function is available for PHP and JavaScript in the files ```mysq
 
 The following types of 404 'Not found' errors may be reported:
 
-  - entity: could not find entity
-  - object: instance not found on read
-  - input: instance not found on create
-  - subject: instance not found on update
-  - 1pk: primary key not found or composite
+  - entity (could not find entity)
+  - object (instance not found on read)
+  - input (instance not found on create)
+  - subject (instance not found on update)
+  - 1pk (primary key not found or composite)
 
 ## Tests
 
