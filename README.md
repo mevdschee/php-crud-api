@@ -15,7 +15,7 @@ Simple PHP script that adds a very basic API to a MySQL database.
 
 ## TODO
 
-  - Add column blacklisting
+  - Add column whitelisting and blacklisting
   - Add created_at and modified_at support
   - Add basic authentication support
   - Add user_id and group_id support (multi-tenant)
