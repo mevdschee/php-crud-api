@@ -83,7 +83,7 @@ class MySQL_CRUD_API {
 			header("Content-Type:",true,404);
 			die("Not found ($line)");
 		} else {
-			throw new \Exception('404',$line);
+			throw new \Exception("Not found ($line)");
 		}
 	}
 
