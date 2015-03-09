@@ -260,8 +260,8 @@ class MySQL_CRUD_API {
 		$key       = $this->parseRequestParameter($request, 1, 'a-zA-Z0-9\-,', false); // auto-increment or uuid
 		$callback  = $this->parseGetParameter($get, 'callback', 'a-zA-Z0-9\-_', false);
 		$page      = $this->parseGetParameter($get, 'page', '0-9,', false);
-		$filter    = $this->parseGetParameter($get, 'filter', false, 'exact');
-		$match     = $this->parseGetParameter($get, 'match', 'a-z', false);
+		$filter    = $this->parseGetParameter($get, 'filter', false, false);
+		$match     = $this->parseGetParameter($get, 'match', 'a-z', 'exact');
 		$order     = $this->parseGetParameter($get, 'order', 'a-zA-Z0-9\-_*,', false);
 		$transform = $this->parseGetParameter($get, 'transform', '1', false);
 
