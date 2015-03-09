@@ -81,7 +81,7 @@ class MySQL_CRUD_API {
 		$line = $trace[0]['line'];
 		if (isset($_SERVER['REQUEST_METHOD'])) {
 			header("Content-Type:",true,404);
-			die("error $line");
+			die("Not found ($line)");
 		} else {
 			throw new \Exception('404',$line);
 		}
