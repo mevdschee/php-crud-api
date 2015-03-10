@@ -127,22 +127,24 @@ class MySQL_CRUD_API {
 			$filter = explode(':',$filter,2);
 			if (count($filter)==2) {
 				$filter[0] = preg_replace('/[^a-zA-Z0-9\-_]/','',$filter[0]);
-				if ($match=='in') {
-					$filter[1] = implode("','",array_map(function($v){ return preg_replace('/[^a-zA-Z0-9\-]/','',$v); },explode(',',$filter[1])));
-				} else {
-					$filter[1] = $mysqli->real_escape_string($filter[1]);
-				}
 				$filter[2] = 'LIKE';
-				if ($match=='contain'||$match=='start') $filter[1] .= '%';
-				if ($match=='contain'||$match=='end') $filter[1] = '%'.$filter[1];
+				if ($match=='contain') $filter[1] = '%'.addcslashes($filter[1], '%_').'%';
+				if ($match=='start') $filter[1] = addcslashes($filter[1], '%_').'%';
+				if ($match=='end') $filter[1] = '%'.addcslashes($filter[1], '%_');
 				if ($match=='exact') $filter[2] = '=';
 				if ($match=='lower') $filter[2] = '<';
 				if ($match=='upto') $filter[2] = '<=';
 				if ($match=='from') $filter[2] = '>=';
 				if ($match=='higher') $filter[2] = '>';
-				if ($match=='in') $filter[2] = 'IN';
-				$filter[1]="'$filter[1]'";
-				if ($filter[2]=='IN') $filter[1]="($filter[1])";
+				if ($match=='in') {
+					$filter[2] = 'IN';
+					$filter[1] = implode("','",array_map(function($v){return preg_replace('/[^a-zA-Z0-9\-]/','',$v);},explode(',',$filter[1])));
+					$filter[1]="'$filter[1]'";
+					$filter[1]="($filter[1])";
+
+				} else {
+					$filter[1] = "'".$mysqli->real_escape_string($filter[1])."'";
+				}
 			} else {
 				$filter = false;
 			}
