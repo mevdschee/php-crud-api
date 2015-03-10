@@ -61,7 +61,9 @@ class PDODB_CRUD_API {
 		$tables = array();
 		foreach ($tablelist as $table) {
 			$table = str_replace('*','%',addcslashes($table,'_%'));
-			if ($result = $pdodb->query("SELECT \"TABLE_NAME\" FROM \"INFORMATION_SCHEMA\".\"TABLES\" WHERE \"TABLE_NAME\" LIKE '$table' AND \"TABLE_SCHEMA\" = '$database'")) {
+			$table_schema = 'TABLE_SCHEMA';
+			if ($driver=='sqlsrv') $table_schema = 'TABLE_CATALOG'; 
+			if ($result = $pdodb->query("SELECT \"TABLE_NAME\" FROM \"INFORMATION_SCHEMA\".\"TABLES\" WHERE \"TABLE_NAME\" LIKE '$table' AND \"$table_schema\" = '$database'")) {
 				while ($row = $result->fetch(PDO::FETCH_NUM)) $tables[] = $row[0];
 				$result->closeCursor();
 			}
@@ -71,7 +73,9 @@ class PDODB_CRUD_API {
 
 	protected function findSinglePrimaryKey($table,$database,$pdodb) {
 		$keys = array();
-		if ($result = $pdodb->query("SELECT \"COLUMN_NAME\" FROM \"INFORMATION_SCHEMA\".\"COLUMNS\" WHERE \"COLUMN_KEY\" = 'PRI' AND \"TABLE_NAME\" = '$table[0]' AND \"TABLE_SCHEMA\" = '$database'")) {
+		$table_schema = 'TABLE_SCHEMA';
+		if ($driver=='sqlsrv') $table_schema = 'TABLE_CATALOG'; 
+		if ($result = $pdodb->query("SELECT \"COLUMN_NAME\" FROM \"INFORMATION_SCHEMA\".\"COLUMNS\" WHERE \"COLUMN_KEY\" = 'PRI' AND \"TABLE_NAME\" = '$table[0]' AND \"$table_schema\" = '$database'")) {
 			while ($row = $result->fetch(PDO::FETCH_NUM)) $keys[] = $row[0];
 			$result->closeCursor();
 		}
@@ -304,12 +308,12 @@ class PDODB_CRUD_API {
 		$sql = "SELECT * FROM \"$table\"";
 		if (is_array($filter)) $sql .= " WHERE \"$filter[0]\" $filter[2] $filter[1]";
 		if (is_array($order)) $sql .= " ORDER BY \"$order[0]\" $order[1]";
-		if ($driver=='mysql') {
-			if (is_array($page)) $sql .= " LIMIT $page[1] OFFSET $page[0]";
-		} elseif ($driver=='sqlsrv') {
+		if ($driver=='sqlsrv') {
 			if (is_array($order) && is_array($page)) {
 				$sql .= " OFFSET $page[0] ROWS FETCH NEXT $page[1] ROWS ONLY";
 			}
+		} elseif ($driver=='mysql') {
+			if (is_array($page)) $sql .= " LIMIT $page[1] OFFSET $page[0]";
 		}
 			
 		if ($result = $pdodb->query($sql)) {
