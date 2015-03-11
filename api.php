@@ -77,12 +77,12 @@ class MySQL_CRUD_API extends REST_CRUD_API {
 		return mysqli_fetch_row($result);
 	}
 
-	protected function insert_id($db) {
-		return mysqli_insert_id();
+	protected function insert_id($db,$result) {
+		return mysqli_insert_id($db);
 	}
 		
-	protected function affected_rows($db) {
-		return mysqli_affected_rows();
+	protected function affected_rows($db,$result) {
+		return mysqli_affected_rows($db);
 	}
 	
 	protected function close($result) {
@@ -95,6 +95,121 @@ class MySQL_CRUD_API extends REST_CRUD_API {
 	
 	protected function add_limit_to_sql($sql,$limit,$offset) {
 		return "$sql LIMIT $limit OFFSET $offset";
+	}
+
+}
+
+class SQLSRV_CRUD_API extends REST_CRUD_API {
+
+	protected $queries = array(
+		'reflect_table'=>'SELECT "TABLE_NAME" FROM "INFORMATION_SCHEMA"."TABLES" WHERE "TABLE_NAME" LIKE ? AND "TABLE_CATALOG" = ?',
+		'reflect_pk'=>'SELECT "COLUMN_NAME" FROM "INFORMATION_SCHEMA"."COLUMNS" WHERE "COLUMN_KEY" = \'PRI\' AND "TABLE_NAME" = ? AND "TABLE_CATALOG" = ?',
+		'reflect_belongs_to'=>'SELECT
+				"TABLE_NAME","COLUMN_NAME",
+				"REFERENCED_TABLE_NAME","REFERENCED_COLUMN_NAME"
+			FROM
+				"INFORMATION_SCHEMA"."KEY_COLUMN_USAGE"
+			WHERE
+				"TABLE_NAME" = ? AND
+				"REFERENCED_TABLE_NAME" IN ? AND
+				"TABLE_CATALOG" = ? AND
+				"REFERENCED_TABLE_CATALOG" = ?',
+		'reflect_has_many'=>'SELECT
+				"TABLE_NAME","COLUMN_NAME",
+				"REFERENCED_TABLE_NAME","REFERENCED_COLUMN_NAME"
+			FROM
+				"INFORMATION_SCHEMA"."KEY_COLUMN_USAGE"
+			WHERE
+				"TABLE_NAME" IN ? AND
+				"REFERENCED_TABLE_NAME" = ? AND
+				"TABLE_CATALOG" = ? AND
+				"REFERENCED_TABLE_CATALOG" = ?',
+		'reflect_habtm'=>'SELECT
+				k1."TABLE_NAME", k1."COLUMN_NAME",
+				k1."REFERENCED_TABLE_NAME", k1."REFERENCED_COLUMN_NAME",
+				k2."TABLE_NAME", k2."COLUMN_NAME",
+				k2."REFERENCED_TABLE_NAME", k2."REFERENCED_COLUMN_NAME"
+			FROM
+				"INFORMATION_SCHEMA"."KEY_COLUMN_USAGE" k1, "INFORMATION_SCHEMA"."KEY_COLUMN_USAGE" k2
+			WHERE
+				k1."TABLE_CATALOG" = ? AND
+				k2."TABLE_CATALOG" = ? AND
+				k1."REFERENCED_TABLE_CATALOG" = ? AND
+				k2."REFERENCED_TABLE_CATALOG" = ? AND
+				k1."TABLE_NAME" = k2."TABLE_NAME" AND
+				k1."REFERENCED_TABLE_NAME" = ? AND
+				k2."REFERENCED_TABLE_NAME" IN ?'
+	);
+
+	protected function connectDatabase($hostname,$username,$password,$database,$port,$socket,$charset) {
+		$connectionInfo = array();
+		if ($port) $hostname.=','.$port;
+		if ($database) $connectionInfo['Database']=$database;
+		if ($username) $connectionInfo['UID']=$username;
+		if ($password) $connectionInfo['PWD']=$password;
+		if ($charset) $connectionInfo['CharacterSet']=$charset;
+		$connectionInfo['QuotedId']=1;
+
+		$db = sqlsrv_connect($hostname, $connectionInfo);
+		if (!$db) {
+			throw new \Exception('Connect failed. '.print_r( sqlsrv_errors(), true));
+		}
+		if ($socket) {
+			throw new \Exception('Socket connection is not supported.');
+		}
+		return $db;
+	}
+
+	protected function query($db,$sql,$params) {
+		$sql = preg_replace_callback('/\!|\?/', function ($matches) use (&$db,&$params) {
+			static $i=-1;
+			$i++;
+			$param = $params[$i];
+			if ($matches[0]=='!') return preg_replace('/[^a-zA-Z0-9\-_=<>]/','',$param);
+			if (is_array($param)) {
+				$params = array_splice($params, $i, 1, $param);
+				return '('.implode(',',split('',str_repeat('?',count($param)))).')';
+			}
+			return '?';
+		}, $sql);
+		return sqlsrv_query($db,$sql,$params);
+	}
+
+	protected function fetch_assoc($result) {
+		return sqlsrv_fetch_array($result, SQLSRV_FETCH_ASSOC);
+	}
+
+	protected function fetch_row($result) {
+		return sqlsrv_fetch_array($result, SQLSRV_FETCH_NUMERIC);
+	}
+
+	protected function insert_id($db) {
+		$result = sqlsrv_query($db, 'SELECT SCOPE_IDENTITY()');
+		$data = sqlsrv_fetch_array($result, SQLSRV_FETCH_NUMERIC);
+		return $data[0];
+	}
+
+	protected function affected_rows($db,$result) {
+		return sqlsrv_rows_affected($result);
+	}
+
+	protected function close($result) {
+		return sqlsrv_free_stmt($result);
+	}
+
+	protected function fetch_fields($result) {
+		//var_dump(sqlsrv_field_metadata($result));
+		return array_map(function($a){ 
+			$p = array();
+			foreach ($a as $k=>$v) {
+				$p[strtolower($k)] = $v;
+			}
+			return (object)$p;
+		},sqlsrv_field_metadata($result));
+	}
+
+	protected function add_limit_to_sql($sql,$limit,$offset) {
+		return "$sql OFFSET $offset ROWS FETCH NEXT $limit ROWS ONLY";
 	}
 
 }
@@ -259,8 +374,8 @@ class REST_CRUD_API {
 		$values = implode(',',split('', str_repeat('?', count($input))));
 		$params = array_merge(array_keys((array)$input),array_values((array)$input));
 		array_unshift($params, $table[0]);
-		$this->query($db,'INSERT INTO "!" ("'.$keys.'") VALUES ('.$values.')',$params);
-		return $this->insert_id($db);
+		$result = $this->query($db,'INSERT INTO "!" ("'.$keys.'") VALUES ('.$values.')',$params);
+		return $this->insert_id($db,$result);
 	}
 
 	protected function updateObject($key,$input,$table,$db) {
@@ -278,13 +393,13 @@ class REST_CRUD_API {
 		$sql .= ' WHERE "!"=?';
 		$params[] = $key[1];
 		$params[] = $key[0];
-		$this->query($db,$sql,$params);
-		return $this->affected_rows($db);
+		$result = $this->query($db,$sql,$params);
+		return $this->affected_rows($db, $result);
 	}
 
 	protected function deleteObject($key,$table,$db) {
-		$this->query($db,'DELETE FROM "!" WHERE "!" = ?',array($table[0],$key[1],$key[0]));
-		return $this->affected_rows($db);
+		$result = $this->query($db,'DELETE FROM "!" WHERE "!" = ?',array($table[0],$key[1],$key[0]));
+		return $this->affected_rows($db, $result);
 	}
 
 	protected function findRelations($tables,$database,$db) {
@@ -587,10 +702,12 @@ class REST_CRUD_API {
 
 // only execute this when running in stand-alone mode
 if(count(get_required_files())<2) {
-	$api = new MySQL_CRUD_API(array(
-		'username'=>'xxx',
-		'password'=>'xxx',
-		'database'=>'xxx'
+	$api = new SQLSRV_CRUD_API(array(
+		'hostname'=>'(local)',
+		'username'=>'',
+		'password'=>'',
+		'database'=>'xxx',
+		'charset'=>'UTF-8'
 	));
 	$api->executeCommand();
 }
