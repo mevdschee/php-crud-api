@@ -2,6 +2,46 @@
 
 class MySQL_CRUD_API extends REST_CRUD_API {
 
+	protected $queries = array(
+		'find_table'=>'SELECT "TABLE_NAME" FROM "INFORMATION_SCHEMA"."TABLES" WHERE "TABLE_NAME" LIKE ? AND "TABLE_SCHEMA" = ?',
+		'find_pk'=>'SELECT "COLUMN_NAME" FROM "INFORMATION_SCHEMA"."COLUMNS" WHERE "COLUMN_KEY" = \'PRI\' AND "TABLE_NAME" = ? AND "TABLE_SCHEMA" = ?',
+		'find_belongs_to'=>'SELECT
+				"TABLE_NAME","COLUMN_NAME",
+				"REFERENCED_TABLE_NAME","REFERENCED_COLUMN_NAME"
+			FROM
+				"INFORMATION_SCHEMA"."KEY_COLUMN_USAGE"
+			WHERE
+				"TABLE_NAME" = ? AND
+				"REFERENCED_TABLE_NAME" IN ? AND
+				"TABLE_SCHEMA" = ? AND
+				"REFERENCED_TABLE_SCHEMA" = ?',
+		'find_has_many'=>'SELECT
+				"TABLE_NAME","COLUMN_NAME",
+				"REFERENCED_TABLE_NAME","REFERENCED_COLUMN_NAME"
+			FROM
+				"INFORMATION_SCHEMA"."KEY_COLUMN_USAGE"
+			WHERE
+				"TABLE_NAME" IN ? AND
+				"REFERENCED_TABLE_NAME" = ? AND
+				"TABLE_SCHEMA" = ? AND
+				"REFERENCED_TABLE_SCHEMA" = ?',
+		'find_habtm'=>'SELECT
+				k1."TABLE_NAME", k1."COLUMN_NAME",
+				k1."REFERENCED_TABLE_NAME", k1."REFERENCED_COLUMN_NAME",
+				k2."TABLE_NAME", k2."COLUMN_NAME",
+				k2."REFERENCED_TABLE_NAME", k2."REFERENCED_COLUMN_NAME"
+			FROM
+				"INFORMATION_SCHEMA"."KEY_COLUMN_USAGE" k1, "INFORMATION_SCHEMA"."KEY_COLUMN_USAGE" k2
+			WHERE
+				k1."TABLE_SCHEMA" = ? AND
+				k2."TABLE_SCHEMA" = ? AND
+				k1."REFERENCED_TABLE_SCHEMA" = ? AND
+				k2."REFERENCED_TABLE_SCHEMA" = ? AND
+				k1."TABLE_NAME" = k2."TABLE_NAME" AND
+				k1."REFERENCED_TABLE_NAME" = ? AND
+				k2."REFERENCED_TABLE_NAME" IN ?'
+	);
+	
 	protected function connectDatabase($hostname,$username,$password,$database,$port,$socket,$charset) {
 		$db = mysqli_connect($hostname,$username,$password,$database,$port,$socket);
 		if (mysqli_connect_errno()) {
@@ -106,7 +146,7 @@ class REST_CRUD_API {
 		$tables = array();
 		foreach ($tablelist as $table) {
 			$table = str_replace('*','%',$table);
-			if ($result = $this->query($db,'SELECT "TABLE_NAME" FROM "INFORMATION_SCHEMA"."TABLES" WHERE "TABLE_NAME" LIKE ? AND "TABLE_SCHEMA" = ?',array($table,$database))) {
+			if ($result = $this->query($db,$this->queries['find_table'],array($table,$database))) {
 				while ($row = $this->fetch_row($result)) $tables[] = $row[0];
 				$this->close($result);
 			}
@@ -116,7 +156,7 @@ class REST_CRUD_API {
 
 	protected function findSinglePrimaryKey($table,$database,$db) {
 		$keys = array();
-		if ($result = $this->query($db,'SELECT "COLUMN_NAME" FROM "INFORMATION_SCHEMA"."COLUMNS" WHERE "COLUMN_KEY" = \'PRI\' AND "TABLE_NAME" = ? AND "TABLE_SCHEMA" = ?',array($table[0],$database))) {
+		if ($result = $this->query($db,$this->queries['find_pk'],array($table[0],$database))) {
 			while ($row = $this->fetch_row($result)) $keys[] = $row[0];
 			$this->close($result);
 		}
@@ -249,52 +289,17 @@ class REST_CRUD_API {
 		if (count($tables)>1) {
 			$table0 = array_shift($tables);
 			
-			$result = $this->query($db,'SELECT
-								"TABLE_NAME","COLUMN_NAME",
-								"REFERENCED_TABLE_NAME","REFERENCED_COLUMN_NAME"
-							FROM
-								"INFORMATION_SCHEMA"."KEY_COLUMN_USAGE"
-							WHERE
-								"TABLE_NAME" = ? AND
-								"REFERENCED_TABLE_NAME" IN ? AND
-								"TABLE_SCHEMA" = ? AND
-								"REFERENCED_TABLE_SCHEMA" = ?',
-							array($table0,$tables,$database,$database));
+			$result = $this->query($db,$this->queries['find_belongs_to'],array($table0,$tables,$database,$database));
 			while ($row = $this->fetch_row($result)) {
 				$collect[$row[0]][$row[1]]=array();
 				$select[$row[2]][$row[3]]=array($row[0],$row[1]);
 			}
-			$result = $this->query($db,'SELECT
-								"TABLE_NAME","COLUMN_NAME",
-								"REFERENCED_TABLE_NAME","REFERENCED_COLUMN_NAME"
-							FROM
-								"INFORMATION_SCHEMA"."KEY_COLUMN_USAGE"
-							WHERE
-								"TABLE_NAME" IN ? AND
-								"REFERENCED_TABLE_NAME" = ? AND
-								"TABLE_SCHEMA" = ? AND
-								"REFERENCED_TABLE_SCHEMA" = ?',
-							array($tables,$table0,$database,$database));
+			$result = $this->query($db,$this->queries['find_has_many'],array($tables,$table0,$database,$database));
 			while ($row = $this->fetch_row($result)) {
 				$collect[$row[2]][$row[3]]=array();
 				$select[$row[0]][$row[1]]=array($row[2],$row[3]);
 			}
-			$result = $this->query($db,'SELECT
-								k1."TABLE_NAME", k1."COLUMN_NAME",
-								k1."REFERENCED_TABLE_NAME", k1."REFERENCED_COLUMN_NAME",
-								k2."TABLE_NAME", k2."COLUMN_NAME",
-								k2."REFERENCED_TABLE_NAME", k2."REFERENCED_COLUMN_NAME"
-							FROM
-								"INFORMATION_SCHEMA"."KEY_COLUMN_USAGE" k1, "INFORMATION_SCHEMA"."KEY_COLUMN_USAGE" k2
-							WHERE
-								k1."TABLE_SCHEMA" = ? AND
-								k2."TABLE_SCHEMA" = ? AND
-								k1."REFERENCED_TABLE_SCHEMA" = ? AND
-								k2."REFERENCED_TABLE_SCHEMA" = ? AND
-								k1."TABLE_NAME" = k2."TABLE_NAME" AND
-								k1."REFERENCED_TABLE_NAME" = ? AND
-								k2."REFERENCED_TABLE_NAME" IN ?',
-							array($database,$database,$database,$database,$table0,$tables));
+			$result = $this->query($db,$this->queries['find_habtm'],array($database,$database,$database,$database,$table0,$tables));
 			while ($row = $this->fetch_row($result)) {
 				$collect[$row[2]][$row[3]]=array();
 				$select[$row[0]][$row[1]]=array($row[2],$row[3]);
@@ -516,7 +521,7 @@ class REST_CRUD_API {
 
 		$db = isset($db)?$db:null;
 		$method = isset($method)?$method:$_SERVER['REQUEST_METHOD'];
-		$request = isset($request)?$request:isset($_SERVER['PATH_INFO'])?$_SERVER['PATH_INFO']:'';
+		$request = isset($request)?$request:(isset($_SERVER['PATH_INFO'])?$_SERVER['PATH_INFO']:'');
 		$get = isset($get)?$get:$_GET;
 		$post = isset($post)?$post:'php://input';
 
