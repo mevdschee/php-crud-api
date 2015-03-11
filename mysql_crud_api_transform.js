@@ -36,6 +36,9 @@ function mysql_crud_api_transform(tables) {
 		var table = tables[name];
 		if (!table['relations']) {
 			tree[name] = get_objects(tables,name);
+			if (table['results']) {
+				tree['_results'] = table['results'];
+			}
 		}
 	}
 	return tree;

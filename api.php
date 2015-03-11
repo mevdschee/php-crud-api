@@ -1,19 +1,63 @@
 <?php
 
-class MySQL_CRUD_API {
-
-	protected $config;
+class MySQL_CRUD_API extends REST_CRUD_API {
 
 	protected function connectDatabase($hostname,$username,$password,$database,$port,$socket,$charset) {
-		$mysqli = new mysqli($hostname,$username,$password,$database,$port,$socket);
-		if ($mysqli->connect_errno) {
-			throw new \Exception('Connect failed: '.$mysqli->connect_error);
+		$db = mysqli_connect($hostname,$username,$password,$database,$port,$socket);
+		if (mysqli_connect_errno()) {
+			throw new \Exception('Connect failed. '.mysqli_connect_error());
 		}
-		if (!$mysqli->set_charset($charset)) {
-			throw new \Exception('Error setting charset: '.$mysqli->error);
+		if (!mysqli_set_charset($db,$charset)) {
+			throw new \Exception('Error setting charset. '.mysqli_error($db));
 		}
-		return $mysqli;
+		if (!mysqli_query($db,'SET SESSION sql_mode = \'ANSI_QUOTES\';')) {
+			throw new \Exception('Error setting ANSI quotes. '.mysqli_error($db));
+		}
+		return $db;
 	}
+	
+	protected function query($db,$sql,$params) {
+		$sql = preg_replace_callback('/\!|\?/', function ($matches) use (&$db,&$params) {
+			$param = array_shift($params);
+			if ($matches[0]=='!') return preg_replace('/[^a-zA-Z0-9\-_=<>]/','',$param);
+			if (is_array($param)) return '('.implode(',',array_map(function($v) use (&$db) {
+				return "'".mysqli_real_escape_string($db,$v)."'";
+			},$param)).')';
+			return "'".mysqli_real_escape_string($db,$param)."'";
+		}, $sql);
+		//echo "\n$sql\n";
+		return mysqli_query($db,$sql);
+	}
+	
+	protected function fetch_assoc($result) {
+		return mysqli_fetch_assoc($result);
+	}
+	
+	protected function fetch_row($result) {
+		return mysqli_fetch_row($result);
+	}
+
+	protected function insert_id($db) {
+		return mysqli_insert_id();
+	}
+		
+	protected function affected_rows($db) {
+		return mysqli_affected_rows();
+	}
+	
+	protected function close($result) {
+		return mysqli_free_result($result);
+	}
+	
+	protected function fetch_fields($result) {
+		return mysqli_fetch_fields($result);
+	}
+	
+}
+
+class REST_CRUD_API {
+
+	protected $config;
 
 	protected function mapMethodToAction($method,$request) {
 		switch ($method) {
@@ -57,31 +101,31 @@ class MySQL_CRUD_API {
 		return $table;
 	}
 
-	protected function processTableParameter($table,$database,$mysqli) {
+	protected function processTableParameter($table,$database,$db) {
 		$tablelist = explode(',',$table);
 		$tables = array();
 		foreach ($tablelist as $table) {
 			$table = str_replace('*','%',$table);
-			if ($result = $mysqli->query("SELECT `TABLE_NAME` FROM `INFORMATION_SCHEMA`.`TABLES` WHERE `TABLE_NAME` LIKE '$table' AND `TABLE_SCHEMA` = '$database'")) {
-				while ($row = $result->fetch_row()) $tables[] = $row[0];
-				$result->close();
+			if ($result = $this->query($db,'SELECT "TABLE_NAME" FROM "INFORMATION_SCHEMA"."TABLES" WHERE "TABLE_NAME" LIKE ? AND "TABLE_SCHEMA" = ?',array($table,$database))) {
+				while ($row = $this->fetch_row($result)) $tables[] = $row[0];
+				$this->close($result);
 			}
 		}
 		return $tables;
 	}
 
-	protected function findSinglePrimaryKey($table,$database,$mysqli) {
+	protected function findSinglePrimaryKey($table,$database,$db) {
 		$keys = array();
-		if ($result = $mysqli->query("SELECT `COLUMN_NAME` FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `COLUMN_KEY` = 'PRI' AND `TABLE_NAME` = '$table[0]' AND `TABLE_SCHEMA` = '$database'")) {
-			while ($row = $result->fetch_row()) $keys[] = $row[0];
-			$result->close();
+		if ($result = $this->query($db,'SELECT "COLUMN_NAME" FROM "INFORMATION_SCHEMA"."COLUMNS" WHERE "COLUMN_KEY" = \'PRI\' AND "TABLE_NAME" = ? AND "TABLE_SCHEMA" = ?',array($table[0],$database))) {
+			while ($row = $this->fetch_row($result)) $keys[] = $row[0];
+			$this->close($result);
 		}
 		return count($keys)==1?$keys[0]:false;
 	}
 
 	protected function exitWith404($type) {
 		if (isset($_SERVER['REQUEST_METHOD'])) {
-			header("Content-Type:",true,404);
+			header('Content-Type:',true,404);
 			die("Not found ($type)");
 		} else {
 			throw new \Exception("Not found ($type)");
@@ -91,10 +135,10 @@ class MySQL_CRUD_API {
 	protected function startOutput($callback) {
 		if (isset($_SERVER['REQUEST_METHOD'])) {
 			if ($callback) {
-				header("Content-Type: application/javascript");
+				header('Content-Type: application/javascript');
 				echo $callback.'(';
 			} else {
-				header("Content-Type: application/json");
+				header('Content-Type: application/json');
 			}
 		}
 	}
@@ -105,15 +149,15 @@ class MySQL_CRUD_API {
 		}
 	}
 
-	protected function processKeyParameter($key,$table,$database,$mysqli) {
+	protected function processKeyParameter($key,$table,$database,$db) {
 		if ($key) {
-			$key = array($key,$this->findSinglePrimaryKey($table,$database,$mysqli));
+			$key = array($key,$this->findSinglePrimaryKey($table,$database,$db));
 			if ($key[1]===false) $this->exitWith404('1pk');
 		}
 		return $key;
 	}
 
-	protected function processOrderParameter($order,$table,$database,$mysqli) {
+	protected function processOrderParameter($order,$table,$database,$db) {
 		if ($order) {
 			$order = explode(',',$order,2);
 			if (count($order)<2) $order[1]='ASC';
@@ -122,11 +166,10 @@ class MySQL_CRUD_API {
 		return $order;
 	}
 
-	protected function processFilterParameter($filter,$match,$mysqli) {
+	protected function processFilterParameter($filter,$match,$db) {
 		if ($filter) {
 			$filter = explode(':',$filter,2);
 			if (count($filter)==2) {
-				$filter[0] = preg_replace('/[^a-zA-Z0-9\-_]/','',$filter[0]);
 				$filter[2] = 'LIKE';
 				if ($match=='contain') $filter[1] = '%'.addcslashes($filter[1], '%_').'%';
 				if ($match=='start') $filter[1] = addcslashes($filter[1], '%_').'%';
@@ -138,12 +181,8 @@ class MySQL_CRUD_API {
 				if ($match=='higher') $filter[2] = '>';
 				if ($match=='in') {
 					$filter[2] = 'IN';
-					$filter[1] = implode("','",array_map(function($v){return preg_replace('/[^a-zA-Z0-9\-]/','',$v);},explode(',',$filter[1])));
-					$filter[1]="'$filter[1]'";
-					$filter[1]="($filter[1])";
+					$filter[1] = explode(',',$filter[1]);
 
-				} else {
-					$filter[1] = "'".$mysqli->real_escape_string($filter[1])."'";
 				}
 			} else {
 				$filter = false;
@@ -161,91 +200,102 @@ class MySQL_CRUD_API {
 		return $page;
 	}
 
-	protected function retrieveObject($key,$table,$mysqli) {
+	protected function retrieveObject($key,$table,$db) {
 		if (!$key) return false;
-		if ($result = $mysqli->query("SELECT * FROM `$table[0]` WHERE `$key[1]` = '$key[0]'")) {
-			$object = $result->fetch_assoc();
-			$result->close();
+		if ($result = $this->query($db,'SELECT * FROM "!" WHERE "!" = ?',array($table[0],$key[1],$key[0]))) {
+			$object = $this->fetch_assoc($result);
+			$this->close($result);
 		}
 		return $object;
 	}
 
-	protected function createObject($input,$table,$mysqli) {
+	protected function createObject($input,$table,$db) {
 		if (!$input) return false;
-		$keys = implode('`,`',array_map(function($v){ return preg_replace('/[^a-zA-Z0-9\-_]/','',$v); },array_keys((array)$input)));
-		$values = implode("','",array_map(function($v) use ($mysqli){ return $mysqli->real_escape_string($v); },array_values((array)$input)));
-		$mysqli->query("INSERT INTO `$table[0]` (`$keys`) VALUES ('$values')");
-		return $mysqli->insert_id;
+		$keys = implode('","',split('', str_repeat('!', count($input))));
+		$values = implode(',',split('', str_repeat('?', count($input))));
+		$params = array_merge(array_keys((array)$input),array_values((array)$input));
+		array_unshift($params, $table[0]);
+		$this->query($db,'INSERT INTO "!" ("'.$keys.'") VALUES ('.$values.')',$params);
+		return $this->insert_id($db);
 	}
 
-	protected function updateObject($key,$input,$table,$mysqli) {
+	protected function updateObject($key,$input,$table,$db) {
 		if (!$input) return false;
-		$sql = "UPDATE `$table[0]` SET ";
+		$params = array();
+		$sql = 'UPDATE "?" SET ';
+		$params[] = $table[0];
 		foreach (array_keys((array)$input) as $i=>$k) {
-			if ($i) $sql .= ",";
+			if ($i) $sql .= ',';
 			$v = $input->$k;
-			$sql .= "`$k`='$v'";
+			$sql .= '"!"=?';
+			$params[] = $k;
+			$params[] = $v;
 		}
-		$sql .= " WHERE `$key[1]`='$key[0]'";
-		$mysqli->query($sql);
-		return $mysqli->affected_rows;
+		$sql .= ' WHERE "!"=?';
+		$params[] = $key[1];
+		$params[] = $key[0];
+		$this->query($db,$sql,$params);
+		return $this->affected_rows($db);
 	}
 
-	protected function deleteObject($key,$table,$mysqli) {
-		$mysqli->query("DELETE FROM `$table[0]` WHERE `$key[1]`='$key[0]'");
-		return $mysqli->affected_rows;
+	protected function deleteObject($key,$table,$db) {
+		$this->query($db,'DELETE FROM "!" WHERE "!" = ?',array($table[0],$key[1],$key[0]));
+		return $this->affected_rows($db);
 	}
 
-	protected function findRelations($action,$table,$database,$mysqli) {
+	protected function findRelations($tables,$database,$db) {
 		$collect = array();
 		$select = array();
-		if (count($table)>1) {
-			$table0 = array_shift($table);
-			$tables = implode("','",$table);
-			$result = $mysqli->query("SELECT
-								`TABLE_NAME`,`COLUMN_NAME`,
-								`REFERENCED_TABLE_NAME`,`REFERENCED_COLUMN_NAME`
+		if (count($tables)>1) {
+			$table0 = array_shift($tables);
+			
+			$result = $this->query($db,'SELECT
+								"TABLE_NAME","COLUMN_NAME",
+								"REFERENCED_TABLE_NAME","REFERENCED_COLUMN_NAME"
 							FROM
-								`INFORMATION_SCHEMA`.`KEY_COLUMN_USAGE`
+								"INFORMATION_SCHEMA"."KEY_COLUMN_USAGE"
 							WHERE
-								`TABLE_NAME` = '$table0' AND
-								`REFERENCED_TABLE_NAME` IN ('$tables') AND
-								`TABLE_SCHEMA` = '$database' AND
-								`REFERENCED_TABLE_SCHEMA` = '$database'");
-			while ($row = $result->fetch_row()) {
+								"TABLE_NAME" = ? AND
+								"REFERENCED_TABLE_NAME" IN ? AND
+								"TABLE_SCHEMA" = ? AND
+								"REFERENCED_TABLE_SCHEMA" = ?',
+							array($table0,$tables,$database,$database));
+			while ($row = $this->fetch_row($result)) {
 				$collect[$row[0]][$row[1]]=array();
 				$select[$row[2]][$row[3]]=array($row[0],$row[1]);
 			}
-			$result = $mysqli->query("SELECT
-								`TABLE_NAME`,`COLUMN_NAME`,
-								`REFERENCED_TABLE_NAME`,`REFERENCED_COLUMN_NAME`
+			$result = $this->query($db,'SELECT
+								"TABLE_NAME","COLUMN_NAME",
+								"REFERENCED_TABLE_NAME","REFERENCED_COLUMN_NAME"
 							FROM
-								`INFORMATION_SCHEMA`.`KEY_COLUMN_USAGE`
+								"INFORMATION_SCHEMA"."KEY_COLUMN_USAGE"
 							WHERE
-								`TABLE_NAME` IN ('$tables') AND
-								`REFERENCED_TABLE_NAME` = '$table0' AND
-								`TABLE_SCHEMA` = '$database' AND
-								`REFERENCED_TABLE_SCHEMA` = '$database'");
-			while ($row = $result->fetch_row()) {
+								"TABLE_NAME" IN ? AND
+								"REFERENCED_TABLE_NAME" = ? AND
+								"TABLE_SCHEMA" = ? AND
+								"REFERENCED_TABLE_SCHEMA" = ?',
+							array($tables,$table0,$database,$database));
+			while ($row = $this->fetch_row($result)) {
 				$collect[$row[2]][$row[3]]=array();
 				$select[$row[0]][$row[1]]=array($row[2],$row[3]);
 			}
-			$result = $mysqli->query("SELECT
-								k1.`TABLE_NAME`, k1.`COLUMN_NAME`,
-								k1.`REFERENCED_TABLE_NAME`, k1.`REFERENCED_COLUMN_NAME`,
-								k2.`TABLE_NAME`, k2.`COLUMN_NAME`,
-								k2.`REFERENCED_TABLE_NAME`, k2.`REFERENCED_COLUMN_NAME`
+			$result = $this->query($db,'SELECT
+								k1."TABLE_NAME", k1."COLUMN_NAME",
+								k1."REFERENCED_TABLE_NAME", k1."REFERENCED_COLUMN_NAME",
+								k2."TABLE_NAME", k2."COLUMN_NAME",
+								k2."REFERENCED_TABLE_NAME", k2."REFERENCED_COLUMN_NAME"
 							FROM
-								`INFORMATION_SCHEMA`.`KEY_COLUMN_USAGE` k1, `INFORMATION_SCHEMA`.`KEY_COLUMN_USAGE` k2
+								"INFORMATION_SCHEMA"."KEY_COLUMN_USAGE" k1, "INFORMATION_SCHEMA"."KEY_COLUMN_USAGE" k2
 							WHERE
-								k1.`TABLE_SCHEMA` = '$database' AND
-								k2.`TABLE_SCHEMA` = '$database' AND
-								k1.`REFERENCED_TABLE_SCHEMA` = '$database' AND
-								k2.`REFERENCED_TABLE_SCHEMA` = '$database' AND
-								k1.`TABLE_NAME` = k2.`TABLE_NAME` AND
-								k1.`REFERENCED_TABLE_NAME` = '$table0' AND
-								k2.`REFERENCED_TABLE_NAME` in ('$tables')");
-			while ($row = $result->fetch_row()) {
+								k1."TABLE_SCHEMA" = ? AND
+								k2."TABLE_SCHEMA" = ? AND
+								k1."REFERENCED_TABLE_SCHEMA" = ? AND
+								k2."REFERENCED_TABLE_SCHEMA" = ? AND
+								k1."TABLE_NAME" = k2."TABLE_NAME" AND
+								k1."REFERENCED_TABLE_NAME" = ? AND
+								k2."REFERENCED_TABLE_NAME" IN ?',
+							array($database,$database,$database,$database,$table0,$tables));
+			while ($row = $this->fetch_row($result)) {
 				$collect[$row[2]][$row[3]]=array();
 				$select[$row[0]][$row[1]]=array($row[2],$row[3]);
 				$collect[$row[4]][$row[5]]=array();
@@ -267,21 +317,21 @@ class MySQL_CRUD_API {
 		$order     = $this->parseGetParameter($get, 'order', 'a-zA-Z0-9\-_*,', false);
 		$transform = $this->parseGetParameter($get, 'transform', '1', false);
 
-		$table  = $this->processTableParameter($table,$database,$mysqli);
-		$key    = $this->processKeyParameter($key,$table,$database,$mysqli);
-		$filter = $this->processFilterParameter($filter,$match,$mysqli);
+		$table  = $this->processTableParameter($table,$database,$db);
+		$key    = $this->processKeyParameter($key,$table,$database,$db);
+		$filter = $this->processFilterParameter($filter,$match,$db);
 		$page   = $this->processPageParameter($page);
-		$order  = $this->processOrderParameter($order,$table,$database,$mysqli);
+		$order  = $this->processOrderParameter($order,$table,$database,$db);
 
 		$table  = $this->applyWhitelistAndBlacklist($table,$action,$whitelist,$blacklist);
 		if (empty($table)) $this->exitWith404('entity');
 
-		$object = $this->retrieveObject($key,$table,$mysqli);
+		$object = $this->retrieveObject($key,$table,$db);
 		$input  = json_decode(file_get_contents($post));
 
-		list($collect,$select) = $this->findRelations($action,$table,$database,$mysqli);
+		list($collect,$select) = $this->findRelations($table,$database,$db);
 
-		return compact('action','table','key','callback','page','filter','match','order','transform','mysqli','object','input','collect','select');
+		return compact('action','table','key','callback','page','filter','match','order','transform','db','object','input','collect','select');
 	}
 
 	protected function listCommand($parameters) {
@@ -293,28 +343,50 @@ class MySQL_CRUD_API {
 		// first table
 		$count = false;
 		echo '"'.$table.'":{';
-		if (is_array($page)) {
-			$sql = "SELECT COUNT(*) FROM `$table`";
-			if (is_array($filter)) $sql .= " WHERE `$filter[0]` $filter[2] $filter[1]";
-			if ($result = $mysqli->query($sql)) {
-				while ($pages = $result->fetch_row()) {
+		if (is_array($order) && is_array($page)) {
+			$params = array();
+			$sql = 'SELECT COUNT(*) FROM "!"';
+			$params[] = $table;
+			if (is_array($filter)) {
+				$sql .= ' WHERE "!" ! ?';
+				$params[] = $filter[0];
+				$params[] = $filter[2];
+				$params[] = $filter[1];
+			}
+			if ($result = $this->query($db,$sql,$params)) {
+				while ($pages = $this->fetch_row($result)) {
 					$count = $pages[0];
 				}
 			}
 		}
-		$sql = "SELECT * FROM `$table`";
-		if (is_array($filter)) $sql .= " WHERE `$filter[0]` $filter[2] $filter[1]";
-		if (is_array($order)) $sql .= " ORDER BY `$order[0]` $order[1]";
-		if (is_array($page)) $sql .= " LIMIT $page[1] OFFSET $page[0]";
-		if ($result = $mysqli->query($sql)) {
+		$params = array();
+		$sql = 'SELECT * FROM "!"';
+		$params[] = $table;
+		if (is_array($filter)) {
+			$sql .= ' WHERE "!" ! ?';
+			$params[] = $filter[0];
+			$params[] = $filter[2];
+			$params[] = $filter[1];
+		}
+		if (is_array($order)) {
+			$sql .= ' ORDER BY "!" !';
+			$params[] = $order[0];
+			$params[] = $order[1];
+		}
+		if (is_array($order) && is_array($page)) {
+			$sql .= ' LIMIT ! OFFSET !';
+			$params[] = $page[1];
+			$params[] = $page[0];
+		}
+		if ($result = $this->query($db,$sql,$params)) {
 			echo '"columns":';
 			$fields = array();
-			foreach ($result->fetch_fields() as $field) $fields[] = $field->name;
+			foreach ($this->fetch_fields($result) as $field) $fields[] = $field->name;
 			echo json_encode($fields);
 			$fields = array_flip($fields);
 			echo ',"records":[';
 			$first_row = true;
-			while ($row = $result->fetch_row()) {
+			while ($row = $this->fetch_row($result)) {
 				if ($first_row) $first_row = false;
 				else echo ',';
 				if (isset($collect[$table])) {
@@ -324,7 +396,7 @@ class MySQL_CRUD_API {
 				}
 				echo json_encode($row);
 			}
-			$result->close();
+			$this->close($result);
 			echo ']';
 		}
 		if ($count) echo ',"results":'.$count;
@@ -339,29 +411,33 @@ class MySQL_CRUD_API {
 		foreach ($tables as $t=>$table) {
 			echo ',';
 			echo '"'.$table.'":{';
-			$sql = "SELECT * FROM `$table`";
+			$params = array();
+			$sql = 'SELECT * FROM "!"';
+			$params[] = $table;
 			if (isset($select[$table])) {
 				$first_row = true;
 				echo '"relations":{';
 				foreach ($select[$table] as $field => $path) {
-					$values = implode("','",$collect[$path[0]][$path[1]]);
+					$values = $collect[$path[0]][$path[1]];
 					$sql .= $first_row?' WHERE ':' OR ';
-					$sql .= "`$field` IN ('$values')";
+					$sql .= '"!" IN ?';
+					$params[] = $field;
+					$params[] = $values;
 					if ($first_row) $first_row = false;
 					else echo ',';
 					echo '"'.$field.'":"'.implode('.',$path).'"';
 				}
 				echo '},';
 			}
-			if ($result = $mysqli->query($sql)) {
+			if ($result = $this->query($db,$sql,$params)) {
 				echo '"columns":';
 				$fields = array();
-				foreach ($result->fetch_fields() as $field) $fields[] = $field->name;
+				foreach ($this->fetch_fields($result) as $field) $fields[] = $field->name;
 				echo json_encode($fields);
 				$fields = array_flip($fields);
 				echo ',"records":[';
 				$first_row = true;
-				while ($row = $result->fetch_row()) {
+				while ($row = $this->fetch_row($result)) {
 					if ($first_row) $first_row = false;
 					else echo ',';
 					if (isset($collect[$table])) {
@@ -371,7 +447,7 @@ class MySQL_CRUD_API {
 					}
 					echo json_encode($row);
 				}
-				$result->close();
+				$this->close($result);
 				echo ']';
 			}
 			echo '}';
@@ -392,7 +468,7 @@ class MySQL_CRUD_API {
 		extract($parameters);
 		if (!$input) $this->exitWith404('input');
 		$this->startOutput($callback);
-		echo json_encode($this->createObject($input,$table,$mysqli));
+		echo json_encode($this->createObject($input,$table,$db));
 		$this->endOutput($callback);
 	}
 
@@ -400,14 +476,14 @@ class MySQL_CRUD_API {
 		extract($parameters);
 		if (!$input) $this->exitWith404('subject');
 		$this->startOutput($callback);
-		echo json_encode($this->updateObject($key,$input,$table,$mysqli));
+		echo json_encode($this->updateObject($key,$input,$table,$db));
 		$this->endOutput($callback);
 	}
 
 	protected function deleteCommand($parameters) {
 		extract($parameters);
 		$this->startOutput($callback);
-		echo json_encode($this->deleteObject($key,$table,$mysqli));
+		echo json_encode($this->deleteObject($key,$table,$db));
 		$this->endOutput($callback);
 	}
 
@@ -438,7 +514,7 @@ class MySQL_CRUD_API {
 		$whitelist = isset($whitelist)?$whitelist:false;
 		$blacklist = isset($blacklist)?$blacklist:false;
 
-		$mysqli = isset($mysqli)?$mysqli:null;
+		$db = isset($db)?$db:null;
 		$method = isset($method)?$method:$_SERVER['REQUEST_METHOD'];
 		$request = isset($request)?$request:isset($_SERVER['PATH_INFO'])?$_SERVER['PATH_INFO']:'';
 		$get = isset($get)?$get:$_GET;
@@ -446,11 +522,11 @@ class MySQL_CRUD_API {
 
 		$request = explode('/', trim($request,'/'));
 
-		if (!$mysqli) {
-			$mysqli = $this->connectDatabase($hostname,$username,$password,$database,$port,$socket,$charset);
+		if (!$db) {
+			$db = $this->connectDatabase($hostname,$username,$password,$database,$port,$socket,$charset);
 		}
 
-		$this->config = compact('method', 'request', 'get', 'post', 'database', 'whitelist', 'blacklist', 'mysqli');
+		$this->config = compact('method', 'request', 'get', 'post', 'database', 'whitelist', 'blacklist', 'db');
 	}
 
 	public static function mysql_crud_api_transform(&$tables) {
@@ -481,6 +557,9 @@ class MySQL_CRUD_API {
 		foreach ($tables as $name=>$table) {
 			if (!isset($table['relations'])) {
 				$tree[$name] = $get_objects($tables,$name);
+				if (isset($table['results'])) {
+					$tree['_results'] = $table['results'];
+				}
 			}
 		}
 		return $tree;
