@@ -3,9 +3,9 @@
 class MySQL_CRUD_API extends REST_CRUD_API {
 
 	protected $queries = array(
-		'find_table'=>'SELECT "TABLE_NAME" FROM "INFORMATION_SCHEMA"."TABLES" WHERE "TABLE_NAME" LIKE ? AND "TABLE_SCHEMA" = ?',
-		'find_pk'=>'SELECT "COLUMN_NAME" FROM "INFORMATION_SCHEMA"."COLUMNS" WHERE "COLUMN_KEY" = \'PRI\' AND "TABLE_NAME" = ? AND "TABLE_SCHEMA" = ?',
-		'find_belongs_to'=>'SELECT
+		'reflect_table'=>'SELECT "TABLE_NAME" FROM "INFORMATION_SCHEMA"."TABLES" WHERE "TABLE_NAME" LIKE ? AND "TABLE_SCHEMA" = ?',
+		'reflect_pk'=>'SELECT "COLUMN_NAME" FROM "INFORMATION_SCHEMA"."COLUMNS" WHERE "COLUMN_KEY" = \'PRI\' AND "TABLE_NAME" = ? AND "TABLE_SCHEMA" = ?',
+		'reflect_belongs_to'=>'SELECT
 				"TABLE_NAME","COLUMN_NAME",
 				"REFERENCED_TABLE_NAME","REFERENCED_COLUMN_NAME"
 			FROM
@@ -15,7 +15,7 @@ class MySQL_CRUD_API extends REST_CRUD_API {
 				"REFERENCED_TABLE_NAME" IN ? AND
 				"TABLE_SCHEMA" = ? AND
 				"REFERENCED_TABLE_SCHEMA" = ?',
-		'find_has_many'=>'SELECT
+		'reflect_has_many'=>'SELECT
 				"TABLE_NAME","COLUMN_NAME",
 				"REFERENCED_TABLE_NAME","REFERENCED_COLUMN_NAME"
 			FROM
@@ -25,7 +25,7 @@ class MySQL_CRUD_API extends REST_CRUD_API {
 				"REFERENCED_TABLE_NAME" = ? AND
 				"TABLE_SCHEMA" = ? AND
 				"REFERENCED_TABLE_SCHEMA" = ?',
-		'find_habtm'=>'SELECT
+		'reflect_habtm'=>'SELECT
 				k1."TABLE_NAME", k1."COLUMN_NAME",
 				k1."REFERENCED_TABLE_NAME", k1."REFERENCED_COLUMN_NAME",
 				k2."TABLE_NAME", k2."COLUMN_NAME",
@@ -93,6 +93,10 @@ class MySQL_CRUD_API extends REST_CRUD_API {
 		return mysqli_fetch_fields($result);
 	}
 	
+	protected function add_limit_to_sql($sql,$limit,$offset) {
+		return "$sql LIMIT $limit OFFSET $offset";
+	}
+
 }
 
 class REST_CRUD_API {
@@ -146,7 +150,7 @@ class REST_CRUD_API {
 		$tables = array();
 		foreach ($tablelist as $table) {
 			$table = str_replace('*','%',$table);
-			if ($result = $this->query($db,$this->queries['find_table'],array($table,$database))) {
+			if ($result = $this->query($db,$this->queries['reflect_table'],array($table,$database))) {
 				while ($row = $this->fetch_row($result)) $tables[] = $row[0];
 				$this->close($result);
 			}
@@ -156,7 +160,7 @@ class REST_CRUD_API {
 
 	protected function findSinglePrimaryKey($table,$database,$db) {
 		$keys = array();
-		if ($result = $this->query($db,$this->queries['find_pk'],array($table[0],$database))) {
+		if ($result = $this->query($db,$this->queries['reflect_pk'],array($table[0],$database))) {
 			while ($row = $this->fetch_row($result)) $keys[] = $row[0];
 			$this->close($result);
 		}
@@ -289,17 +293,17 @@ class REST_CRUD_API {
 		if (count($tables)>1) {
 			$table0 = array_shift($tables);
 			
-			$result = $this->query($db,$this->queries['find_belongs_to'],array($table0,$tables,$database,$database));
+			$result = $this->query($db,$this->queries['reflect_belongs_to'],array($table0,$tables,$database,$database));
 			while ($row = $this->fetch_row($result)) {
 				$collect[$row[0]][$row[1]]=array();
 				$select[$row[2]][$row[3]]=array($row[0],$row[1]);
 			}
-			$result = $this->query($db,$this->queries['find_has_many'],array($tables,$table0,$database,$database));
+			$result = $this->query($db,$this->queries['reflect_has_many'],array($tables,$table0,$database,$database));
 			while ($row = $this->fetch_row($result)) {
 				$collect[$row[2]][$row[3]]=array();
 				$select[$row[0]][$row[1]]=array($row[2],$row[3]);
 			}
-			$result = $this->query($db,$this->queries['find_habtm'],array($database,$database,$database,$database,$table0,$tables));
+			$result = $this->query($db,$this->queries['reflect_habtm'],array($database,$database,$database,$database,$table0,$tables));
 			while ($row = $this->fetch_row($result)) {
 				$collect[$row[2]][$row[3]]=array();
 				$select[$row[0]][$row[1]]=array($row[2],$row[3]);
@@ -379,9 +383,7 @@ class REST_CRUD_API {
 			$params[] = $order[1];
 		}
 		if (is_array($order) && is_array($page)) {
-			$sql .= ' LIMIT ! OFFSET !';
-			$params[] = $page[1];
-			$params[] = $page[0];
+			$sql = $this->add_limit_to_sql($sql,$page[1],$page[0]);
 		}
 		if ($result = $this->query($db,$sql,$params)) {
 			echo '"columns":';
