@@ -107,21 +107,6 @@ Output:
 {"categories":[{"id":"1","name":"Internet"},{"id":"3","name":"Web development"}]}
 ```
 
-### List + Pagination
-
-The "page" parameter holds the requested page. The default page size is 20, but can be adjusted (e.g. to 50):
-
-```
-GET http://localhost/api.php/categories?page=1
-GET http://localhost/api.php/categories?page=1,50
-```
-
-Output:
-
-```
-{"categories":{"columns":["id","name"],"records":[["1","Internet"],["3","Web development"]],"results":2}}
-```
-
 ### List + Filter
 
 Search is implemented with the "filter" parameter. You need to specify the column name, a colon and the value you want to filter on. The filter match type is "exact" by default, but can easily be adjusted. These are supported:
@@ -162,6 +147,23 @@ Output:
 ```
 {"categories":{"columns":["id","name"],"records":[["3","Web development"],["1","Internet"]]}}
 ```
+
+### List + Order + Pagination
+
+The "page" parameter holds the requested page. The default page size is 20, but can be adjusted (e.g. to 50):
+
+```
+GET http://localhost/api.php/categories?order=id&page=1
+GET http://localhost/api.php/categories?order=id&page=1,50
+```
+
+Output:
+
+```
+{"categories":{"columns":["id","name"],"records":[["1","Internet"],["3","Web development"]],"results":2}}
+```
+
+NB: Pages that are not ordered cannot be paginated. 
 
 ### Create
 
