@@ -79,7 +79,6 @@ For the alternative SQLSRV_CRUD_API class the following mapping applies:
  - username = UID
  - password = PWD
  - database = Database
-
  - hostname = Server
  - port = Server(,port)
  - socket = (not supported)
