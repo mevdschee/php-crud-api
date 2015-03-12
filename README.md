@@ -80,7 +80,7 @@ For the alternative SQLSRV_CRUD_API class the following mapping applies:
  - password = PWD
  - database = Database
  - hostname = Server
- - port = Server(,port)
+ - port = (Server),port
  - socket = (not supported)
  - charset = CharacterSet
 
