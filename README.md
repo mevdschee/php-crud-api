@@ -387,8 +387,7 @@ You can call the ```mysql_crud_api_tranform()``` function to structure the data 
             ],
             "content": "blog started"
         }
-    ],
-    "_results": 1
+    ]
 }
 ```
 
