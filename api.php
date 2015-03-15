@@ -42,8 +42,8 @@ class MySQL_CRUD_API extends REST_CRUD_API {
 				k2."REFERENCED_TABLE_NAME" IN ?'
 	);
 	
-	protected function connectDatabase($hostname,$username,$password,$database,$port,$socket,$charset) {
-		$db = mysqli_connect($hostname,$username,$password,$database,$port,$socket);
+	protected function connectDatabase($hostname,$username,$password,$port,$socket,$charset) {
+		$db = mysqli_connect($hostname,$username,$password,false,$port,$socket);
 		if (mysqli_connect_errno()) {
 			throw new \Exception('Connect failed. '.mysqli_connect_error());
 		}
@@ -141,10 +141,9 @@ class SQLSRV_CRUD_API extends REST_CRUD_API {
 				k2."REFERENCED_TABLE_NAME" IN ?'
 	);
 
-	protected function connectDatabase($hostname,$username,$password,$database,$port,$socket,$charset) {
+	protected function connectDatabase($hostname,$username,$password,$port,$socket,$charset) {
 		$connectionInfo = array();
 		if ($port) $hostname.=','.$port;
-		if ($database) $connectionInfo['Database']=$database;
 		if ($username) $connectionInfo['UID']=$username;
 		if ($password) $connectionInfo['PWD']=$password;
 		if ($charset) $connectionInfo['CharacterSet']=$charset;
@@ -218,9 +217,9 @@ class REST_CRUD_API {
 
 	protected $config;
 
-	protected function mapMethodToAction($method,$request) {
+	protected function mapMethodToAction($method,$key) {
 		switch ($method) {
-			case 'GET': return count($request)>1?'read':'list';
+			case 'GET': return $key?'read':'list';
 			case 'PUT': return 'update';
 			case 'POST': return 'create';
 			case 'DELETE': return 'delete';
@@ -238,29 +237,25 @@ class REST_CRUD_API {
 		return $characters?preg_replace("/[^$characters]/",'',$value):$value;
 	}
 
-	protected function applyWhitelist($table,$action,$list) {
-		if ($list===false) return $table;
-		$list = array_filter($list, function($actions) use ($action) {
-			return strpos($actions,$action[0])!==false;
-		});
-		return array_intersect($table, array_keys($list));
+	protected function applyPermissions($database, $tables, $action, $permissions, $multidb) {
+		if (in_array(strtolower($database), array('information_schema','mysql','sys'))) return array();
+		$results = array();
+		$permissions = array_change_key_case($permissions,CASE_LOWER);
+		foreach ($tables as $table) {
+			$result = false;
+			$options = $multidb?array("*.*","$database.*","$database.$table"):array("*","$table");
+			$options = array_map('strtolower', $options);
+			foreach ($options as $option) {
+				if (isset($permissions[$option])) {
+					$result = strpos($permissions[$option],$action[0])!==false;
+				}
+			}
+			if ($result) $results[] = $table;				
+		} 
+		return $results;
 	}
 
-	protected function applyBlacklist($table,$action,$list) {
-		if ($list===false) return $table;
-		$list = array_filter($list, function($actions) use ($action) {
-			return strpos($actions,$action[0])!==false;
-		});
-		return array_diff($table, array_keys($list));
-	}
-
-	protected function applyWhitelistAndBlacklist($table, $action, $whitelist, $blacklist) {
-		$table = $this->applyWhitelist($table, $action, $whitelist);
-		$table = $this->applyBlacklist($table, $action, $blacklist);
-		return $table;
-	}
-
-	protected function processTableParameter($table,$database,$db) {
+	protected function processTableParameter($database,$table,$db) {
 		$tablelist = explode(',',$table);
 		$tables = array();
 		foreach ($tablelist as $table) {
@@ -359,29 +354,31 @@ class REST_CRUD_API {
 		return $page;
 	}
 
-	protected function retrieveObject($key,$table,$db) {
+	protected function retrieveObject($key,$table,$database,$db) {
 		if (!$key) return false;
-		if ($result = $this->query($db,'SELECT * FROM "!" WHERE "!" = ?',array($table[0],$key[1],$key[0]))) {
+		if ($result = $this->query($db,'SELECT * FROM "!"."!" WHERE "!" = ?',array($database,$table[0],$key[1],$key[0]))) {
 			$object = $this->fetch_assoc($result);
 			$this->close($result);
 		}
 		return $object;
 	}
 
-	protected function createObject($input,$table,$db) {
+	protected function createObject($input,$table,$database,$db) {
 		if (!$input) return false;
 		$keys = implode('","',split('', str_repeat('!', count($input))));
 		$values = implode(',',split('', str_repeat('?', count($input))));
 		$params = array_merge(array_keys((array)$input),array_values((array)$input));
 		array_unshift($params, $table[0]);
-		$result = $this->query($db,'INSERT INTO "!" ("'.$keys.'") VALUES ('.$values.')',$params);
+		array_unshift($params, $database);
+		$result = $this->query($db,'INSERT INTO "!"."!" ("'.$keys.'") VALUES ('.$values.')',$params);
 		return $this->insert_id($db,$result);
 	}
 
-	protected function updateObject($key,$input,$table,$db) {
+	protected function updateObject($key,$input,$table,$database,$db) {
 		if (!$input) return false;
 		$params = array();
-		$sql = 'UPDATE "?" SET ';
+		$sql = 'UPDATE "!"."!" SET ';
+		$params[] = $database;
 		$params[] = $table[0];
 		foreach (array_keys((array)$input) as $i=>$k) {
 			if ($i) $sql .= ',';
@@ -397,8 +394,8 @@ class REST_CRUD_API {
 		return $this->affected_rows($db, $result);
 	}
 
-	protected function deleteObject($key,$table,$db) {
-		$result = $this->query($db,'DELETE FROM "!" WHERE "!" = ?',array($table[0],$key[1],$key[0]));
+	protected function deleteObject($key,$table,$database,$db) {
+		$result = $this->query($db,'DELETE FROM "!"."!" WHERE "!" = ?',array($database,$table[0],$key[1],$key[0]));
 		return $this->affected_rows($db, $result);
 	}
 
@@ -431,9 +428,16 @@ class REST_CRUD_API {
 
 	protected function getParameters($config) {
 		extract($config);
-		$action    = $this->mapMethodToAction($method, $request);
-		$table     = $this->parseRequestParameter($request, 0, 'a-zA-Z0-9\-_*,', '*');
-		$key       = $this->parseRequestParameter($request, 1, 'a-zA-Z0-9\-,', false); // auto-increment or uuid
+		$multidb   = !$database;		
+		if ($multidb) {
+			$database  = $this->parseRequestParameter($request, 0, 'a-zA-Z0-9\-_,', false);
+			$table     = $this->parseRequestParameter($request, 1, 'a-zA-Z0-9\-_*,', false);
+			$key       = $this->parseRequestParameter($request, 2, 'a-zA-Z0-9\-,', false); // auto-increment or uuid
+		} else {
+			$table     = $this->parseRequestParameter($request, 0, 'a-zA-Z0-9\-_*,', false);
+			$key       = $this->parseRequestParameter($request, 1, 'a-zA-Z0-9\-,', false); // auto-increment or uuid
+		}
+		$action    = $this->mapMethodToAction($method,$key);
 		$callback  = $this->parseGetParameter($get, 'callback', 'a-zA-Z0-9\-_', false);
 		$page      = $this->parseGetParameter($get, 'page', '0-9,', false);
 		$filter    = $this->parseGetParameter($get, 'filter', false, false);
@@ -441,21 +445,21 @@ class REST_CRUD_API {
 		$order     = $this->parseGetParameter($get, 'order', 'a-zA-Z0-9\-_*,', false);
 		$transform = $this->parseGetParameter($get, 'transform', '1', false);
 
-		$table  = $this->processTableParameter($table,$database,$db);
-		$key    = $this->processKeyParameter($key,$table,$database,$db);
-		$filter = $this->processFilterParameter($filter,$match,$db);
-		$page   = $this->processPageParameter($page);
-		$order  = $this->processOrderParameter($order,$table,$database,$db);
+		$table    = $this->processTableParameter($database,$table,$db);
+		$key      = $this->processKeyParameter($key,$table,$database,$db);
+		$filter   = $this->processFilterParameter($filter,$match,$db);
+		$page     = $this->processPageParameter($page);
+		$order    = $this->processOrderParameter($order,$table,$database,$db);
 
-		$table  = $this->applyWhitelistAndBlacklist($table,$action,$whitelist,$blacklist);
+		$table  = $this->applyPermissions($database,$table,$action,$permissions,$multidb);
 		if (empty($table)) $this->exitWith404('entity');
-
-		$object = $this->retrieveObject($key,$table,$db);
+		
+		$object = $this->retrieveObject($key,$table,$database,$db);
 		$input  = json_decode(file_get_contents($post));
 
 		list($collect,$select) = $this->findRelations($table,$database,$db);
 
-		return compact('action','table','key','callback','page','filter','match','order','transform','db','object','input','collect','select');
+		return compact('action','database','table','key','callback','page','filter','match','order','transform','db','object','input','collect','select');
 	}
 
 	protected function listCommand($parameters) {
@@ -469,7 +473,8 @@ class REST_CRUD_API {
 		echo '"'.$table.'":{';
 		if (is_array($order) && is_array($page)) {
 			$params = array();
-			$sql = 'SELECT COUNT(*) FROM "!"';
+			$sql = 'SELECT COUNT(*) FROM "!"."!"';
+			$params[] = $database;
 			$params[] = $table;
 			if (is_array($filter)) {
 				$sql .= ' WHERE "!" ! ?';
@@ -484,7 +489,8 @@ class REST_CRUD_API {
 			}
 		}
 		$params = array();
-		$sql = 'SELECT * FROM "!"';
+		$sql = 'SELECT * FROM "!"."!"';
+		$params[] = $database;
 		$params[] = $table;
 		if (is_array($filter)) {
 			$sql .= ' WHERE "!" ! ?';
@@ -534,7 +540,8 @@ class REST_CRUD_API {
 			echo ',';
 			echo '"'.$table.'":{';
 			$params = array();
-			$sql = 'SELECT * FROM "!"';
+			$sql = 'SELECT * FROM "!"."!"';
+			$params[] = $database;
 			$params[] = $table;
 			if (isset($select[$table])) {
 				$first_row = true;
@@ -628,14 +635,13 @@ class REST_CRUD_API {
 		$hostname = isset($hostname)?$hostname:null;
 		$username = isset($username)?$username:'root';
 		$password = isset($password)?$password:null;
-		$database = isset($database)?$database:'';
+		$database = isset($database)?$database:false;
 		$port = isset($port)?$port:null;
 		$socket = isset($socket)?$socket:null;
 		$charset = isset($charset)?$charset:'utf8';
 
-		$whitelist = isset($whitelist)?$whitelist:false;
-		$blacklist = isset($blacklist)?$blacklist:false;
-
+		$permissions = isset($permissions)?$permissions:array('*'=>'crudl');
+		
 		$db = isset($db)?$db:null;
 		$method = isset($method)?$method:$_SERVER['REQUEST_METHOD'];
 		$request = isset($request)?$request:(isset($_SERVER['PATH_INFO'])?$_SERVER['PATH_INFO']:'');
@@ -645,10 +651,10 @@ class REST_CRUD_API {
 		$request = explode('/', trim($request,'/'));
 
 		if (!$db) {
-			$db = $this->connectDatabase($hostname,$username,$password,$database,$port,$socket,$charset);
+			$db = $this->connectDatabase($hostname,$username,$password,$port,$socket,$charset);
 		}
 
-		$this->config = compact('method', 'request', 'get', 'post', 'database', 'whitelist', 'blacklist', 'db');
+		$this->config = compact('method', 'request', 'get', 'post', 'database', 'permissions', 'db');
 	}
 
 	public static function mysql_crud_api_transform(&$tables) {

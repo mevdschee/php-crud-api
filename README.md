@@ -14,11 +14,10 @@ This is a single file application! Upload "api.php" somewhere and enjoy!
 
   - Authentication or authorization is not included
   - Validation on API input is not included
-  - Only a single database is supported
 
 ## TODO
 
-  - Add column whitelisting and blacklisting
+  - Add column permission system
   - Add created_at and modified_at support
   - Add basic authentication support
   - Add user_id and group_id support (multi-tenant)
@@ -30,7 +29,7 @@ This is a single file application! Upload "api.php" somewhere and enjoy!
   - Very little code, easy to adapt and maintain
   - Streaming data, low memory footprint
   - Condensed JSON: first row contains field names
-  - Blacklist support for tables (and columns, todo)
+  - Permission system for databases and tables
   - JSONP support for cross-domain requests
   - Combined requests with support for multiple table names
   - Pagination, sorting and search support
@@ -56,9 +55,8 @@ These are all the configuration options and their default values:
 $api = new MySQL_CRUD_API(array(
 	'username=>'root'
 	'password=>null,
-	'database=>'',
-	'whitelist=>false,
-	'blacklist=>false,
+	'database=>false,
+	'permissions'=>array('*'=>'crudl'),
 // for connectivity (defaults to localhost):
 	'hostname'=>null,
 	'port=>null,
@@ -404,6 +402,21 @@ You can call the ```mysql_crud_api_tranform()``` function to structure the data 
 
 This transform function is available for PHP and JavaScript in the files ```mysql_crud_api_tranform.php``` and ```mysql_crud_api_tranform.js```.
 
+## Permissions
+
+By default a single database is exposed with all it's tables in read-write mode. You can change the permissions by specifying in the
+'permissions' configuration parameter. This array contains the permissions that are applied. The star character can be used as a wildcard
+for a full table or database name. Permissions with more specific keys override the values of permissions that contain one or more wildcards.
+The letters 'crudl' in the permission value are the first letters of the 'create','read','update','delete','list' operations.
+Specifying such a letters in the permission value means that the corresponding operation is permitted, while leaving it out, 
+means that the operation is not permitted. 
+
+## Multi-Database
+
+The code also supports multi-database API's. These have URLs where the first segment in the path is the database and not the table name.
+This can be enabled by NOT specifying a database in the configuration. Also the permissions in the configuration should contain a dot
+character to seperate the database from the table name. The databases 'mysql', 'information_schema' and 'sys' are automatically blocked.
+ 
 ## Errors
 
 The following types of 404 'Not found' errors may be reported:
