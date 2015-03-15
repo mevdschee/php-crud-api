@@ -96,6 +96,10 @@ class MySQL_CRUD_API extends REST_CRUD_API {
 	protected function add_limit_to_sql($sql,$limit,$offset) {
 		return "$sql LIMIT $limit OFFSET $offset";
 	}
+	
+	protected function is_binary_type($type) {
+		return ($type>=249 && $type<=252);
+	}
 
 }
 
@@ -209,6 +213,10 @@ class SQLSRV_CRUD_API extends REST_CRUD_API {
 
 	protected function add_limit_to_sql($sql,$limit,$offset) {
 		return "$sql OFFSET $offset ROWS FETCH NEXT $limit ROWS ONLY";
+	}
+	
+	protected function is_binary_type($type) {
+		return ($type>=-4 && $type<=-2);
 	}
 
 }
@@ -509,7 +517,11 @@ class REST_CRUD_API {
 		if ($result = $this->query($db,$sql,$params)) {
 			echo '"columns":';
 			$fields = array();
-			foreach ($this->fetch_fields($result) as $field) $fields[] = $field->name;
+			$base64 = array();
+			foreach ($this->fetch_fields($result) as $field) {
+				$base64[] = $this->is_binary_type($field->type);
+				$fields[] = $field->name;
+			}
 			echo json_encode($fields);
 			$fields = array_flip($fields);
 			echo ',"records":[';
@@ -520,6 +532,11 @@ class REST_CRUD_API {
 				if (isset($collect[$table])) {
 					foreach (array_keys($collect[$table]) as $field) {
 						$collect[$table][$field][] = $row[$fields[$field]];
+					}
+				}
+				foreach ($base64 as $k=>$v) {
+					if ($v) {
+						$row[$k] = base64_encode($row[$k]);
 					}
 				}
 				echo json_encode($row);
@@ -561,7 +578,11 @@ class REST_CRUD_API {
 			if ($result = $this->query($db,$sql,$params)) {
 				echo '"columns":';
 				$fields = array();
-				foreach ($this->fetch_fields($result) as $field) $fields[] = $field->name;
+				$base64 = array();
+				foreach ($this->fetch_fields($result) as $field) {
+					$base64[] = $this->is_binary_type($field->type);
+					$fields[] = $field->name;
+				}
 				echo json_encode($fields);
 				$fields = array_flip($fields);
 				echo ',"records":[';
@@ -572,6 +593,11 @@ class REST_CRUD_API {
 					if (isset($collect[$table])) {
 						foreach (array_keys($collect[$table]) as $field) {
 							$collect[$table][$field][]=$row[$fields[$field]];
+						}
+					}
+					foreach ($base64 as $k=>$v) {
+						if ($v) {
+							$row[$k] = base64_encode($row[$k]);
 						}
 					}
 					echo json_encode($row);
