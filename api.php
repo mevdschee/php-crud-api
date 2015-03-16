@@ -42,8 +42,8 @@ class MySQL_CRUD_API extends REST_CRUD_API {
 				k2."REFERENCED_TABLE_NAME" IN ?'
 	);
 	
-	protected function connectDatabase($hostname,$username,$password,$port,$socket,$charset) {
-		$db = mysqli_connect($hostname,$username,$password,false,$port,$socket);
+	protected function connectDatabase($hostname,$username,$password,$database,$port,$socket,$charset) {
+		$db = mysqli_connect($hostname,$username,$password,$database,$port,$socket);
 		if (mysqli_connect_errno()) {
 			throw new \Exception('Connect failed. '.mysqli_connect_error());
 		}
@@ -97,8 +97,8 @@ class MySQL_CRUD_API extends REST_CRUD_API {
 		return "$sql LIMIT $limit OFFSET $offset";
 	}
 	
-	protected function is_binary_type($type) {
-		return ($type>=249 && $type<=252);
+	protected function is_binary_type($field) {
+		return ($field->flags & 128);
 	}
 
 }
@@ -145,11 +145,12 @@ class SQLSRV_CRUD_API extends REST_CRUD_API {
 				k2."REFERENCED_TABLE_NAME" IN ?'
 	);
 
-	protected function connectDatabase($hostname,$username,$password,$port,$socket,$charset) {
+	protected function connectDatabase($hostname,$username,$password,$database,$port,$socket,$charset) {
 		$connectionInfo = array();
 		if ($port) $hostname.=','.$port;
 		if ($username) $connectionInfo['UID']=$username;
 		if ($password) $connectionInfo['PWD']=$password;
+		if ($database) $connectionInfo['Database']=$database;
 		if ($charset) $connectionInfo['CharacterSet']=$charset;
 		$connectionInfo['QuotedId']=1;
 
@@ -215,8 +216,8 @@ class SQLSRV_CRUD_API extends REST_CRUD_API {
 		return "$sql OFFSET $offset ROWS FETCH NEXT $limit ROWS ONLY";
 	}
 	
-	protected function is_binary_type($type) {
-		return ($type>=-4 && $type<=-2);
+	protected function is_binary_type($field) {
+		return ($field->type>=-4 && $field->type<=-2);
 	}
 
 }
@@ -235,8 +236,9 @@ class REST_CRUD_API {
 		}
 	}
 
-	protected function parseRequestParameter($request,$position,$characters,$default) {
-		$value = isset($request[$position])?$request[$position]:$default;
+	protected function parseRequestParameter(&$request,$characters,$default) {
+		if (!count($request)) return $default;
+		$value = array_shift($request);
 		return $characters?preg_replace("/[^$characters]/",'',$value):$value;
 	}
 
@@ -362,30 +364,29 @@ class REST_CRUD_API {
 		return $page;
 	}
 
-	protected function retrieveObject($key,$table,$database,$db) {
+	protected function retrieveObject($key,$table,$db) {
 		if (!$key) return false;
-		if ($result = $this->query($db,'SELECT * FROM "!"."!" WHERE "!" = ?',array($database,$table[0],$key[1],$key[0]))) {
+		if ($result = $this->query($db,'SELECT * FROM "!" WHERE "!" = ?',array($table[0],$key[1],$key[0]))) {
 			$object = $this->fetch_assoc($result);
 			$this->close($result);
 		}
 		return $object;
 	}
 
-	protected function createObject($input,$table,$database,$db) {
+	protected function createObject($input,$table,$db) {
 		if (!$input) return false;
 		$keys = implode('","',split('', str_repeat('!', count($input))));
 		$values = implode(',',split('', str_repeat('?', count($input))));
 		$params = array_merge(array_keys((array)$input),array_values((array)$input));
 		array_unshift($params, $table[0]);
-		array_unshift($params, $database);
-		$result = $this->query($db,'INSERT INTO "!"."!" ("'.$keys.'") VALUES ('.$values.')',$params);
+		$result = $this->query($db,'INSERT INTO "!" ("'.$keys.'") VALUES ('.$values.')',$params);
 		return $this->insert_id($db,$result);
 	}
 
-	protected function updateObject($key,$input,$table,$database,$db) {
+	protected function updateObject($key,$input,$table,$db) {
 		if (!$input) return false;
 		$params = array();
-		$sql = 'UPDATE "!"."!" SET ';
+		$sql = 'UPDATE "!" SET ';
 		$params[] = $database;
 		$params[] = $table[0];
 		foreach (array_keys((array)$input) as $i=>$k) {
@@ -402,8 +403,8 @@ class REST_CRUD_API {
 		return $this->affected_rows($db, $result);
 	}
 
-	protected function deleteObject($key,$table,$database,$db) {
-		$result = $this->query($db,'DELETE FROM "!"."!" WHERE "!" = ?',array($database,$table[0],$key[1],$key[0]));
+	protected function deleteObject($key,$table,$db) {
+		$result = $this->query($db,'DELETE FROM "!" WHERE "!" = ?',array($table[0],$key[1],$key[0]));
 		return $this->affected_rows($db, $result);
 	}
 
@@ -436,15 +437,8 @@ class REST_CRUD_API {
 
 	protected function getParameters($config) {
 		extract($config);
-		$multidb   = !$database;		
-		if ($multidb) {
-			$database  = $this->parseRequestParameter($request, 0, 'a-zA-Z0-9\-_,', false);
-			$table     = $this->parseRequestParameter($request, 1, 'a-zA-Z0-9\-_*,', false);
-			$key       = $this->parseRequestParameter($request, 2, 'a-zA-Z0-9\-,', false); // auto-increment or uuid
-		} else {
-			$table     = $this->parseRequestParameter($request, 0, 'a-zA-Z0-9\-_*,', false);
-			$key       = $this->parseRequestParameter($request, 1, 'a-zA-Z0-9\-,', false); // auto-increment or uuid
-		}
+		$table     = $this->parseRequestParameter($request, 'a-zA-Z0-9\-_*,', false);
+		$key       = $this->parseRequestParameter($request, 'a-zA-Z0-9\-,', false); // auto-increment or uuid
 		$action    = $this->mapMethodToAction($method,$key);
 		$callback  = $this->parseGetParameter($get, 'callback', 'a-zA-Z0-9\-_', false);
 		$page      = $this->parseGetParameter($get, 'page', '0-9,', false);
@@ -481,8 +475,7 @@ class REST_CRUD_API {
 		echo '"'.$table.'":{';
 		if (is_array($order) && is_array($page)) {
 			$params = array();
-			$sql = 'SELECT COUNT(*) FROM "!"."!"';
-			$params[] = $database;
+			$sql = 'SELECT COUNT(*) FROM "!"';
 			$params[] = $table;
 			if (is_array($filter)) {
 				$sql .= ' WHERE "!" ! ?';
@@ -497,8 +490,7 @@ class REST_CRUD_API {
 			}
 		}
 		$params = array();
-		$sql = 'SELECT * FROM "!"."!"';
-		$params[] = $database;
+		$sql = 'SELECT * FROM "!"';
 		$params[] = $table;
 		if (is_array($filter)) {
 			$sql .= ' WHERE "!" ! ?';
@@ -519,7 +511,7 @@ class REST_CRUD_API {
 			$fields = array();
 			$base64 = array();
 			foreach ($this->fetch_fields($result) as $field) {
-				$base64[] = $this->is_binary_type($field->type);
+				$base64[] = $this->is_binary_type($field);
 				$fields[] = $field->name;
 			}
 			echo json_encode($fields);
@@ -557,8 +549,7 @@ class REST_CRUD_API {
 			echo ',';
 			echo '"'.$table.'":{';
 			$params = array();
-			$sql = 'SELECT * FROM "!"."!"';
-			$params[] = $database;
+			$sql = 'SELECT * FROM "!"';
 			$params[] = $table;
 			if (isset($select[$table])) {
 				$first_row = true;
@@ -580,7 +571,7 @@ class REST_CRUD_API {
 				$fields = array();
 				$base64 = array();
 				foreach ($this->fetch_fields($result) as $field) {
-					$base64[] = $this->is_binary_type($field->type);
+					$base64[] = $this->is_binary_type($field);
 					$fields[] = $field->name;
 				}
 				echo json_encode($fields);
@@ -676,11 +667,15 @@ class REST_CRUD_API {
 
 		$request = explode('/', trim($request,'/'));
 
+		$multidb   = !$database;
+		if ($multidb) {
+			$database  = $this->parseRequestParameter($request, 'a-zA-Z0-9\-_,', false);
+		}
 		if (!$db) {
-			$db = $this->connectDatabase($hostname,$username,$password,$port,$socket,$charset);
+			$db = $this->connectDatabase($hostname,$username,$password,$database,$port,$socket,$charset);
 		}
 
-		$this->config = compact('method', 'request', 'get', 'post', 'database', 'permissions', 'db');
+		$this->config = compact('method', 'request', 'get', 'post', 'multidb', 'database', 'permissions', 'db');
 	}
 
 	public static function mysql_crud_api_transform(&$tables) {
@@ -724,9 +719,9 @@ class REST_CRUD_API {
 		switch($parameters['action']){
 			case 'list': $this->listCommandTransform($parameters); break;
 			case 'read': $this->readCommand($parameters); break;
-			case 'create': $this->readCommand($parameters); break;
-			case 'update': $this->readCommand($parameters); break;
-			case 'delete': $this->readCommand($parameters); break;
+			case 'create': $this->createCommand($parameters); break;
+			case 'update': $this->updateCommand($parameters); break;
+			case 'delete': $this->deleteCommand($parameters); break;
 		}
 	}
 
