@@ -139,6 +139,12 @@ GET http://localhost/api.php/categories?filter=id,le,1
 GET http://localhost/api.php/categories?filter=id,lt,2
 ```
 
+Output:
+
+```
+{"categories":{"columns":["id","name"],"records":[["1","Internet"]]}}
+```
+
 ### List + Filter + Satisfy
 
 Multiple filters can be applied by using "filter[]" instead of "filter" as a parameter name. Then the parameter "satisfy" is used to indicate whether "all" (default) or "any" filter should be satisfied to lead to a match:
