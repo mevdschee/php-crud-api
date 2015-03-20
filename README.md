@@ -143,6 +143,22 @@ Output:
 {"categories":{"columns":["id","name"],"records":[["1","Internet"]]}}
 ```
 
+### List + Column selection
+
+By default all columns are selected. With the "columns" parameter you can select specific columns (comma seperated):
+
+```
+GET http://localhost/api.php/categories?columns=name
+```
+
+Output:
+
+```
+{"categories":{"columns":["name"],"records":[["Web development"],["Internet"]]}}
+```
+
+NB: Column selection cannot be applied to related tables. 
+
 ### List + Order
 
 With the "order" parameter you can sort. By default the sort is in ascending order, but by specifying "desc" this can be reversed:

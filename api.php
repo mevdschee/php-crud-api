@@ -457,17 +457,17 @@ class REST_CRUD_API {
 		$callback  = $this->parseGetParameter($get, 'callback', 'a-zA-Z0-9\-_', false);
 		$page      = $this->parseGetParameter($get, 'page', '0-9,', false);
 		$filters   = $this->parseGetParameterArray($get, 'filter', false, false);
+		$columns   = $this->parseGetParameter($get, 'columns', 'a-zA-Z0-9\-_,', false);
 		$order     = $this->parseGetParameter($get, 'order', 'a-zA-Z0-9\-_*,', false);
 		$transform = $this->parseGetParameter($get, 'transform', '1', false);
-
+		
 		$table    = $this->processTableParameter($database,$table,$db);
 		$key      = $this->processKeyParameter($key,$table,$database,$db);
-		foreach ($filters as &$filter) {
-			$filter   = $this->processFilterParameter($filter,$db);
-		}
+		foreach ($filters as &$filter) $filter = $this->processFilterParameter($filter,$db);
+		if ($columns) $columns = explode(',',$columns);
 		$page     = $this->processPageParameter($page);
 		$order    = $this->processOrderParameter($order,$table,$database,$db);
-
+		
 		$table  = $this->applyPermissions($database,$table,$action,$permissions,$multidb);
 		if (empty($table)) $this->exitWith404('entity');
 		
@@ -476,7 +476,7 @@ class REST_CRUD_API {
 
 		list($collect,$select) = $this->findRelations($table,$database,$db);
 
-		return compact('action','database','table','key','callback','page','filters','order','transform','db','object','input','collect','select');
+		return compact('action','database','table','key','callback','page','filters','columns','order','transform','db','object','input','collect','select');
 	}
 
 	protected function listCommand($parameters) {
@@ -508,7 +508,13 @@ class REST_CRUD_API {
 			}
 		}
 		$params = array();
-		$sql = 'SELECT * FROM "!"';
+		$sql = 'SELECT ';
+		if (is_array($columns)) {
+			$sql .= '"'.implode('","',$columns).'"';
+		} else {
+			$sql .= '*';
+		}
+		$sql .= ' FROM "!"';
 		$params[] = $table;
 		foreach ($filters as $i=>$filter) {
 			if (is_array($filter)) {
