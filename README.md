@@ -104,7 +104,7 @@ Output:
 
 ### List + Transform
 
-List all records of a database table and transform them to objects. NB: This transform is CPU and memory intensive and can also be executed client-side.
+List all records of a database table and transform them to objects.
 
 ```
 GET http://localhost/api.php/categories?transform=1
@@ -115,6 +115,8 @@ Output:
 ```
 {"categories":[{"id":"1","name":"Internet"},{"id":"3","name":"Web development"}]}
 ```
+
+NB: This transform is CPU and memory intensive and can also be executed client-side.
 
 ### List + Filter
 
