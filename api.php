@@ -463,7 +463,7 @@ class REST_CRUD_API {
 		$table    = $this->processTableParameter($database,$table,$db);
 		$key      = $this->processKeyParameter($key,$table,$database,$db);
 		foreach ($filters as &$filter) {
-			$filter   = $this->processFilterParameter($filter,$match,$db);
+			$filter   = $this->processFilterParameter($filter,$db);
 		}
 		$page     = $this->processPageParameter($page);
 		$order    = $this->processOrderParameter($order,$table,$database,$db);
@@ -476,7 +476,7 @@ class REST_CRUD_API {
 
 		list($collect,$select) = $this->findRelations($table,$database,$db);
 
-		return compact('action','database','table','key','callback','page','filters','match','order','transform','db','object','input','collect','select');
+		return compact('action','database','table','key','callback','page','filters','order','transform','db','object','input','collect','select');
 	}
 
 	protected function listCommand($parameters) {
