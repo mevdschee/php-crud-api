@@ -7,7 +7,7 @@ function callback(jsonObject) {
   document.getElementById('output').innerHTML = JSON.stringify(jsonObject, undefined, 4);
 }
 </script>
-<script src="http://localhost/blog.php/posts,categories,tags,comments?filter=id:1&callback=callback" defer="defer"></script>
+<script src="http://localhost/blog.php/posts,categories,tags,comments?filter=id,eq,1&callback=callback" defer="defer"></script>
 </head>
 <body>
 <pre id="output"></pre>

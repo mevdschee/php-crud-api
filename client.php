@@ -16,7 +16,7 @@ function call($method, $url, $data = false) {
 	return curl_exec($ch);
 }
 
-$response = call('GET','http://localhost/blog.php/posts,categories,tags,comments?filter=id:1');
+$response = call('GET','http://localhost/blog.php/posts,categories,tags,comments?filter=id,eq,1');
 $jsonObject = json_decode($response,true);
 
 $jsonObject = mysql_crud_api_transform($jsonObject);
