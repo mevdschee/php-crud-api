@@ -98,6 +98,7 @@ class MySQL_CRUD_API extends REST_CRUD_API {
 	}
 	
 	protected function is_binary_type($field) {
+		//echo "$field->name: $field->type ($field->flags)\n";
 		return ($field->flags & 128);
 	}
 
@@ -247,6 +248,17 @@ class REST_CRUD_API {
 		return $characters?preg_replace("/[^$characters]/",'',$value):$value;
 	}
 
+	protected function parseGetParameterArray($get,$name,$characters,$default) {
+		$values = isset($get[$name])?$get[$name]:$default;
+		if (!is_array($values)) $values = array($values);
+		if ($characters) {
+			foreach ($values as &$value) {
+				$value = preg_replace("/[^$characters]/",'',$value);
+			}
+		}
+		return $values;
+	}
+	
 	protected function applyPermissions($database, $tables, $action, $permissions, $multidb) {
 		if (in_array(strtolower($database), array('information_schema','mysql','sys'))) return array();
 		$results = array();
@@ -330,22 +342,24 @@ class REST_CRUD_API {
 		return $order;
 	}
 
-	protected function processFilterParameter($filter,$match,$db) {
+	protected function processFilterParameter($filter,$db) {
 		if ($filter) {
-			$filter = explode(':',$filter,2);
-			if (count($filter)==2) {
-				$filter[2] = 'LIKE';
-				if ($match=='contain') $filter[1] = '%'.addcslashes($filter[1], '%_').'%';
-				if ($match=='start') $filter[1] = addcslashes($filter[1], '%_').'%';
-				if ($match=='end') $filter[1] = '%'.addcslashes($filter[1], '%_');
-				if ($match=='exact') $filter[2] = '=';
-				if ($match=='lower') $filter[2] = '<';
-				if ($match=='upto') $filter[2] = '<=';
-				if ($match=='from') $filter[2] = '>=';
-				if ($match=='higher') $filter[2] = '>';
+			$filter = explode(',',$filter,3);
+			if (count($filter)==3) {
+				$match = $filter[1];
+				$filter[1] = 'LIKE';
+				if ($match=='cs') $filter[2] = '%'.addcslashes($filter[2], '%_').'%';
+				if ($match=='sw') $filter[2] = addcslashes($filter[2], '%_').'%';
+				if ($match=='ew') $filter[2] = '%'.addcslashes($filter[2], '%_');
+				if ($match=='eq') $filter[1] = '=';
+				if ($match=='ne') $filter[1] = '!=';
+				if ($match=='lt') $filter[1] = '<';
+				if ($match=='le') $filter[1] = '<=';
+				if ($match=='ge') $filter[1] = '>=';
+				if ($match=='gt') $filter[1] = '>';
 				if ($match=='in') {
-					$filter[2] = 'IN';
-					$filter[1] = explode(',',$filter[1]);
+					$filter[1] = 'IN';
+					$filter[2] = explode(',',$filter[2]);
 
 				}
 			} else {
@@ -442,14 +456,15 @@ class REST_CRUD_API {
 		$action    = $this->mapMethodToAction($method,$key);
 		$callback  = $this->parseGetParameter($get, 'callback', 'a-zA-Z0-9\-_', false);
 		$page      = $this->parseGetParameter($get, 'page', '0-9,', false);
-		$filter    = $this->parseGetParameter($get, 'filter', false, false);
-		$match     = $this->parseGetParameter($get, 'match', 'a-z', 'exact');
+		$filters   = $this->parseGetParameterArray($get, 'filter', false, false);
 		$order     = $this->parseGetParameter($get, 'order', 'a-zA-Z0-9\-_*,', false);
 		$transform = $this->parseGetParameter($get, 'transform', '1', false);
 
 		$table    = $this->processTableParameter($database,$table,$db);
 		$key      = $this->processKeyParameter($key,$table,$database,$db);
-		$filter   = $this->processFilterParameter($filter,$match,$db);
+		foreach ($filters as &$filter) {
+			$filter   = $this->processFilterParameter($filter,$match,$db);
+		}
 		$page     = $this->processPageParameter($page);
 		$order    = $this->processOrderParameter($order,$table,$database,$db);
 
@@ -461,7 +476,7 @@ class REST_CRUD_API {
 
 		list($collect,$select) = $this->findRelations($table,$database,$db);
 
-		return compact('action','database','table','key','callback','page','filter','match','order','transform','db','object','input','collect','select');
+		return compact('action','database','table','key','callback','page','filters','match','order','transform','db','object','input','collect','select');
 	}
 
 	protected function listCommand($parameters) {
@@ -477,11 +492,14 @@ class REST_CRUD_API {
 			$params = array();
 			$sql = 'SELECT COUNT(*) FROM "!"';
 			$params[] = $table;
-			if (is_array($filter)) {
-				$sql .= ' WHERE "!" ! ?';
-				$params[] = $filter[0];
-				$params[] = $filter[2];
-				$params[] = $filter[1];
+			foreach ($filters as $i=>$filter) {
+				if (is_array($filter)) {
+					$sql .= $i==0?' WHERE ':' AND ';
+					$sql .= '"!" ! ?';
+					$params[] = $filter[0];
+					$params[] = $filter[1];
+					$params[] = $filter[2];
+				}
 			}
 			if ($result = $this->query($db,$sql,$params)) {
 				while ($pages = $this->fetch_row($result)) {
@@ -492,11 +510,14 @@ class REST_CRUD_API {
 		$params = array();
 		$sql = 'SELECT * FROM "!"';
 		$params[] = $table;
-		if (is_array($filter)) {
-			$sql .= ' WHERE "!" ! ?';
-			$params[] = $filter[0];
-			$params[] = $filter[2];
-			$params[] = $filter[1];
+		foreach ($filters as $i=>$filter) {
+			if (is_array($filter)) {
+				$sql .= $i==0?' WHERE ':' AND ';
+				$sql .= '"!" ! ?';
+				$params[] = $filter[0];
+				$params[] = $filter[1];
+				$params[] = $filter[2];
+			}
 		}
 		if (is_array($order)) {
 			$sql .= ' ORDER BY "!" !';
@@ -564,10 +585,10 @@ class REST_CRUD_API {
 					else echo ',';
 					echo '"'.$field.'":"'.implode('.',$path).'"';
 				}
-				echo '},';
+				echo '}';
 			}
 			if ($result = $this->query($db,$sql,$params)) {
-				echo '"columns":';
+				echo ',"columns":';
 				$fields = array();
 				$base64 = array();
 				foreach ($this->fetch_fields($result) as $field) {
