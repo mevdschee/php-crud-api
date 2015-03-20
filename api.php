@@ -457,6 +457,7 @@ class REST_CRUD_API {
 		$callback  = $this->parseGetParameter($get, 'callback', 'a-zA-Z0-9\-_', false);
 		$page      = $this->parseGetParameter($get, 'page', '0-9,', false);
 		$filters   = $this->parseGetParameterArray($get, 'filter', false, false);
+		$satisfy   = $this->parseGetParameter($get, 'satisfy', 'a-z', 'all');
 		$columns   = $this->parseGetParameter($get, 'columns', 'a-zA-Z0-9\-_,', false);
 		$order     = $this->parseGetParameter($get, 'order', 'a-zA-Z0-9\-_*,', false);
 		$transform = $this->parseGetParameter($get, 'transform', '1', false);
@@ -476,7 +477,7 @@ class REST_CRUD_API {
 
 		list($collect,$select) = $this->findRelations($table,$database,$db);
 
-		return compact('action','database','table','key','callback','page','filters','columns','order','transform','db','object','input','collect','select');
+		return compact('action','database','table','key','callback','page','filters','satisfy','columns','order','transform','db','object','input','collect','select');
 	}
 
 	protected function listCommand($parameters) {
@@ -494,7 +495,7 @@ class REST_CRUD_API {
 			$params[] = $table;
 			foreach ($filters as $i=>$filter) {
 				if (is_array($filter)) {
-					$sql .= $i==0?' WHERE ':' AND ';
+					$sql .= $i==0?' WHERE ':$satisfy=='all'?' AND ':' OR ';
 					$sql .= '"!" ! ?';
 					$params[] = $filter[0];
 					$params[] = $filter[1];
@@ -518,7 +519,7 @@ class REST_CRUD_API {
 		$params[] = $table;
 		foreach ($filters as $i=>$filter) {
 			if (is_array($filter)) {
-				$sql .= $i==0?' WHERE ':' AND ';
+				$sql .= $i==0?' WHERE ':$satisfy=='all'?' AND ':' OR ';
 				$sql .= '"!" ! ?';
 				$params[] = $filter[0];
 				$params[] = $filter[1];

@@ -32,7 +32,7 @@ This is a single file application! Upload "api.php" somewhere and enjoy!
   - Permission system for databases and tables
   - JSONP support for cross-domain requests
   - Combined requests with support for multiple table names
-  - Pagination, sorting and search support
+  - Pagination, sorting, column selection and search support
   - Relation detection and filtering on foreign keys
   - Relation "transforms" for PHP and JavaScript
 
@@ -131,7 +131,7 @@ Search is implemented with the "filter" parameter. You need to specify the colum
   - ge: greater or equal (number is higher than or equal to value)
   - gt: greater than (number is higher than value)
   - in: in (number is in comma seperated list of values)
-
+  
 ```
 GET http://localhost/api.php/categories?filter=name,eq,Internet
 GET http://localhost/api.php/categories?filter=name,sw,Inter
@@ -139,10 +139,20 @@ GET http://localhost/api.php/categories?filter=id,le,1
 GET http://localhost/api.php/categories?filter=id,lt,2
 ```
 
+### List + Filter + Satisfy
+
+Multiple filters can be applied by using "filter[]" instead of "filter" as a parameter name. Then the parameter "satisfy" is used to indicate whether "all" (default) or "any" filter should be satisfied to lead to a match:
+
+```
+GET http://localhost/api.php/categories?filter[]=id,eq,1&filter[]=id,eq,3&satisfy=any
+GET http://localhost/api.php/categories?filter[]=id,ge,1&filter[]=id,le,3&satisfy=all
+GET http://localhost/api.php/categories?filter[]=id,ge,1&filter[]=id,le,3
+```
+
 Output:
 
 ```
-{"categories":{"columns":["id","name"],"records":[["1","Internet"]]}}
+{"categories":{"columns":["id","name"],"records":[["1","Internet"],["3","Web development"]]}}
 ```
 
 ### List + Column selection
