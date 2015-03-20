@@ -118,23 +118,23 @@ Output:
 
 ### List + Filter
 
-Search is implemented with the "filter" parameter. You need to specify the column name, a colon and the value you want to filter on. The filter match type is "exact" by default, but can easily be adjusted. These are supported:
+Search is implemented with the "filter" parameter. You need to specify the column name, a comma, the match type, another commma and the value you want to filter on. These are supported match types:
 
-  - start (string starts with value)
-  - end (string end with value)
-  - contain (string contains value)
-  - exact (string or number matches exactly)
-  - lower (number is lower than value)
-  - upto (number is lower than or equal to value)
-  - from (number is higher than or equal to value)
-  - higher (number is higher than value)
-  - in (number is in comma seperated list of values)
+  - cs: contain string (string contains value)
+  - sw: start with (string starts with value)
+  - ew: end with (string end with value)
+  - eq: equal (string or number matches exactly)
+  - lt: lower than (number is lower than value)
+  - le: lower or equal (number is lower than or equal to value)
+  - ge: greater or equal (number is higher than or equal to value)
+  - gt: greater than (number is higher than value)
+  - in: in (number is in comma seperated list of values)
 
 ```
-GET http://localhost/api.php/categories?filter=name:Internet
-GET http://localhost/api.php/categories?filter=name:Inter&match=start
-GET http://localhost/api.php/categories?filter=id:1&match=upto
-GET http://localhost/api.php/categories?filter=id:2&match=lower
+GET http://localhost/api.php/categories?filter=name,eq,Internet
+GET http://localhost/api.php/categories?filter=name,sw,Inter
+GET http://localhost/api.php/categories?filter=id,le,1
+GET http://localhost/api.php/categories?filter=id,lt,2
 ```
 
 Output:
@@ -239,7 +239,7 @@ The explanation of this feature is based on the datastructure from the ```blog.s
 You can get the "post" that has "id" equal to "1" with it's corresponding "categories", "tags" and "comments" using:
 
 ```
-GET http://localhost/api.php/posts,categories,tags,comments?filter=id:1
+GET http://localhost/api.php/posts,categories,tags,comments?filter=id,eq,1
 ```
 
 Output:
