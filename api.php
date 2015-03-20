@@ -310,6 +310,7 @@ class REST_CRUD_API {
 
 	protected function startOutput($callback) {
 		if (isset($_SERVER['REQUEST_METHOD'])) {
+			header('Access-Control-Allow-Origin: *');
 			if ($callback) {
 				header('Content-Type: application/javascript');
 				echo $callback.'(';
@@ -757,6 +758,7 @@ class REST_CRUD_API {
 
 // only execute this when running in stand-alone mode
 if(count(get_required_files())<2) {
+	header('Access-Control-Allow-Origin: *');
 	$api = new SQLSRV_CRUD_API(array(
 		'hostname'=>'(local)',
 		'username'=>'',
