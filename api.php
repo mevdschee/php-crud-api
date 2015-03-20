@@ -495,7 +495,7 @@ class REST_CRUD_API {
 			$params[] = $table;
 			foreach ($filters as $i=>$filter) {
 				if (is_array($filter)) {
-					$sql .= $i==0?' WHERE ':$satisfy=='all'?' AND ':' OR ';
+					$sql .= $i==0?' WHERE ':($satisfy=='all'?' AND ':' OR ');
 					$sql .= '"!" ! ?';
 					$params[] = $filter[0];
 					$params[] = $filter[1];
@@ -519,7 +519,7 @@ class REST_CRUD_API {
 		$params[] = $table;
 		foreach ($filters as $i=>$filter) {
 			if (is_array($filter)) {
-				$sql .= $i==0?' WHERE ':$satisfy=='all'?' AND ':' OR ';
+				$sql .= $i==0?' WHERE ':($satisfy=='all'?' AND ':' OR ');
 				$sql .= '"!" ! ?';
 				$params[] = $filter[0];
 				$params[] = $filter[1];
