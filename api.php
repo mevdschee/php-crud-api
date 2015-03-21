@@ -166,18 +166,24 @@ class SQLSRV_CRUD_API extends REST_CRUD_API {
 	}
 
 	protected function query($db,$sql,$params) {
-		$sql = preg_replace_callback('/\!|\?/', function ($matches) use (&$db,&$params) {
+		$args = array();
+		$sql = preg_replace_callback('/\!|\?/', function ($matches) use (&$db,&$params,&$args) {
 			static $i=-1;
 			$i++;
 			$param = $params[$i];
-			if ($matches[0]=='!') return preg_replace('/[^a-zA-Z0-9\-_=<>]/','',$param);
+			if ($matches[0]=='!') {
+				return preg_replace('/[^a-zA-Z0-9\-_=<>]/','',$param);
+			}
 			if (is_array($param)) {
-				$params = array_splice($params, $i, 1, $param);
+				$args = array_merge($args,$param);
 				return '('.implode(',',split('',str_repeat('?',count($param)))).')';
 			}
+			$args[] = $param;
 			return '?';
 		}, $sql);
-		return sqlsrv_query($db,$sql,$params);
+		//echo "\n$sql\n";
+		//var_dump($args);
+		return sqlsrv_query($db,$sql,$args);
 	}
 
 	protected function fetch_assoc($result) {
@@ -353,7 +359,7 @@ class REST_CRUD_API {
 				if ($match=='sw') $filter[2] = addcslashes($filter[2], '%_').'%';
 				if ($match=='ew') $filter[2] = '%'.addcslashes($filter[2], '%_');
 				if ($match=='eq') $filter[1] = '=';
-				if ($match=='ne') $filter[1] = '!=';
+				if ($match=='ne') $filter[1] = '<>';
 				if ($match=='lt') $filter[1] = '<';
 				if ($match=='le') $filter[1] = '<=';
 				if ($match=='ge') $filter[1] = '>=';
