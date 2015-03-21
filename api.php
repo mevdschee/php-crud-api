@@ -353,7 +353,7 @@ class REST_CRUD_API {
 				if ($match=='sw') $filter[2] = addcslashes($filter[2], '%_').'%';
 				if ($match=='ew') $filter[2] = '%'.addcslashes($filter[2], '%_');
 				if ($match=='eq') $filter[1] = '=';
-				if ($match=='ne') $filter[1] = '!=';
+				if ($match=='ne') $filter[1] = '<>';
 				if ($match=='lt') $filter[1] = '<';
 				if ($match=='le') $filter[1] = '<=';
 				if ($match=='ge') $filter[1] = '>=';
