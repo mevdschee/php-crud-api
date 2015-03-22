@@ -396,8 +396,8 @@ class REST_CRUD_API {
 
 	protected function createObject($input,$table,$db) {
 		if (!$input) return false;
-		$keys = implode('","',split('', str_repeat('!', count($input))));
-		$values = implode(',',split('', str_repeat('?', count($input))));
+		$keys = implode('","',str_split(str_repeat('!', count($input))));
+		$values = implode(',',str_split(str_repeat('?', count($input))));
 		$params = array_merge(array_keys((array)$input),array_values((array)$input));
 		array_unshift($params, $table[0]);
 		$result = $this->query($db,'INSERT INTO "!" ("'.$keys.'") VALUES ('.$values.')',$params);
@@ -408,11 +408,10 @@ class REST_CRUD_API {
 		if (!$input) return false;
 		$params = array();
 		$sql = 'UPDATE "!" SET ';
-		$params[] = $database;
 		$params[] = $table[0];
-		foreach (array_keys((array)$input) as $i=>$k) {
+		foreach (array_keys($input) as $i=>$k) {
 			if ($i) $sql .= ',';
-			$v = $input->$k;
+			$v = $input[$k];
 			$sql .= '"!"=?';
 			$params[] = $k;
 			$params[] = $v;
@@ -479,9 +478,9 @@ class REST_CRUD_API {
 		$table  = $this->applyPermissions($database,$table,$action,$permissions,$multidb);
 		if (empty($table)) $this->exitWith404('entity');
 		
-		$object = $this->retrieveObject($key,$table,$database,$db);
-		$input  = json_decode(file_get_contents($post));
-
+		$object = $this->retrieveObject($key,$table,$db);
+		$input  = json_decode(file_get_contents($post),true);
+		
 		list($collect,$select) = $this->findRelations($table,$database,$db);
 
 		return compact('action','database','table','key','callback','page','filters','satisfy','columns','order','transform','db','object','input','collect','select');

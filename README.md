@@ -466,11 +466,16 @@ The following types of 404 'Not found' errors may be reported:
 Yes, written for PHPUnit. Run:
 
 ```
-wget https://phar.phpunit.de/phpunit.phar
-php phpunit.phar test.php
-```
+$ wget https://phar.phpunit.de/phpunit.phar
+$ php phpunit.phar tests.php 
+PHPUnit 4.5.0 by Sebastian Bergmann and contributors.
 
-No complete coverage yet.
+...........
+
+Time: 322 ms, Memory: 3.25Mb
+
+OK (11 tests, 48 assertions)
+```
 
 ## License
 
