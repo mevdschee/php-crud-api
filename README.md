@@ -463,7 +463,7 @@ The following types of 404 'Not found' errors may be reported:
 
 ## Tests
 
-Yes, written for PHPUnit. Run:
+Yes, written for PHPUnit in the file 'tests.php'. You need to configure your test database conenction in this file. After that run:
 
 ```
 $ wget https://phar.phpunit.de/phpunit.phar
@@ -475,7 +475,10 @@ PHPUnit 4.5.0 by Sebastian Bergmann and contributors.
 Time: 322 ms, Memory: 3.25Mb
 
 OK (11 tests, 48 assertions)
+$
 ```
+
+NB: You MUST use an empty database as a database fixture ('blog.sql') is loaded.
 
 ## License
 
