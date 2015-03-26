@@ -33,7 +33,8 @@ This is a single file application! Upload "api.php" somewhere and enjoy!
   - Permission system for databases and tables
   - JSONP support for cross-domain requests
   - Combined requests with support for multiple table names
-  - Pagination, sorting, column selection and search support
+  - Search support on multiple criteria
+  - Pagination, sorting and column selection
   - Relation detection and filtering on foreign keys
   - Relation "transforms" for PHP and JavaScript
 
