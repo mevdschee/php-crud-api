@@ -128,6 +128,7 @@ Search is implemented with the "filter" parameter. You need to specify the colum
   - sw: start with (string starts with value)
   - ew: end with (string end with value)
   - eq: equal (string or number matches exactly)
+  - ne: not equal (string or number doen not match)
   - lt: lower than (number is lower than value)
   - le: lower or equal (number is lower than or equal to value)
   - ge: greater or equal (number is higher than or equal to value)
