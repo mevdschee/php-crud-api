@@ -569,8 +569,9 @@ class REST_CRUD_API {
 			}
 			$this->close($result);
 			echo ']';
+			if ($count) echo ',';
 		}
-		if ($count) echo ',"results":'.$count;
+		if ($count) echo '"results":'.$count;
 		echo '}';
 		// prepare for other tables
 		foreach (array_keys($collect) as $t) {
