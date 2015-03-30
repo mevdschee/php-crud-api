@@ -176,7 +176,7 @@ class SQLSRV_CRUD_API extends REST_CRUD_API {
 			}
 			if (is_array($param)) {
 				$args = array_merge($args,$param);
-				return '('.implode(',',split('',str_repeat('?',count($param)))).')';
+				return '('.implode(',',str_split(str_repeat('?',count($param)))).')';
 			}
 			$args[] = $param;
 			return '?';
