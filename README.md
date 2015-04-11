@@ -5,6 +5,7 @@ Simple PHP script that adds a very basic API to a MySQL InnoDB database (or MS S
 ## Requirements
 
   - PHP 5.3 or higher with MySQLi or SQLSRV enabled
+  - PHP on Windows when connecting to SQL Server 2012
 
 ## Installation
 
@@ -32,7 +33,8 @@ This is a single file application! Upload "api.php" somewhere and enjoy!
   - Permission system for databases and tables
   - JSONP support for cross-domain requests
   - Combined requests with support for multiple table names
-  - Pagination, sorting, column selection and search support
+  - Search support on multiple criteria
+  - Pagination, sorting and column selection
   - Relation detection and filtering on foreign keys
   - Relation "transforms" for PHP and JavaScript
 
@@ -126,6 +128,7 @@ Search is implemented with the "filter" parameter. You need to specify the colum
   - sw: start with (string starts with value)
   - ew: end with (string end with value)
   - eq: equal (string or number matches exactly)
+  - ne: not equal (string or number doen not match)
   - lt: lower than (number is lower than value)
   - le: lower or equal (number is lower than or equal to value)
   - ge: greater or equal (number is higher than or equal to value)

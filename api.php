@@ -180,7 +180,7 @@ class SQLSRV_CRUD_API extends REST_CRUD_API {
 			}
 			if (is_array($param)) {
 				$args = array_merge($args,$param);
-				return '('.implode(',',split('',str_repeat('?',count($param)))).')';
+				return '('.implode(',',str_split(str_repeat('?',count($param)))).')';
 			}
 			$args[] = $param;
 			return '?';
@@ -577,8 +577,9 @@ class REST_CRUD_API {
 			}
 			$this->close($result);
 			echo ']';
+			if ($count) echo ',';
 		}
-		if ($count) echo ',"results":'.$count;
+		if ($count) echo '"results":'.$count;
 		echo '}';
 		// prepare for other tables
 		foreach (array_keys($collect) as $t) {
