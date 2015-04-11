@@ -97,6 +97,10 @@ class MySQL_CRUD_API extends REST_CRUD_API {
 		return "$sql LIMIT $limit OFFSET $offset";
 	}
 	
+	protected function likeEscape($string) {
+		return addslashes($string,'%_');
+	}
+	
 	protected function is_binary_type($field) {
 		//echo "$field->name: $field->type ($field->flags)\n";
 		return (($field->flags & 128) && ($field->type==252));
@@ -221,6 +225,10 @@ class SQLSRV_CRUD_API extends REST_CRUD_API {
 
 	protected function add_limit_to_sql($sql,$limit,$offset) {
 		return "$sql OFFSET $offset ROWS FETCH NEXT $limit ROWS ONLY";
+	}
+	
+	protected function likeEscape($string) {
+		return str_replace(array('%','_'),array('[%]','[_]'),$string);
 	}
 	
 	protected function is_binary_type($field) {
@@ -355,9 +363,9 @@ class REST_CRUD_API {
 			if (count($filter)==3) {
 				$match = $filter[1];
 				$filter[1] = 'LIKE';
-				if ($match=='cs') $filter[2] = '%'.addcslashes($filter[2], '%_').'%';
-				if ($match=='sw') $filter[2] = addcslashes($filter[2], '%_').'%';
-				if ($match=='ew') $filter[2] = '%'.addcslashes($filter[2], '%_');
+				if ($match=='cs') $filter[2] = '%'.$this->likeEscape($filter[2]).'%';
+				if ($match=='sw') $filter[2] = $this->likeEscape($filter[2]).'%';
+				if ($match=='ew') $filter[2] = '%'.$this->likeEscape($filter[2]);
 				if ($match=='eq') $filter[1] = '=';
 				if ($match=='ne') $filter[1] = '<>';
 				if ($match=='lt') $filter[1] = '<';
