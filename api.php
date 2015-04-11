@@ -98,7 +98,7 @@ class MySQL_CRUD_API extends REST_CRUD_API {
 	}
 	
 	protected function likeEscape($string) {
-		return addslashes($string,'%_');
+		return addcslashes($string,'%_');
 	}
 	
 	protected function is_binary_type($field) {
