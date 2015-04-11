@@ -466,7 +466,7 @@ The following types of 404 'Not found' errors may be reported:
 
 ## Tests
 
-Yes, written for PHPUnit in the file 'tests.php'. You need to configure your test database conenction in this file. After that run:
+There are PHPUnit tests in the file 'tests.php'. You need to configure your test database connection in this file. After that run:
 
 ```
 $ wget https://phar.phpunit.de/phpunit.phar
