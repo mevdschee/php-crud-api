@@ -188,8 +188,8 @@ class SQLSRV_CRUD_API extends REST_CRUD_API {
 		//echo "\n$sql\n";
 		//var_dump($args);
 		$result = sqlsrv_query($db,$sql,$args);
-		$errors = sqlsrv_errors();
-		if ($errors) {
+		if ($result===false) {
+			$errors = sqlsrv_errors();
 			header('HTTP/1.0 422 Unprocessable Entity');
 			die(json_encode(compact('sql','args','errors')));
 		}
@@ -205,7 +205,8 @@ class SQLSRV_CRUD_API extends REST_CRUD_API {
 	}
 
 	protected function insert_id($db) {
-		$result = sqlsrv_query($db, 'SELECT SCOPE_IDENTITY()');
+		$result = sqlsrv_query($db, 'SELECT @@IDENTITY');
+		//$result = sqlsrv_query($db, 'SELECT SCOPE_IDENTITY()');
 		$data = sqlsrv_fetch_array($result, SQLSRV_FETCH_NUMERIC);
 		return $data[0];
 	}
