@@ -187,7 +187,13 @@ class SQLSRV_CRUD_API extends REST_CRUD_API {
 		}, $sql);
 		//echo "\n$sql\n";
 		//var_dump($args);
-		return sqlsrv_query($db,$sql,$args);
+		$result = sqlsrv_query($db,$sql,$args);
+		$errors = sqlsrv_errors();
+		if ($errors) {
+			header('HTTP/1.0 422 Unprocessable Entity');
+			die(json_encode(compact('sql','args','errors')));
+		}
+		return $result;
 	}
 
 	protected function fetch_assoc($result) {
