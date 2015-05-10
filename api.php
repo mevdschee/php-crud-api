@@ -63,6 +63,9 @@ class MySQL_CRUD_API extends REST_CRUD_API {
 			if (is_array($param)) return '('.implode(',',array_map(function($v) use (&$db) {
 				return "'".mysqli_real_escape_string($db,$v)."'";
 			},$param)).')';
+			if (is_object($param) && $param->type=='base64') 
+				return "x'".bin2hex(base64_decode($param->data))."'";
+			}
 			return "'".mysqli_real_escape_string($db,$param)."'";
 		}, $sql);
 		//echo "\n$sql\n";
