@@ -470,7 +470,7 @@ Output:
 ```
 
 Editing a record that contains a binary field requires you to send an object instead of the field value.
-The object should have two properties, where 'type' may only be 'base64' and data is the base64 encoded data.
+The object should have two properties, where 'type' may only be 'base64' and 'data' is the base64 encoded data.
 
 ```
 PUT http://localhost/api.php/images/2
