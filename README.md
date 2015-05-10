@@ -37,6 +37,7 @@ This is a single file application! Upload "api.php" somewhere and enjoy!
   - Pagination, sorting and column selection
   - Relation detection and filtering on foreign keys
   - Relation "transforms" for PHP and JavaScript
+  - Binary fields supported with base64 encoding
 
 ## Configuration
 
