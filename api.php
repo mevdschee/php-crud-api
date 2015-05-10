@@ -421,7 +421,6 @@ class REST_CRUD_API {
 
 	protected function createObject($input,$table,$db) {
 		if (!$input) return false;
-		$input = (array)$input;
 		$keys = implode('","',str_split(str_repeat('!', count($input))));
 		$values = implode(',',str_split(str_repeat('?', count($input))));
 		$params = array_merge(array_keys((array)$input),array_values((array)$input));
@@ -505,7 +504,7 @@ class REST_CRUD_API {
 		if (empty($table)) $this->exitWith404('entity');
 		
 		$object = $this->retrieveObject($key,$table,$db);
-		$input  = json_decode(file_get_contents($post));
+		$input  = (array)json_decode(file_get_contents($post));
 		
 		list($collect,$select) = $this->findRelations($table,$database,$db);
 
