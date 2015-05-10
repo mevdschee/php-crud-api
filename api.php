@@ -187,6 +187,9 @@ class SQLSRV_CRUD_API extends REST_CRUD_API {
 		}, $sql);
 		//echo "\n$sql\n";
 		//var_dump($args);
+		if (strtoupper(substr($sql,0,6))=='INSERT') {
+			$sql .= ';SELECT SCOPE_IDENTITY()';
+		}
 		$result = sqlsrv_query($db,$sql,$args);
 		if ($result===false) {
 			$errors = sqlsrv_errors();
@@ -204,11 +207,10 @@ class SQLSRV_CRUD_API extends REST_CRUD_API {
 		return sqlsrv_fetch_array($result, SQLSRV_FETCH_NUMERIC);
 	}
 
-	protected function insert_id($db) {
-		$result = sqlsrv_query($db, 'SELECT @@IDENTITY');
-		//$result = sqlsrv_query($db, 'SELECT SCOPE_IDENTITY()');
-		$data = sqlsrv_fetch_array($result, SQLSRV_FETCH_NUMERIC);
-		return $data[0];
+	protected function insert_id($db,$result) {
+		sqlsrv_next_result($result); 
+		sqlsrv_fetch($result); 
+		return sqlsrv_get_field($result, 0); 
 	}
 
 	protected function affected_rows($db,$result) {
