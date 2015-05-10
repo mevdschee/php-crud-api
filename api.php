@@ -182,9 +182,17 @@ class SQLSRV_CRUD_API extends REST_CRUD_API {
 				$args = array_merge($args,$param);
 				return '('.implode(',',str_split(str_repeat('?',count($param)))).')';
 			}
+			if (is_object($param)) {
+				switch($param->type) {
+					case 'base64': 
+						$args[] = bin2hex(base64_decode($param->data));
+						return 'CONVERT(VARBINARY(MAX),?,2)';
+				}
+			}
 			$args[] = $param;
 			return '?';
 		}, $sql);
+		//var_dump($params);
 		//echo "\n$sql\n";
 		//var_dump($args);
 		if (strtoupper(substr($sql,0,6))=='INSERT') {
@@ -413,6 +421,7 @@ class REST_CRUD_API {
 
 	protected function createObject($input,$table,$db) {
 		if (!$input) return false;
+		$input = (array)$input;
 		$keys = implode('","',str_split(str_repeat('!', count($input))));
 		$values = implode(',',str_split(str_repeat('?', count($input))));
 		$params = array_merge(array_keys((array)$input),array_values((array)$input));
@@ -496,7 +505,7 @@ class REST_CRUD_API {
 		if (empty($table)) $this->exitWith404('entity');
 		
 		$object = $this->retrieveObject($key,$table,$db);
-		$input  = json_decode(file_get_contents($post),true);
+		$input  = json_decode(file_get_contents($post));
 		
 		list($collect,$select) = $this->findRelations($table,$database,$db);
 
@@ -791,3 +800,4 @@ if(count(get_required_files())<2) {
 	));
 	$api->executeCommand();
 }
+
