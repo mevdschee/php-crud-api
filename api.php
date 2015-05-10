@@ -417,6 +417,11 @@ class REST_CRUD_API {
 		if (!$key) return false;
 		if ($result = $this->query($db,'SELECT * FROM "!" WHERE "!" = ?',array($table[0],$key[1],$key[0]))) {
 			$object = $this->fetch_assoc($result);
+			foreach ($this->fetch_fields($result) as $field) {
+				if ($this->is_binary_type($field)) {
+					$object[$field->name] = base64_encode($object[$field->name]);
+				}
+			}
 			$this->close($result);
 		}
 		return $object;

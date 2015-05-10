@@ -8,13 +8,14 @@ SET sql_mode = 'NO_AUTO_VALUE_ON_ZERO';
 DROP TABLE IF EXISTS `categories`;
 CREATE TABLE `categories` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
-  `name` varchar(255) COLLATE utf8_general_ci NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `icon` blob NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
-INSERT INTO `categories` (`id`, `name`) VALUES
-(1,	'anouncement'),
-(2,	'article');
+INSERT INTO `categories` (`id`, `name`, `icon`) VALUES
+(1,	'anouncement',	''),
+(2,	'article',	'');
 
 DROP TABLE IF EXISTS `comments`;
 CREATE TABLE `comments` (
