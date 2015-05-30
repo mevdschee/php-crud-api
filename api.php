@@ -161,6 +161,7 @@ class SQLSRV_CRUD_API extends REST_CRUD_API {
 		if ($database) $connectionInfo['Database']=$database;
 		if ($charset) $connectionInfo['CharacterSet']=$charset;
 		$connectionInfo['QuotedId']=1;
+		$connectionInfo['ReturnDatesAsStrings']=1;
 
 		$db = sqlsrv_connect($hostname, $connectionInfo);
 		if (!$db) {
