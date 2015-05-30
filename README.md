@@ -455,6 +455,30 @@ The code also supports multi-database API's. These have URLs where the first seg
 This can be enabled by NOT specifying a database in the configuration. Also the permissions in the configuration should contain a dot
 character to seperate the database from the table name. The databases 'mysql', 'information_schema' and 'sys' are automatically blocked.
  
+## Binary data
+
+Binary fields are automatically detected and data in those fields is returned using base64 encoding.
+
+```
+GET http://localhost/api.php/images/2
+```
+
+Output:
+
+```
+{"id":"1","thumbnail":"ZGF0YQ=="}
+```
+
+Editing a record that contains a binary field requires you to send an object instead of the field value.
+The object should have two properties, where 'type' may only be 'base64' and 'data' is the base64 encoded data.
+
+```
+PUT http://localhost/api.php/images/2
+{"thumbnail":{"type":"base64","data":"ZGF0YQ=="}}
+```
+
+In the above example you see how binary data is sent.
+ 
 ## Errors
 
 The following types of 404 'Not found' errors may be reported:
