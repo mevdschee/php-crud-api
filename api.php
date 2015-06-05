@@ -649,7 +649,8 @@ class REST_CRUD_API {
 				echo '}';
 			}
 			if ($result = $this->query($db,$sql,$params)) {
-				echo ',"columns":';
+				if (isset($select[$table])) echo ',';
+				echo '"columns":';
 				$fields = array();
 				$base64 = array();
 				foreach ($this->fetch_fields($result) as $field) {
