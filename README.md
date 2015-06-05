@@ -29,8 +29,9 @@ This is a single file application! Upload "api.php" somewhere and enjoy!
   - Single PHP file, easy to deploy.
   - Very little code, easy to adapt and maintain
   - Streaming data, low memory footprint
-  - Supports POST variables or a JSON object as input
-  - Condensed JSON: first row contains field names
+  - Supports POST variables as input (x-www-form-urlencoded)
+  - Supports a JSON object as input
+  - Condensed JSON ouput: first row contains field names
   - Permission system for databases and tables
   - JSONP support for cross-domain requests
   - Combined requests with support for multiple table names
@@ -215,7 +216,7 @@ NB: Pages that are not ordered cannot be paginated.
 
 ### Create
 
-You can easily add a record using the POST method. The call returns the "last insert id".
+You can easily add a record using the POST method (see rfc1738). The call returns the "last insert id".
 
 ```
 POST http://localhost/api.php/categories
@@ -507,7 +508,7 @@ PUT http://localhost/api.php/images/2
 thumbnail~base64=ZGF0YQ
 ```
 
-In the above example you see how binary data is sent. Both "base64url" and standard "base64" are allowed.
+In the above example you see how binary data is sent. Both "base64url" and standard "base64" are allowed (see rfc4648).
 
 ## Errors
 

@@ -150,6 +150,18 @@ class MySQL_CRUD_API_Test extends PHPUnit_Framework_TestCase
 		$test->expect('{"id":"2","user_id":"1","category_id":"2","content":'.$utf8.'}');
 	}
 
+	public function testEditPostWithUtf8ContentWithPost()
+	{
+		$utf8 = 'Hello world! Καλημέρα κόσμε, コンニチハ';
+		$url_encoded = urlencode($utf8);
+		$json_encoded = json_encode($utf8);
+		$test = new API($this);
+		$test->put('/posts/2','content='.$url_encoded);
+		$test->expect('1');
+		$test->get('/posts/2');
+		$test->expect('{"id":"2","user_id":"1","category_id":"2","content":'.$json_encoded.'}');
+	}
+
 	public function testDeletePost()
 	{
 		$test = new API($this);
