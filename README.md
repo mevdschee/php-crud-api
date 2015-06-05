@@ -29,7 +29,7 @@ This is a single file application! Upload "api.php" somewhere and enjoy!
   - Single PHP file, easy to deploy.
   - Very little code, easy to adapt and maintain
   - Streaming data, low memory footprint
-  - Supports POST variables as input (x-www-form-urlencoded)
+  - Supports POST variables as input
   - Supports a JSON object as input
   - Condensed JSON ouput: first row contains field names
   - Permission system for databases and tables
