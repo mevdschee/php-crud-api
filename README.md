@@ -501,7 +501,7 @@ Output:
 {"id":"1","thumbnail":"ZGF0YQ=="}
 ```
 
-When editing a record that contains a binary field you may add a "~base64" suffix to the field name and send base64 encoded data.
+When sending a record that contains a binary field you may add a "~base64" suffix to the field name and send base64 encoded data.
 
 ```
 PUT http://localhost/api.php/images/2
@@ -529,11 +529,11 @@ $ wget https://phar.phpunit.de/phpunit.phar
 $ php phpunit.phar tests.php
 PHPUnit 4.5.0 by Sebastian Bergmann and contributors.
 
-...........
+................
 
-Time: 322 ms, Memory: 3.25Mb
+Time: 365 ms, Memory: 3.25Mb
 
-OK (11 tests, 48 assertions)
+OK (16 tests, 66 assertions)
 $
 ```
 
