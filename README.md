@@ -91,7 +91,7 @@ The other variables are not MySQL or SQL Server specific.
 
 ## Usage
 
-You can do all CRUD (Create, Read, Update, Delete) operations and extra List operation. Here is how:
+You can do all CRUD (Create, Read, Update, Delete) operations and one extra List operation. Here is how:
 
 ### List
 
