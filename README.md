@@ -501,7 +501,7 @@ Output:
 {"id":"1","thumbnail":"ZGF0YQ=="}
 ```
 
-Editing a record that contains a binary field requires you to suffix the field name with "~base64".
+When editing a record that contains a binary field you may add a "~base64" suffix to the field name and send base64 encoded data.
 
 ```
 PUT http://localhost/api.php/images/2
