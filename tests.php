@@ -219,8 +219,9 @@ class MySQL_CRUD_API_Test extends PHPUnit_Framework_TestCase
 	public function testEditPostWithBinaryContent()
 	{
 		$binary = base64_encode("\0abc\0\n\r\b\0");
+		$base64url = rtrim(strtr($binary, '+/', '-_'), '=');
 		$test = new API($this);
-		$test->put('/categories/2','{"icon":{"type":"base64","data":"'.$binary.'"}}');
+		$test->put('/categories/2','icon~base64='.$base64url);
 		$test->expect('1');
 		$test->get('/categories/2');
 		$test->expect('{"id":"2","name":"article","icon":"'.$binary.'"}');

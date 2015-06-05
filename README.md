@@ -499,15 +499,14 @@ Output:
 {"id":"1","thumbnail":"ZGF0YQ=="}
 ```
 
-Editing a record that contains a binary field requires you to send an object instead of the field value.
-The object should have two properties, where 'type' may only be 'base64' and 'data' is the base64 encoded data.
+Editing a record that contains a binary field requires you to suffix the field name with "~base64".
 
 ```
 PUT http://localhost/api.php/images/2
-{"thumbnail":{"type":"base64","data":"ZGF0YQ=="}}
+thumbnail~base64=ZGF0YQ
 ```
 
-In the above example you see how binary data is sent.
+In the above example you see how binary data is sent. Both "base64url" and standard "base64" are allowed.
 
 ## Errors
 

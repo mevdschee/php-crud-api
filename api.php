@@ -498,6 +498,23 @@ class REST_CRUD_API {
 			} else {
 				parse_str($data, $input);
 			}
+			$input = $this->convertBinary($input);
+		}
+		return $input;
+	}
+
+	protected function convertBinary($input) {
+		$binary_fields = array();
+		foreach ($input as $key => $value) {
+			if (substr($key,-7)=='~base64') {
+				$binary_fields[] = $key;
+			}
+		}
+		while ($key = array_pop($binary_fields)) {
+			$data = $input[$key];
+			$data = str_pad(strtr($data, '-_', '+/'), strlen($data) % 4, '=', STR_PAD_RIGHT);
+			$input[substr($key,0,-7)] = (object)array('type'=>'base64','data'=>$data);
+			unset($input[$key]);
 		}
 		return $input;
 	}
