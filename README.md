@@ -27,9 +27,9 @@ This is a single file application! Upload "api.php" somewhere and enjoy!
 ## Features
 
   - Single PHP file, easy to deploy.
-  - Supports posting raw JSON and POST variables
   - Very little code, easy to adapt and maintain
   - Streaming data, low memory footprint
+  - Supports POST variables or a JSON object as input
   - Condensed JSON: first row contains field names
   - Permission system for databases and tables
   - JSONP support for cross-domain requests
