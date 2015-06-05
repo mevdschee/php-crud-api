@@ -135,7 +135,7 @@ Search is implemented with the "filter" parameter. You need to specify the colum
   - ge: greater or equal (number is higher than or equal to value)
   - gt: greater than (number is higher than value)
   - in: in (number is in comma seperated list of values)
-  
+
 ```
 GET http://localhost/api.php/categories?filter=name,eq,Internet
 GET http://localhost/api.php/categories?filter=name,sw,Inter
@@ -179,7 +179,7 @@ Output:
 {"categories":{"columns":["name"],"records":[["Web development"],["Internet"]]}}
 ```
 
-NB: Column selection cannot be applied to related tables. 
+NB: Column selection cannot be applied to related tables.
 
 ### List + Order
 
@@ -210,11 +210,26 @@ Output:
 {"categories":{"columns":["id","name"],"records":[["1","Internet"],["3","Web development"]],"results":2}}
 ```
 
-NB: Pages that are not ordered cannot be paginated. 
+NB: Pages that are not ordered cannot be paginated.
 
 ### Create
 
 You can easily add a record using the POST method. The call returns the "last insert id".
+
+```
+POST http://localhost/api.php/categories
+id=1&name=Internet
+```
+
+Output:
+
+```
+1
+```
+
+### Create (with JSON)
+
+Alternatively you can send a JSON object in the body. The call returns the "last insert id".
 
 ```
 POST http://localhost/api.php/categories
@@ -244,6 +259,21 @@ Output:
 ### Update
 
 Editing a record is done with the PUT method. The call returns the rows affected.
+
+```
+PUT http://localhost/api.php/categories/2
+id=1&name=Internet+networking
+```
+
+Output:
+
+```
+1
+```
+
+### Update (with JSON)
+
+Alternatively you can send a JSON object in the body. The call returns the rows affected.
 
 ```
 PUT http://localhost/api.php/categories/2
@@ -446,15 +476,15 @@ By default a single database is exposed with all it's tables in read-write mode.
 'permissions' configuration parameter. This array contains the permissions that are applied. The star character can be used as a wildcard
 for a full table or database name. Permissions with more specific keys override the values of permissions that contain one or more wildcards.
 The letters 'crudl' in the permission value are the first letters of the 'create','read','update','delete','list' operations.
-Specifying such a letters in the permission value means that the corresponding operation is permitted, while leaving it out, 
-means that the operation is not permitted. 
+Specifying such a letters in the permission value means that the corresponding operation is permitted, while leaving it out,
+means that the operation is not permitted.
 
 ## Multi-Database
 
 The code also supports multi-database API's. These have URLs where the first segment in the path is the database and not the table name.
 This can be enabled by NOT specifying a database in the configuration. Also the permissions in the configuration should contain a dot
 character to seperate the database from the table name. The databases 'mysql', 'information_schema' and 'sys' are automatically blocked.
- 
+
 ## Binary data
 
 Binary fields are automatically detected and data in those fields is returned using base64 encoding.
@@ -478,7 +508,7 @@ PUT http://localhost/api.php/images/2
 ```
 
 In the above example you see how binary data is sent.
- 
+
 ## Errors
 
 The following types of 404 'Not found' errors may be reported:
@@ -495,7 +525,7 @@ There are PHPUnit tests in the file 'tests.php'. You need to configure your test
 
 ```
 $ wget https://phar.phpunit.de/phpunit.phar
-$ php phpunit.phar tests.php 
+$ php phpunit.phar tests.php
 PHPUnit 4.5.0 by Sebastian Bergmann and contributors.
 
 ...........
