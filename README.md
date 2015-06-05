@@ -527,13 +527,13 @@ There are PHPUnit tests in the file 'tests.php'. You need to configure your test
 ```
 $ wget https://phar.phpunit.de/phpunit.phar
 $ php phpunit.phar tests.php
-PHPUnit 4.5.0 by Sebastian Bergmann and contributors.
+PHPUnit 4.7.1 by Sebastian Bergmann and contributors.
 
-................
+.................
 
-Time: 365 ms, Memory: 3.25Mb
+Time: 444 ms, Memory: 12.00Mb
 
-OK (16 tests, 66 assertions)
+OK (17 tests, 70 assertions)
 $
 ```
 
