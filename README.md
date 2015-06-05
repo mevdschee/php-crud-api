@@ -216,7 +216,7 @@ NB: Pages that are not ordered cannot be paginated.
 
 ### Create
 
-You can easily add a record using the POST method (see rfc1738). The call returns the "last insert id".
+You can easily add a record using the POST method (x-www-form-urlencoded, see rfc1738). The call returns the "last insert id".
 
 ```
 POST http://localhost/api.php/categories
