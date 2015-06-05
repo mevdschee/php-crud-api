@@ -41,7 +41,7 @@ class MySQL_CRUD_API extends REST_CRUD_API {
 				k1."REFERENCED_TABLE_NAME" = ? AND
 				k2."REFERENCED_TABLE_NAME" IN ?'
 	);
-	
+
 	protected function connectDatabase($hostname,$username,$password,$database,$port,$socket,$charset) {
 		$db = mysqli_connect($hostname,$username,$password,$database,$port,$socket);
 		if (mysqli_connect_errno()) {
@@ -55,7 +55,7 @@ class MySQL_CRUD_API extends REST_CRUD_API {
 		}
 		return $db;
 	}
-	
+
 	protected function query($db,$sql,$params) {
 		$sql = preg_replace_callback('/\!|\?/', function ($matches) use (&$db,&$params) {
 			$param = array_shift($params);
@@ -71,11 +71,11 @@ class MySQL_CRUD_API extends REST_CRUD_API {
 		//echo "\n$sql\n";
 		return mysqli_query($db,$sql);
 	}
-	
+
 	protected function fetch_assoc($result) {
 		return mysqli_fetch_assoc($result);
 	}
-	
+
 	protected function fetch_row($result) {
 		return mysqli_fetch_row($result);
 	}
@@ -83,27 +83,27 @@ class MySQL_CRUD_API extends REST_CRUD_API {
 	protected function insert_id($db,$result) {
 		return mysqli_insert_id($db);
 	}
-		
+
 	protected function affected_rows($db,$result) {
 		return mysqli_affected_rows($db);
 	}
-	
+
 	protected function close($result) {
 		return mysqli_free_result($result);
 	}
-	
+
 	protected function fetch_fields($result) {
 		return mysqli_fetch_fields($result);
 	}
-	
+
 	protected function add_limit_to_sql($sql,$limit,$offset) {
 		return "$sql LIMIT $limit OFFSET $offset";
 	}
-	
+
 	protected function likeEscape($string) {
 		return addcslashes($string,'%_');
 	}
-	
+
 	protected function is_binary_type($field) {
 		//echo "$field->name: $field->type ($field->flags)\n";
 		return (($field->flags & 128) && ($field->type==252));
@@ -188,7 +188,7 @@ class SQLSRV_CRUD_API extends REST_CRUD_API {
 			}
 			if (is_object($param)) {
 				switch($param->type) {
-					case 'base64': 
+					case 'base64':
 						$args[] = bin2hex(base64_decode($param->data));
 						return 'CONVERT(VARBINARY(MAX),?,2)';
 				}
@@ -220,9 +220,9 @@ class SQLSRV_CRUD_API extends REST_CRUD_API {
 	}
 
 	protected function insert_id($db,$result) {
-		sqlsrv_next_result($result); 
-		sqlsrv_fetch($result); 
-		return sqlsrv_get_field($result, 0); 
+		sqlsrv_next_result($result);
+		sqlsrv_fetch($result);
+		return sqlsrv_get_field($result, 0);
 	}
 
 	protected function affected_rows($db,$result) {
@@ -235,7 +235,7 @@ class SQLSRV_CRUD_API extends REST_CRUD_API {
 
 	protected function fetch_fields($result) {
 		//var_dump(sqlsrv_field_metadata($result));
-		return array_map(function($a){ 
+		return array_map(function($a){
 			$p = array();
 			foreach ($a as $k=>$v) {
 				$p[strtolower($k)] = $v;
@@ -247,11 +247,11 @@ class SQLSRV_CRUD_API extends REST_CRUD_API {
 	protected function add_limit_to_sql($sql,$limit,$offset) {
 		return "$sql OFFSET $offset ROWS FETCH NEXT $limit ROWS ONLY";
 	}
-	
+
 	protected function likeEscape($string) {
 		return str_replace(array('%','_'),array('[%]','[_]'),$string);
 	}
-	
+
 	protected function is_binary_type($field) {
 		return ($field->type>=-4 && $field->type<=-2);
 	}
@@ -293,7 +293,7 @@ class REST_CRUD_API {
 		}
 		return $values;
 	}
-	
+
 	protected function applyPermissions($database, $tables, $action, $permissions, $multidb) {
 		if (in_array(strtolower($database), array('information_schema','mysql','sys'))) return array();
 		$results = array();
@@ -307,8 +307,8 @@ class REST_CRUD_API {
 					$result = strpos($permissions[$option],$action[0])!==false;
 				}
 			}
-			if ($result) $results[] = $table;				
-		} 
+			if ($result) $results[] = $table;
+		}
 		return $results;
 	}
 
@@ -467,7 +467,7 @@ class REST_CRUD_API {
 		$select = array();
 		if (count($tables)>1) {
 			$table0 = array_shift($tables);
-			
+
 			$result = $this->query($db,$this->queries['reflect_belongs_to'],array($table0,$tables,$database,$database));
 			while ($row = $this->fetch_row($result)) {
 				$collect[$row[0]][$row[1]]=array();
@@ -489,6 +489,19 @@ class REST_CRUD_API {
 		return array($collect,$select);
 	}
 
+	protected function retrieveInput($post) {
+		$input = array();
+		$data = trim(file_get_contents($post));
+		if (strlen($data)>0) {
+			if ($data[0]=='{') {
+				$input = (array)json_decode($data);
+			} else {
+				parse_str($data, $input);
+			}
+		}
+		return $input;
+	}
+
 	protected function getParameters($config) {
 		extract($config);
 		$table     = $this->parseRequestParameter($request, 'a-zA-Z0-9\-_*,', false);
@@ -501,20 +514,20 @@ class REST_CRUD_API {
 		$columns   = $this->parseGetParameter($get, 'columns', 'a-zA-Z0-9\-_,', false);
 		$order     = $this->parseGetParameter($get, 'order', 'a-zA-Z0-9\-_*,', false);
 		$transform = $this->parseGetParameter($get, 'transform', '1', false);
-		
+
 		$table    = $this->processTableParameter($database,$table,$db);
 		$key      = $this->processKeyParameter($key,$table,$database,$db);
 		foreach ($filters as &$filter) $filter = $this->processFilterParameter($filter,$db);
 		if ($columns) $columns = explode(',',$columns);
 		$page     = $this->processPageParameter($page);
 		$order    = $this->processOrderParameter($order,$table,$database,$db);
-		
+
 		$table  = $this->applyPermissions($database,$table,$action,$permissions,$multidb);
 		if (empty($table)) $this->exitWith404('entity');
-		
+
 		$object = $this->retrieveObject($key,$table,$db);
-		$input  = (array)json_decode(file_get_contents($post));
-		
+		$input = $this->retrieveInput($post);
+
 		list($collect,$select) = $this->findRelations($table,$database,$db);
 
 		return compact('action','database','table','key','callback','page','filters','satisfy','columns','order','transform','db','object','input','collect','select');
@@ -727,7 +740,7 @@ class REST_CRUD_API {
 		$charset = isset($charset)?$charset:'utf8';
 
 		$permissions = isset($permissions)?$permissions:array('*'=>'crudl');
-		
+
 		$db = isset($db)?$db:null;
 		$method = isset($method)?$method:$_SERVER['REQUEST_METHOD'];
 		$request = isset($request)?$request:(isset($_SERVER['PATH_INFO'])?$_SERVER['PATH_INFO']:'');
