@@ -152,7 +152,7 @@ class MySQL_CRUD_API_Test extends PHPUnit_Framework_TestCase
 
 	public function testEditPostWithUtf8ContentWithPost()
 	{
-		$utf8 = 'Hello world! Καλημέρα κόσμε, コンニチハ';
+		$utf8 = '€ Hello world, Καλημέρα κόσμε, コンニチハ';
 		$url_encoded = urlencode($utf8);
 		$json_encoded = json_encode($utf8);
 		$test = new API($this);
