@@ -115,14 +115,14 @@ class SQLSRV_CRUD_API extends REST_CRUD_API {
 
 	protected $queries = array(
 		'reflect_table'=>'SELECT "TABLE_NAME" FROM "INFORMATION_SCHEMA"."TABLES" WHERE "TABLE_NAME" LIKE ? AND "TABLE_CATALOG" = ?',
-		'reflect_pk'=>'SELECT 
+		'reflect_pk'=>'SELECT
 				"COLUMN_NAME"
-			FROM 
+			FROM
 				"INFORMATION_SCHEMA"."TABLE_CONSTRAINTS" tc, "INFORMATION_SCHEMA"."KEY_COLUMN_USAGE" ku
-			WHERE 
-				tc."CONSTRAINT_TYPE" = \'PRIMARY KEY\' AND 
-				tc."CONSTRAINT_NAME" = ku."CONSTRAINT_NAME" AND 
-				ku."TABLE_NAME" = ? AND 
+			WHERE
+				tc."CONSTRAINT_TYPE" = \'PRIMARY KEY\' AND
+				tc."CONSTRAINT_NAME" = ku."CONSTRAINT_NAME" AND
+				ku."TABLE_NAME" = ? AND
 				ku."TABLE_CATALOG" = ?',
 		'reflect_belongs_to'=>'SELECT
 				"TABLE_NAME","COLUMN_NAME",
@@ -835,16 +835,14 @@ class REST_CRUD_API {
 
 }
 
-// only execute this when running in stand-alone mode
-if(count(get_required_files())<2) {
-	header('Access-Control-Allow-Origin: *');
-	$api = new SQLSRV_CRUD_API(array(
-		'hostname'=>'(local)',
-		'username'=>'',
-		'password'=>'',
-		'database'=>'xxx',
-		'charset'=>'UTF-8'
-	));
-	$api->executeCommand();
-}
+// uncomment the lines below when running in stand-alone mode:
 
+// header('Access-Control-Allow-Origin: *');
+// $api = new SQLSRV_CRUD_API(array(
+// 	'hostname'=>'(local)',
+// 	'username'=>'',
+// 	'password'=>'',
+// 	'database'=>'xxx',
+// 	'charset'=>'UTF-8'
+// ));
+// $api->executeCommand();
