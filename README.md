@@ -527,7 +527,7 @@ PUT http://localhost/api.php/categories/2
 name=Internet&icon__is_null
 ```
 
-When sending JSON data, then sending a NULL value for a nullable database field is easier as you can use the JSON "null" value.
+When sending JSON data, then sending a NULL value for a nullable database field is easier as you can use the JSON "null" value (without quotes).
 
 ```
 PUT http://localhost/api.php/categories/2
