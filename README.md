@@ -229,7 +229,7 @@ Output:
 1
 ```
 
-Note that the fields that are not specified get the default value as specified in the database.
+Note that the fields that are not specified in the request get the default value as specified in the database.
 
 ### Create (with JSON)
 
@@ -245,6 +245,8 @@ Output:
 ```
 1
 ```
+
+Note that the fields that are not specified in the request get the default value as specified in the database.
 
 ### Read
 
@@ -275,7 +277,7 @@ Output:
 1
 ```
 
-Note that only fields that are specified will be updated.
+Note that only fields that are specified in the request will be updated.
 
 ### Update (with JSON)
 
@@ -292,7 +294,7 @@ Output:
 1
 ```
 
-Note that only fields that are specified will be updated.
+Note that only fields that are specified in the request will be updated.
 
 ### Delete
 
