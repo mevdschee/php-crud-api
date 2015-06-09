@@ -553,11 +553,11 @@ $ wget https://phar.phpunit.de/phpunit.phar
 $ php phpunit.phar tests.php
 PHPUnit 4.7.1 by Sebastian Bergmann and contributors.
 
-.................
+...................
 
-Time: 444 ms, Memory: 12.00Mb
+Time: 471 ms, Memory: 12.00Mb
 
-OK (17 tests, 70 assertions)
+OK (19 tests, 78 assertions)
 $
 ```
 
