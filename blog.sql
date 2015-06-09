@@ -9,13 +9,13 @@ DROP TABLE IF EXISTS `categories`;
 CREATE TABLE `categories` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(255) NOT NULL,
-  `icon` blob NOT NULL,
+  `icon` blob NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 INSERT INTO `categories` (`id`, `name`, `icon`) VALUES
-(1,	'anouncement',	''),
-(2,	'article',	'');
+(1,	'anouncement',	NULL),
+(2,	'article',	NULL);
 
 DROP TABLE IF EXISTS `comments`;
 CREATE TABLE `comments` (

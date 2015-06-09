@@ -66,6 +66,7 @@ class MySQL_CRUD_API extends REST_CRUD_API {
 			if (is_object($param) && $param->type=='base64') {
 				return "x'".bin2hex(base64_decode($param->data))."'";
 			}
+			if ($param===null) return 'NULL';
 			return "'".mysqli_real_escape_string($db,$param)."'";
 		}, $sql);
 		//echo "\n$sql\n";
@@ -377,7 +378,7 @@ class REST_CRUD_API {
 		return $key;
 	}
 
-	protected function processOrderParameter($order,$table,$database,$db) {
+	protected function processOrderParameter($order) {
 		if ($order) {
 			$order = explode(',',$order,2);
 			if (count($order)<2) $order[1]='ASC';
@@ -427,7 +428,7 @@ class REST_CRUD_API {
 		if ($result = $this->query($db,'SELECT * FROM "!" WHERE "!" = ?',array($table[0],$key[1],$key[0]))) {
 			$object = $this->fetch_assoc($result);
 			foreach ($this->fetch_fields($result) as $field) {
-				if ($this->is_binary_type($field)) {
+				if ($this->is_binary_type($field) && $object[$field->name]) {
 					$object[$field->name] = base64_encode($object[$field->name]);
 				}
 			}
@@ -505,23 +506,25 @@ class REST_CRUD_API {
 				$input = (array)json_decode($data);
 			} else {
 				parse_str($data, $input);
+				foreach ($input as $key => $value) {
+					if (substr($key,-9)=='__is_null') {
+						$input[substr($key,0,-9)] = null;
+						unset($input[$key]);
+					}
+				}
 			}
 		}
 		return $input;
 	}
 
 	protected function convertBinary($input,$tables,$db) {
-		if (count($tables)>0) {
-			$table0 = array_shift($tables);
-			$sql = 'SELECT * FROM "'.$table0.'" WHERE 1=2;';
-			$result = $this->query($db,$sql,array());
-			foreach ($this->fetch_fields($result) as $field) {
-				$key = $field->name;
-				if (isset($input[$key]) && $this->is_binary_type($field)) {
-					$data = $input[$key];
-					$data = str_pad(strtr($data, '-_', '+/'), strlen($data) % 4, '=', STR_PAD_RIGHT);
-					$input[$key] = (object)array('type'=>'base64','data'=>$data);
-				}
+		$result = $this->query($db,'SELECT * FROM "!" WHERE 1=2;',array($tables[0]));
+		foreach ($this->fetch_fields($result) as $field) {
+			$key = $field->name;
+			if (isset($input[$key]) && $input[$key] && $this->is_binary_type($field)) {
+				$data = $input[$key];
+				$data = str_pad(strtr($data, '-_', '+/'), strlen($data) % 4, '=', STR_PAD_RIGHT);
+				$input[$key] = (object)array('type'=>'base64','data'=>$data);
 			}
 		}
 		return $input;
@@ -634,7 +637,7 @@ class REST_CRUD_API {
 					}
 				}
 				foreach ($base64 as $k=>$v) {
-					if ($v) {
+					if ($v && $row[$k]) {
 						$row[$k] = base64_encode($row[$k]);
 					}
 				}
@@ -696,7 +699,7 @@ class REST_CRUD_API {
 						}
 					}
 					foreach ($base64 as $k=>$v) {
-						if ($v) {
+						if ($v && $row[$k]) {
 							$row[$k] = base64_encode($row[$k]);
 						}
 					}
