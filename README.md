@@ -15,7 +15,7 @@ This is a single file application! Upload "api.php" somewhere and enjoy!
 
   - Authentication or authorization is not included
   - Validation on API input is not included
-  - Transactions over multiple tables are not supported
+  - Complex queries or transactions are not supported
 
 ## TODO
 
@@ -23,6 +23,7 @@ This is a single file application! Upload "api.php" somewhere and enjoy!
   - Add created_at and modified_at support
   - Add user_id and group_id support (multi-tenant)
   - Add created_by and modified_by support
+  - PostgreSQL support
 
 ## Features
 
@@ -527,7 +528,7 @@ PUT http://localhost/api.php/categories/2
 name=Internet&icon__is_null
 ```
 
-When sending JSON data, then sending a NULL value for a nullable database field is easier as you can use the JSON "null" value.
+When sending JSON data, then sending a NULL value for a nullable database field is easier as you can use the JSON "null" value (without quotes).
 
 ```
 PUT http://localhost/api.php/categories/2
