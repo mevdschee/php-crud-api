@@ -15,12 +15,12 @@ This is a single file application! Upload "api.php" somewhere and enjoy!
 
   - Authentication or authorization is not included
   - Validation on API input is not included
+  - Transactions over multiple tables are not supported
 
 ## TODO
 
   - Add column permission system
   - Add created_at and modified_at support
-  - Add basic authentication support
   - Add user_id and group_id support (multi-tenant)
   - Add created_by and modified_by support
 
@@ -524,14 +524,14 @@ When using the POST method (x-www-form-urlencoded, see rfc1738) a database NULL 
 
 ```
 PUT http://localhost/api.php/categories/2
-name=funny&icon__is_null
+name=Internet&icon__is_null
 ```
 
 When sending JSON data, then sending a NULL value for a nullable database field is easier as you can use the JSON "null" value.
 
 ```
 PUT http://localhost/api.php/categories/2
-{"name":"funny","icon":null}
+{"name":"Internet","icon":null}
 ```
 
 ## Errors
