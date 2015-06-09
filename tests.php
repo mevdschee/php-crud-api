@@ -262,7 +262,7 @@ class MySQL_CRUD_API_Test extends PHPUnit_Framework_TestCase
 	public function testEditCategoryWithNullWithPost()
 	{
 		$test = new API($this);
-		$test->put('/categories/2','icon__is_null=1');
+		$test->put('/categories/2','icon__is_null');
 		$test->expect('1');
 		$test->get('/categories/2');
 		$test->expect('{"id":"2","name":"article","icon":null}');

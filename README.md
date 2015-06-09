@@ -229,6 +229,8 @@ Output:
 1
 ```
 
+Note that the fields that are not specified get the default value as specified in the database.
+
 ### Create (with JSON)
 
 Alternatively you can send a JSON object in the body. The call returns the "last insert id".
@@ -273,6 +275,8 @@ Output:
 1
 ```
 
+Note that only fields that are specified will be updated.
+
 ### Update (with JSON)
 
 Alternatively you can send a JSON object in the body. The call returns the rows affected.
@@ -287,6 +291,8 @@ Output:
 ```
 1
 ```
+
+Note that only fields that are specified will be updated.
 
 ### Delete
 
@@ -492,23 +498,39 @@ character to seperate the database from the table name. The databases 'mysql', '
 Binary fields are automatically detected and data in those fields is returned using base64 encoding.
 
 ```
-GET http://localhost/api.php/images/2
+GET http://localhost/api.php/categories/2
 ```
 
 Output:
 
 ```
-{"id":"1","thumbnail":"ZGF0YQ=="}
+{"id":"2","name":"funny","icon":"ZGF0YQ=="}
 ```
 
-When sending a record that contains a binary field you may add a "~base64" suffix to the field name and send base64 encoded data.
+When sending a record that contains a binary field you will also have to send base64 encoded data.
 
 ```
-PUT http://localhost/api.php/images/2
-thumbnail~base64=ZGF0YQ
+PUT http://localhost/api.php/categories/2
+icon=ZGF0YQ
 ```
 
 In the above example you see how binary data is sent. Both "base64url" and standard "base64" are allowed (see rfc4648).
+
+## Sending NULL
+
+When using the POST method (x-www-form-urlencoded, see rfc1738) a database NULL value can be set using the "__is_null" suffix:
+
+```
+PUT http://localhost/api.php/categories/2
+name=funny&icon__is_null
+```
+
+When sending JSON data, then sending a NULL value for a nullable database field is easier as you can use the JSON "null" value.
+
+```
+PUT http://localhost/api.php/categories/2
+{"name":"funny","icon":null}
+```
 
 ## Errors
 
