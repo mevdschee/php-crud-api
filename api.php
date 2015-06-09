@@ -506,13 +506,19 @@ class REST_CRUD_API {
 			} else {
 				parse_str($data, $input);
 			}
-			$input = $this->convertBinary($input);
 		}
 		return $input;
 	}
 
-	protected function convertBinary($input) {
-		$binary_fields = array();
+	protected function convertBinary($input,$table,$db) {
+		
+		$sql = 'SELECT * FROM "'.$table.'" WHERE 1=2;';
+		$result = $this->query($db,$sql,array());
+		$fields = $this->fetch_fields($result);
+		
+		// write awesome here.
+		
+		foreach ($fields as $key => $value) {
 		foreach ($input as $key => $value) {
 			if (substr($key,-7)=='~base64') {
 				$binary_fields[] = $key;
@@ -552,6 +558,7 @@ class REST_CRUD_API {
 
 		$object = $this->retrieveObject($key,$table,$db);
 		$input = $this->retrieveInput($post);
+		if (!empty($input)) $input = $this->convertBinary($post,$table,$db);
 
 		list($collect,$select) = $this->findRelations($table,$database,$db);
 
