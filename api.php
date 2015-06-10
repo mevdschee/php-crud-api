@@ -548,7 +548,7 @@ class REST_CRUD_API {
 		foreach ($filters as &$filter) $filter = $this->processFilterParameter($filter,$db);
 		if ($columns) $columns = explode(',',$columns);
 		$page     = $this->processPageParameter($page);
-		$order    = $this->processOrderParameter($order,$table,$database,$db);
+		$order    = $this->processOrderParameter($order);
 
 		$table  = $this->applyPermissions($database,$table,$action,$permissions,$multidb);
 		if (empty($table)) $this->exitWith404('entity');
