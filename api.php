@@ -112,6 +112,114 @@ class MySQL_CRUD_API extends REST_CRUD_API {
 
 }
 
+class PgSQL_CRUD_API extends REST_CRUD_API {
+
+	protected $queries = array(
+		'reflect_table'=>'SELECT "TABLE_NAME" FROM "INFORMATION_SCHEMA"."TABLES" WHERE "TABLE_NAME" LIKE ? AND "TABLE_SCHEMA" = ?',
+		'reflect_pk'=>'SELECT "COLUMN_NAME" FROM "INFORMATION_SCHEMA"."COLUMNS" WHERE "COLUMN_KEY" = \'PRI\' AND "TABLE_NAME" = ? AND "TABLE_SCHEMA" = ?',
+		'reflect_belongs_to'=>'SELECT
+				"TABLE_NAME","COLUMN_NAME",
+				"REFERENCED_TABLE_NAME","REFERENCED_COLUMN_NAME"
+			FROM
+				"INFORMATION_SCHEMA"."KEY_COLUMN_USAGE"
+			WHERE
+				"TABLE_NAME" = ? AND
+				"REFERENCED_TABLE_NAME" IN ? AND
+				"TABLE_SCHEMA" = ? AND
+				"REFERENCED_TABLE_SCHEMA" = ?',
+		'reflect_has_many'=>'SELECT
+				"TABLE_NAME","COLUMN_NAME",
+				"REFERENCED_TABLE_NAME","REFERENCED_COLUMN_NAME"
+			FROM
+				"INFORMATION_SCHEMA"."KEY_COLUMN_USAGE"
+			WHERE
+				"TABLE_NAME" IN ? AND
+				"REFERENCED_TABLE_NAME" = ? AND
+				"TABLE_SCHEMA" = ? AND
+				"REFERENCED_TABLE_SCHEMA" = ?',
+		'reflect_habtm'=>'SELECT
+				k1."TABLE_NAME", k1."COLUMN_NAME",
+				k1."REFERENCED_TABLE_NAME", k1."REFERENCED_COLUMN_NAME",
+				k2."TABLE_NAME", k2."COLUMN_NAME",
+				k2."REFERENCED_TABLE_NAME", k2."REFERENCED_COLUMN_NAME"
+			FROM
+				"INFORMATION_SCHEMA"."KEY_COLUMN_USAGE" k1, "INFORMATION_SCHEMA"."KEY_COLUMN_USAGE" k2
+			WHERE
+				k1."TABLE_SCHEMA" = ? AND
+				k2."TABLE_SCHEMA" = ? AND
+				k1."REFERENCED_TABLE_SCHEMA" = ? AND
+				k2."REFERENCED_TABLE_SCHEMA" = ? AND
+				k1."TABLE_NAME" = k2."TABLE_NAME" AND
+				k1."REFERENCED_TABLE_NAME" = ? AND
+				k2."REFERENCED_TABLE_NAME" IN ?'
+	);
+
+	protected function connectDatabase($hostname,$username,$password,$database,$port,$socket,$charset) {
+		$e = function ($v) { return str_replace(array('\'','\\'),array('\\\'','\\\\'),$v); };
+		$conn_string = "host='".$e($hostname)."' port=5432 dbname=test user=lamb password=bar options='--client_encoding=UTF8'";
+		$db = pg_connect($conn_string);
+
+
+
+		return $db;
+	}
+
+	protected function query($db,$sql,$params) {
+		$sql = preg_replace_callback('/\!|\?/', function ($matches) use (&$db,&$params) {
+			$param = array_shift($params);
+			if ($matches[0]=='!') return preg_replace('/[^a-zA-Z0-9\-_=<>]/','',$param);
+			if (is_array($param)) return '('.implode(',',array_map(function($v) use (&$db) {
+				return "'".mysqli_real_escape_string($db,$v)."'";
+			},$param)).')';
+			if (is_object($param) && $param->type=='base64') {
+				return "x'".bin2hex(base64_decode($param->data))."'";
+			}
+			if ($param===null) return 'NULL';
+			return "'".mysqli_real_escape_string($db,$param)."'";
+		}, $sql);
+		//echo "\n$sql\n";
+		return mysqli_query($db,$sql);
+	}
+
+	protected function fetch_assoc($result) {
+		return mysqli_fetch_assoc($result);
+	}
+
+	protected function fetch_row($result) {
+		return mysqli_fetch_row($result);
+	}
+
+	protected function insert_id($db,$result) {
+		return mysqli_insert_id($db);
+	}
+
+	protected function affected_rows($db,$result) {
+		return mysqli_affected_rows($db);
+	}
+
+	protected function close($result) {
+		return mysqli_free_result($result);
+	}
+
+	protected function fetch_fields($result) {
+		return mysqli_fetch_fields($result);
+	}
+
+	protected function add_limit_to_sql($sql,$limit,$offset) {
+		return "$sql LIMIT $limit OFFSET $offset";
+	}
+
+	protected function likeEscape($string) {
+		return addcslashes($string,'%_');
+	}
+
+	protected function is_binary_type($field) {
+		//echo "$field->name: $field->type ($field->flags)\n";
+		return (($field->flags & 128) && ($field->type==252));
+	}
+
+}
+
 class SQLSRV_CRUD_API extends REST_CRUD_API {
 
 	protected $queries = array(
