@@ -112,9 +112,11 @@ class MySQL_CRUD_API_Test extends PHPUnit_Framework_TestCase
 				$i++;
 			} while (mysqli_next_result($link));
 		}
-		if ($mysqli->errno) {
-			die("Loading '$fixture' failed on statemement #$i with error:\n$mysqli->error\n");
+		if (mysqli_errno($link)) {
+			die("Loading '$fixture' failed on statemement #$i with error:\n".mysqli_error($link)."\n");
 		}
+
+		mysqli_close($link);
 	}
 
 	public function testListPosts()
