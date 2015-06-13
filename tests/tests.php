@@ -1,6 +1,6 @@
 <?php
-require "config.php";
-require "../api.php";
+require __DIR__.'/config.php';
+require __DIR__.'/../api.php';
 
 class API
 {
@@ -84,7 +84,7 @@ class MySQL_CRUD_API_Test extends PHPUnit_Framework_TestCase
 	public static function setUpBeforeClass()
 	{
 		static::checkConfig();
-		$fixture = 'blog.mysql';
+		$fixture = __DIR__.'/blog.mysql';
 
 		$hostname = MySQL_CRUD_API_Config::$hostname;
 		$username = MySQL_CRUD_API_Config::$username;
