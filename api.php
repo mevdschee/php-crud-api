@@ -220,7 +220,7 @@ class PgSQL_CRUD_API extends REST_CRUD_API {
 
 }
 
-class SQLSRV_CRUD_API extends REST_CRUD_API {
+class MsSQL_CRUD_API extends REST_CRUD_API {
 
 	protected $queries = array(
 		'reflect_table'=>'SELECT "TABLE_NAME" FROM "INFORMATION_SCHEMA"."TABLES" WHERE "TABLE_NAME" LIKE ? AND "TABLE_CATALOG" = ?',
@@ -950,7 +950,7 @@ class REST_CRUD_API {
 // uncomment the lines below when running in stand-alone mode:
 
 // header('Access-Control-Allow-Origin: *');
-// $api = new SQLSRV_CRUD_API(array(
+// $api = new MsSQL_CRUD_API(array(
 // 	'hostname'=>'(local)',
 // 	'username'=>'',
 // 	'password'=>'',

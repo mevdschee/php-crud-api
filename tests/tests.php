@@ -24,7 +24,7 @@ class API
 		$data = 'data://text/plain;base64,'.base64_encode($data);
 
 		switch(MySQL_CRUD_API_Config::$dbengine) {
-			case 'mssql':	$class = 'SQLSRV_CRUD_API'; break;
+			case 'mssql':	$class = 'MsSQL_CRUD_API'; break;
 			case 'pgsql':	$class = 'PgSQL_CRUD_API'; break;
 			case 'mysql':	$class = 'MySQL_CRUD_API'; break;
 			default:	die("DB engine not supported: $dbengine\n");
@@ -84,16 +84,11 @@ class API
 
 class MySQL_CRUD_API_Test extends PHPUnit_Framework_TestCase
 {
-	private static function checkConfig()
+	public static function setUpBeforeClass()
 	{
 		if (MySQL_CRUD_API_Config::$database=='{{test_database}}') {
 			die("Configure database in 'config.php' before running tests.\n");
 		}
-	}
-
-	public static function setUpBeforeClass()
-	{
-		static::checkConfig();
 
 		$dbengine = MySQL_CRUD_API_Config::$dbengine;
 		$hostname = MySQL_CRUD_API_Config::$hostname;
@@ -119,6 +114,22 @@ class MySQL_CRUD_API_Test extends PHPUnit_Framework_TestCase
 			}
 
 			mysqli_close($link);
+
+		} elseif ($dbengine == 'mssql') {
+
+			$connectionInfo = array();
+			$connectionInfo['UID']=$username;
+			$connectionInfo['PWD']=$password;
+			$connectionInfo['Database']=$database;
+			$connectionInfo['CharacterSet']='UTF-8';
+			$conn = sqlsrv_connect( $hostname, $connectionInfo);
+			if (!$conn) {
+				die("Connect failed: ".print_r( sqlsrv_errors(), true));
+			}
+			if (!sqlsrv_query($conn, file_get_contents($fixture))) {
+				die("Loading '$fixture' failed with error:\n".print_r( sqlsrv_errors(), true)."\n");
+			}
+			sqlsrv_close($conn);
 
 		}
 	}
