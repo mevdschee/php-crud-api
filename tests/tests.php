@@ -20,7 +20,14 @@ class API
 
 		$data = 'data://text/plain;base64,'.base64_encode($data);
 
-		$this->api = new MySQL_CRUD_API(array(
+		switch(MySQL_CRUD_API_Config::$dbengine) {
+			case 'mssql':	$class = 'MsSQL_CRUD_API'; break;
+			case 'pgsql':	$class = 'PgSQL_CRUD_API'; break;
+			case 'mysql':	$class = 'MySQL_CRUD_API'; break;
+			default:	die("DB engine not supported: $dbengine\n");
+		}
+
+		$this->api = new $class(array(
 				'hostname'=>MySQL_CRUD_API_Config::$hostname,
 				'username'=>MySQL_CRUD_API_Config::$username,
 				'password'=>MySQL_CRUD_API_Config::$password,
@@ -84,30 +91,36 @@ class MySQL_CRUD_API_Test extends PHPUnit_Framework_TestCase
 	public static function setUpBeforeClass()
 	{
 		static::checkConfig();
-		$fixture = __DIR__.'/blog.mysql';
 
+		$dbengine = MySQL_CRUD_API_Config::$dbengine;
 		$hostname = MySQL_CRUD_API_Config::$hostname;
 		$username = MySQL_CRUD_API_Config::$username;
 		$password = MySQL_CRUD_API_Config::$password;
 		$database = MySQL_CRUD_API_Config::$database;
 
-		$link = mysqli_connect($hostname, $username, $password, $database);
+		$fixture = __DIR__.'/blog.'.$dbengine;
 
-		if (mysqli_connect_errno()) {
-			die("Connect failed: ".mysqli_connect_error()."\n");
-		}
+		if ($dbengine == 'mysql') {
 
-		if (mysqli_multi_query($link, file_get_contents($fixture))) {
-			$i = 0;
-			do {
-				$i++;
-			} while (mysqli_next_result($link));
-		}
-		if (mysqli_errno($link)) {
-			die("Loading '$fixture' failed on statemement #$i with error:\n".mysqli_error($link)."\n");
-		}
+			$link = mysqli_connect($hostname, $username, $password, $database);
 
-		mysqli_close($link);
+			if (mysqli_connect_errno()) {
+				die("Connect failed: ".mysqli_connect_error()."\n");
+			}
+
+			if (mysqli_multi_query($link, file_get_contents($fixture))) {
+				$i = 0;
+				do {
+					$i++;
+				} while (mysqli_next_result($link));
+			}
+			if (mysqli_errno($link)) {
+				die("Loading '$fixture' failed on statemement #$i with error:\n".mysqli_error($link)."\n");
+			}
+
+			mysqli_close($link);
+
+		}
 	}
 
 	public function testListPosts()

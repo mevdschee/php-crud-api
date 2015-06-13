@@ -2,6 +2,7 @@
 
 class MySQL_CRUD_API_Config
 {
+	public static $dbengine='mysql';
 	public static $hostname='localhost';
 	public static $username='root';
 	public static $password='root';
