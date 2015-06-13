@@ -1,5 +1,5 @@
 <?php
-require "test_config.php";
+require "config.php";
 require "../api.php";
 
 class API
