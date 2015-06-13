@@ -3,6 +3,7 @@ require "api.php";
 
 class MySQL_CRUD_API_Config
 {
+	public static $hostname='localhost';
 	public static $username='root';
 	public static $password='root';
 	public static $database='mysql_crud_api'; // NB: Use an empty database, data will be LOST!
@@ -27,7 +28,7 @@ class API
 		$data = 'data://text/plain;base64,'.base64_encode($data);
 
 		$this->api = new MySQL_CRUD_API(array(
-				'hostname'=>'localhost',
+				'hostname'=>MySQL_CRUD_API_Config::$hostname,
 				'username'=>MySQL_CRUD_API_Config::$username,
 				'password'=>MySQL_CRUD_API_Config::$password,
 				'database'=>MySQL_CRUD_API_Config::$database,
@@ -92,13 +93,28 @@ class MySQL_CRUD_API_Test extends PHPUnit_Framework_TestCase
 	public static function setUpBeforeClass()
 	{
 		static::checkConfig();
-		$fixture = 'blog.sql';
-		$username = escapeshellarg(MySQL_CRUD_API_Config::$username);
-		$password = escapeshellarg(MySQL_CRUD_API_Config::$password);
-		$database = escapeshellarg(MySQL_CRUD_API_Config::$database);
-		$command = "cat $fixture | mysql -u$username -p$password $database 2>&1";
-		$output = shell_exec($command);
-		if ($output) die("Could not load fixture '$fixture':\n$output");
+		$fixture = 'blog.mysql';
+
+		$hostname = MySQL_CRUD_API_Config::$hostname;
+		$username = MySQL_CRUD_API_Config::$username;
+		$password = MySQL_CRUD_API_Config::$password;
+		$database = MySQL_CRUD_API_Config::$database;
+
+		$link = mysqli_connect($hostname, $username, $password, $database);
+
+		if (mysqli_connect_errno()) {
+			die("Connect failed: ".mysqli_connect_error()."\n");
+		}
+
+		if (mysqli_multi_query($link, file_get_contents($fixture))) {
+			$i = 0;
+			do {
+				$i++;
+			} while (mysqli_next_result($link));
+		}
+		if ($mysqli->errno) {
+			die("Loading '$fixture' failed on statemement #$i with error:\n$mysqli->error\n");
+		}
 	}
 
 	public function testListPosts()
