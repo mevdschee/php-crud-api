@@ -562,7 +562,7 @@ OK (19 tests, 78 assertions)
 $
 ```
 
-NB: You MUST use an empty database as a desctructive database fixture ('blog.sql') is loaded.
+NB: You MUST use an empty database as a desctructive database fixture ('blog.mysql') is loaded.
 
 ## License
 
