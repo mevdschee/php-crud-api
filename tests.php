@@ -18,15 +18,13 @@ class API
 		$this->test = $test;
 	}
 
-	private function action($method,$url,$data=false)
+	private function action($method,$url,$data='')
 	{
 		$url = parse_url($url);
 		$query = isset($url['query'])?$url['query']:'';
 		parse_str($query,$get);
 
-		if ($data) {
-			$data = 'data://text/plain;base64,'.base64_encode($data);
-		}
+		$data = 'data://text/plain;base64,'.base64_encode($data);
 
 		$this->api = new MySQL_CRUD_API(array(
 				'hostname'=>'localhost',
@@ -37,7 +35,7 @@ class API
 				// for tests
 				'method' =>$method,
 				'request' =>$url['path'],
-				'post'=>$data?:'php://input',
+				'post'=>$data,
 				'get' =>$get,
 		));
 		return $this;
