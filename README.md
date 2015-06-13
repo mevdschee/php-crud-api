@@ -78,7 +78,7 @@ $api = new MySQL_CRUD_API(array(
 $api->executeCommand();
 ```
 
-For the alternative SQLSRV_CRUD_API class the following mapping applies:
+For the alternative MsSQL_CRUD_API class the following mapping applies:
 
  - username = UID
  - password = PWD
@@ -88,7 +88,7 @@ For the alternative SQLSRV_CRUD_API class the following mapping applies:
  - socket = (not supported)
  - charset = CharacterSet
 
-The other variables are not MySQL or SQL Server specific.
+The other variables are not MySQL or MsSQL server specific.
 
 ## Usage
 
