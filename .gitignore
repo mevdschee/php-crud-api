@@ -2,3 +2,4 @@
 .project
 .settings/
 phpunit.phar
+tests/config.php
