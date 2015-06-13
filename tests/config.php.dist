@@ -1,0 +1,10 @@
+<?php
+
+class MySQL_CRUD_API_Config
+{
+	public static $dbengine='mysql';             // 'mysql', 'mssql' or 'pgsql'
+	public static $hostname='{{test_hostname}}'; // 'localhost' for mysql or '(Local)' for mssql
+	public static $username='{{test_username}}'; // May be empty on mssql
+	public static $password='{{test_password}}'; // May be empty on mssql
+	public static $database='{{test_database}}'; // NB: Use an empty database, data will be LOST!
+}

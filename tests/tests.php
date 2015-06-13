@@ -1,4 +1,7 @@
 <?php
+if (!file_exists(__DIR__.'/config.php')) {
+	copy(__DIR__.'/config.php.dist',__DIR__.'/config.php');
+}
 require __DIR__.'/config.php';
 require __DIR__.'/../api.php';
 
@@ -21,7 +24,7 @@ class API
 		$data = 'data://text/plain;base64,'.base64_encode($data);
 
 		switch(MySQL_CRUD_API_Config::$dbengine) {
-			case 'mssql':	$class = 'MsSQL_CRUD_API'; break;
+			case 'mssql':	$class = 'SQLSRV_CRUD_API'; break;
 			case 'pgsql':	$class = 'PgSQL_CRUD_API'; break;
 			case 'mysql':	$class = 'MySQL_CRUD_API'; break;
 			default:	die("DB engine not supported: $dbengine\n");
@@ -83,8 +86,8 @@ class MySQL_CRUD_API_Test extends PHPUnit_Framework_TestCase
 {
 	private static function checkConfig()
 	{
-		if (MySQL_CRUD_API_Config::$database=='{{test_database}}') {
-			die("Configure database in 'test_config.php' before running tests.\n");
+		if (!isset(MySQL_CRUD_API_Config::$database=='{{test_database}}') {
+			die("Configure database in 'config.php' before running tests.\n");
 		}
 	}
 
@@ -103,16 +106,13 @@ class MySQL_CRUD_API_Test extends PHPUnit_Framework_TestCase
 		if ($dbengine == 'mysql') {
 
 			$link = mysqli_connect($hostname, $username, $password, $database);
-
 			if (mysqli_connect_errno()) {
 				die("Connect failed: ".mysqli_connect_error()."\n");
 			}
 
+			$i=0;
 			if (mysqli_multi_query($link, file_get_contents($fixture))) {
-				$i = 0;
-				do {
-					$i++;
-				} while (mysqli_next_result($link));
+				do { $i++; } while (mysqli_next_result($link));
 			}
 			if (mysqli_errno($link)) {
 				die("Loading '$fixture' failed on statemement #$i with error:\n".mysqli_error($link)."\n");
