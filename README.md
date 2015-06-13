@@ -551,7 +551,7 @@ There are PHPUnit tests in the file 'tests.php'. You need to configure your test
 
 ```
 $ wget https://phar.phpunit.de/phpunit.phar
-$ php phpunit.phar tests.php
+$ php phpunit.phar tests/tests.php
 PHPUnit 4.7.1 by Sebastian Bergmann and contributors.
 
 ...................
