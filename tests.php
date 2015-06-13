@@ -1,13 +1,6 @@
 <?php
+require "test_config.php";
 require "api.php";
-
-class MySQL_CRUD_API_Config
-{
-	public static $hostname='{{test_hostname}}';
-	public static $username='{{test_username}}';
-	public static $password='{{test_password}}';
-	public static $database='{{test_database}}'; // NB: Use an empty database, data will be LOST!
-}
 
 class API
 {
@@ -83,10 +76,8 @@ class MySQL_CRUD_API_Test extends PHPUnit_Framework_TestCase
 {
 	private static function checkConfig()
 	{
-		$file = __FILE__;
-		$file = str_replace(rtrim(getcwd(),'/').'/', '', $file);
 		if (MySQL_CRUD_API_Config::$database=='{{test_database}}') {
-			die("Configure database in '$file' before running tests.\n");
+			die("Configure database in 'test_config.php' before running tests.\n");
 		}
 	}
 
