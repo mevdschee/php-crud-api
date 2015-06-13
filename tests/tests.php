@@ -86,7 +86,7 @@ class MySQL_CRUD_API_Test extends PHPUnit_Framework_TestCase
 {
 	private static function checkConfig()
 	{
-		if (!isset(MySQL_CRUD_API_Config::$database=='{{test_database}}') {
+		if (MySQL_CRUD_API_Config::$database=='{{test_database}}') {
 			die("Configure database in 'config.php' before running tests.\n");
 		}
 	}
