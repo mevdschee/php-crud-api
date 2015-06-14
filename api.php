@@ -304,9 +304,6 @@ class MsSQL_CRUD_API extends REST_CRUD_API {
 		if ($socket) {
 			throw new \Exception('Socket connection is not supported.');
 		}
-		if (!sqlsrv_query($db,'SET ANSI_DEFAULTS ON')) {
-			throw new \Exception('Could not set ANSI defaults.');
-		}
 		return $db;
 	}
 
