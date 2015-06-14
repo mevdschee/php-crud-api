@@ -565,7 +565,7 @@ $
 For SQL server on Windows:
 
 ```
-C:\mysql-crud-api-master>"C:\Program Files (x86)\PHP\v5.5\php.exe" phpunit.phar tests\tests.php
+C:\mysql-crud-api-master>php.exe phpunit.phar tests\tests.php
 PHPUnit 4.7.3 by Sebastian Bergmann and contributors.
 
 ...................
@@ -573,7 +573,6 @@ PHPUnit 4.7.3 by Sebastian Bergmann and contributors.
 Time: 676 ms, Memory: 7.25Mb
 
 OK (19 tests, 39 assertions)
-
 C:\mysql-crud-api-master>
 ```
 
