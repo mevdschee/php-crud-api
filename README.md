@@ -552,14 +552,29 @@ There are PHPUnit tests in the file 'tests.php'. You need to configure your test
 ```
 $ wget https://phar.phpunit.de/phpunit.phar
 $ php phpunit.phar tests/tests.php
-PHPUnit 4.7.1 by Sebastian Bergmann and contributors.
+PHPUnit 4.7.3 by Sebastian Bergmann and contributors.
 
 ...................
 
-Time: 471 ms, Memory: 12.00Mb
+Time: 464 ms, Memory: 12.00Mb
 
-OK (19 tests, 78 assertions)
+OK (19 tests, 39 assertions)
 $
+```
+
+For SQL server on Windows:
+
+```
+C:\mysql-crud-api-master>"C:\Program Files (x86)\PHP\v5.5\php.exe" phpunit.phar tests\tests.php
+PHPUnit 4.7.3 by Sebastian Bergmann and contributors.
+
+...................
+
+Time: 676 ms, Memory: 7.25Mb
+
+OK (19 tests, 39 assertions)
+
+C:\mysql-crud-api-master>
 ```
 
 NB: You MUST use an empty database as a desctructive database fixture ('blog.mysql') is loaded.

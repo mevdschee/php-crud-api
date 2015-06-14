@@ -234,40 +234,57 @@ class MsSQL_CRUD_API extends REST_CRUD_API {
 				ku."TABLE_NAME" = ? AND
 				ku."TABLE_CATALOG" = ?',
 		'reflect_belongs_to'=>'SELECT
-				"TABLE_NAME","COLUMN_NAME",
-				"REFERENCED_TABLE_NAME","REFERENCED_COLUMN_NAME"
+				cu1."TABLE_NAME",cu1."COLUMN_NAME",
+				cu2."TABLE_NAME",cu2."COLUMN_NAME"
 			FROM
-				"INFORMATION_SCHEMA"."KEY_COLUMN_USAGE"
+				"INFORMATION_SCHEMA".REFERENTIAL_CONSTRAINTS rc,
+				"INFORMATION_SCHEMA".CONSTRAINT_COLUMN_USAGE cu1,
+				"INFORMATION_SCHEMA".CONSTRAINT_COLUMN_USAGE cu2
 			WHERE
-				"TABLE_NAME" = ? AND
-				"REFERENCED_TABLE_NAME" IN ? AND
-				"TABLE_CATALOG" = ? AND
-				"REFERENCED_TABLE_CATALOG" = ?',
+				cu1."CONSTRAINT_NAME" = rc."CONSTRAINT_NAME" AND
+				cu2."CONSTRAINT_NAME" = rc."UNIQUE_CONSTRAINT_NAME" AND
+				cu1."TABLE_NAME" = ? AND
+				cu2."TABLE_NAME" IN ? AND
+				cu1."TABLE_CATALOG" = ? AND
+				cu2."TABLE_CATALOG" = ?',
 		'reflect_has_many'=>'SELECT
-				"TABLE_NAME","COLUMN_NAME",
-				"REFERENCED_TABLE_NAME","REFERENCED_COLUMN_NAME"
+				cu1."TABLE_NAME",cu1."COLUMN_NAME",
+				cu2."TABLE_NAME",cu2."COLUMN_NAME"
 			FROM
-				"INFORMATION_SCHEMA"."KEY_COLUMN_USAGE"
+				"INFORMATION_SCHEMA".REFERENTIAL_CONSTRAINTS rc,
+				"INFORMATION_SCHEMA".CONSTRAINT_COLUMN_USAGE cu1,
+				"INFORMATION_SCHEMA".CONSTRAINT_COLUMN_USAGE cu2
 			WHERE
-				"TABLE_NAME" IN ? AND
-				"REFERENCED_TABLE_NAME" = ? AND
-				"TABLE_CATALOG" = ? AND
-				"REFERENCED_TABLE_CATALOG" = ?',
+				cu1."CONSTRAINT_NAME" = rc."CONSTRAINT_NAME" AND
+				cu2."CONSTRAINT_NAME" = rc."UNIQUE_CONSTRAINT_NAME" AND
+				cu1."TABLE_NAME" IN ? AND
+				cu2."TABLE_NAME" = ? AND
+				cu1."TABLE_CATALOG" = ? AND
+				cu2."TABLE_CATALOG" = ?',
 		'reflect_habtm'=>'SELECT
-				k1."TABLE_NAME", k1."COLUMN_NAME",
-				k1."REFERENCED_TABLE_NAME", k1."REFERENCED_COLUMN_NAME",
-				k2."TABLE_NAME", k2."COLUMN_NAME",
-				k2."REFERENCED_TABLE_NAME", k2."REFERENCED_COLUMN_NAME"
+				cua1."TABLE_NAME",cua1."COLUMN_NAME",
+				cua2."TABLE_NAME",cua2."COLUMN_NAME",
+				cub1."TABLE_NAME",cub1."COLUMN_NAME",
+				cub2."TABLE_NAME",cub2."COLUMN_NAME"
 			FROM
-				"INFORMATION_SCHEMA"."KEY_COLUMN_USAGE" k1, "INFORMATION_SCHEMA"."KEY_COLUMN_USAGE" k2
+				"INFORMATION_SCHEMA".REFERENTIAL_CONSTRAINTS rca,
+				"INFORMATION_SCHEMA".REFERENTIAL_CONSTRAINTS rcb,
+				"INFORMATION_SCHEMA".CONSTRAINT_COLUMN_USAGE cua1,
+				"INFORMATION_SCHEMA".CONSTRAINT_COLUMN_USAGE cua2,
+				"INFORMATION_SCHEMA".CONSTRAINT_COLUMN_USAGE cub1,
+				"INFORMATION_SCHEMA".CONSTRAINT_COLUMN_USAGE cub2
 			WHERE
-				k1."TABLE_CATALOG" = ? AND
-				k2."TABLE_CATALOG" = ? AND
-				k1."REFERENCED_TABLE_CATALOG" = ? AND
-				k2."REFERENCED_TABLE_CATALOG" = ? AND
-				k1."TABLE_NAME" = k2."TABLE_NAME" AND
-				k1."REFERENCED_TABLE_NAME" = ? AND
-				k2."REFERENCED_TABLE_NAME" IN ?'
+				cua1."CONSTRAINT_NAME" = rca."CONSTRAINT_NAME" AND
+				cua2."CONSTRAINT_NAME" = rca."UNIQUE_CONSTRAINT_NAME" AND
+				cub1."CONSTRAINT_NAME" = rcb."CONSTRAINT_NAME" AND
+				cub2."CONSTRAINT_NAME" = rcb."UNIQUE_CONSTRAINT_NAME" AND
+				cua1."TABLE_CATALOG" = ? AND
+				cub1."TABLE_CATALOG" = ? AND
+				cua2."TABLE_CATALOG" = ? AND
+				cub2."TABLE_CATALOG" = ? AND
+				cua1."TABLE_NAME" = cub1."TABLE_NAME" AND
+				cua2."TABLE_NAME" = ? AND
+				cub2."TABLE_NAME" IN ?'
 	);
 
 	protected function connectDatabase($hostname,$username,$password,$database,$port,$socket,$charset) {
@@ -287,6 +304,9 @@ class MsSQL_CRUD_API extends REST_CRUD_API {
 		if ($socket) {
 			throw new \Exception('Socket connection is not supported.');
 		}
+		if (!sqlsrv_query($db,'SET ANSI_DEFAULTS ON')) {
+			throw new \Exception('Could not set ANSI defaults.');
+		}
 		return $db;
 	}
 
@@ -298,6 +318,9 @@ class MsSQL_CRUD_API extends REST_CRUD_API {
 			$param = $params[$i];
 			if ($matches[0]=='!') {
 				return preg_replace('/[^a-zA-Z0-9\-_=<>]/','',$param);
+			}
+			if ($matches[0]=='?' && is_null($param)) {
+				return 'NULL';
 			}
 			if (is_array($param)) {
 				$args = array_merge($args,$param);
@@ -322,8 +345,7 @@ class MsSQL_CRUD_API extends REST_CRUD_API {
 		$result = sqlsrv_query($db,$sql,$args);
 		if ($result===false) {
 			$errors = sqlsrv_errors();
-			header('HTTP/1.0 422 Unprocessable Entity');
-			die(json_encode(compact('sql','args','errors')));
+			$this->exitWith422(compact('sql','args','errors'));
 		}
 		return $result;
 	}
@@ -339,7 +361,7 @@ class MsSQL_CRUD_API extends REST_CRUD_API {
 	protected function insert_id($db,$result) {
 		sqlsrv_next_result($result);
 		sqlsrv_fetch($result);
-		return sqlsrv_get_field($result, 0);
+		return (int)sqlsrv_get_field($result, 0);
 	}
 
 	protected function affected_rows($db,$result) {
@@ -457,6 +479,15 @@ class REST_CRUD_API {
 			die("Not found ($type)");
 		} else {
 			throw new \Exception("Not found ($type)");
+		}
+	}
+
+		protected function exitWith422($object) {
+		if (isset($_SERVER['REQUEST_METHOD'])) {
+			header('Content-Type:',true,422);
+			die('Unprocessable Entity');
+		} else {
+			throw new \Exception(json_encode($object));
 		}
 	}
 

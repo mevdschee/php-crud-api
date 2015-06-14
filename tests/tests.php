@@ -76,8 +76,7 @@ class API
 		}
 		$data = ob_get_contents();
 		ob_end_clean();
-		$this->test->assertEquals($output, $data);
-		$this->test->assertEquals($error, $exception);
+		$this->test->assertEquals($error.$output, $exception.$data);
 		return $this;
 	}
 }
