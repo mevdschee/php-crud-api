@@ -562,6 +562,8 @@ OK (19 tests, 39 assertions)
 $
 ```
 
+NB: You MUST use an empty database as a desctructive database fixture ('blog.mysql') is loaded.
+
 For SQL server on Windows:
 
 ```
@@ -576,7 +578,7 @@ OK (19 tests, 39 assertions)
 C:\mysql-crud-api-master>
 ```
 
-NB: You MUST use an empty database as a desctructive database fixture ('blog.mysql') is loaded.
+NB: You MUST use an empty database as a desctructive database fixture ('blog.mssql') is loaded.
 
 ## License
 
