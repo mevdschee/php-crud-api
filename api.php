@@ -316,6 +316,7 @@ class MsSQL_CRUD_API extends REST_CRUD_API {
 			if ($matches[0]=='!') {
 				return preg_replace('/[^a-zA-Z0-9\-_=<>]/','',$param);
 			}
+			// This is workaround because SQLSRV cannot accept NULL in a param
 			if ($matches[0]=='?' && is_null($param)) {
 				return 'NULL';
 			}
@@ -348,11 +349,15 @@ class MsSQL_CRUD_API extends REST_CRUD_API {
 	}
 
 	protected function fetch_assoc($result) {
-		return sqlsrv_fetch_array($result, SQLSRV_FETCH_ASSOC);
+		$values = sqlsrv_fetch_array($result, SQLSRV_FETCH_ASSOC);
+		if ($values) $values = array_map(function($v){ return is_null($v)?null:(string)$v; },$values);
+		return $values;
 	}
 
 	protected function fetch_row($result) {
-		return sqlsrv_fetch_array($result, SQLSRV_FETCH_NUMERIC);
+		$values = sqlsrv_fetch_array($result, SQLSRV_FETCH_NUMERIC);
+		if ($values) $values = array_map(function($v){ return is_null($v)?null:(string)$v; },$values);
+		return $values;
 	}
 
 	protected function insert_id($db,$result) {
@@ -479,7 +484,7 @@ class REST_CRUD_API {
 		}
 	}
 
-		protected function exitWith422($object) {
+	protected function exitWith422($object) {
 		if (isset($_SERVER['REQUEST_METHOD'])) {
 			header('Content-Type:',true,422);
 			die('Unprocessable Entity');
