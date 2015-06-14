@@ -126,8 +126,12 @@ class MySQL_CRUD_API_Test extends PHPUnit_Framework_TestCase
 			if (!$conn) {
 				die("Connect failed: ".print_r( sqlsrv_errors(), true));
 			}
-			if (!sqlsrv_query($conn, file_get_contents($fixture))) {
-				die("Loading '$fixture' failed with error:\n".print_r( sqlsrv_errors(), true)."\n");
+			$queries = preg_split('/\n\s*GO\s*\n/', file_get_contents($fixture));
+			foreach ($queries as $i=>$query) {
+				if (!sqlsrv_query($conn, $query)) {
+					$i++;
+					die("Loading '$fixture' failed on statemement #$i with error:\n".print_r( sqlsrv_errors(), true)."\n");
+				}
 			}
 			sqlsrv_close($conn);
 
