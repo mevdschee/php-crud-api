@@ -302,4 +302,11 @@ class MySQL_CRUD_API_Test extends PHPUnit_Framework_TestCase
 		$test->expect('{"id":"2","name":"article","icon":null}');
 	}
 
+	public function testAddPosts()
+	{
+		$test = new API($this);
+		$test->post('/posts','[{"user_id":"1","category_id":"1","content":"tests"},{"user_id":"1","category_id":"1","content":"tests"}]');
+		$test->expect('[15,16]');
+	}
+	
 }

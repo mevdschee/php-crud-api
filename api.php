@@ -580,9 +580,10 @@ class REST_CRUD_API {
 
 	protected function createObject($input,$table,$db) {
 		if (!$input) return false;
+		$input = (array)$input;
 		$keys = implode('","',str_split(str_repeat('!', count($input))));
 		$values = implode(',',str_split(str_repeat('?', count($input))));
-		$params = array_merge(array_keys((array)$input),array_values((array)$input));
+		$params = array_merge(array_keys($input),array_values($input));
 		array_unshift($params, $table[0]);
 		$result = $this->query($db,'INSERT INTO "!" ("'.$keys.'") VALUES ('.$values.')',$params);
 		return $this->insert_id($db,$result);
@@ -590,6 +591,7 @@ class REST_CRUD_API {
 
 	protected function updateObject($key,$input,$table,$db) {
 		if (!$input) return false;
+		$input = (array)$input;
 		$params = array();
 		$sql = 'UPDATE "!" SET ';
 		$params[] = $table[0];
@@ -640,11 +642,11 @@ class REST_CRUD_API {
 	}
 
 	protected function retrieveInput($post) {
-		$input = array();
+		$input = (object)array();
 		$data = trim(file_get_contents($post));
 		if (strlen($data)>0) {
-			if ($data[0]=='{') {
-				$input = (array)json_decode($data);
+			if ($data[0]=='{' || $data[0]=='[') {
+				$input = json_decode($data);
 			} else {
 				parse_str($data, $input);
 				foreach ($input as $key => $value) {
@@ -653,19 +655,26 @@ class REST_CRUD_API {
 						unset($input[$key]);
 					}
 				}
+				$input = (object)$input;
 			}
 		}
 		return $input;
 	}
 
 	protected function convertBinary($input,$tables,$db) {
+		if (is_array($input)) {
+			foreach (array_keys($input) as $i) {
+				$input[$i] = $this->convertBinary($input[$i],$tables,$db);
+			}
+			return $input;
+		}
 		$result = $this->query($db,'SELECT * FROM "!" WHERE 1=2;',array($tables[0]));
 		foreach ($this->fetch_fields($result) as $field) {
 			$key = $field->name;
-			if (isset($input[$key]) && $input[$key] && $this->is_binary_type($field)) {
-				$data = $input[$key];
+			if (isset($input->$key) && $input->$key && $this->is_binary_type($field)) {
+				$data = $input->$key;
 				$data = str_pad(strtr($data, '-_', '+/'), strlen($data) % 4, '=', STR_PAD_RIGHT);
-				$input[$key] = (object)array('type'=>'base64','data'=>$data);
+				$input->$key = (object)array('type'=>'base64','data'=>$data);
 			}
 		}
 		return $input;
@@ -867,7 +876,15 @@ class REST_CRUD_API {
 		extract($parameters);
 		if (!$input) $this->exitWith404('input');
 		$this->startOutput($callback);
-		echo json_encode($this->createObject($input,$table,$db));
+		if (!is_array($input)) {
+			echo json_encode($this->createObject($input,$table,$db));
+		} else {
+			$result = array();
+			foreach ($input as $i) {
+				$result[] = $this->createObject($i,$table,$db); 
+			}
+			echo json_encode($result);
+		} 
 		$this->endOutput($callback);
 	}
 
