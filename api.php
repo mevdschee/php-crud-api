@@ -586,6 +586,7 @@ class REST_CRUD_API {
 		$params = array_merge(array_keys($input),array_values($input));
 		array_unshift($params, $table[0]);
 		$result = $this->query($db,'INSERT INTO "!" ("'.$keys.'") VALUES ('.$values.')',$params);
+		if (!$result) return null;
 		return $this->insert_id($db,$result);
 	}
 

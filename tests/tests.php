@@ -309,4 +309,10 @@ class MySQL_CRUD_API_Test extends PHPUnit_Framework_TestCase
 		$test->expect('[15,16]');
 	}
 	
+	public function testAddPostsFailure()
+	{
+		$test = new API($this);
+		$test->post('/posts','[{"user_id":"a","category_id":"1","content":"tests"},{"user_id":"1","category_id":"1","content":"tests"}]');
+		$test->expect('[null,18]');
+	}
 }
