@@ -1000,6 +1000,18 @@ class REST_CRUD_API {
 // uncomment the lines below when running in stand-alone mode:
 
 // header('Access-Control-Allow-Origin: *');
+
+// $api = new MySQL_CRUD_API(array(
+// 	'hostname'=>'localhost',
+//	'username'=>'xxx',
+//	'password'=>'xxx',
+//	'database'=>'xxx',
+// 	'charset'=>'utf8'
+// ));
+// $api->executeCommand();
+
+// For Microsoft SQL Server use:
+
 // $api = new MsSQL_CRUD_API(array(
 // 	'hostname'=>'(local)',
 // 	'username'=>'',
