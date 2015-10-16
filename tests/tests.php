@@ -65,6 +65,11 @@ class API
 		return $this->action('DELETE',$url);
 	}
 
+	public function options($url)
+	{
+		return $this->action('OPTIONS',$url);
+	}
+
 	public function expect($output,$error=false)
 	{
 		$exception = false;
@@ -308,11 +313,18 @@ class MySQL_CRUD_API_Test extends PHPUnit_Framework_TestCase
 		$test->post('/posts','[{"user_id":"1","category_id":"1","content":"tests"},{"user_id":"1","category_id":"1","content":"tests"}]');
 		$test->expect('[15,16]');
 	}
-	
+
 	public function testAddPostsFailure()
 	{
 		$test = new API($this);
 		$test->post('/posts','[{"user_id":"a","category_id":"1","content":"tests"},{"user_id":"1","category_id":"1","content":"tests"}]');
 		$test->expect('[null,18]');
+	}
+
+	public function testOptionsRequest()
+	{
+		$test = new API($this);
+		$test->options('/posts/2');
+		$test->expect('["Access-Control-Allow-Origin: *","Access-Control-Allow-Methods: HEAD, OPTIONS, GET, PUT, POST, DELETE","Access-Control-Max-Age: 1728000"]');
 	}
 }

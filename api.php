@@ -1,5 +1,4 @@
 <?php
-
 class MySQL_CRUD_API extends REST_CRUD_API {
 
 	protected $queries = array(
@@ -405,6 +404,8 @@ class REST_CRUD_API {
 
 	protected function mapMethodToAction($method,$key) {
 		switch ($method) {
+			case 'HEAD':
+			case 'OPTIONS': $this->exitWithCorsHeaders();
 			case 'GET': return $key?'read':'list';
 			case 'PUT': return 'update';
 			case 'POST': return 'create';
@@ -492,6 +493,23 @@ class REST_CRUD_API {
 			throw new \Exception(json_encode($object));
 		}
 	}
+
+	protected function exitWithCorsHeaders() {
+		$headers = array(
+			'Access-Control-Allow-Origin: *',
+			'Access-Control-Allow-Methods: HEAD, OPTIONS, GET, PUT, POST, DELETE',
+			'Access-Control-Max-Age: 1728000',
+		);
+		if (isset($_SERVER['REQUEST_METHOD'])) {
+			foreach ($headers as $header) {
+				header($header);
+			}
+		} else {
+			throw new \Exception(json_encode($headers));
+		}
+		die();
+	}
+
 
 	protected function startOutput($callback) {
 		if (isset($_SERVER['REQUEST_METHOD'])) {
@@ -882,10 +900,10 @@ class REST_CRUD_API {
 		} else {
 			$result = array();
 			foreach ($input as $i) {
-				$result[] = $this->createObject($i,$table,$db); 
+				$result[] = $this->createObject($i,$table,$db);
 			}
 			echo json_encode($result);
-		} 
+		}
 		$this->endOutput($callback);
 	}
 
