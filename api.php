@@ -504,10 +504,10 @@ class REST_CRUD_API {
 			foreach ($headers as $header) {
 				header($header);
 			}
+			die();
 		} else {
 			throw new \Exception(json_encode($headers));
 		}
-		die();
 	}
 
 
