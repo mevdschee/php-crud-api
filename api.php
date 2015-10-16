@@ -404,7 +404,6 @@ class REST_CRUD_API {
 
 	protected function mapMethodToAction($method,$key) {
 		switch ($method) {
-			case 'HEAD':
 			case 'OPTIONS': $this->exitWithCorsHeaders();
 			case 'GET': return $key?'read':'list';
 			case 'PUT': return 'update';
@@ -497,7 +496,7 @@ class REST_CRUD_API {
 	protected function exitWithCorsHeaders() {
 		$headers = array(
 			'Access-Control-Allow-Origin: *',
-			'Access-Control-Allow-Methods: HEAD, OPTIONS, GET, PUT, POST, DELETE',
+			'Access-Control-Allow-Methods: OPTIONS, GET, PUT, POST, DELETE',
 			'Access-Control-Max-Age: 1728000',
 		);
 		if (isset($_SERVER['REQUEST_METHOD'])) {
