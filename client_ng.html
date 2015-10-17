@@ -5,7 +5,7 @@
 <script>
 var app = angular.module('myApp', []);
 app.controller('customersCtrl', function($scope, $http) {
-    $http.get("http://localhost/blog.php/posts,categories,tags,comments")
+    $http.get("http://leaseweb_pdb.dev/blog.php/posts,categories,tags,comments")
     .success(function(response) { $scope.posts = mysql_crud_api_transform(response).posts; });
 });
 </script>
