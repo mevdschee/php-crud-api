@@ -496,6 +496,7 @@ class REST_CRUD_API {
 	protected function exitWithCorsHeaders() {
 		$headers = array(
 			'Access-Control-Allow-Origin: *',
+			'Access-Control-Allow-Headers: Content-Type',
 			'Access-Control-Allow-Methods: OPTIONS, GET, PUT, POST, DELETE',
 			'Access-Control-Max-Age: 1728000',
 		);
@@ -513,6 +514,7 @@ class REST_CRUD_API {
 	protected function startOutput($callback) {
 		if (isset($_SERVER['REQUEST_METHOD'])) {
 			header('Access-Control-Allow-Origin: *');
+			header("Access-Control-Allow-Headers: Content-Type");
 			if ($callback) {
 				header('Content-Type: application/javascript');
 				echo $callback.'(';
