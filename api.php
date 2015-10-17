@@ -514,7 +514,7 @@ class REST_CRUD_API {
 	protected function startOutput($callback) {
 		if (isset($_SERVER['REQUEST_METHOD'])) {
 			header('Access-Control-Allow-Origin: *');
-			header("Access-Control-Allow-Headers: Content-Type");
+			header('Access-Control-Allow-Headers: Content-Type');
 			if ($callback) {
 				header('Content-Type: application/javascript');
 				echo $callback.'(';
