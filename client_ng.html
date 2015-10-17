@@ -1,0 +1,22 @@
+<html>
+<head>
+<script src= "http://ajax.googleapis.com/ajax/libs/angularjs/1.3.14/angular.min.js"></script>
+<script src="mysql_crud_api_transform.js"></script>
+<script>
+var app = angular.module('myApp', []);
+app.controller('customersCtrl', function($scope, $http) {
+    $http.get("http://localhost/blog.php/posts,categories,tags,comments")
+    .success(function(response) { $scope.posts = mysql_crud_api_transform(response).posts; });
+});
+</script>
+</head>
+<body>
+<div ng-app="myApp" ng-controller="customersCtrl">
+  <ul>
+    <li ng-repeat="x in posts">
+      {{ x.id + ', ' + x.content }}
+    </li>
+  </ul>
+</div>
+</body>
+</html>
