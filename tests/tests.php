@@ -144,12 +144,10 @@ class MySQL_CRUD_API_Test extends PHPUnit_Framework_TestCase
 
 			$e = function ($v) { return str_replace(array('\'','\\'),array('\\\'','\\\\'),$v); };
 			$hostname = $e($hostname);
-			$port = 5432;
-			$database = $database;
+			$database = $e($database);
 			$username = $e($username);
 			$password = $e($password);
-			$charset = 'UTF8';
-			$conn_string = "host='$hostname' port=$port dbname='$database' user='$username' password='$password' options='--client_encoding=$charset'";
+			$conn_string = "host='$hostname' dbname='$database' user='$username' password='$password' options='--client_encoding=UTF8'";
 			$db = pg_connect($conn_string);
 			if (!$db) {
 				die("Connect failed: ".print_r( sqlsrv_errors(), true));
