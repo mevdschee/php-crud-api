@@ -505,7 +505,7 @@ class REST_CRUD_API {
 	}
 
 	protected function applyPermissions($database, $tables, $action, $permissions, $multidb) {
-		if (in_array(strtolower($database), array('information_schema','mysql','sys'))) return array();
+		if (in_array(strtolower($database), array('information_schema','mysql','sys','pg_catalog'))) return array();
 		$results = array();
 		$permissions = array_change_key_case($permissions,CASE_LOWER);
 		foreach ($tables as $table) {
