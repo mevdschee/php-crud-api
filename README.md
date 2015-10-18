@@ -564,7 +564,7 @@ $
 
 NB: You MUST use an empty database as a desctructive database fixture ('blog.mysql') is loaded.
 
-For SQL server on Windows:
+### SQL server on Windows:
 
 ```
 C:\mysql-crud-api-master>php.exe phpunit.phar tests\tests.php
@@ -580,7 +580,7 @@ C:\mysql-crud-api-master>
 
 NB: You MUST use an empty database as a desctructive database fixture ('blog.mssql') is loaded.
 
-For PostgreSQL on Linux
+### PostgreSQL on Linux
 
 ```
 $ wget https://phar.phpunit.de/phpunit.phar
