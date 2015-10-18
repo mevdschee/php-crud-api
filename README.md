@@ -4,8 +4,9 @@ Simple PHP script that adds a very basic API to a MySQL InnoDB database (or MS S
 
 ## Requirements
 
-  - PHP 5.3 or higher with MySQLi or SQLSRV enabled
+  - PHP 5.3 or higher with libpq, MySQLi or SQLSRV enabled
   - PHP on Windows when connecting to SQL Server 2012
+  - PostgreSQL 9 or higher when connecting to PostgreSQL
 
 ## Installation
 
