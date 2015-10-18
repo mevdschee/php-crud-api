@@ -88,7 +88,7 @@ For the alternative MsSQL_CRUD_API class the following mapping applies:
  - socket = (not supported)
  - charset = CharacterSet
 
-The other variables are not MySQL or MsSQL server specific.
+The other variables are not MySQL, PgSQL or MsSQL specific.
 
 ## Usage
 
