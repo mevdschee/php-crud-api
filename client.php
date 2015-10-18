@@ -1,5 +1,5 @@
 <?php
-require "mysql_crud_api_transform.php";
+require "php_crud_api_transform.php";
 
 function call($method, $url, $data = false) {
 	$ch = curl_init();
@@ -19,7 +19,7 @@ function call($method, $url, $data = false) {
 $response = call('GET','http://localhost/blog.php/posts,categories,tags,comments?filter=id,eq,1');
 $jsonObject = json_decode($response,true);
 
-$jsonObject = mysql_crud_api_transform($jsonObject);
+$jsonObject = php_crud_api_transform($jsonObject);
 $output = json_encode($jsonObject,JSON_PRETTY_PRINT);
 ?>
 <html>

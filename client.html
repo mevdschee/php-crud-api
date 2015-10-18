@@ -1,9 +1,9 @@
 <html>
 <head>
-<script src="mysql_crud_api_transform.js"></script>
+<script src="php_crud_api_transform.js"></script>
 <script>
 function callback(jsonObject) {
-  jsonObject = mysql_crud_api_transform(jsonObject);
+  jsonObject = php_crud_api_transform(jsonObject);
   document.getElementById('output').innerHTML = JSON.stringify(jsonObject, undefined, 4);
 }
 </script>

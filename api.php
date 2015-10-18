@@ -1000,7 +1000,7 @@ class REST_CRUD_API {
 			$content = ob_get_contents();
 			ob_end_clean();
 			$data = json_decode($content,true);
-			echo json_encode(self::mysql_crud_api_transform($data));
+			echo json_encode(self::php_crud_api_transform($data));
 		}
 	}
 
@@ -1036,7 +1036,7 @@ class REST_CRUD_API {
 		$this->config = compact('method', 'request', 'get', 'post', 'multidb', 'database', 'permissions', 'db');
 	}
 
-	public static function mysql_crud_api_transform(&$tables) {
+	public static function php_crud_api_transform(&$tables) {
 		$get_objects = function (&$tables,$table_name,$where_index=false,$match_value=false) use (&$get_objects) {
 			$objects = array();
 			foreach ($tables[$table_name]['records'] as $record) {

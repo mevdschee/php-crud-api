@@ -1,4 +1,4 @@
-function mysql_crud_api_transform(tables) {
+function php_crud_api_transform(tables) {
 	var array_flip = function (trans) {
 		var key, tmp_ar = {};
 		for (key in trans) {
