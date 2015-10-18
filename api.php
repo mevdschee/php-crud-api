@@ -1106,3 +1106,14 @@ class REST_CRUD_API {
 // 	'charset'=>'UTF-8'
 // ));
 // $api->executeCommand();
+
+// For PostgreSQL use:
+
+// $api = new PgSQL_CRUD_API(array(
+// 	'hostname'=>'localhost',
+// 	'username'=>'xxx',
+// 	'password'=>'xxx',
+// 	'database'=>'xxx',
+// 	'charset'=>'UTF8'
+// ));
+// $api->executeCommand();
