@@ -109,57 +109,89 @@ class MySQL_CRUD_API extends REST_CRUD_API {
 		return (($field->flags & 128) && ($field->type==252));
 	}
 
+	protected function base64_encode($string) {
+		return base64_encode($string);
+	}
+
 }
 
 class PgSQL_CRUD_API extends REST_CRUD_API {
 
 	protected $queries = array(
-		'reflect_table'=>'SELECT "TABLE_NAME" FROM "INFORMATION_SCHEMA"."TABLES" WHERE "TABLE_NAME" LIKE ? AND "TABLE_SCHEMA" = ?',
-		'reflect_pk'=>'SELECT "COLUMN_NAME" FROM "INFORMATION_SCHEMA"."COLUMNS" WHERE "COLUMN_KEY" = \'PRI\' AND "TABLE_NAME" = ? AND "TABLE_SCHEMA" = ?',
-		'reflect_belongs_to'=>'SELECT
-				"TABLE_NAME","COLUMN_NAME",
-				"REFERENCED_TABLE_NAME","REFERENCED_COLUMN_NAME"
-			FROM
-				"INFORMATION_SCHEMA"."KEY_COLUMN_USAGE"
-			WHERE
-				"TABLE_NAME" = ? AND
-				"REFERENCED_TABLE_NAME" IN ? AND
-				"TABLE_SCHEMA" = ? AND
-				"REFERENCED_TABLE_SCHEMA" = ?',
-		'reflect_has_many'=>'SELECT
-				"TABLE_NAME","COLUMN_NAME",
-				"REFERENCED_TABLE_NAME","REFERENCED_COLUMN_NAME"
-			FROM
-				"INFORMATION_SCHEMA"."KEY_COLUMN_USAGE"
-			WHERE
-				"TABLE_NAME" IN ? AND
-				"REFERENCED_TABLE_NAME" = ? AND
-				"TABLE_SCHEMA" = ? AND
-				"REFERENCED_TABLE_SCHEMA" = ?',
-		'reflect_habtm'=>'SELECT
-				k1."TABLE_NAME", k1."COLUMN_NAME",
-				k1."REFERENCED_TABLE_NAME", k1."REFERENCED_COLUMN_NAME",
-				k2."TABLE_NAME", k2."COLUMN_NAME",
-				k2."REFERENCED_TABLE_NAME", k2."REFERENCED_COLUMN_NAME"
-			FROM
-				"INFORMATION_SCHEMA"."KEY_COLUMN_USAGE" k1, "INFORMATION_SCHEMA"."KEY_COLUMN_USAGE" k2
-			WHERE
-				k1."TABLE_SCHEMA" = ? AND
-				k2."TABLE_SCHEMA" = ? AND
-				k1."REFERENCED_TABLE_SCHEMA" = ? AND
-				k2."REFERENCED_TABLE_SCHEMA" = ? AND
-				k1."TABLE_NAME" = k2."TABLE_NAME" AND
-				k1."REFERENCED_TABLE_NAME" = ? AND
-				k2."REFERENCED_TABLE_NAME" IN ?'
+		'reflect_table'=>'select "table_name" from "information_schema"."tables" where "table_name" like ? and "table_catalog" = ?',
+		'reflect_pk'=>'select
+				"column_name"
+			from
+				"information_schema"."table_constraints" tc, "information_schema"."key_column_usage" ku
+			where
+				tc."constraint_type" = \'PRIMARY KEY\' and
+				tc."constraint_name" = ku."constraint_name" and
+				ku."table_name" = ? and
+				ku."table_catalog" = ?',
+		'reflect_belongs_to'=>'select
+				cu1."table_name",cu1."column_name",
+				cu2."table_name",cu2."column_name"
+			from
+				"information_schema".referential_constraints rc,
+				"information_schema".key_column_usage cu1,
+				"information_schema".key_column_usage cu2
+			where
+				cu1."constraint_name" = rc."constraint_name" and
+				cu2."constraint_name" = rc."unique_constraint_name" and
+				cu1."table_name" = ? and
+				cu2."table_name" in ? and
+				cu1."table_catalog" = ? and
+				cu2."table_catalog" = ?',
+		'reflect_has_many'=>'select
+				cu1."table_name",cu1."column_name",
+				cu2."table_name",cu2."column_name"
+			from
+				"information_schema".referential_constraints rc,
+				"information_schema".key_column_usage cu1,
+				"information_schema".key_column_usage cu2
+			where
+				cu1."constraint_name" = rc."constraint_name" and
+				cu2."constraint_name" = rc."unique_constraint_name" and
+				cu1."table_name" in ? and
+				cu2."table_name" = ? and
+				cu1."table_catalog" = ? and
+				cu2."table_catalog" = ?',
+		'reflect_habtm'=>'select
+				cua1."table_name",cua1."column_name",
+				cua2."table_name",cua2."column_name",
+				cub1."table_name",cub1."column_name",
+				cub2."table_name",cub2."column_name"
+			from
+				"information_schema".referential_constraints rca,
+				"information_schema".referential_constraints rcb,
+				"information_schema".key_column_usage cua1,
+				"information_schema".key_column_usage cua2,
+				"information_schema".key_column_usage cub1,
+				"information_schema".key_column_usage cub2
+			where
+				cua1."constraint_name" = rca."constraint_name" and
+				cua2."constraint_name" = rca."unique_constraint_name" and
+				cub1."constraint_name" = rcb."constraint_name" and
+				cub2."constraint_name" = rcb."unique_constraint_name" and
+				cua1."table_catalog" = ? and
+				cub1."table_catalog" = ? and
+				cua2."table_catalog" = ? and
+				cub2."table_catalog" = ? and
+				cua1."table_name" = cub1."table_name" and
+				cua2."table_name" = ? and
+				cub2."table_name" in ?'
 	);
 
 	protected function connectDatabase($hostname,$username,$password,$database,$port,$socket,$charset) {
 		$e = function ($v) { return str_replace(array('\'','\\'),array('\\\'','\\\\'),$v); };
-		$conn_string = "host='".$e($hostname)."' port=5432 dbname=test user=lamb password=bar options='--client_encoding=UTF8'";
+		$hostname = $e($hostname);
+		$port = ($port?:5432)+0;
+		$database = $database;
+		$username = $e($username);
+		$password = $e($password);
+		$charset = $e($charset);
+		$conn_string = "host='$hostname' port=$port dbname='$database' user='$username' password='$password' options='--client_encoding=$charset'";
 		$db = pg_connect($conn_string);
-
-
-
 		return $db;
 	}
 
@@ -168,40 +200,51 @@ class PgSQL_CRUD_API extends REST_CRUD_API {
 			$param = array_shift($params);
 			if ($matches[0]=='!') return preg_replace('/[^a-zA-Z0-9\-_=<>]/','',$param);
 			if (is_array($param)) return '('.implode(',',array_map(function($v) use (&$db) {
-				return "'".mysqli_real_escape_string($db,$v)."'";
+				return "'".pg_escape_string($db,$v)."'";
 			},$param)).')';
 			if (is_object($param) && $param->type=='base64') {
-				return "x'".bin2hex(base64_decode($param->data))."'";
+				return "'\x".bin2hex(base64_decode($param->data))."'";
 			}
 			if ($param===null) return 'NULL';
-			return "'".mysqli_real_escape_string($db,$param)."'";
+			return "'".pg_escape_string($db,$param)."'";
 		}, $sql);
+		if (strtoupper(substr($sql,0,6))=='INSERT') {
+			$sql .= ' RETURNING id;';
+		}
 		//echo "\n$sql\n";
-		return mysqli_query($db,$sql);
+		return @pg_query($db,$sql);
 	}
 
 	protected function fetch_assoc($result) {
-		return mysqli_fetch_assoc($result);
+		return pg_fetch_assoc($result);
 	}
 
 	protected function fetch_row($result) {
-		return mysqli_fetch_row($result);
+		return pg_fetch_row($result);
 	}
 
 	protected function insert_id($db,$result) {
-		return mysqli_insert_id($db);
+		list($id) = pg_fetch_row($result);
+		return (int)$id;
 	}
 
 	protected function affected_rows($db,$result) {
-		return mysqli_affected_rows($db);
+		return pg_affected_rows($result);
 	}
 
 	protected function close($result) {
-		return mysqli_free_result($result);
+		return pg_free_result($result);
 	}
 
 	protected function fetch_fields($result) {
-		return mysqli_fetch_fields($result);
+		$fields = array();
+		for($i=0;$i<pg_num_fields($result);$i++) {
+			$field = array();
+			$field['name'] = pg_field_name($result,$i);
+			$field['type'] = pg_field_type($result,$i);
+			$fields[$i] = (object)$field;
+		}
+		return $fields;
 	}
 
 	protected function add_limit_to_sql($sql,$limit,$offset) {
@@ -213,8 +256,11 @@ class PgSQL_CRUD_API extends REST_CRUD_API {
 	}
 
 	protected function is_binary_type($field) {
-		//echo "$field->name: $field->type ($field->flags)\n";
-		return (($field->flags & 128) && ($field->type==252));
+		return $field->type == 'bytea';
+	}
+
+	protected function base64_encode($string) {
+		return base64_encode(hex2bin(substr($string,2)));
 	}
 
 }
@@ -396,6 +442,10 @@ class MsSQL_CRUD_API extends REST_CRUD_API {
 		return ($field->type>=-4 && $field->type<=-2);
 	}
 
+	protected function base64_encode($string) {
+		return base64_encode($string);
+	}
+
 }
 
 class REST_CRUD_API {
@@ -510,7 +560,6 @@ class REST_CRUD_API {
 		}
 	}
 
-
 	protected function startOutput($callback) {
 		if (isset($_SERVER['REQUEST_METHOD'])) {
 			header('Access-Control-Allow-Origin: *');
@@ -589,7 +638,7 @@ class REST_CRUD_API {
 			$object = $this->fetch_assoc($result);
 			foreach ($this->fetch_fields($result) as $field) {
 				if ($this->is_binary_type($field) && $object[$field->name]) {
-					$object[$field->name] = base64_encode($object[$field->name]);
+					$object[$field->name] = $this->base64_encode($object[$field->name]);
 				}
 			}
 			$this->close($result);
@@ -808,7 +857,7 @@ class REST_CRUD_API {
 				}
 				foreach ($base64 as $k=>$v) {
 					if ($v && $row[$k]) {
-						$row[$k] = base64_encode($row[$k]);
+						$row[$k] = $this->base64_encode($row[$k]);
 					}
 				}
 				echo json_encode($row);
@@ -870,7 +919,7 @@ class REST_CRUD_API {
 					}
 					foreach ($base64 as $k=>$v) {
 						if ($v && $row[$k]) {
-							$row[$k] = base64_encode($row[$k]);
+							$row[$k] = $this->base64_encode($row[$k]);
 						}
 					}
 					echo json_encode($row);

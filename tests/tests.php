@@ -131,6 +131,7 @@ class MySQL_CRUD_API_Test extends PHPUnit_Framework_TestCase
 				die("Connect failed: ".print_r( sqlsrv_errors(), true));
 			}
 			$queries = preg_split('/\n\s*GO\s*\n/', file_get_contents($fixture));
+			array_pop($queries);
 			foreach ($queries as $i=>$query) {
 				if (!sqlsrv_query($conn, $query)) {
 					$i++;
@@ -138,6 +139,30 @@ class MySQL_CRUD_API_Test extends PHPUnit_Framework_TestCase
 				}
 			}
 			sqlsrv_close($conn);
+
+		} elseif ($dbengine == 'pgsql') {
+
+			$e = function ($v) { return str_replace(array('\'','\\'),array('\\\'','\\\\'),$v); };
+			$hostname = $e($hostname);
+			$port = 5432;
+			$database = $database;
+			$username = $e($username);
+			$password = $e($password);
+			$charset = 'UTF8';
+			$conn_string = "host='$hostname' port=$port dbname='$database' user='$username' password='$password' options='--client_encoding=$charset'";
+			$db = pg_connect($conn_string);
+			if (!$db) {
+				die("Connect failed: ".print_r( sqlsrv_errors(), true));
+			}
+			$queries = preg_split('/;\s*\n/', file_get_contents($fixture));
+			array_pop($queries);
+			foreach ($queries as $i=>$query) {
+				if (!pg_query($db, $query.';')) {
+					$i++;
+					die("Loading '$fixture' failed on statemement #$i with error:\n".print_r( pg_last_error($db), true)."\n");
+				}
+			}
+			pg_close($db);
 
 		}
 	}
@@ -314,11 +339,11 @@ class MySQL_CRUD_API_Test extends PHPUnit_Framework_TestCase
 		$test->expect('[15,16]');
 	}
 
-	public function testAddPostsFailure()
+	public function testAddPostFailure()
 	{
 		$test = new API($this);
-		$test->post('/posts','[{"user_id":"a","category_id":"1","content":"tests"},{"user_id":"1","category_id":"1","content":"tests"}]');
-		$test->expect('[null,18]');
+		$test->post('/posts','{"user_id":"a","category_id":"1","content":"tests"}');
+		$test->expect('null');
 	}
 
 	public function testOptionsRequest()
