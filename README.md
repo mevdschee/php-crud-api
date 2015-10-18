@@ -23,7 +23,6 @@ This is a single file application! Upload "api.php" somewhere and enjoy!
   - Add created_at and modified_at support
   - Add user_id and group_id support (multi-tenant)
   - Add created_by and modified_by support
-  - PostgreSQL support
 
 ## Features
 
