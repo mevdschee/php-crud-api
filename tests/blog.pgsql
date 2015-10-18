@@ -59,7 +59,7 @@ ALTER TABLE public.categories OWNER TO postgres;
 
 CREATE TABLE comments (
     id serial NOT NULL,
-    post_id serial NOT NULL,
+    post_id integer NOT NULL,
     message character varying(255) NOT NULL
 );
 
@@ -72,8 +72,8 @@ ALTER TABLE public.comments OWNER TO postgres;
 
 CREATE TABLE post_tags (
     id serial NOT NULL,
-    post_id serial NOT NULL,
-    tag_id serial NOT NULL
+    post_id integer NOT NULL,
+    tag_id integer NOT NULL
 );
 
 
@@ -85,8 +85,8 @@ ALTER TABLE public.post_tags OWNER TO postgres;
 
 CREATE TABLE posts (
     id serial NOT NULL,
-    user_id serial NOT NULL,
-    category_id serial NOT NULL,
+    user_id integer NOT NULL,
+    category_id integer NOT NULL,
     content character varying(255) NOT NULL
 );
 
