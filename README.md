@@ -1,6 +1,6 @@
 # MySQL-CRUD-API
 
-Simple PHP script that adds a very basic API to a MySQL InnoDB database (or MS SQL Server 2012).
+Simple PHP script that adds a very basic API to a MySQL InnoDB database, PostgreSQL 9 or MS SQL Server 2012.
 
 ## Requirements
 
