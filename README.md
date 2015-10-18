@@ -1,11 +1,12 @@
 # MySQL-CRUD-API
 
-Simple PHP script that adds a very basic API to a MySQL InnoDB database (or MS SQL Server 2012).
+Simple PHP script that adds a very basic API to a MySQL InnoDB database, PostgreSQL 9 or MS SQL Server 2012.
 
 ## Requirements
 
-  - PHP 5.3 or higher with MySQLi or SQLSRV enabled
+  - PHP 5.3 or higher with MySQLi, libpq or SQLSRV enabled
   - PHP on Windows when connecting to SQL Server 2012
+  - PostgreSQL 9 or higher when connecting to PostgreSQL
 
 ## Installation
 
@@ -23,7 +24,6 @@ This is a single file application! Upload "api.php" somewhere and enjoy!
   - Add created_at and modified_at support
   - Add user_id and group_id support (multi-tenant)
   - Add created_by and modified_by support
-  - PostgreSQL support
 
 ## Features
 
