@@ -88,7 +88,7 @@ For the alternative MsSQL_CRUD_API class the following mapping applies:
  - socket = (not supported)
  - charset = CharacterSet
 
-The other variables are not MySQL or MsSQL server specific.
+The other variables are not MySQL, PgSQL or MsSQL specific.
 
 ## Usage
 
@@ -579,6 +579,24 @@ C:\mysql-crud-api-master>
 ```
 
 NB: You MUST use an empty database as a desctructive database fixture ('blog.mssql') is loaded.
+
+For PostgreSQL on Linux
+
+```
+$ wget https://phar.phpunit.de/phpunit.phar
+$ php phpunit.phar tests/tests.php
+PHPUnit 4.7.3 by Sebastian Bergmann and contributors.
+
+......................
+
+Time: 894 ms, Memory: 2.75Mb
+
+OK (22 tests, 42 assertions)
+$
+```
+
+NB: You MUST use an empty database as a desctructive database fixture ('blog.pgsql') is loaded.
+
 
 ## License
 
