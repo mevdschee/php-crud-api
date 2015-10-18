@@ -184,13 +184,32 @@ class PgSQL_CRUD_API extends REST_CRUD_API {
 
 	protected function connectDatabase($hostname,$username,$password,$database,$port,$socket,$charset) {
 		$e = function ($v) { return str_replace(array('\'','\\'),array('\\\'','\\\\'),$v); };
-		$hostname = $e($hostname);
-		$port = ($port?:5432)+0;
-		$database = $database;
-		$username = $e($username);
-		$password = $e($password);
-		$charset = $e($charset);
-		$conn_string = "host='$hostname' port=$port dbname='$database' user='$username' password='$password' options='--client_encoding=$charset'";
+		$conn_string = '';
+		if ($hostname || $socket) {
+			if ($socket) $hostname = $e($socket);
+			else $hostname = $e($hostname);
+			$conn_string.= " host='$hostname'";
+		}
+		if ($port) {
+			$port = ($port+0);
+			$conn_string.= " port='$port'";
+		}
+		if ($database) {
+			$database = $e($database);
+			$conn_string.= " dbname='$database'";
+		}
+		if ($username) {
+			$username = $e($username);
+			$conn_string.= " user='$username'";
+		}
+		if ($password) {
+			$password = $e($password);
+			$conn_string.= " password='$password'";
+		}
+		if ($charset) {
+			$charset = $e($charset);
+			$conn_string.= " options='--client_encoding=$charset'";
+		}
 		$db = pg_connect($conn_string);
 		return $db;
 	}
