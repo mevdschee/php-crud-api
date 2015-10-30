@@ -563,16 +563,10 @@ class REST_CRUD_API {
 	}
 
 	protected function exitWithCorsHeaders() {
-		$headers = array(
-			'Access-Control-Allow-Origin: *',
-			'Access-Control-Allow-Headers: Content-Type',
-			'Access-Control-Allow-Methods: OPTIONS, GET, PUT, POST, DELETE',
-			'Access-Control-Max-Age: 1728000',
-		);
 		if (isset($_SERVER['REQUEST_METHOD'])) {
-			foreach ($headers as $header) {
-				header($header);
-			}
+			header('Access-Control-Allow-Headers: Content-Type');
+			header('Access-Control-Allow-Methods: OPTIONS, GET, PUT, POST, DELETE');
+			header('Access-Control-Max-Age: 1728000');
 			die();
 		} else {
 			throw new \Exception(json_encode($headers));
@@ -581,8 +575,6 @@ class REST_CRUD_API {
 
 	protected function startOutput($callback) {
 		if (isset($_SERVER['REQUEST_METHOD'])) {
-			header('Access-Control-Allow-Origin: *');
-			header('Access-Control-Allow-Headers: Content-Type');
 			if ($callback) {
 				header('Content-Type: application/javascript');
 				echo $callback.'(';
@@ -1072,8 +1064,12 @@ class REST_CRUD_API {
 		return $tree;
 	}
 
-	public function executeCommand() {
+	public function executeCommand($callbacks = array()) {
+		header('Access-Control-Allow-Origin: *');
 		$parameters = $this->getParameters($this->config);
+		if (is_array($callbacks)) foreach ($callbacks as $callback) {
+			if (is_callable($callback)) $callback($parameters);
+		}
 		switch($parameters['action']){
 			case 'list': $this->listCommandTransform($parameters); break;
 			case 'read': $this->readCommand($parameters); break;
