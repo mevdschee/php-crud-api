@@ -14,7 +14,7 @@ This is a single file application! Upload "api.php" somewhere and enjoy!
 
 ## Limitations
 
-  - Authentication or authorization is not included
+  - Authentication is not included
   - Validation on API input is not included
   - Complex queries or transactions are not supported
 
@@ -41,6 +41,8 @@ This is a single file application! Upload "api.php" somewhere and enjoy!
   - Relation detection and filtering on foreign keys
   - Relation "transforms" for PHP and JavaScript
   - Binary fields supported with base64 encoding
+  - Callback functions to authorize on table and column level
+  - Callback functions to do sanitize and validate input 
 
 ## Configuration
 
@@ -68,6 +70,11 @@ $api = new MySQL_CRUD_API(array(
 	'port=>null,
 	'socket=>null,
 	'charset=>'utf8',
+// callbacks with their default behavior
+	'table_authorizer'=>function($action,$database,$table) { return true; },
+	'column_authorizer'=>function($action,$database,$table,$column) { return true; },
+	'input_sanitizer'=>function($action,$database,$table,$column,$value) { return $value; },
+	'input_validator'=>function($action,$database,$table,$column,$value) { return true; },
 // dependencies (added for unit testing):
 	'db'=>null,
 	'method'=>$_SERVER['REQUEST_METHOD'],

@@ -407,7 +407,7 @@ class MsSQL_CRUD_API extends REST_CRUD_API {
 		$result = sqlsrv_query($db,$sql,$args);
 		if ($result===false) {
 			$errors = sqlsrv_errors();
-			$this->exitWith422(compact('sql','args','errors'));
+			$this->exitWith409(compact('sql','args','errors'));
 		}
 		return $result;
 	}
@@ -504,25 +504,54 @@ class REST_CRUD_API {
 		return $values;
 	}
 
-	protected function applyPermissions($database, $tables, $action, $permissions, $multidb) {
-		if (in_array(strtolower($database), array('information_schema','mysql','sys','pg_catalog'))) return array();
-		$results = array();
-		$permissions = array_change_key_case($permissions,CASE_LOWER);
-		foreach ($tables as $table) {
-			$result = false;
-			$options = $multidb?array("*.*","$database.*","$database.$table"):array("*","$table");
-			$options = array_map('strtolower', $options);
-			foreach ($options as $option) {
-				if (isset($permissions[$option])) {
-					$result = strpos($permissions[$option],$action[0])!==false;
+	protected function applyTableAuthorizer($callback,$action,$database,&$tables) {
+		if (is_callable($callback,true)) foreach ($tables as $i=>$table) {
+			if (!$callback($action,$database,$table)) {
+				unset($tables[$i]);
+			}
+		}
+		if (empty($tables)) $this->exitWith404('entity');
+	}
+	
+	protected function applyColumnAuthorizer($callback,$action,$database,&$columns) {
+		if (is_callable($callback,true)) foreach ($columns as $table=>$fields) {
+			foreach ($fields as $field) {
+				if (!$callback($action,$database,$table,$field->name)) {
+					unset($columns[$table][$field->name]);
 				}
 			}
-			if ($result) $results[] = $table;
 		}
-		return $results;
 	}
 
+	protected function applyInputSanitizer($callback,$action,$database,$table,&$input) {
+		if (is_array($input)) {
+			foreach (array_keys($input) as $i) {
+				$this->applyInputSanitizer($callback,$action,$database,$table,$input[$i]);
+			}
+			return;
+		}		
+		if (is_callable($callback,true)) foreach ((array)$input as $key=>$value) {
+			$input->$key = $callback($action,$database,$table,$key,$value);
+		}
+	}
+	
+	protected function applyInputValidator($callback,$action,$database,$table,&$input) {
+		if (is_array($input)) {
+			foreach (array_keys($input) as $i) {
+				$this->applyInputValidator($callback,$action,$database,$table,$input[$i]);
+			}
+			return;
+		}	
+		$errors = array();
+		if (is_callable($callback,true)) foreach ((array)$input as $key=>$value) {
+			$error = $callback($action,$database,$table,$key,$value);
+			if ($error!==true) $errors[$key] = $error;
+		}
+		if (!empty($errors)) $this->exitWith422($errors);
+	}
+	
 	protected function processTableParameter($database,$table,$db) {
+		if (in_array(strtolower($database), array('information_schema','mysql','sys','pg_catalog'))) return array();
 		$tablelist = explode(',',$table);
 		$tables = array();
 		foreach ($tablelist as $table) {
@@ -552,7 +581,25 @@ class REST_CRUD_API {
 			throw new \Exception("Not found ($type)");
 		}
 	}
-
+	
+	protected function exitWith403($object) {
+		if (isset($_SERVER['REQUEST_METHOD'])) {
+			header('Content-Type:',true,403);
+			die('Forbidden');
+		} else {
+			throw new \Exception(json_encode($object));
+		}
+	}
+	
+	protected function exitWith409($object) {
+		if (isset($_SERVER['REQUEST_METHOD'])) {
+			header('Content-Type:',true,409);
+			die('Conflict');
+		} else {
+			throw new \Exception(json_encode($object));
+		}
+	}
+	
 	protected function exitWith422($object) {
 		if (isset($_SERVER['REQUEST_METHOD'])) {
 			header('Content-Type:',true,422);
@@ -563,10 +610,12 @@ class REST_CRUD_API {
 	}
 
 	protected function exitWithCorsHeaders() {
+		$headers = array();
+		$headers[]='Access-Control-Allow-Headers: Content-Type';
+		$headers[]='Access-Control-Allow-Methods: OPTIONS, GET, PUT, POST, DELETE';
+		$headers[]='Access-Control-Max-Age: 1728000';
 		if (isset($_SERVER['REQUEST_METHOD'])) {
-			header('Access-Control-Allow-Headers: Content-Type');
-			header('Access-Control-Allow-Methods: OPTIONS, GET, PUT, POST, DELETE');
-			header('Access-Control-Max-Age: 1728000');
+			foreach ($headers as $header) header($header);
 			die();
 		} else {
 			throw new \Exception(json_encode($headers));
@@ -643,11 +692,14 @@ class REST_CRUD_API {
 		return $page;
 	}
 
-	protected function retrieveObject($key,$table,$db) {
+	protected function retrieveObject($key,$columns,$table,$db) {
 		if (!$key) return false;
-		if ($result = $this->query($db,'SELECT * FROM "!" WHERE "!" = ?',array($table[0],$key[1],$key[0]))) {
+		$sql = 'SELECT ';
+		$sql .= '"'.implode('","',array_keys($columns[$table[0]])).'"';
+		$sql .= ' FROM "!" WHERE "!" = ?';
+		if ($result = $this->query($db,$sql,array($table[0],$key[1],$key[0]))) {
 			$object = $this->fetch_assoc($result);
-			foreach ($this->fetch_fields($result) as $field) {
+			foreach ($columns[$table[0]] as $field) {
 				if ($this->is_binary_type($field) && $object[$field->name]) {
 					$object[$field->name] = $this->base64_encode($object[$field->name]);
 				}
@@ -740,17 +792,45 @@ class REST_CRUD_API {
 		}
 		return $input;
 	}
-
-	protected function convertBinary($input,$tables,$db) {
+	
+	protected function findFields($table,$collect,$select,$columns,$database,$db) {
+		$tables = array_unique(array_merge($table,array_keys($collect),array_keys($select)));
+		$fields = array();
+		foreach ($tables as $i=>$table) {
+			$fields[$table] = array();
+			$result = $this->query($db,'SELECT * FROM "!" WHERE 1=2;',array($table));
+			foreach ($this->fetch_fields($result) as $field) {
+				if ($i || !$columns || in_array($field->name, $columns)) {
+					$fields[$table][$field->name] = $field;
+				}
+			}
+		}
+		return $fields;
+	}
+	
+	protected function limitInputFields($input,$fields) {
 		if (is_array($input)) {
 			foreach (array_keys($input) as $i) {
-				$input[$i] = $this->convertBinary($input[$i],$tables,$db);
+				$input[$i] = $this->limitInputFields($input[$i],$fields);
 			}
 			return $input;
 		}
-		$result = $this->query($db,'SELECT * FROM "!" WHERE 1=2;',array($tables[0]));
-		foreach ($this->fetch_fields($result) as $field) {
-			$key = $field->name;
+		foreach (array_keys((array)$input) as $key) {
+			if (!isset($fields[$key])) {
+				unset($input->$key);
+			}
+		}
+		return $input;
+	}
+
+	protected function convertBinary($input,$fields) {
+		if (is_array($input)) {
+			foreach (array_keys($input) as $i) {
+				$input[$i] = $this->convertBinary($input[$i],$fields);
+			}
+			return $input;
+		}
+		foreach ($fields as $key=>$field) {
 			if (isset($input->$key) && $input->$key && $this->is_binary_type($field)) {
 				$data = $input->$key;
 				$data = str_pad(strtr($data, '-_', '+/'), strlen($data) % 4, '=', STR_PAD_RIGHT);
@@ -780,16 +860,26 @@ class REST_CRUD_API {
 		$page     = $this->processPageParameter($page);
 		$order    = $this->processOrderParameter($order);
 
-		$table  = $this->applyPermissions($database,$table,$action,$permissions,$multidb);
 		if (empty($table)) $this->exitWith404('entity');
 
-		$object = $this->retrieveObject($key,$table,$db);
-		$input = $this->retrieveInput($post);
-		if (!empty($input)) $input = $this->convertBinary($input,$table,$db);
-
+		// reflection
 		list($collect,$select) = $this->findRelations($table,$database,$db);
+		$columns = $this->findFields($table,$collect,$select,$columns,$database,$db);
+		
+		// input
+		$input = $this->retrieveInput($post);
+		if ($callbacks['input_sanitizer']) $this->applyInputSanitizer($callbacks['input_sanitizer'],$action,$database,$table[0],$input);
+		if ($callbacks['input_validator']) $this->applyInputValidator($callbacks['input_validator'],$action,$database,$table[0],$input);
 
-		return compact('action','database','table','key','callback','page','filters','satisfy','columns','order','transform','db','object','input','collect','select');
+		// permissions
+		if ($callbacks['table_authorizer']) $this->applyTableAuthorizer($callbacks['table_authorizer'],$action,$database,$table);
+		if ($callbacks['column_authorizer']) $this->applyColumnAuthorizer($callbacks['column_authorizer'],$action,$database,$columns);
+		
+		// conversion
+		if (!empty($input)) $input = $this->limitInputFields($input,$columns[$table[0]]);
+		if (!empty($input)) $input = $this->convertBinary($input,$columns[$table[0]]);
+						
+		return compact('action','database','table','key','callback','page','filters','satisfy','columns','order','transform','db','input','collect','select');
 	}
 
 	protected function listCommand($parameters) {
@@ -822,11 +912,7 @@ class REST_CRUD_API {
 		}
 		$params = array();
 		$sql = 'SELECT ';
-		if (is_array($columns)) {
-			$sql .= '"'.implode('","',$columns).'"';
-		} else {
-			$sql .= '*';
-		}
+		$sql .= '"'.implode('","',array_keys($columns[$table])).'"';
 		$sql .= ' FROM "!"';
 		$params[] = $table;
 		foreach ($filters as $i=>$filter) {
@@ -850,7 +936,7 @@ class REST_CRUD_API {
 			echo '"columns":';
 			$fields = array();
 			$base64 = array();
-			foreach ($this->fetch_fields($result) as $field) {
+			foreach ($columns[$table] as $field) {
 				$base64[] = $this->is_binary_type($field);
 				$fields[] = $field->name;
 			}
@@ -890,7 +976,9 @@ class REST_CRUD_API {
 			echo ',';
 			echo '"'.$table.'":{';
 			$params = array();
-			$sql = 'SELECT * FROM "!"';
+			$sql = 'SELECT ';
+			$sql .= '"'.implode('","',array_keys($columns[$table])).'"';
+			$sql .= ' FROM "!"';
 			$params[] = $table;
 			if (isset($select[$table])) {
 				$first_row = true;
@@ -912,7 +1000,7 @@ class REST_CRUD_API {
 				echo '"columns":';
 				$fields = array();
 				$base64 = array();
-				foreach ($this->fetch_fields($result) as $field) {
+				foreach ($columns[$table] as $field) {
 					$base64[] = $this->is_binary_type($field);
 					$fields[] = $field->name;
 				}
@@ -946,6 +1034,7 @@ class REST_CRUD_API {
 
 	protected function readCommand($parameters) {
 		extract($parameters);
+		$object = $this->retrieveObject($key,$columns,$table,$db);
 		if (!$object) $this->exitWith404('object');
 		$this->startOutput($callback);
 		echo json_encode($object);
@@ -1007,8 +1096,11 @@ class REST_CRUD_API {
 		$socket = isset($socket)?$socket:null;
 		$charset = isset($charset)?$charset:'utf8';
 
-		$permissions = isset($permissions)?$permissions:array('*'=>'crudl');
-
+		$callbacks['table_authorizer'] = isset($table_authorizer)?$table_authorizer:false;
+		$callbacks['column_authorizer'] = isset($column_authorizer)?$column_authorizer:false;
+		$callbacks['input_sanitizer'] = isset($input_sanitizer)?$input_sanitizer:false;
+		$callbacks['input_validator'] = isset($input_validator)?$input_validator:false;
+		
 		$db = isset($db)?$db:null;
 		$method = isset($method)?$method:$_SERVER['REQUEST_METHOD'];
 		$request = isset($request)?$request:(isset($_SERVER['PATH_INFO'])?$_SERVER['PATH_INFO']:'');
@@ -1025,7 +1117,7 @@ class REST_CRUD_API {
 			$db = $this->connectDatabase($hostname,$username,$password,$database,$port,$socket,$charset);
 		}
 
-		$this->config = compact('method', 'request', 'get', 'post', 'multidb', 'database', 'permissions', 'db');
+		$this->config = compact('method', 'request', 'get', 'post', 'multidb', 'database', 'callbacks', 'db');
 	}
 
 	public static function php_crud_api_transform(&$tables) {
@@ -1064,12 +1156,11 @@ class REST_CRUD_API {
 		return $tree;
 	}
 
-	public function executeCommand($callbacks = array()) {
-		header('Access-Control-Allow-Origin: *');
-		$parameters = $this->getParameters($this->config);
-		if (is_array($callbacks)) foreach ($callbacks as $callback) {
-			if (is_callable($callback)) $callback($parameters);
+	public function executeCommand() {
+		if (isset($_SERVER['REQUEST_METHOD'])) {
+			header('Access-Control-Allow-Origin: *');
 		}
+		$parameters = $this->getParameters($this->config);
 		switch($parameters['action']){
 			case 'list': $this->listCommandTransform($parameters); break;
 			case 'read': $this->readCommand($parameters); break;

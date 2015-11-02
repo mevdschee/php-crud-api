@@ -36,6 +36,11 @@ class API
 				'password'=>MySQL_CRUD_API_Config::$password,
 				'database'=>MySQL_CRUD_API_Config::$database,
 				'charset'=>'utf8',
+				// callbacks
+				'table_authorizer'=>function($action,$database,$table) { return true; },
+				'column_authorizer'=>function($action,$database,$table,$column) { return $column!='password'; },
+				'input_sanitizer'=>function($action,$database,$table,$column,$value) { return $value===null?null:strip_tags($value); },
+				'input_validator'=>function($action,$database,$table,$column,$value) { return ($column=='category_id' && !is_numeric($value))?'must be numeric':true; },
 				// for tests
 				'method' =>$method,
 				'request' =>$url['path'],
@@ -171,7 +176,14 @@ class MySQL_CRUD_API_Test extends PHPUnit_Framework_TestCase
 		$test->get('/posts');
 		$test->expect('{"posts":{"columns":["id","user_id","category_id","content"],"records":[["1","1","1","blog started"],["2","1","2","It works!"]]}}');
 	}
-
+	
+	public function testListPostColumns()
+	{
+		$test = new API($this);
+		$test->get('/posts?columns=id,content');
+		$test->expect('{"posts":{"columns":["id","content"],"records":[["1","blog started"],["2","It works!"]]}}');
+	}
+	
 	public function testListPostsWithTransform()
 	{
 		$test = new API($this);
@@ -185,7 +197,14 @@ class MySQL_CRUD_API_Test extends PHPUnit_Framework_TestCase
 		$test->get('/posts/2');
 		$test->expect('{"id":"2","user_id":"1","category_id":"2","content":"It works!"}');
 	}
-
+	
+	public function testReadPostColumns()
+	{
+		$test = new API($this);
+		$test->get('/posts/2?columns=id,content');
+		$test->expect('{"id":"2","content":"It works!"}');
+	}
+	
 	public function testAddPost()
 	{
 		$test = new API($this);
@@ -201,7 +220,16 @@ class MySQL_CRUD_API_Test extends PHPUnit_Framework_TestCase
 		$test->get('/posts/3');
 		$test->expect('{"id":"3","user_id":"1","category_id":"1","content":"test (edited)"}');
 	}
-
+	
+	public function testEditPostColumns()
+	{
+		$test = new API($this);
+		$test->put('/posts/3?columns=id,content','{"user_id":"1","category_id":"2","content":"test (edited 2)"}');
+		$test->expect('1');
+		$test->get('/posts/3');
+		$test->expect('{"id":"3","user_id":"1","category_id":"1","content":"test (edited 2)"}');
+	}
+	
 	public function testEditPostWithUtf8Content()
 	{
 		$utf8 = json_encode('Hello world, Καλημέρα κόσμε, コンニチハ');
@@ -275,7 +303,7 @@ class MySQL_CRUD_API_Test extends PHPUnit_Framework_TestCase
 		$test->get('/posts?page=3,5&order=id');
 		$test->expect('{"posts":{"columns":["id","user_id","category_id","content"],"records":[["13","1","1","#9"],["14","1","1","#10"]],"results":12}}');
 	}
-
+	
 	public function testListExampleFromReadme()
 	{
 		$test = new API($this);
@@ -348,6 +376,29 @@ class MySQL_CRUD_API_Test extends PHPUnit_Framework_TestCase
 	{
 		$test = new API($this);
 		$test->options('/posts/2');
-		$test->expect('["Access-Control-Allow-Origin: *","Access-Control-Allow-Headers: Content-Type","Access-Control-Allow-Methods: OPTIONS, GET, PUT, POST, DELETE","Access-Control-Max-Age: 1728000"]');
+		$test->expect('["Access-Control-Allow-Headers: Content-Type","Access-Control-Allow-Methods: OPTIONS, GET, PUT, POST, DELETE","Access-Control-Max-Age: 1728000"]');
+	}
+	
+	public function testHidingPasswordColumn()
+	{
+		$test = new API($this);
+		$test->get('/users/1');
+		$test->expect('{"id":"1","username":"user1"}');
+	}
+	
+	public function testValidatorErrorMessage()
+	{
+		$test = new API($this);
+		$test->put('/posts/1','{"category_id":"a"}');
+		$test->expect('{"category_id":"must be numeric"}');
+	}
+	
+	public function testSanitizerToStripTags()
+	{
+		$test = new API($this);
+		$test->put('/categories/2','{"name":"<script>alert();</script>"}');
+		$test->expect('1');
+		$test->get('/categories/2');
+		$test->expect('{"id":"2","name":"alert();","icon":null}');
 	}
 }
