@@ -5,7 +5,8 @@
 <script>
 var app = angular.module('myApplication', []);
 app.controller('postController', function($scope, $http) {
-    $http.get("http://localhost/blog.php/posts,categories,tags,comments")
+    $http.post("http://localhost/api.php/posts",{user_id:1,category_id:1,content:"from angular"});
+    $http.get("http://localhost/api.php/posts,categories,tags,comments")
     .success(function(response) { $scope.posts = php_crud_api_transform(response).posts; });
 });
 </script>
