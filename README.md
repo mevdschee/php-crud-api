@@ -20,10 +20,8 @@ This is a single file application! Upload "api.php" somewhere and enjoy!
 
 ## TODO
 
-  - Add column permission system
   - Set up Travis automated tests
   - Add an API documentation generator
-  - Create a plugin system for authentication, authorization and accounting
 
 ## Features
 
