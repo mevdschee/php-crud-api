@@ -42,7 +42,7 @@ This is a single file application! Upload "api.php" somewhere and enjoy!
   - Relation "transforms" for PHP and JavaScript
   - Binary fields supported with base64 encoding
   - Callback functions to authorize on table and column level
-  - Callback functions to do sanitize and validate input 
+  - Callback functions to sanitize and validate input 
 
 ## Configuration
 
@@ -71,10 +71,10 @@ $api = new MySQL_CRUD_API(array(
 	'socket=>null,
 	'charset=>'utf8',
 // callbacks with their default behavior
-	'table_authorizer'=>function($action,$database,$table) { return true; },
-	'column_authorizer'=>function($action,$database,$table,$column) { return true; },
-	'input_sanitizer'=>function($action,$database,$table,$column,$value) { return $value; },
-	'input_validator'=>function($action,$database,$table,$column,$value) { return true; },
+	'table_authorizer'=>function($action,$db,$table) { return true; },
+	'column_authorizer'=>function($action,$db,$table,$column) { return true; },
+	'input_sanitizer'=>function($action,$db,$table,$column,$value) { return $value; },
+	'input_validator'=>function($action,$db,$table,$column,$value) { return true; },
 // dependencies (added for unit testing):
 	'db'=>null,
 	'method'=>$_SERVER['REQUEST_METHOD'],
