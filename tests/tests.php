@@ -24,9 +24,9 @@ class API
 		$data = 'data://text/plain;base64,'.base64_encode($data);
 
 		switch(MySQL_CRUD_API_Config::$dbengine) {
-			case 'mssql':	$class = 'MsSQL_CRUD_API'; break;
-			case 'pgsql':	$class = 'PgSQL_CRUD_API'; break;
-			case 'mysql':	$class = 'MySQL_CRUD_API'; break;
+			case 'mssql':	$class = 'MsSQL_CRUD_API'; $charset = 'utf-8'; break;
+			case 'pgsql':	$class = 'PgSQL_CRUD_API'; $charset = 'utf8'; break;
+			case 'mysql':	$class = 'MySQL_CRUD_API'; $charset = 'utf8'; break;
 			default:	die("DB engine not supported: $dbengine\n");
 		}
 
@@ -35,7 +35,7 @@ class API
 				'username'=>MySQL_CRUD_API_Config::$username,
 				'password'=>MySQL_CRUD_API_Config::$password,
 				'database'=>MySQL_CRUD_API_Config::$database,
-				'charset'=>'utf8',
+				'charset'=>$charset,
 				// callbacks
 				'table_authorizer'=>function($action,$database,$table) { return true; },
 				'column_authorizer'=>function($action,$database,$table,$column) { return $column!='password'; },
@@ -358,13 +358,6 @@ class MySQL_CRUD_API_Test extends PHPUnit_Framework_TestCase
 		$test->expect('{"id":"2","name":"article","icon":null}');
 	}
 
-	public function testAddPosts()
-	{
-		$test = new API($this);
-		$test->post('/posts','[{"user_id":"1","category_id":"1","content":"tests"},{"user_id":"1","category_id":"1","content":"tests"}]');
-		$test->expect('[15,16]');
-	}
-
 	public function testAddPostFailure()
 	{
 		$test = new API($this);
@@ -402,8 +395,17 @@ class MySQL_CRUD_API_Test extends PHPUnit_Framework_TestCase
 		$test->expect('{"id":"2","name":"alert();","icon":null}');
 	}
 	
+	public function testErrorOnInvalidJson()
+	{
+		$test = new API($this);
+		$test->post('/posts','{"}');
+		$test->expect('Not found (input)');
+	}
+		
 	public function testErrorOnDuplicatePrimaryKey()
 	{
-		// to be implemented
+		$test = new API($this);
+		$test->post('/posts','{"id":"1","user_id":"1","category_id":"1","content":"blog started (duplicate)"}');
+		$test->expect('null');
 	}
 }

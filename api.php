@@ -404,12 +404,7 @@ class MsSQL_CRUD_API extends REST_CRUD_API {
 		if (strtoupper(substr($sql,0,6))=='INSERT') {
 			$sql .= ';SELECT SCOPE_IDENTITY()';
 		}
-		$result = sqlsrv_query($db,$sql,$args);
-		if ($result===false) {
-			$errors = sqlsrv_errors();
-			$this->exitWith409(compact('sql','args','errors'));
-		}
-		return $result;
+		return sqlsrv_query($db,$sql,$args)?:null;
 	}
 
 	protected function fetch_assoc($result) {
@@ -524,24 +519,12 @@ class REST_CRUD_API {
 	}
 
 	protected function applyInputSanitizer($callback,$action,$database,$table,&$input) {
-		if (is_array($input)) {
-			foreach (array_keys($input) as $i) {
-				$this->applyInputSanitizer($callback,$action,$database,$table,$input[$i]);
-			}
-			return;
-		}		
 		if (is_callable($callback,true)) foreach ((array)$input as $key=>$value) {
 			$input->$key = $callback($action,$database,$table,$key,$value);
 		}
 	}
 	
 	protected function applyInputValidator($callback,$action,$database,$table,&$input) {
-		if (is_array($input)) {
-			foreach (array_keys($input) as $i) {
-				$this->applyInputValidator($callback,$action,$database,$table,$input[$i]);
-			}
-			return;
-		}	
 		$errors = array();
 		if (is_callable($callback,true)) foreach ((array)$input as $key=>$value) {
 			$error = $callback($action,$database,$table,$key,$value);
@@ -603,7 +586,7 @@ class REST_CRUD_API {
 	protected function exitWith422($object) {
 		if (isset($_SERVER['REQUEST_METHOD'])) {
 			header('Content-Type:',true,422);
-			die('Unprocessable Entity');
+			die(json_encode($object));
 		} else {
 			throw new \Exception(json_encode($object));
 		}
@@ -777,7 +760,7 @@ class REST_CRUD_API {
 		$input = (object)array();
 		$data = trim(file_get_contents($post));
 		if (strlen($data)>0) {
-			if ($data[0]=='{' || $data[0]=='[') {
+			if ($data[0]=='{') {
 				$input = json_decode($data);
 			} else {
 				parse_str($data, $input);
@@ -809,12 +792,6 @@ class REST_CRUD_API {
 	}
 	
 	protected function limitInputFields($input,$fields) {
-		if (is_array($input)) {
-			foreach (array_keys($input) as $i) {
-				$input[$i] = $this->limitInputFields($input[$i],$fields);
-			}
-			return $input;
-		}
 		foreach (array_keys((array)$input) as $key) {
 			if (!isset($fields[$key])) {
 				unset($input->$key);
@@ -824,12 +801,6 @@ class REST_CRUD_API {
 	}
 
 	protected function convertBinary($input,$fields) {
-		if (is_array($input)) {
-			foreach (array_keys($input) as $i) {
-				$input[$i] = $this->convertBinary($input[$i],$fields);
-			}
-			return $input;
-		}
 		foreach ($fields as $key=>$field) {
 			if (isset($input->$key) && $input->$key && $this->is_binary_type($field)) {
 				$data = $input->$key;
@@ -1045,15 +1016,7 @@ class REST_CRUD_API {
 		extract($parameters);
 		if (!$input) $this->exitWith404('input');
 		$this->startOutput($callback);
-		if (!is_array($input)) {
-			echo json_encode($this->createObject($input,$table,$db));
-		} else {
-			$result = array();
-			foreach ($input as $i) {
-				$result[] = $this->createObject($i,$table,$db);
-			}
-			echo json_encode($result);
-		}
+		echo json_encode($this->createObject($input,$table,$db));
 		$this->endOutput($callback);
 	}
 
