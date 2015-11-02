@@ -9,3 +9,14 @@ if (!isset($_SERVER['PHP_AUTH_USER'])) {
 } else {
     header('HTTP/1.0 403 Forbidden');
 }
+
+include "api.php";
+
+$api = new SQLSRV_CRUD_API(array(
+		'hostname'=>'(local)',
+		'username'=>'',
+		'password'=>'',
+		'database'=>'xxx',
+		'charset'=>'UTF-8'
+));
+$api->executeCommand();
