@@ -401,4 +401,9 @@ class MySQL_CRUD_API_Test extends PHPUnit_Framework_TestCase
 		$test->get('/categories/2');
 		$test->expect('{"id":"2","name":"alert();","icon":null}');
 	}
+	
+	public function testErrorOnDuplicatePrimaryKey()
+	{
+		// to be implemented
+	}
 }
