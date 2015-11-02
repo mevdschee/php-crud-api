@@ -486,7 +486,8 @@ This transform function is available for PHP and JavaScript in the files ```mysq
 ## Permissions
 
 By default a single database is exposed with all it's tables and columns in read-write mode. You can change the permissions by specifying
-a 'table_authorizer' and/or a 'column_authorizer' function that returns a boolean indicating whether or not the table or column is allowed.
+a 'table_authorizer' and/or a 'column_authorizer' function that returns a boolean indicating whether or not the table or column is allowed
+for a specific CRUD action.
 
 ## Sanitizing input
 

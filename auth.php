@@ -20,7 +20,6 @@ if ($info['http_code']!=200) die('Forbidden');
 
 include "api.php";
 
-header('Access-Control-Allow-Origin: *');
 $api = new SQLSRV_CRUD_API(array(
   'hostname'=>'(local)',
   'username'=>'',
