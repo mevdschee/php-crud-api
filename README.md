@@ -15,8 +15,7 @@ This is a single file application! Upload "api.php" somewhere and enjoy!
 ## Limitations
 
   - Authentication is not included
-  - Validation on API input is not included
-  - Complex queries or transactions are not supported
+  - Complex writes (transactions) are not supported
 
 ## TODO
 
