@@ -30,7 +30,8 @@ This is a single file application! Upload "api.php" somewhere and enjoy!
   - Supports POST variables as input
   - Supports a JSON object as input
   - Condensed JSON ouput: first row contains field names
-  - Permission system for databases and tables
+  - Sanitize and validate input using callbacks
+  - Permission system for databases, tables and columns
   - JSONP + CORS support for cross-domain requests
   - Combined requests with support for multiple table names
   - Search support on multiple criteria
@@ -38,9 +39,7 @@ This is a single file application! Upload "api.php" somewhere and enjoy!
   - Relation detection and filtering on foreign keys
   - Relation "transforms" for PHP and JavaScript
   - Binary fields supported with base64 encoding
-  - Callback functions to authorize on table and column level
-  - Callback functions to sanitize and validate input 
-
+  
 ## Configuration
 
 Edit the following lines in the bottom of the file "api.php":
@@ -61,7 +60,6 @@ $api = new MySQL_CRUD_API(array(
 	'username=>'root'
 	'password=>null,
 	'database=>false,
-	'permissions'=>array('*'=>'crudl'),
 // for connectivity (defaults to localhost):
 	'hostname'=>null,
 	'port=>null,
@@ -487,12 +485,8 @@ This transform function is available for PHP and JavaScript in the files ```mysq
 
 ## Permissions
 
-By default a single database is exposed with all it's tables in read-write mode. You can change the permissions by specifying in the
-'permissions' configuration parameter. This array contains the permissions that are applied. The star character can be used as a wildcard
-for a full table or database name. Permissions with more specific keys override the values of permissions that contain one or more wildcards.
-The letters 'crudl' in the permission value are the first letters of the 'create','read','update','delete','list' operations.
-Specifying such a letters in the permission value means that the corresponding operation is permitted, while leaving it out,
-means that the operation is not permitted.
+By default a single database is exposed with all it's tables and columns in read-write mode. You can change the permissions by 
+specifying a 'table_authorizer' and 'column_authorizer' callback. 
 
 ## Multi-Database
 
