@@ -526,11 +526,11 @@ class REST_CRUD_API {
 		}
 	}
 	
-	protected function applyInputValidator($callback,$action,$database,$table,$input,$fields) {
+	protected function applyInputValidator($callback,$action,$database,$table,$input,$fields,$context) {
 		$errors = array();
 		if (is_callable($callback,true)) foreach ((array)$input as $key=>$value) {
 			if (isset($fields[$key])) {
-				$error = $callback($action,$database,$table,$key,$fields[$key]->type,$value,$input);
+				$error = $callback($action,$database,$table,$key,$fields[$key]->type,$value,$context);
 				if ($error!==true) $errors[$key] = $error;
 			}
 		}
@@ -841,17 +841,17 @@ class REST_CRUD_API {
 		list($collect,$select) = $this->findRelations($table,$database,$db);
 		$columns = $this->findFields($table,$collect,$select,$columns,$database,$db);
 		
-		// input
-		$input = $this->retrieveInput($post);
-		if ($callbacks['input_sanitizer']) $this->applyInputSanitizer($callbacks['input_sanitizer'],$action,$database,$table[0],$input,$columns[$table[0]]);
-		if ($callbacks['input_validator']) $this->applyInputValidator($callbacks['input_validator'],$action,$database,$table[0],$input,$columns[$table[0]]);
-
 		// permissions
 		if ($callbacks['table_authorizer']) $this->applyTableAuthorizer($callbacks['table_authorizer'],$action,$database,$table);
 		if ($callbacks['column_authorizer']) $this->applyColumnAuthorizer($callbacks['column_authorizer'],$action,$database,$columns);
 		
-		// limit removed columns
-		if (!empty($input)) $input = $this->limitInputFields($input,$columns[$table[0]]);
+		// input
+		$context = $this->retrieveInput($post);
+		if (!empty($context)) $input = $this->limitInputFields($context,$columns[$table[0]]);
+
+		if ($callbacks['input_sanitizer']) $this->applyInputSanitizer($callbacks['input_sanitizer'],$action,$database,$table[0],$input,$columns[$table[0]]);
+		if ($callbacks['input_validator']) $this->applyInputValidator($callbacks['input_validator'],$action,$database,$table[0],$input,$columns[$table[0]],$context);
+
 		if (!empty($input)) $input = $this->convertBinary($input,$columns[$table[0]]);
 		
 		return compact('action','database','table','key','callback','page','filters','satisfy','columns','order','transform','db','input','collect','select');
