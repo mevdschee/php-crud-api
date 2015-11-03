@@ -520,17 +520,19 @@ class REST_CRUD_API {
 
 	protected function applyInputSanitizer($callback,$action,$database,$table,&$input,$fields) {
 		if (is_callable($callback,true)) foreach ((array)$input as $key=>$value) {
-			$type = isset($fields[$key])?$fields[$key]->type:false;
-			$input->$key = $callback($action,$database,$table,$key,$type,$value);
+			if (isset($fields[$key])) {
+				$input->$key = $callback($action,$database,$table,$key,$fields[$key]->type,$value);
+			}
 		}
 	}
 	
-	protected function applyInputValidator($callback,$action,$database,$table,&$input,$fields) {
+	protected function applyInputValidator($callback,$action,$database,$table,$input,$fields) {
 		$errors = array();
 		if (is_callable($callback,true)) foreach ((array)$input as $key=>$value) {
-			$type = isset($fields[$key])?$fields[$key]->type:false;
-			$error = $callback($action,$database,$table,$key,$type,$value);
-			if ($error!==true) $errors[$key] = $error;
+			if (isset($fields[$key])) {
+				$error = $callback($action,$database,$table,$key,$fields[$key]->type,$value,$input);
+				if ($error!==true) $errors[$key] = $error;
+			}
 		}
 		if (!empty($errors)) $this->exitWith422($errors);
 	}

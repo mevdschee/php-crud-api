@@ -66,10 +66,10 @@ $api = new MySQL_CRUD_API(array(
 	'socket=>null,
 	'charset=>'utf8',
 // callbacks with their default behavior
-	'table_authorizer'=>function($action,$db,$table) { return true; },
-	'column_authorizer'=>function($action,$db,$table,$col) { return true; },
-	'input_sanitizer'=>function($action,$db,$table,$col,$type,$val) { return $val; },
-	'input_validator'=>function($action,$db,$table,$col,$type,$val) { return true; },
+	'table_authorizer'=>function($cmd,$db,$tab) { return true; },
+	'column_authorizer'=>function($cmd,$db,$tab,$col) { return true; },
+	'input_sanitizer'=>function($cmd,$db,$tab,$col,$typ,$val) { return $val; },
+	'input_validator'=>function($cmd,$db,$tab,$col,$typ,$val,$ctx) { return true; },
 // dependencies (added for unit testing):
 	'db'=>null,
 	'method'=>$_SERVER['REQUEST_METHOD'],

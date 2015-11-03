@@ -40,7 +40,7 @@ class API
 				'table_authorizer'=>function($action,$database,$table) { return true; },
 				'column_authorizer'=>function($action,$database,$table,$column) { return $column!='password'; },
 				'input_sanitizer'=>function($action,$database,$table,$column,$type,$value) { return $value===null?null:strip_tags($value); },
-				'input_validator'=>function($action,$database,$table,$column,$type,$value) { return ($column=='category_id' && !is_numeric($value))?'must be numeric':true; },
+				'input_validator'=>function($action,$database,$table,$column,$type,$value,$context) { return ($column=='category_id' && !is_numeric($value))?'must be numeric':true; },
 				// for tests
 				'method' =>$method,
 				'request' =>$url['path'],
