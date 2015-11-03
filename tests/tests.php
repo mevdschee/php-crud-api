@@ -412,7 +412,7 @@ class MySQL_CRUD_API_Test extends PHPUnit_Framework_TestCase
 	public function testErrorOnFailingForeignKeyConstraint()
 	{
 		$test = new API($this);
-		$test->post('/posts','{"user_id":"3","category_id":"1","content":"blog started (duplicate)"}');
+		$test->post('/posts','{"user_id":"3","category_id":"1","content":"fk constraint"}');
 		$test->expect('null');
 	}
 }
