@@ -520,14 +520,16 @@ class REST_CRUD_API {
 
 	protected function applyInputSanitizer($callback,$action,$database,$table,&$input,$fields) {
 		if (is_callable($callback,true)) foreach ((array)$input as $key=>$value) {
-			$input->$key = $callback($action,$database,$table,$key,$fields[$key]->type,$value);
+			$type = isset($fields[$key])?$fields[$key]->type:false;
+			$input->$key = $callback($action,$database,$table,$key,$type,$value);
 		}
 	}
 	
 	protected function applyInputValidator($callback,$action,$database,$table,&$input,$fields) {
 		$errors = array();
 		if (is_callable($callback,true)) foreach ((array)$input as $key=>$value) {
-			$error = $callback($action,$database,$table,$key,$fields[$key]->type,$value);
+			$type = isset($fields[$key])?$fields[$key]->type:false;
+			$error = $callback($action,$database,$table,$key,$type,$value);
 			if ($error!==true) $errors[$key] = $error;
 		}
 		if (!empty($errors)) $this->exitWith422($errors);
@@ -839,9 +841,6 @@ class REST_CRUD_API {
 		
 		// input
 		$input = $this->retrieveInput($post);
-		if (!empty($input)) $input = $this->limitInputFields($input,$columns[$table[0]]);
-		
-		// conversion
 		if ($callbacks['input_sanitizer']) $this->applyInputSanitizer($callbacks['input_sanitizer'],$action,$database,$table[0],$input,$columns[$table[0]]);
 		if ($callbacks['input_validator']) $this->applyInputValidator($callbacks['input_validator'],$action,$database,$table[0],$input,$columns[$table[0]]);
 
