@@ -507,7 +507,7 @@ class REST_CRUD_API {
 		}
 		if (empty($tables)) $this->exitWith404('entity');
 	}
-	
+
 	protected function applyColumnAuthorizer($callback,$action,$database,&$columns) {
 		if (is_callable($callback,true)) foreach ($columns as $table=>$fields) {
 			foreach ($fields as $field) {
@@ -525,7 +525,7 @@ class REST_CRUD_API {
 			}
 		}
 	}
-	
+
 	protected function applyInputValidator($callback,$action,$database,$table,$input,$fields,$context) {
 		$errors = array();
 		if (is_callable($callback,true)) foreach ((array)$input as $key=>$value) {
@@ -536,7 +536,7 @@ class REST_CRUD_API {
 		}
 		if (!empty($errors)) $this->exitWith422($errors);
 	}
-	
+
 	protected function processTableParameter($database,$table,$db) {
 		if (in_array(strtolower($database), array('information_schema','mysql','sys','pg_catalog'))) return array();
 		$tablelist = explode(',',$table);
@@ -568,7 +568,7 @@ class REST_CRUD_API {
 			throw new \Exception("Not found ($type)");
 		}
 	}
-	
+
 	protected function exitWith403($object) {
 		if (isset($_SERVER['REQUEST_METHOD'])) {
 			header('Content-Type:',true,403);
@@ -577,7 +577,7 @@ class REST_CRUD_API {
 			throw new \Exception(json_encode($object));
 		}
 	}
-	
+
 	protected function exitWith409($object) {
 		if (isset($_SERVER['REQUEST_METHOD'])) {
 			header('Content-Type:',true,409);
@@ -586,7 +586,7 @@ class REST_CRUD_API {
 			throw new \Exception(json_encode($object));
 		}
 	}
-	
+
 	protected function exitWith422($object) {
 		if (isset($_SERVER['REQUEST_METHOD'])) {
 			header('Content-Type:',true,422);
@@ -779,7 +779,7 @@ class REST_CRUD_API {
 		}
 		return $input;
 	}
-	
+
 	protected function findFields($table,$collect,$select,$columns,$database,$db) {
 		$tables = array_unique(array_merge($table,array_keys($collect),array_keys($select)));
 		$fields = array();
@@ -794,7 +794,7 @@ class REST_CRUD_API {
 		}
 		return $fields;
 	}
-	
+
 	protected function limitInputFields($input,$fields) {
 		foreach (array_keys((array)$input) as $key) {
 			if (!isset($fields[$key])) {
@@ -840,11 +840,11 @@ class REST_CRUD_API {
 		// reflection
 		list($collect,$select) = $this->findRelations($table,$database,$db);
 		$columns = $this->findFields($table,$collect,$select,$columns,$database,$db);
-		
+
 		// permissions
 		if ($callbacks['table_authorizer']) $this->applyTableAuthorizer($callbacks['table_authorizer'],$action,$database,$table);
 		if ($callbacks['column_authorizer']) $this->applyColumnAuthorizer($callbacks['column_authorizer'],$action,$database,$columns);
-		
+
 		// input
 		$context = $this->retrieveInput($post);
 		if (!empty($context)) $input = $this->limitInputFields($context,$columns[$table[0]]);
@@ -853,7 +853,7 @@ class REST_CRUD_API {
 		if ($callbacks['input_validator']) $this->applyInputValidator($callbacks['input_validator'],$action,$database,$table[0],$input,$columns[$table[0]],$context);
 
 		if (!empty($input)) $input = $this->convertBinary($input,$columns[$table[0]]);
-		
+
 		return compact('action','database','table','key','callback','page','filters','satisfy','columns','order','transform','db','input','collect','select');
 	}
 
@@ -1067,7 +1067,7 @@ class REST_CRUD_API {
 		$callbacks['column_authorizer'] = isset($column_authorizer)?$column_authorizer:false;
 		$callbacks['input_sanitizer'] = isset($input_sanitizer)?$input_sanitizer:false;
 		$callbacks['input_validator'] = isset($input_validator)?$input_validator:false;
-		
+
 		$db = isset($db)?$db:null;
 		$method = isset($method)?$method:$_SERVER['REQUEST_METHOD'];
 		$request = isset($request)?$request:(isset($_SERVER['PATH_INFO'])?$_SERVER['PATH_INFO']:'');
@@ -1076,15 +1076,14 @@ class REST_CRUD_API {
 
 		$request = explode('/', trim($request,'/'));
 
-		$multidb   = !$database;
-		if ($multidb) {
+		if (!$database) {
 			$database  = $this->parseRequestParameter($request, 'a-zA-Z0-9\-_,', false);
 		}
 		if (!$db) {
 			$db = $this->connectDatabase($hostname,$username,$password,$database,$port,$socket,$charset);
 		}
 
-		$this->config = compact('method', 'request', 'get', 'post', 'multidb', 'database', 'callbacks', 'db');
+		$this->config = compact('method', 'request', 'get', 'post', 'database', 'callbacks', 'db');
 	}
 
 	public static function php_crud_api_transform(&$tables) {
