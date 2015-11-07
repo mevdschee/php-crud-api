@@ -464,7 +464,7 @@ class MsSQL_CRUD_API extends REST_CRUD_API {
 
 class REST_CRUD_API {
 
-	protected $config;
+	protected $settings;
 
 	protected function mapMethodToAction($method,$key) {
 		switch ($method) {
@@ -815,8 +815,8 @@ class REST_CRUD_API {
 		return $input;
 	}
 
-	protected function getParameters($config) {
-		extract($config);
+	protected function getParameters($settings) {
+		extract($settings);
 		$table     = $this->parseRequestParameter($request, 'a-zA-Z0-9\-_*,', false);
 		$key       = $this->parseRequestParameter($request, 'a-zA-Z0-9\-,', false); // auto-increment or uuid
 		$action    = $this->mapMethodToAction($method,$key);
@@ -1083,7 +1083,7 @@ class REST_CRUD_API {
 			$db = $this->connectDatabase($hostname,$username,$password,$database,$port,$socket,$charset);
 		}
 
-		$this->config = compact('method', 'request', 'get', 'post', 'database', 'callbacks', 'db');
+		$this->settings = compact('method', 'request', 'get', 'post', 'database', 'callbacks', 'db');
 	}
 
 	public static function php_crud_api_transform(&$tables) {
@@ -1126,7 +1126,7 @@ class REST_CRUD_API {
 		if (isset($_SERVER['REQUEST_METHOD'])) {
 			header('Access-Control-Allow-Origin: *');
 		}
-		$parameters = $this->getParameters($this->config);
+		$parameters = $this->getParameters($this->settings);
 		switch($parameters['action']){
 			case 'list': $this->listCommandTransform($parameters); break;
 			case 'read': $this->readCommand($parameters); break;
