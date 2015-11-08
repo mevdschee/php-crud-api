@@ -531,7 +531,7 @@ class REST_CRUD_API {
 		if (is_callable($callback,true)) foreach ((array)$input as $key=>$value) {
 			if (isset($fields[$key])) {
 				$error = $callback($action,$database,$table,$key,$fields[$key]->type,$value,$context);
-				if ($error!==true) $errors[$key] = $error;
+				if ($error!==true && $error!==null) $errors[$key] = $error;
 			}
 		}
 		if (!empty($errors)) $this->exitWith422($errors);
