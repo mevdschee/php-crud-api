@@ -106,7 +106,7 @@ class MySQL_CRUD_API extends REST_CRUD_API {
 
 	protected function is_binary_type($field) {
 		//echo "$field->name: $field->type ($field->flags)\n";
-		return (($field->flags & 128) && ($field->type==252));
+		return (($field->flags & 128) && ($field->type>=249) && ($field->type<=252));
 	}
 
 	protected function base64_encode($string) {
