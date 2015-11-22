@@ -86,7 +86,8 @@ class API
 		}
 		$data = ob_get_contents();
 		ob_end_clean();
-		$this->test->assertEquals($error.$output, $exception.$data);
+		if ($exception) $this->test->assertEquals($error, $exception);
+		else $this->test->assertEquals($output, $data);
 		return $this;
 	}
 }
@@ -176,14 +177,14 @@ class MySQL_CRUD_API_Test extends PHPUnit_Framework_TestCase
 		$test->get('/posts');
 		$test->expect('{"posts":{"columns":["id","user_id","category_id","content"],"records":[["1","1","1","blog started"],["2","1","2","It works!"]]}}');
 	}
-	
+
 	public function testListPostColumns()
 	{
 		$test = new API($this);
 		$test->get('/posts?columns=id,content');
 		$test->expect('{"posts":{"columns":["id","content"],"records":[["1","blog started"],["2","It works!"]]}}');
 	}
-	
+
 	public function testListPostsWithTransform()
 	{
 		$test = new API($this);
@@ -197,14 +198,14 @@ class MySQL_CRUD_API_Test extends PHPUnit_Framework_TestCase
 		$test->get('/posts/2');
 		$test->expect('{"id":"2","user_id":"1","category_id":"2","content":"It works!"}');
 	}
-	
+
 	public function testReadPostColumns()
 	{
 		$test = new API($this);
 		$test->get('/posts/2?columns=id,content');
 		$test->expect('{"id":"2","content":"It works!"}');
 	}
-	
+
 	public function testAddPost()
 	{
 		$test = new API($this);
@@ -220,7 +221,7 @@ class MySQL_CRUD_API_Test extends PHPUnit_Framework_TestCase
 		$test->get('/posts/3');
 		$test->expect('{"id":"3","user_id":"1","category_id":"1","content":"test (edited)"}');
 	}
-	
+
 	public function testEditPostColumns()
 	{
 		$test = new API($this);
@@ -229,7 +230,7 @@ class MySQL_CRUD_API_Test extends PHPUnit_Framework_TestCase
 		$test->get('/posts/3');
 		$test->expect('{"id":"3","user_id":"1","category_id":"1","content":"test (edited 2)"}');
 	}
-	
+
 	public function testEditPostWithUtf8Content()
 	{
 		$utf8 = json_encode('Hello world, Καλημέρα κόσμε, コンニチハ');
@@ -258,7 +259,7 @@ class MySQL_CRUD_API_Test extends PHPUnit_Framework_TestCase
 		$test->delete('/posts/3');
 		$test->expect('1');
 		$test->get('/posts/3');
-		$test->expect('','Not found (object)');
+		$test->expect(false,'Not found (object)');
 	}
 
 	public function testAddPostWithPost()
@@ -283,7 +284,7 @@ class MySQL_CRUD_API_Test extends PHPUnit_Framework_TestCase
 		$test->delete('/posts/4');
 		$test->expect('1');
 		$test->get('/posts/4');
-		$test->expect('','Not found (object)');
+		$test->expect(false,'Not found (object)');
 	}
 
 	public function testListWithPaginate()
@@ -303,7 +304,7 @@ class MySQL_CRUD_API_Test extends PHPUnit_Framework_TestCase
 		$test->get('/posts?page=3,5&order=id');
 		$test->expect('{"posts":{"columns":["id","user_id","category_id","content"],"records":[["13","1","1","#9"],["14","1","1","#10"]],"results":12}}');
 	}
-	
+
 	public function testListExampleFromReadme()
 	{
 		$test = new API($this);
@@ -369,23 +370,23 @@ class MySQL_CRUD_API_Test extends PHPUnit_Framework_TestCase
 	{
 		$test = new API($this);
 		$test->options('/posts/2');
-		$test->expect('["Access-Control-Allow-Headers: Content-Type","Access-Control-Allow-Methods: OPTIONS, GET, PUT, POST, DELETE","Access-Control-Max-Age: 1728000"]');
+		$test->expect(false,'["Access-Control-Allow-Headers: Content-Type","Access-Control-Allow-Methods: OPTIONS, GET, PUT, POST, DELETE","Access-Control-Max-Age: 1728000"]');
 	}
-	
+
 	public function testHidingPasswordColumn()
 	{
 		$test = new API($this);
 		$test->get('/users/1');
 		$test->expect('{"id":"1","username":"user1"}');
 	}
-	
+
 	public function testValidatorErrorMessage()
 	{
 		$test = new API($this);
 		$test->put('/posts/1','{"category_id":"a"}');
-		$test->expect('{"category_id":"must be numeric"}');
+		$test->expect(false,'{"category_id":"must be numeric"}');
 	}
-	
+
 	public function testSanitizerToStripTags()
 	{
 		$test = new API($this);
@@ -394,21 +395,21 @@ class MySQL_CRUD_API_Test extends PHPUnit_Framework_TestCase
 		$test->get('/categories/2');
 		$test->expect('{"id":"2","name":"alert();","icon":null}');
 	}
-	
+
 	public function testErrorOnInvalidJson()
 	{
 		$test = new API($this);
 		$test->post('/posts','{"}');
-		$test->expect('Not found (input)');
+		$test->expect(false,'Not found (input)');
 	}
-		
+
 	public function testErrorOnDuplicatePrimaryKey()
 	{
 		$test = new API($this);
 		$test->post('/posts','{"id":"1","user_id":"1","category_id":"1","content":"blog started (duplicate)"}');
 		$test->expect('null');
 	}
-	
+
 	public function testErrorOnFailingForeignKeyConstraint()
 	{
 		$test = new API($this);
