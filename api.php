@@ -857,9 +857,8 @@ class REST_CRUD_API {
 		return compact('action','database','table','key','callback','page','filters','satisfy','columns','order','transform','db','input','collect','select');
 	}
 
-	protected function listCommand($parameters) {
+	protected function listCommandInternal($parameters) {
 		extract($parameters);
-		$this->startOutput($callback);
 		echo '{';
 		$tables = $table;
 		$table = array_shift($tables);
@@ -1004,7 +1003,6 @@ class REST_CRUD_API {
 			echo '}';
 		}
 		echo '}';
-		$this->endOutput($callback);
 	}
 
 	protected function readCommand($parameters) {
@@ -1039,17 +1037,20 @@ class REST_CRUD_API {
 		$this->endOutput($callback);
 	}
 
-	protected function listCommandTransform($parameters) {
-		if ($parameters['transform']) {
+	protected function listCommand($parameters) {
+		extract($parameters);
+		$this->startOutput($callback);
+		if ($transform) {
 			ob_start();
 		}
-		$this->listCommand($parameters);
-		if ($parameters['transform']) {
+		$this->listCommandInternal($parameters);
+		if ($transform) {
 			$content = ob_get_contents();
 			ob_end_clean();
 			$data = json_decode($content,true);
 			echo json_encode(self::php_crud_api_transform($data));
 		}
+		$this->endOutput($callback);
 	}
 
 	public function __construct($config) {
@@ -1128,7 +1129,7 @@ class REST_CRUD_API {
 		}
 		$parameters = $this->getParameters($this->settings);
 		switch($parameters['action']){
-			case 'list': $this->listCommandTransform($parameters); break;
+			case 'list': $this->listCommand($parameters); break;
 			case 'read': $this->readCommand($parameters); break;
 			case 'create': $this->createCommand($parameters); break;
 			case 'update': $this->updateCommand($parameters); break;
