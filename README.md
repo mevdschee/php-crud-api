@@ -32,14 +32,14 @@ This is a single file application! Upload "api.php" somewhere and enjoy!
   - Condensed JSON ouput: first row contains field names
   - Sanitize and validate input using callbacks
   - Permission system for databases, tables and columns
-  - JSONP + CORS support for cross-domain requests
+  - Both JSONP and CORS support for cross-domain requests
   - Combined requests with support for multiple table names
   - Search support on multiple criteria
   - Pagination, sorting and column selection
   - Relation detection and filtering on foreign keys
   - Relation "transforms" for PHP and JavaScript
   - Binary fields supported with base64 encoding
-  
+
 ## Configuration
 
 Edit the following lines in the bottom of the file "api.php":
