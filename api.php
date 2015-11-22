@@ -610,11 +610,13 @@ class REST_CRUD_API {
 	}
 
 	protected function startOutput($callback) {
-		if (isset($_SERVER['REQUEST_METHOD'])) {
-			if ($callback) {
+		if ($callback) {
+			if (isset($_SERVER['REQUEST_METHOD'])) {
 				header('Content-Type: application/javascript');
-				echo $callback.'(';
-			} else {
+			}
+			echo $callback.'(';
+		} else {
+			if (isset($_SERVER['REQUEST_METHOD'])) {
 				header('Content-Type: application/json');
 			}
 		}
