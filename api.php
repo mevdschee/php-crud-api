@@ -1070,6 +1070,7 @@ class REST_CRUD_API {
 	public function __construct($config) {
 		extract($config);
 
+		// initialize
 		$hostname = isset($hostname)?$hostname:null;
 		$username = isset($username)?$username:null;
 		$password = isset($password)?$password:null;
@@ -1089,13 +1090,13 @@ class REST_CRUD_API {
 		$get = isset($get)?$get:null;
 		$post = isset($post)?$post:null;
 
+		// defaults
 		if (!$method) {
 			$method = $_SERVER['REQUEST_METHOD'];
 		}
 		if (!$request) {
 			$request = isset($_SERVER['PATH_INFO'])?$_SERVER['PATH_INFO']:'';
 		}
-		$request = explode('/', trim($request,'/'));
 		if (!$get) {
 			$get = $_GET;
 		}
@@ -1105,6 +1106,9 @@ class REST_CRUD_API {
 		if (!$charset) {
 			$charset = $this->getDefaultCharset();
 		}
+
+		// connect
+		$request = explode('/', trim($request,'/'));
 		if (!$database) {
 			$database  = $this->parseRequestParameter($request, 'a-zA-Z0-9\-_,', false);
 		}
