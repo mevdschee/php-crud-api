@@ -113,6 +113,7 @@ class MySQL_CRUD_API_Test extends PHPUnit_Framework_TestCase
 			if (mysqli_connect_errno()) {
 				die("Connect failed: ".mysqli_connect_error()."\n");
 			}
+			mysqli_set_charset($link,'utf8');
 
 			$i=0;
 			if (mysqli_multi_query($link, file_get_contents($fixture))) {
