@@ -113,6 +113,10 @@ class MySQL_CRUD_API extends REST_CRUD_API {
 		return base64_encode($string);
 	}
 
+	protected function getDefaultCharset() {
+		return 'utf8';
+	}
+
 }
 
 class PgSQL_CRUD_API extends REST_CRUD_API {
@@ -280,6 +284,10 @@ class PgSQL_CRUD_API extends REST_CRUD_API {
 
 	protected function base64_encode($string) {
 		return base64_encode(hex2bin(substr($string,2)));
+	}
+
+	protected function getDefaultCharset() {
+		return 'UTF8';
 	}
 
 }
@@ -460,6 +468,9 @@ class MsSQL_CRUD_API extends REST_CRUD_API {
 		return base64_encode($string);
 	}
 
+	protected function getDefaultCharset() {
+		return 'UTF-8';
+	}
 }
 
 class REST_CRUD_API {
@@ -819,6 +830,7 @@ class REST_CRUD_API {
 
 	protected function getParameters($settings) {
 		extract($settings);
+
 		$table     = $this->parseRequestParameter($request, 'a-zA-Z0-9\-_*,', false);
 		$key       = $this->parseRequestParameter($request, 'a-zA-Z0-9\-,', false); // auto-increment or uuid
 		$action    = $this->mapMethodToAction($method,$key);
@@ -844,15 +856,15 @@ class REST_CRUD_API {
 		$columns = $this->findFields($table,$collect,$select,$columns,$database,$db);
 
 		// permissions
-		if ($callbacks['table_authorizer']) $this->applyTableAuthorizer($callbacks['table_authorizer'],$action,$database,$table);
-		if ($callbacks['column_authorizer']) $this->applyColumnAuthorizer($callbacks['column_authorizer'],$action,$database,$columns);
+		if ($table_authorizer) $this->applyTableAuthorizer($table_authorizer,$action,$database,$table);
+		if ($column_authorizer) $this->applyColumnAuthorizer($column_authorizer,$action,$database,$columns);
 
 		// input
 		$context = $this->retrieveInput($post);
 		if (!empty($context)) $input = $this->limitInputFields($context,$columns[$table[0]]);
 
-		if ($callbacks['input_sanitizer']) $this->applyInputSanitizer($callbacks['input_sanitizer'],$action,$database,$table[0],$input,$columns[$table[0]]);
-		if ($callbacks['input_validator']) $this->applyInputValidator($callbacks['input_validator'],$action,$database,$table[0],$input,$columns[$table[0]],$context);
+		if ($input_sanitizer) $this->applyInputSanitizer($input_sanitizer,$action,$database,$table[0],$input,$columns[$table[0]]);
+		if ($input_validator) $this->applyInputValidator($input_validator,$action,$database,$table[0],$input,$columns[$table[0]],$context);
 
 		if (!empty($input)) $input = $this->convertBinary($input,$columns[$table[0]]);
 
@@ -1059,26 +1071,40 @@ class REST_CRUD_API {
 		extract($config);
 
 		$hostname = isset($hostname)?$hostname:null;
-		$username = isset($username)?$username:'root';
+		$username = isset($username)?$username:null;
 		$password = isset($password)?$password:null;
-		$database = isset($database)?$database:false;
+		$database = isset($database)?$database:null;
 		$port = isset($port)?$port:null;
 		$socket = isset($socket)?$socket:null;
-		$charset = isset($charset)?$charset:'utf8';
+		$charset = isset($charset)?$charset:null;
 
-		$callbacks['table_authorizer'] = isset($table_authorizer)?$table_authorizer:false;
-		$callbacks['column_authorizer'] = isset($column_authorizer)?$column_authorizer:false;
-		$callbacks['input_sanitizer'] = isset($input_sanitizer)?$input_sanitizer:false;
-		$callbacks['input_validator'] = isset($input_validator)?$input_validator:false;
+		$table_authorizer = isset($table_authorizer)?$table_authorizer:null;
+		$column_authorizer = isset($column_authorizer)?$column_authorizer:null;
+		$input_sanitizer = isset($input_sanitizer)?$input_sanitizer:null;
+		$input_validator = isset($input_validator)?$input_validator:null;
 
 		$db = isset($db)?$db:null;
-		$method = isset($method)?$method:$_SERVER['REQUEST_METHOD'];
-		$request = isset($request)?$request:(isset($_SERVER['PATH_INFO'])?$_SERVER['PATH_INFO']:'');
-		$get = isset($get)?$get:$_GET;
-		$post = isset($post)?$post:'php://input';
+		$method = isset($method)?$method:null;
+		$request = isset($request)?$request:null;
+		$get = isset($get)?$get:null;
+		$post = isset($post)?$post:null;
 
+		if (!$method) {
+			$method = $_SERVER['REQUEST_METHOD'];
+		}
+		if (!$request) {
+			$request = isset($_SERVER['PATH_INFO'])?$_SERVER['PATH_INFO']:'';
+		}
 		$request = explode('/', trim($request,'/'));
-
+		if (!$get) {
+			$get = $_GET;
+		}
+		if (!$post) {
+			$post = 'php://input';
+		}
+		if (!$charset) {
+			$charset = $this->getDefaultCharset();
+		}
 		if (!$database) {
 			$database  = $this->parseRequestParameter($request, 'a-zA-Z0-9\-_,', false);
 		}
@@ -1086,7 +1112,7 @@ class REST_CRUD_API {
 			$db = $this->connectDatabase($hostname,$username,$password,$database,$port,$socket,$charset);
 		}
 
-		$this->settings = compact('method', 'request', 'get', 'post', 'database', 'callbacks', 'db');
+		$this->settings = compact('method', 'request', 'get', 'post', 'database', 'table_authorizer', 'column_authorizer', 'input_sanitizer', 'input_validator', 'db');
 	}
 
 	public static function php_crud_api_transform(&$tables) {
