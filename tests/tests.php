@@ -24,9 +24,9 @@ class API
 		$data = 'data://text/plain;base64,'.base64_encode($data);
 
 		switch(MySQL_CRUD_API_Config::$dbengine) {
-			case 'mssql':	$class = 'MsSQL_CRUD_API'; $charset = 'utf-8'; break;
-			case 'pgsql':	$class = 'PgSQL_CRUD_API'; $charset = 'utf8'; break;
-			case 'mysql':	$class = 'MySQL_CRUD_API'; $charset = 'utf8'; break;
+			case 'mssql':	$class = 'MsSQL_CRUD_API'; break;
+			case 'pgsql':	$class = 'PgSQL_CRUD_API'; break;
+			case 'mysql':	$class = 'MySQL_CRUD_API'; break;
 			default:	die("DB engine not supported: $dbengine\n");
 		}
 
@@ -35,7 +35,6 @@ class API
 				'username'=>MySQL_CRUD_API_Config::$username,
 				'password'=>MySQL_CRUD_API_Config::$password,
 				'database'=>MySQL_CRUD_API_Config::$database,
-				'charset'=>$charset,
 				// callbacks
 				'table_authorizer'=>function($action,$database,$table) { return true; },
 				'column_authorizer'=>function($action,$database,$table,$column) { return $column!='password'; },
