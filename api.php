@@ -1,4 +1,12 @@
 <?php
+
+interface ENUM_TYPES
+{
+    const NONE = 0;
+    const Binary = 1;
+	const Numeric = 2;
+}
+
 class MySQL_CRUD_API extends REST_CRUD_API {
 
 	protected $queries = array(
@@ -104,9 +112,44 @@ class MySQL_CRUD_API extends REST_CRUD_API {
 		return addcslashes($string,'%_');
 	}
 
-	protected function is_binary_type($field) {
+	protected function needTypeConversion($field) {
 		//echo "$field->name: $field->type ($field->flags)\n";
-		return (($field->flags & 128) && ($field->type>=249) && ($field->type<=252));
+
+		// test for binary
+		if (($field->flags & 128) && ($field->type>=249) && ($field->type<=252))
+			return ENUM_TYPES::Binary;
+
+		// test numerics
+		// numerics found on http://php.net/manual/de/mysqli-result.fetch-field.php
+		// -------------
+		// BIT: 16
+		// TINYINT: 1
+		// BOOL: 1
+		// SMALLINT: 2
+		// MEDIUMINT: 9
+		// INTEGER: 3
+		// BIGINT: 8
+		// SERIAL: 8
+		// FLOAT: 4
+		// DOUBLE: 5
+		// DECIMAL: 246
+		// NUMERIC: 246
+		// FIXED: 246
+		switch ($field->type)
+		{
+			case 1:
+			case 2:
+			case 3:
+			case 4:
+			case 5:
+			case 8:
+			case 9:
+			case 16:
+			case 246:
+				return ENUM_TYPES::Numeric;
+		}
+		
+		return ENUM_TYPES::NONE;
 	}
 
 	protected function base64_encode($string) {
@@ -277,11 +320,17 @@ class PgSQL_CRUD_API extends REST_CRUD_API {
 	protected function likeEscape($string) {
 		return addcslashes($string,'%_');
 	}
+	
+	protected function needTypeConversion($field) {
+		//echo "$field->name: $field->type ($field->flags)\n";
 
-	protected function is_binary_type($field) {
-		return $field->type == 'bytea';
+		// test for binary
+		if ($field->type == 'bytea')
+			return ENUM_TYPES::Binary;
+
+		return ENUM_TYPES::NONE;
 	}
-
+	
 	protected function base64_encode($string) {
 		return base64_encode(hex2bin(substr($string,2)));
 	}
@@ -460,8 +509,11 @@ class MsSQL_CRUD_API extends REST_CRUD_API {
 		return str_replace(array('%','_'),array('[%]','[_]'),$string);
 	}
 
-	protected function is_binary_type($field) {
-		return ($field->type>=-4 && $field->type<=-2);
+	protected function needTypeConversion($field) {
+		if ($field->type>=-4 && $field->type<=-2)
+			return ENUM_TYPES::Binary;
+		
+		return ENUM_TYPES::NONE;
 	}
 
 	protected function base64_encode($string) {
@@ -476,6 +528,10 @@ class MsSQL_CRUD_API extends REST_CRUD_API {
 class REST_CRUD_API {
 
 	protected $settings;
+	
+	protected function needTypeConversion($field) {
+		return ENUM_TYPES::NONE;
+	}
 
 	protected function mapMethodToAction($method,$key) {
 		switch ($method) {
@@ -691,6 +747,22 @@ class REST_CRUD_API {
 		}
 		return $page;
 	}
+	
+	protected function convertFieldValue(&$object,$key,$type)
+	{
+		if ($object[$key])
+		{
+			switch($type)
+			{
+				case ENUM_TYPES::Binary:
+					$object[$key] = $this->base64_encode($object[$key]);
+					break;
+				case ENUM_TYPES::Numeric:
+					$object[$key] = $object[$key] + 0;
+					break;
+			}
+		}
+	}
 
 	protected function retrieveObject($key,$columns,$table,$db) {
 		if (!$key) return false;
@@ -700,9 +772,7 @@ class REST_CRUD_API {
 		if ($result = $this->query($db,$sql,array($table[0],$key[1],$key[0]))) {
 			$object = $this->fetch_assoc($result);
 			foreach ($columns[$table[0]] as $field) {
-				if ($this->is_binary_type($field) && $object[$field->name]) {
-					$object[$field->name] = $this->base64_encode($object[$field->name]);
-				}
+				$this->convertFieldValue($object, $field->name, $this->needTypeConversion($field));
 			}
 			$this->close($result);
 		}
@@ -819,7 +889,7 @@ class REST_CRUD_API {
 
 	protected function convertBinary($input,$fields) {
 		foreach ($fields as $key=>$field) {
-			if (isset($input->$key) && $input->$key && $this->is_binary_type($field)) {
+			if (isset($input->$key) && $input->$key && $this->needTypeConversion($field) == ENUM_TYPES::Binary) {
 				$data = $input->$key;
 				$data = str_pad(strtr($data, '-_', '+/'), strlen($data) % 4, '=', STR_PAD_RIGHT);
 				$input->$key = (object)array('type'=>'base64','data'=>$data);
@@ -923,9 +993,10 @@ class REST_CRUD_API {
 		if ($result = $this->query($db,$sql,$params)) {
 			echo '"columns":';
 			$fields = array();
-			$base64 = array();
+			$conversions = array();
+
 			foreach ($columns[$table] as $field) {
-				$base64[] = $this->is_binary_type($field);
+				$conversions[] = $this->needTypeConversion($field);
 				$fields[] = $field->name;
 			}
 			echo json_encode($fields);
@@ -940,10 +1011,9 @@ class REST_CRUD_API {
 						$collect[$table][$field][] = $row[$fields[$field]];
 					}
 				}
-				foreach ($base64 as $k=>$v) {
-					if ($v && $row[$k]) {
-						$row[$k] = $this->base64_encode($row[$k]);
-					}
+
+				foreach ($conversions as $k=>$v) {
+					$this->convertFieldValue($row, $k, $v);
 				}
 				echo json_encode($row);
 			}
@@ -987,9 +1057,9 @@ class REST_CRUD_API {
 				if (isset($select[$table])) echo ',';
 				echo '"columns":';
 				$fields = array();
-				$base64 = array();
+				$conversions = array();
 				foreach ($columns[$table] as $field) {
-					$base64[] = $this->is_binary_type($field);
+					$conversions[] = $this->needTypeConversion($field);
 					$fields[] = $field->name;
 				}
 				echo json_encode($fields);
@@ -1004,10 +1074,8 @@ class REST_CRUD_API {
 							$collect[$table][$field][]=$row[$fields[$field]];
 						}
 					}
-					foreach ($base64 as $k=>$v) {
-						if ($v && $row[$k]) {
-							$row[$k] = $this->base64_encode($row[$k]);
-						}
+					foreach ($conversions as $k=>$v) {
+						$this->convertFieldValue($row, $k, $v);
 					}
 					echo json_encode($row);
 				}
