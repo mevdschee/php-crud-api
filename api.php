@@ -750,7 +750,7 @@ class REST_CRUD_API {
 	
 	protected function convertFieldValue(&$object,$key,$type)
 	{
-		if ($object[$key])
+		if (isset($object[$key]))
 		{
 			switch($type)
 			{
