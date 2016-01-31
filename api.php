@@ -580,24 +580,6 @@ class REST_CRUD_API {
 		}
 	}
 
-	protected function exitWith403($object) {
-		if (isset($_SERVER['REQUEST_METHOD'])) {
-			header('Content-Type:',true,403);
-			die('Forbidden');
-		} else {
-			throw new \Exception(json_encode($object));
-		}
-	}
-
-	protected function exitWith409($object) {
-		if (isset($_SERVER['REQUEST_METHOD'])) {
-			header('Content-Type:',true,409);
-			die('Conflict');
-		} else {
-			throw new \Exception(json_encode($object));
-		}
-	}
-
 	protected function exitWith422($object) {
 		if (isset($_SERVER['REQUEST_METHOD'])) {
 			header('Content-Type:',true,422);
