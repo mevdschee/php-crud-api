@@ -562,9 +562,9 @@ class REST_CRUD_API {
 		return $tables;
 	}
 
-	protected function findSinglePrimaryKey($table,$database,$db) {
+	protected function findSinglePrimaryKey($tables,$database,$db) {
 		$keys = array();
-		if ($result = $this->query($db,$this->queries['reflect_pk'],array($table[0],$database))) {
+		if ($result = $this->query($db,$this->queries['reflect_pk'],array($tables[0],$database))) {
 			while ($row = $this->fetch_row($result)) $keys[] = $row[0];
 			$this->close($result);
 		}
@@ -621,9 +621,9 @@ class REST_CRUD_API {
 		}
 	}
 
-	protected function processKeyParameter($key,$table,$database,$db) {
+	protected function processKeyParameter($key,$tables,$database,$db) {
 		if ($key) {
-			$key = array($key,$this->findSinglePrimaryKey($table,$database,$db));
+			$key = array($key,$this->findSinglePrimaryKey($tables,$database,$db));
 			if ($key[1]===false) $this->exitWith404('1pk');
 		}
 		return $key;
@@ -674,14 +674,14 @@ class REST_CRUD_API {
 		return $page;
 	}
 
-	protected function retrieveObject($key,$fields,$table,$db) {
+	protected function retrieveObject($key,$fields,$tables,$db) {
 		if (!$key) return false;
 		$sql = 'SELECT ';
-		$sql .= '"'.implode('","',array_keys($fields[$table[0]])).'"';
+		$sql .= '"'.implode('","',array_keys($fields[$tables[0]])).'"';
 		$sql .= ' FROM "!" WHERE "!" = ?';
-		if ($result = $this->query($db,$sql,array($table[0],$key[1],$key[0]))) {
+		if ($result = $this->query($db,$sql,array($tables[0],$key[1],$key[0]))) {
 			$object = $this->fetch_assoc($result);
-			foreach ($fields[$table[0]] as $field) {
+			foreach ($fields[$tables[0]] as $field) {
 				if ($this->is_binary_type($field) && $object[$field->name]) {
 					$object[$field->name] = $this->base64_encode($object[$field->name]);
 				}
@@ -691,24 +691,24 @@ class REST_CRUD_API {
 		return $object;
 	}
 
-	protected function createObject($input,$table,$db) {
+	protected function createObject($input,$tables,$db) {
 		if (!$input) return false;
 		$input = (array)$input;
 		$keys = implode('","',str_split(str_repeat('!', count($input))));
 		$values = implode(',',str_split(str_repeat('?', count($input))));
 		$params = array_merge(array_keys($input),array_values($input));
-		array_unshift($params, $table[0]);
+		array_unshift($params, $tables[0]);
 		$result = $this->query($db,'INSERT INTO "!" ("'.$keys.'") VALUES ('.$values.')',$params);
 		if (!$result) return null;
 		return $this->insert_id($db,$result);
 	}
 
-	protected function updateObject($key,$input,$table,$db) {
+	protected function updateObject($key,$input,$tables,$db) {
 		if (!$input) return false;
 		$input = (array)$input;
 		$params = array();
 		$sql = 'UPDATE "!" SET ';
-		$params[] = $table[0];
+		$params[] = $tables[0];
 		foreach (array_keys($input) as $i=>$k) {
 			if ($i) $sql .= ',';
 			$v = $input[$k];
@@ -723,8 +723,8 @@ class REST_CRUD_API {
 		return $this->affected_rows($db, $result);
 	}
 
-	protected function deleteObject($key,$table,$db) {
-		$result = $this->query($db,'DELETE FROM "!" WHERE "!" = ?',array($table[0],$key[1],$key[0]));
+	protected function deleteObject($key,$tables,$db) {
+		$result = $this->query($db,'DELETE FROM "!" WHERE "!" = ?',array($tables[0],$key[1],$key[0]));
 		return $this->affected_rows($db, $result);
 	}
 
@@ -775,8 +775,8 @@ class REST_CRUD_API {
 		return $input;
 	}
 
-	protected function findFields($table,$collect,$select,$columns,$database,$db) {
-		$tables = array_unique(array_merge($table,array_keys($collect),array_keys($select)));
+	protected function findFields($tables,$collect,$select,$columns,$database,$db) {
+		$tables = array_unique(array_merge($tables,array_keys($collect),array_keys($select)));
 		$fields = array();
 		foreach ($tables as $i=>$table) {
 			$fields[$table] = array();
@@ -822,43 +822,42 @@ class REST_CRUD_API {
 		$order     = $this->parseGetParameter($get, 'order', 'a-zA-Z0-9\-_*,', false);
 		$transform = $this->parseGetParameter($get, 'transform', '1', false);
 
-		$table    = $this->processTableParameter($database,$table,$db);
-		$key      = $this->processKeyParameter($key,$table,$database,$db);
+		$tables    = $this->processTableParameter($database,$table,$db);
+		$key       = $this->processKeyParameter($key,$tables,$database,$db);
 		foreach ($filters as &$filter) $filter = $this->processFilterParameter($filter,$db);
 		if ($columns) $columns = explode(',',$columns);
-		$page     = $this->processPageParameter($page);
-		$order    = $this->processOrderParameter($order);
+		$page      = $this->processPageParameter($page);
+		$order     = $this->processOrderParameter($order);
 
-		if (empty($table)) $this->exitWith404('entity');
+		if (empty($tables)) $this->exitWith404('entity');
 
 		// reflection
-		list($collect,$select) = $this->findRelations($table,$database,$db);
-		$fields = $this->findFields($table,$collect,$select,$columns,$database,$db);
+		list($collect,$select) = $this->findRelations($tables,$database,$db);
+		$fields = $this->findFields($tables,$collect,$select,$columns,$database,$db);
 
 		// permissions
-		if ($table_authorizer) $this->applyTableAuthorizer($table_authorizer,$action,$database,$table);
+		if ($table_authorizer) $this->applyTableAuthorizer($table_authorizer,$action,$database,$tables);
 		if ($column_authorizer) $this->applyColumnAuthorizer($column_authorizer,$action,$database,$fields);
         
         if (in_array($action,array('update','create'))) {
     		// input
             $input = $this->retrieveInput($post);
-    		$this->validateInputFields($input,$fields[$table[0]]);
+    		$this->validateInputFields($input,$fields[$tables[0]]);
             
-            if ($input_sanitizer) $this->applyInputSanitizer($input_sanitizer,$action,$database,$table[0],$input,$fields[$table[0]]);
-		    if ($input_validator) $this->applyInputValidator($input_validator,$action,$database,$table[0],$input,$fields[$table[0]]);
+            if ($input_sanitizer) $this->applyInputSanitizer($input_sanitizer,$action,$database,$tables[0],$input,$fields[$tables[0]]);
+		    if ($input_validator) $this->applyInputValidator($input_validator,$action,$database,$tables[0],$input,$fields[$tables[0]]);
 
-            $this->convertBinary($input,$fields[$table[0]]);
+            $this->convertBinary($input,$fields[$tables[0]]);
         } else {
             $input = NULL;
         }
         
-		return compact('action','database','table','key','callback','page','filters','satisfy','fields','order','transform','db','input','collect','select');
+		return compact('action','database','tables','key','callback','page','filters','satisfy','fields','order','transform','db','input','collect','select');
 	}
 
 	protected function listCommandInternal($parameters) {
 		extract($parameters);
 		echo '{';
-		$tables = $table;
 		$table = array_shift($tables);
 		// first table
 		$count = false;
@@ -1005,7 +1004,7 @@ class REST_CRUD_API {
 
 	protected function readCommand($parameters) {
 		extract($parameters);
-		$object = $this->retrieveObject($key,$fields,$table,$db);
+		$object = $this->retrieveObject($key,$fields,$tables,$db);
 		if (!$object) $this->exitWith404('object');
 		$this->startOutput($callback);
 		echo json_encode($object);
@@ -1016,7 +1015,7 @@ class REST_CRUD_API {
 		extract($parameters);
 		if (!$input) $this->exitWith404('input');
 		$this->startOutput($callback);
-		echo json_encode($this->createObject($input,$table,$db));
+		echo json_encode($this->createObject($input,$tables,$db));
 		$this->endOutput($callback);
 	}
 
@@ -1024,14 +1023,14 @@ class REST_CRUD_API {
 		extract($parameters);
 		if (!$input) $this->exitWith404('subject');
 		$this->startOutput($callback);
-		echo json_encode($this->updateObject($key,$input,$table,$db));
+		echo json_encode($this->updateObject($key,$input,$tables,$db));
 		$this->endOutput($callback);
 	}
 
 	protected function deleteCommand($parameters) {
 		extract($parameters);
 		$this->startOutput($callback);
-		echo json_encode($this->deleteObject($key,$table,$db));
+		echo json_encode($this->deleteObject($key,$tables,$db));
 		$this->endOutput($callback);
 	}
 
