@@ -513,10 +513,10 @@ class REST_CRUD_API {
 	protected function applyTableAuthorizer($callback,$action,$database,&$tables) {
 		if (is_callable($callback,true)) foreach ($tables as $i=>$table) {
 			if (!$callback($action,$database,$table)) {
-				unset($tables[$i]);
+				if ($i) unset($tables[$i]);
+                else $this->exitWith404('entity');
 			}
 		}
-		if (empty($tables)) $this->exitWith404('entity');
 	}
 
 	protected function applyColumnAuthorizer($callback,$action,$database,&$columns) {
