@@ -810,9 +810,9 @@ class REST_CRUD_API {
 		return $fields;
 	}
 
-	protected function validateInputFields($input,$fields) {
+	protected function filterInputByColumns($input,$columns) {
 		foreach (array_keys((array)$input) as $key) {
-			if (!isset($fields[$key])) {
+			if (!isset($columns[$key])) {
 				unset($input->$key); 
 			}
 		}
@@ -863,7 +863,7 @@ class REST_CRUD_API {
 
     		// input
             $context = $this->retrieveInput($post);
-            $input = $this->validateInputFields($context,$fields[$tables[0]]);
+            $input = $this->filterInputByColumns($context,$fields[$tables[0]]);
             
             if ($input_sanitizer) $this->applyInputSanitizer($input_sanitizer,$action,$database,$tables[0],$input,$fields[$tables[0]]);
 		    if ($input_validator) $this->applyInputValidator($input_validator,$action,$database,$tables[0],$input,$fields[$tables[0]],$context);
