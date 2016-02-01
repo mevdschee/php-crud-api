@@ -780,7 +780,7 @@ class REST_CRUD_API {
 		$fields = array();
 		foreach ($tables as $i=>$table) {
 			$fields[$table] = $this->findTableFields($table,$database,$db);
-			if ($i==0 && $columns) $fields[$table] = $this->filterFieldsByColumns($fields[$table],$columns);
+			if ($i==0) $fields[$table] = $this->filterFieldsByColumns($fields[$table],$columns);
 		}
         return $fields;
 	}
@@ -793,8 +793,8 @@ class REST_CRUD_API {
 	}
     
     protected function filterFieldsByColumns($fields,$columns) {
-		foreach (array_keys($fields) as $key) {
-			if ($columns && !in_array($key, $columns)) {
+		if ($columns) foreach (array_keys($fields) as $key) {
+			if (!in_array($key, $columns)) {
 				unset($fields[$key]);
 			}
         }
@@ -811,7 +811,7 @@ class REST_CRUD_API {
 	}
 
 	protected function filterInputByColumns($input,$columns) {
-		foreach (array_keys((array)$input) as $key) {
+		if ($columns) foreach (array_keys((array)$input) as $key) {
 			if (!isset($columns[$key])) {
 				unset($input->$key); 
 			}
