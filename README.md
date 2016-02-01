@@ -550,6 +550,7 @@ PUT http://localhost/api.php/categories/2
 The following types of 404 'Not found' errors may be reported:
 
   - entity (could not find entity)
+  - field (could not find field)
   - object (instance not found on read)
   - input (instance not found on create)
   - subject (instance not found on update)

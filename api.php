@@ -537,11 +537,11 @@ class REST_CRUD_API {
 		}
 	}
 
-	protected function applyInputValidator($callback,$action,$database,$table,$input,$keys) {
+	protected function applyInputValidator($callback,$action,$database,$table,$input,$keys,$context) {
 		$errors = array();
 		if (is_callable($callback,true)) foreach ((array)$input as $key=>$value) {
 			if (isset($keys[$key])) {
-				$error = $callback($action,$database,$table,$key,$keys[$key]->type,$value,$input);
+				$error = $callback($action,$database,$table,$key,$keys[$key]->type,$value,$context);
 				if ($error!==true && $error!==null) $errors[$key] = $error;
 			}
 		}
@@ -779,23 +779,44 @@ class REST_CRUD_API {
 		$tables = array_unique(array_merge($tables,array_keys($collect),array_keys($select)));
 		$fields = array();
 		foreach ($tables as $i=>$table) {
-			$fields[$table] = array();
-			$result = $this->query($db,'SELECT * FROM "!" WHERE 1=2;',array($table));
-			foreach ($this->fetch_fields($result) as $field) {
-				if ($i || !$columns || in_array($field->name, $columns)) {
-					$fields[$table][$field->name] = $field;
-				}
+			$fields[$table] = $this->findTableFields($table,$database,$db);
+			if ($i==0 && $columns) $fields[$table] = $this->filterFieldsByColumns($fields[$table],$columns);
+		}
+        return $fields;
+	}
+    
+    protected function findInputFields($table,$columns,$database,$db) {
+		$fields = array();
+		$fields[$table] = $this->findTableFields($table,$database,$db);
+		$fields[$table] = $this->filterFieldsByColumns($fields[$table],$columns);
+        return $fields;
+	}
+    
+    protected function filterFieldsByColumns($fields,$columns) {
+		foreach (array_keys($fields) as $key) {
+			if ($columns && !in_array($key, $columns)) {
+				unset($fields[$key]);
 			}
+        }
+        return $fields;
+	}
+    
+    protected function findTableFields($table,$database,$db) {
+		$fields = array();
+        $result = $this->query($db,'SELECT * FROM "!" WHERE 1=2;',array($table));
+		foreach ($this->fetch_fields($result) as $field) {
+			$fields[$field->name] = $field;
 		}
 		return $fields;
 	}
 
-	protected function validateInputFields(&$input,$keys) {
+	protected function validateInputFields($input,$fields) {
 		foreach (array_keys((array)$input) as $key) {
-			if (!isset($keys[$key])) {
+			if (!isset($fields[$key])) {
 				unset($input->$key); 
 			}
 		}
+        return $input;
 	}
 
 	protected function convertBinary(&$input,$keys) {
@@ -831,25 +852,33 @@ class REST_CRUD_API {
 
 		if (empty($tables)) $this->exitWith404('entity');
 
-		// reflection
-		list($collect,$select) = $this->findRelations($tables,$database,$db);
-		$fields = $this->findFields($tables,$collect,$select,$columns,$database,$db);
-
-		// permissions
-		if ($table_authorizer) $this->applyTableAuthorizer($table_authorizer,$action,$database,$tables);
-		if ($column_authorizer) $this->applyColumnAuthorizer($column_authorizer,$action,$database,$fields);
-        
         if (in_array($action,array('update','create'))) {
+            
+            // reflection
+            $fields = $this->findInputFields($tables[0],$columns,$database,$db);
+            
+            // permissions
+    		if ($table_authorizer) $this->applyTableAuthorizer($table_authorizer,$action,$database,$tables);
+    		if ($column_authorizer) $this->applyColumnAuthorizer($column_authorizer,$action,$database,$fields);
+
     		// input
-            $input = $this->retrieveInput($post);
-    		$this->validateInputFields($input,$fields[$tables[0]]);
+            $context = $this->retrieveInput($post);
+            $input = $this->validateInputFields($context,$fields[$tables[0]]);
             
             if ($input_sanitizer) $this->applyInputSanitizer($input_sanitizer,$action,$database,$tables[0],$input,$fields[$tables[0]]);
-		    if ($input_validator) $this->applyInputValidator($input_validator,$action,$database,$tables[0],$input,$fields[$tables[0]]);
+		    if ($input_validator) $this->applyInputValidator($input_validator,$action,$database,$tables[0],$input,$fields[$tables[0]],$context);
 
             $this->convertBinary($input,$fields[$tables[0]]);
+            
         } else {
-            $input = NULL;
+            
+            // reflection
+            list($collect,$select) = $this->findRelations($tables,$database,$db);
+            $fields = $this->findFields($tables,$collect,$select,$columns,$database,$db);
+    		
+            // permissions
+            if ($table_authorizer) $this->applyTableAuthorizer($table_authorizer,$action,$database,$tables);
+            if ($column_authorizer) $this->applyColumnAuthorizer($column_authorizer,$action,$database,$fields);
         }
         
 		return compact('action','database','tables','key','callback','page','filters','satisfy','fields','order','transform','db','input','collect','select');

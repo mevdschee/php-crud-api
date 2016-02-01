@@ -222,15 +222,24 @@ class MySQL_CRUD_API_Test extends PHPUnit_Framework_TestCase
 		$test->expect('{"id":"3","user_id":"1","category_id":"1","content":"test (edited)"}');
 	}
 
-	public function testEditPostColumns()
+	public function testEditPostColumnsMissingField()
 	{
 		$test = new API($this);
-		$test->put('/posts/3?columns=id,content','{"user_id":"1","category_id":"2","content":"test (edited 2)"}');
+		$test->put('/posts/3?columns=id,content','{"content":"test (edited 2)"}');
 		$test->expect('1');
 		$test->get('/posts/3');
 		$test->expect('{"id":"3","user_id":"1","category_id":"1","content":"test (edited 2)"}');
 	}
-
+    
+    public function testEditPostColumnsExtraField()
+	{
+		$test = new API($this);
+		$test->put('/posts/3?columns=id,content','{"user_id":"2","content":"test (edited 3)"}');
+		$test->expect('1');
+		$test->get('/posts/3');
+		$test->expect('{"id":"3","user_id":"1","category_id":"1","content":"test (edited 3)"}');
+	}
+    
 	public function testEditPostWithUtf8Content()
 	{
 		$utf8 = json_encode('Hello world, Καλημέρα κόσμε, コンニチハ');
