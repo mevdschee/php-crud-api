@@ -731,7 +731,7 @@ class REST_CRUD_API {
 	protected function findRelations($tables,$database,$db) {
 		$collect = array();
 		$select = array();
-		if (count($tables)>1) {
+		while (count($tables)>1) {
 			$table0 = array_shift($tables);
 
 			$result = $this->query($db,$this->queries['reflect_belongs_to'],array($table0,$tables,$database,$database));
