@@ -1,5 +1,5 @@
 <?php
-require "php_crud_api_transform.php";
+require "../lib/php_crud_api_transform.php";
 
 function call($method, $url, $data = false) {
 	$ch = curl_init();
