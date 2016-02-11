@@ -2,7 +2,7 @@
 class MySQL_CRUD_API extends REST_CRUD_API {
 
 	protected $queries = array(
-		'reflect_table'=>'SELECT "TABLE_NAME" FROM "INFORMATION_SCHEMA"."TABLES" WHERE "TABLE_NAME" LIKE ? AND "TABLE_SCHEMA" = ?',
+		'reflect_table'=>'SELECT "TABLE_NAME" FROM "INFORMATION_SCHEMA"."TABLES" WHERE "TABLE_NAME" COLLATE \'utf8_bin\' = ? AND "TABLE_SCHEMA" = ?',
 		'reflect_pk'=>'SELECT "COLUMN_NAME" FROM "INFORMATION_SCHEMA"."COLUMNS" WHERE "COLUMN_KEY" = \'PRI\' AND "TABLE_NAME" = ? AND "TABLE_SCHEMA" = ?',
 		'reflect_belongs_to'=>'SELECT
 				"TABLE_NAME","COLUMN_NAME",
@@ -10,8 +10,8 @@ class MySQL_CRUD_API extends REST_CRUD_API {
 			FROM
 				"INFORMATION_SCHEMA"."KEY_COLUMN_USAGE"
 			WHERE
-				"TABLE_NAME" = ? AND
-				"REFERENCED_TABLE_NAME" IN ? AND
+				"TABLE_NAME" COLLATE \'utf8_bin\' = ? AND
+				"REFERENCED_TABLE_NAME" COLLATE \'utf8_bin\' IN ? AND
 				"TABLE_SCHEMA" = ? AND
 				"REFERENCED_TABLE_SCHEMA" = ?',
 		'reflect_has_many'=>'SELECT
@@ -20,8 +20,8 @@ class MySQL_CRUD_API extends REST_CRUD_API {
 			FROM
 				"INFORMATION_SCHEMA"."KEY_COLUMN_USAGE"
 			WHERE
-				"TABLE_NAME" IN ? AND
-				"REFERENCED_TABLE_NAME" = ? AND
+				"TABLE_NAME" COLLATE \'utf8_bin\' IN ? AND
+				"REFERENCED_TABLE_NAME" COLLATE \'utf8_bin\' = ? AND
 				"TABLE_SCHEMA" = ? AND
 				"REFERENCED_TABLE_SCHEMA" = ?',
 		'reflect_habtm'=>'SELECT
@@ -36,9 +36,9 @@ class MySQL_CRUD_API extends REST_CRUD_API {
 				k2."TABLE_SCHEMA" = ? AND
 				k1."REFERENCED_TABLE_SCHEMA" = ? AND
 				k2."REFERENCED_TABLE_SCHEMA" = ? AND
-				k1."TABLE_NAME" = k2."TABLE_NAME" AND
-				k1."REFERENCED_TABLE_NAME" = ? AND
-				k2."REFERENCED_TABLE_NAME" IN ?'
+				k1."TABLE_NAME" COLLATE \'utf8_bin\' = k2."TABLE_NAME" COLLATE \'utf8_bin\' AND
+				k1."REFERENCED_TABLE_NAME" COLLATE \'utf8_bin\' = ? AND
+				k2."REFERENCED_TABLE_NAME" COLLATE \'utf8_bin\' IN ?'
 	);
 
 	protected function connectDatabase($hostname,$username,$password,$database,$port,$socket,$charset) {
@@ -553,7 +553,6 @@ class REST_CRUD_API {
 		$tablelist = explode(',',$table);
 		$tables = array();
 		foreach ($tablelist as $table) {
-			$table = str_replace('*','%',$table);
 			if ($result = $this->query($db,$this->queries['reflect_table'],array($table,$database))) {
 				while ($row = $this->fetch_row($result)) $tables[] = $row[0];
 				$this->close($result);
