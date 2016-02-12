@@ -553,7 +553,8 @@ class REST_CRUD_API {
 	}
 
 	protected function processTablesParameter($database,$tables,$action,$db) {
-		if (in_array(strtolower($database), array('information_schema','mysql','sys','pg_catalog'))) return array();
+		$blacklist = array('information_schema','mysql','sys','pg_catalog');
+		if (in_array(strtolower($database), $blacklist)) return array();
 		$tablelist = explode(',',$tables);
 		$tables = array();
 		foreach ($tablelist as $table) {
