@@ -489,8 +489,10 @@ class REST_CRUD_API {
 	}
 
 	protected function parseRequestParameter(&$request,$characters) {
-		if (!count($request)) return false;
-		$value = array_shift($request);
+		if (!strlen($request)) return false;
+		$pos = strpos($request,'/');
+		$value = $pos?substr($request,0,$pos):$request;
+		$request = $pos?substr($request,$pos+1):'';
 		return $characters?preg_replace("/[^$characters]/",'',$value):$value;
 	}
 
@@ -1120,7 +1122,7 @@ class REST_CRUD_API {
 		}
 
 		// connect
-		$request = explode('/', trim($request,'/'));
+		$request = trim($request,'/');
 		if (!$database) {
 			$database  = $this->parseRequestParameter($request, 'a-zA-Z0-9\-_,');
 		}
