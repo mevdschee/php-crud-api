@@ -479,21 +479,23 @@ class REST_CRUD_API {
 
 	protected function mapMethodToAction($method,$key) {
 		switch ($method) {
-			case 'OPTIONS': $this->exitWithCorsHeaders();
+			case 'OPTIONS': return 'headers';
 			case 'GET': return $key?'read':'list';
 			case 'PUT': return 'update';
 			case 'POST': return 'create';
 			case 'DELETE': return 'delete';
 			default: $this->exitWith404('method');
 		}
+		return false;
 	}
 
 	protected function parseRequestParameter(&$request,$characters) {
-		if (!strlen($request)) return false;
+		if (!$request) return false;
 		$pos = strpos($request,'/');
 		$value = $pos?substr($request,0,$pos):$request;
 		$request = $pos?substr($request,$pos+1):'';
-		return $characters?preg_replace("/[^$characters]/",'',$value):$value;
+		if (!$characters) return $value;
+		return preg_replace("/[^$characters]/",'',$value);
 	}
 
 	protected function parseGetParameter($get,$name,$characters) {
@@ -550,7 +552,7 @@ class REST_CRUD_API {
 		if (!empty($errors)) $this->exitWith422($errors);
 	}
 
-	protected function processTableParameter($database,$table,$db) {
+	protected function processTableParameter($database,$table,$action,$db) {
 		if (in_array(strtolower($database), array('information_schema','mysql','sys','pg_catalog'))) return array();
 		$tablelist = explode(',',$table);
 		$tables = array();
@@ -558,7 +560,8 @@ class REST_CRUD_API {
 			if ($result = $this->query($db,$this->queries['reflect_table'],array($table,$database))) {
 				while ($row = $this->fetch_row($result)) $tables[] = $row[0];
 				$this->close($result);
-			}
+				if ($action!='list') break;
+			}			
 		}
 		return $tables;
 	}
@@ -590,16 +593,15 @@ class REST_CRUD_API {
 		}
 	}
 
-	protected function exitWithCorsHeaders() {
+	protected function headersCommand($parameters) {
 		$headers = array();
 		$headers[]='Access-Control-Allow-Headers: Content-Type';
 		$headers[]='Access-Control-Allow-Methods: OPTIONS, GET, PUT, POST, DELETE';
 		$headers[]='Access-Control-Max-Age: 1728000';
 		if (isset($_SERVER['REQUEST_METHOD'])) {
 			foreach ($headers as $header) header($header);
-			die();
 		} else {
-			throw new \Exception(json_encode($headers));
+			echo json_encode($headers);
 		}
 	}
 
@@ -843,8 +845,7 @@ class REST_CRUD_API {
 		$columns   = $this->parseGetParameter($get, 'columns', 'a-zA-Z0-9\-_,');
 		$order     = $this->parseGetParameter($get, 'order', 'a-zA-Z0-9\-_*,');
 		$transform = $this->parseGetParameter($get, 'transform', '1');
-
-		$tables    = $this->processTableParameter($database,$table,$db);
+		$tables    = $this->processTableParameter($database,$table,$action,$db);
 		$key       = $this->processKeyParameter($key,$tables,$database,$db);
 		foreach ($filters as &$filter) $filter = $this->processFilterParameter($filter,$db);
 		if ($columns) $columns = explode(',',$columns);
@@ -854,15 +855,15 @@ class REST_CRUD_API {
 
 		if (empty($tables)) $this->exitWith404('entity');
 
-		if (in_array($action,array('update','create'))) {
-			
-			// reflection
-			$fields = $this->findInputFields($tables[0],$columns,$database,$db);
-			
-			// permissions
-			if ($table_authorizer) $this->applyTableAuthorizer($table_authorizer,$action,$database,$tables);
-			if ($column_authorizer) $this->applyColumnAuthorizer($column_authorizer,$action,$database,$fields);
+		// reflection
+		list($collect,$select) = $this->findRelations($tables,$database,$db);
+		$fields = $this->findFields($tables,$collect,$select,$columns,$database,$db);
+		
+		// permissions
+		if ($table_authorizer) $this->applyTableAuthorizer($table_authorizer,$action,$database,$tables);
+		if ($column_authorizer) $this->applyColumnAuthorizer($column_authorizer,$action,$database,$fields);
 
+		if ($post) {
 			// input
 			$context = $this->retrieveInput($post);
 			$input = $this->filterInputByColumns($context,$fields[$tables[0]]);
@@ -871,16 +872,6 @@ class REST_CRUD_API {
 			if ($input_validator) $this->applyInputValidator($input_validator,$action,$database,$tables[0],$input,$fields[$tables[0]],$context);
 
 			$this->convertBinary($input,$fields[$tables[0]]);
-			
-		} else {
-			
-			// reflection
-			list($collect,$select) = $this->findRelations($tables,$database,$db);
-			$fields = $this->findFields($tables,$collect,$select,$columns,$database,$db);
-			
-			// permissions
-			if ($table_authorizer) $this->applyTableAuthorizer($table_authorizer,$action,$database,$tables);
-			if ($column_authorizer) $this->applyColumnAuthorizer($column_authorizer,$action,$database,$fields);
 		}
 		
 		return compact('action','database','tables','key','callback','page','filters','satisfy','fields','order','transform','db','input','collect','select');
@@ -1180,6 +1171,7 @@ class REST_CRUD_API {
 			case 'create': $this->createCommand($parameters); break;
 			case 'update': $this->updateCommand($parameters); break;
 			case 'delete': $this->deleteCommand($parameters); break;
+			case 'headers': $this->headersCommand($parameters); break;
 		}
 	}
 
