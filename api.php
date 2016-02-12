@@ -552,7 +552,7 @@ class REST_CRUD_API {
 		if (!empty($errors)) $this->exitWith422($errors);
 	}
 
-	protected function processTableParameter($database,$table,$action,$db) {
+	protected function processTablesParameter($database,$table,$action,$db) {
 		if (in_array(strtolower($database), array('information_schema','mysql','sys','pg_catalog'))) return array();
 		$tablelist = explode(',',$table);
 		$tables = array();
@@ -845,7 +845,8 @@ class REST_CRUD_API {
 		$columns   = $this->parseGetParameter($get, 'columns', 'a-zA-Z0-9\-_,');
 		$order     = $this->parseGetParameter($get, 'order', 'a-zA-Z0-9\-_*,');
 		$transform = $this->parseGetParameter($get, 'transform', '1');
-		$tables    = $this->processTableParameter($database,$tables,$action,$db);
+		
+		$tables    = $this->processTablesParameter($database,$tables,$action,$db);
 		$key       = $this->processKeyParameter($key,$tables,$database,$db);
 		foreach ($filters as &$filter) $filter = $this->processFilterParameter($filter,$db);
 		if ($columns) $columns = explode(',',$columns);
