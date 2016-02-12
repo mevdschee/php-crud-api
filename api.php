@@ -835,7 +835,7 @@ class REST_CRUD_API {
 	protected function getParameters($settings) {
 		extract($settings);
 
-		$table     = $this->parseRequestParameter($request, 'a-zA-Z0-9\-_*,');
+		$tables    = $this->parseRequestParameter($request, 'a-zA-Z0-9\-_*,');
 		$key       = $this->parseRequestParameter($request, 'a-zA-Z0-9\-,'); // auto-increment or uuid
 		$action    = $this->mapMethodToAction($method,$key);
 		$callback  = $this->parseGetParameter($get, 'callback', 'a-zA-Z0-9\-_');
@@ -845,7 +845,7 @@ class REST_CRUD_API {
 		$columns   = $this->parseGetParameter($get, 'columns', 'a-zA-Z0-9\-_,');
 		$order     = $this->parseGetParameter($get, 'order', 'a-zA-Z0-9\-_*,');
 		$transform = $this->parseGetParameter($get, 'transform', '1');
-		$tables    = $this->processTableParameter($database,$table,$action,$db);
+		$tables    = $this->processTableParameter($database,$tables,$action,$db);
 		$key       = $this->processKeyParameter($key,$tables,$database,$db);
 		foreach ($filters as &$filter) $filter = $this->processFilterParameter($filter,$db);
 		if ($columns) $columns = explode(',',$columns);
