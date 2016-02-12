@@ -552,9 +552,9 @@ class REST_CRUD_API {
 		if (!empty($errors)) $this->exitWith422($errors);
 	}
 
-	protected function processTablesParameter($database,$table,$action,$db) {
+	protected function processTablesParameter($database,$tables,$action,$db) {
 		if (in_array(strtolower($database), array('information_schema','mysql','sys','pg_catalog'))) return array();
-		$tablelist = explode(',',$table);
+		$tablelist = explode(',',$tables);
 		$tables = array();
 		foreach ($tablelist as $table) {
 			if ($result = $this->query($db,$this->queries['reflect_table'],array($table,$database))) {
