@@ -488,19 +488,19 @@ class REST_CRUD_API {
 		}
 	}
 
-	protected function parseRequestParameter(&$request,$characters,$default) {
-		if (!count($request)) return $default;
+	protected function parseRequestParameter(&$request,$characters) {
+		if (!count($request)) return false;
 		$value = array_shift($request);
 		return $characters?preg_replace("/[^$characters]/",'',$value):$value;
 	}
 
-	protected function parseGetParameter($get,$name,$characters,$default) {
-		$value = isset($get[$name])?$get[$name]:$default;
+	protected function parseGetParameter($get,$name,$characters) {
+		$value = isset($get[$name])?$get[$name]:false;
 		return $characters?preg_replace("/[^$characters]/",'',$value):$value;
 	}
 
-	protected function parseGetParameterArray($get,$name,$characters,$default) {
-		$values = isset($get[$name])?$get[$name]:$default;
+	protected function parseGetParameterArray($get,$name,$characters) {
+		$values = isset($get[$name])?$get[$name]:false;
 		if (!is_array($values)) $values = array($values);
 		if ($characters) {
 			foreach ($values as &$value) {
@@ -831,22 +831,23 @@ class REST_CRUD_API {
 	protected function getParameters($settings) {
 		extract($settings);
 
-		$table     = $this->parseRequestParameter($request, 'a-zA-Z0-9\-_*,', false);
-		$key       = $this->parseRequestParameter($request, 'a-zA-Z0-9\-,', false); // auto-increment or uuid
+		$table     = $this->parseRequestParameter($request, 'a-zA-Z0-9\-_*,');
+		$key       = $this->parseRequestParameter($request, 'a-zA-Z0-9\-,'); // auto-increment or uuid
 		$action    = $this->mapMethodToAction($method,$key);
-		$callback  = $this->parseGetParameter($get, 'callback', 'a-zA-Z0-9\-_', false);
-		$page      = $this->parseGetParameter($get, 'page', '0-9,', false);
-		$filters   = $this->parseGetParameterArray($get, 'filter', false, false);
-		$satisfy   = $this->parseGetParameter($get, 'satisfy', 'a-z', 'all');
-		$columns   = $this->parseGetParameter($get, 'columns', 'a-zA-Z0-9\-_,', false);
-		$order     = $this->parseGetParameter($get, 'order', 'a-zA-Z0-9\-_*,', false);
-		$transform = $this->parseGetParameter($get, 'transform', '1', false);
+		$callback  = $this->parseGetParameter($get, 'callback', 'a-zA-Z0-9\-_');
+		$page      = $this->parseGetParameter($get, 'page', '0-9,');
+		$filters   = $this->parseGetParameterArray($get, 'filter', false);
+		$satisfy   = $this->parseGetParameter($get, 'satisfy', 'a-z');
+		$columns   = $this->parseGetParameter($get, 'columns', 'a-zA-Z0-9\-_,');
+		$order     = $this->parseGetParameter($get, 'order', 'a-zA-Z0-9\-_*,');
+		$transform = $this->parseGetParameter($get, 'transform', '1');
 
 		$tables    = $this->processTableParameter($database,$table,$db);
 		$key       = $this->processKeyParameter($key,$tables,$database,$db);
 		foreach ($filters as &$filter) $filter = $this->processFilterParameter($filter,$db);
 		if ($columns) $columns = explode(',',$columns);
 		$page      = $this->processPageParameter($page);
+		$satisfy   = ($satisfy && strtolower($satisfy)=='any')?'any':'all';
 		$order     = $this->processOrderParameter($order);
 
 		if (empty($tables)) $this->exitWith404('entity');
@@ -1121,7 +1122,7 @@ class REST_CRUD_API {
 		// connect
 		$request = explode('/', trim($request,'/'));
 		if (!$database) {
-			$database  = $this->parseRequestParameter($request, 'a-zA-Z0-9\-_,', false);
+			$database  = $this->parseRequestParameter($request, 'a-zA-Z0-9\-_,');
 		}
 		if (!$db) {
 			$db = $this->connectDatabase($hostname,$username,$password,$database,$port,$socket,$charset);
