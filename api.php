@@ -553,18 +553,18 @@ class REST_CRUD_API {
 	}
 
 	protected function processTablesParameter($database,$tables,$action,$db) {
+		$table_array = explode(',',$tables);
+		$table_list = array();
 		$blacklist = array('information_schema','mysql','sys','pg_catalog');
-		if (in_array(strtolower($database), $blacklist)) return array();
-		$tablelist = explode(',',$tables);
-		$tables = array();
-		foreach ($tablelist as $table) {
+		if (in_array(strtolower($database), $blacklist)) return $tables;
+		foreach ($table_array as $table) {
 			if ($result = $this->query($db,$this->queries['reflect_table'],array($table,$database))) {
-				while ($row = $this->fetch_row($result)) $tables[] = $row[0];
+				while ($row = $this->fetch_row($result)) $table_list[] = $row[0];
 				$this->close($result);
 				if ($action!='list') break;
 			}			
 		}
-		return $tables;
+		return $table_list;
 	}
 
 	protected function findSinglePrimaryKey($tables,$database,$db) {
