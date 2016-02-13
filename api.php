@@ -553,10 +553,10 @@ class REST_CRUD_API {
 	}
 
 	protected function processTablesParameter($database,$tables,$action,$db) {
+		$blacklist = array('information_schema','mysql','sys','pg_catalog');
+		if (in_array(strtolower($database), $blacklist)) return array();
 		$table_array = explode(',',$tables);
 		$table_list = array();
-		$blacklist = array('information_schema','mysql','sys','pg_catalog');
-		if (in_array(strtolower($database), $blacklist)) return $tables;
 		foreach ($table_array as $table) {
 			if ($result = $this->query($db,$this->queries['reflect_table'],array($table,$database))) {
 				while ($row = $this->fetch_row($result)) $table_list[] = $row[0];
