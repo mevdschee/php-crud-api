@@ -568,12 +568,16 @@ class REST_CRUD_API {
 	}
 
 	protected function findSinglePrimaryKey($tables,$database,$db) {
-		$keys = array();
+		$count = 0;
+		$field = false;
 		if ($result = $this->query($db,$this->queries['reflect_pk'],array($tables[0],$database))) {
-			while ($row = $this->fetch_row($result)) $keys[] = $row[0];
+			while ($row = $this->fetch_row($result)) {
+				$count++;
+				$field = $row[0];
+			}
 			$this->close($result);
 		}
-		return count($keys)==1?$keys[0]:false;
+		return $count==1?$field:false;
 	}
 
 	protected function exitWith404($type) {
