@@ -627,7 +627,7 @@ class REST_CRUD_API {
 
 	protected function processKeyParameter($key,$tables,$database,$db) {
 		if (!$key) return false;
-		$field = $this->findSinglePrimaryKey($tables,$database,$db)
+		$field = $this->findSinglePrimaryKey($tables,$database,$db);
 		if ($field===false) $this->exitWith404('1pk');
 		return array($key,$field);
 	}
