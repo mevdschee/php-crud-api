@@ -1117,7 +1117,7 @@ class REST_CRUD_API {
 		// connect
 		$request = trim($request,'/');
 		if (!$database) {
-			$database  = $this->parseRequestParameter($request, 'a-zA-Z0-9\-_,');
+			$database  = $this->parseRequestParameter($request, 'a-zA-Z0-9\-_');
 		}
 		if (!$db) {
 			$db = $this->connectDatabase($hostname,$username,$password,$database,$port,$socket,$charset);
