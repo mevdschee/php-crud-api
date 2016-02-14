@@ -736,20 +736,25 @@ class REST_CRUD_API {
 	}
 
 	protected function findRelations($tables,$database,$db) {
+		$tableset = array();
 		$collect = array();
 		$select = array();
+		
 		while (count($tables)>1) {
 			$table0 = array_shift($tables);
+			$tableset[] = $table0;
 
 			$result = $this->query($db,$this->queries['reflect_belongs_to'],array($table0,$tables,$database,$database));
 			while ($row = $this->fetch_row($result)) {
 				$collect[$row[0]][$row[1]]=array();
 				$select[$row[2]][$row[3]]=array($row[0],$row[1]);
+				if (!in_array($row[0],$tableset)) $tableset[] = $row[0];
 			}
 			$result = $this->query($db,$this->queries['reflect_has_many'],array($tables,$table0,$database,$database));
 			while ($row = $this->fetch_row($result)) {
 				$collect[$row[2]][$row[3]]=array();
 				$select[$row[0]][$row[1]]=array($row[2],$row[3]);
+				if (!in_array($row[2],$tableset)) $tableset[] = $row[2];
 			}
 			$result = $this->query($db,$this->queries['reflect_habtm'],array($database,$database,$database,$database,$table0,$tables));
 			while ($row = $this->fetch_row($result)) {
@@ -757,9 +762,12 @@ class REST_CRUD_API {
 				$select[$row[0]][$row[1]]=array($row[2],$row[3]);
 				$collect[$row[4]][$row[5]]=array();
 				$select[$row[6]][$row[7]]=array($row[4],$row[5]);
+				if (!in_array($row[2],$tableset)) $tableset[] = $row[2];
+				if (!in_array($row[4],$tableset)) $tableset[] = $row[4];
 			}
 		}
-		return array($collect,$select);
+		$tableset[] = array_shift($tables);
+		return array($tableset,$collect,$select);
 	}
 
 	protected function retrieveInput($post) {
@@ -861,7 +869,7 @@ class REST_CRUD_API {
 		if (empty($tables)) $this->exitWith404('entity');
 
 		// reflection
-		list($collect,$select) = $this->findRelations($tables,$database,$db);
+		list($tables,$collect,$select) = $this->findRelations($tables,$database,$db);
 		$fields = $this->findFields($tables,$collect,$select,$columns,$database,$db);
 		
 		// permissions

@@ -432,4 +432,11 @@ class MySQL_CRUD_API_Test extends PHPUnit_Framework_TestCase
 		$test->get('/posts?filter[]=id,eq,1&callback=test_jsonp_fn&transform=1');
 		$test->expect('test_jsonp_fn({"posts":[{"id":"1","user_id":"1","category_id":"1","content":"blog started"}]});');
 	}
+	
+	public function testMissingIntermediateTable()
+	{
+		$test = new API($this);
+		$test->get('/users,posts,tags');
+		$test->expect('{"users":{"columns":["id","username"],"records":[["1","user1"],["2","user2"]]},"posts":{"relations":{"user_id":"users.id"},"columns":["id","user_id","category_id","content"],"records":[["1","1","1","blog started"],["2","1","2","\u20ac Hello world, \u039a\u03b1\u03bb\u03b7\u03bc\u1f73\u03c1\u03b1 \u03ba\u1f79\u03c3\u03bc\u03b5, \u30b3\u30f3\u30cb\u30c1\u30cf"],["5","1","1","#1"],["6","1","1","#2"],["7","1","1","#3"],["8","1","1","#4"],["9","1","1","#5"],["10","1","1","#6"],["11","1","1","#7"],["12","1","1","#8"],["13","1","1","#9"],["14","1","1","#10"]]},"post_tags":{"relations":{"post_id":"posts.id"},"columns":["id","post_id","tag_id"],"records":[["1","1","1"],["2","1","2"],["3","2","1"],["4","2","2"]]},"tags":{"relations":{"id":"post_tags.tag_id"},"columns":["id","name"],"records":[["1","funny"],["2","important"]]}}');
+	}
 }
