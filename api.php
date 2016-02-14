@@ -643,7 +643,7 @@ class REST_CRUD_API {
 	
 	protected function processFiltersParameter($tables,$filters) {
 		$result = array();
-		foreach ($filters as &$filter) {
+		foreach ($filters as $filter) {
 			if ($filter) {
 				$filter = explode(',',$filter,3);
 				if (count($filter)==3) {
@@ -666,7 +666,7 @@ class REST_CRUD_API {
 				}
 			}
 		}
-		return $filters;
+		return $result;
 	}
 
 	protected function processPageParameter($page) {
