@@ -564,20 +564,8 @@ class REST_CRUD_API {
 				if ($action!='list') break;
 			}			
 		}
+		if (empty($table_list)) $this->exitWith404('entity');
 		return $table_list;
-	}
-
-	protected function findSinglePrimaryKey($tables,$database,$db) {
-		$count = 0;
-		$field = false;
-		if ($result = $this->query($db,$this->queries['reflect_pk'],array($tables[0],$database))) {
-			while ($row = $this->fetch_row($result)) {
-				$count++;
-				$field = $row[0];
-			}
-			$this->close($result);
-		}
-		return $count==1?$field:false;
 	}
 
 	protected function exitWith404($type) {
@@ -631,8 +619,16 @@ class REST_CRUD_API {
 
 	protected function processKeyParameter($key,$tables,$database,$db) {
 		if (!$key) return false;
-		$field = $this->findSinglePrimaryKey($tables,$database,$db);
-		if ($field===false) $this->exitWith404('1pk');
+		$count = 0;
+		$field = false;
+		if ($result = $this->query($db,$this->queries['reflect_pk'],array($tables[0],$database))) {
+			while ($row = $this->fetch_row($result)) {
+				$count++;
+				$field = $row[0];
+			}
+			$this->close($result);
+		}
+		if ($count!=1 || $field==false) $this->exitWith404('1pk');
 		return array($key,$field);
 	}
 
@@ -644,32 +640,33 @@ class REST_CRUD_API {
 		}
 		return $order;
 	}
-
-	protected function processFilterParameter($filter,$db) {
-		if ($filter) {
-			$filter = explode(',',$filter,3);
-			if (count($filter)==3) {
-				$match = $filter[1];
-				$filter[1] = 'LIKE';
-				if ($match=='cs') $filter[2] = '%'.$this->likeEscape($filter[2]).'%';
-				if ($match=='sw') $filter[2] = $this->likeEscape($filter[2]).'%';
-				if ($match=='ew') $filter[2] = '%'.$this->likeEscape($filter[2]);
-				if ($match=='eq') $filter[1] = '=';
-				if ($match=='ne') $filter[1] = '<>';
-				if ($match=='lt') $filter[1] = '<';
-				if ($match=='le') $filter[1] = '<=';
-				if ($match=='ge') $filter[1] = '>=';
-				if ($match=='gt') $filter[1] = '>';
-				if ($match=='in') {
-					$filter[1] = 'IN';
-					$filter[2] = explode(',',$filter[2]);
-
+	
+	protected function processFiltersParameter($tables,$filters) {
+		$result = array();
+		foreach ($filters as &$filter) {
+			if ($filter) {
+				$filter = explode(',',$filter,3);
+				if (count($filter)==3) {
+					$match = $filter[1];
+					$filter[1] = 'LIKE';
+					if ($match=='cs') $filter[2] = '%'.$this->likeEscape($filter[2]).'%';
+					if ($match=='sw') $filter[2] = $this->likeEscape($filter[2]).'%';
+					if ($match=='ew') $filter[2] = '%'.$this->likeEscape($filter[2]);
+					if ($match=='eq') $filter[1] = '=';
+					if ($match=='ne') $filter[1] = '<>';
+					if ($match=='lt') $filter[1] = '<';
+					if ($match=='le') $filter[1] = '<=';
+					if ($match=='ge') $filter[1] = '>=';
+					if ($match=='gt') $filter[1] = '>';
+					if ($match=='in') {
+						$filter[1] = 'IN';
+						$filter[2] = explode(',',$filter[2]);
+					}
+					$result[] = $filter;
 				}
-			} else {
-				$filter = false;
 			}
 		}
-		return $filter;
+		return $filters;
 	}
 
 	protected function processPageParameter($page) {
@@ -860,14 +857,12 @@ class REST_CRUD_API {
 		
 		$tables    = $this->processTablesParameter($database,$tables,$action,$db);
 		$key       = $this->processKeyParameter($key,$tables,$database,$db);
-		foreach ($filters as &$filter) $filter = $this->processFilterParameter($filter,$db);
+		$filters   = $this->processFiltersParameter($tables,$filters);
 		if ($columns) $columns = explode(',',$columns);
 		$page      = $this->processPageParameter($page);
 		$satisfy   = ($satisfy && strtolower($satisfy)=='any')?'any':'all';
 		$order     = $this->processOrderParameter($order);
-
-		if (empty($tables)) $this->exitWith404('entity');
-
+		
 		// reflection
 		list($tables,$collect,$select) = $this->findRelations($tables,$database,$db);
 		$fields = $this->findFields($tables,$collect,$select,$columns,$database,$db);
@@ -971,12 +966,6 @@ class REST_CRUD_API {
 		}
 		if ($count) echo '"results":'.$count;
 		echo '}';
-		// prepare for other tables
-		foreach (array_keys($collect) as $t) {
-			if ($t!=$table && !in_array($t,$tables)) {
-				array_unshift($tables,$t);
-			}
-		}
 		// other tables
 		foreach ($tables as $t=>$table) {
 			echo ',';
