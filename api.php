@@ -1116,6 +1116,12 @@ class REST_CRUD_API {
 
 		// connect
 		$request = trim($request,'/');
+		// Fix for compatibility with .htaccess 
+		if($request==''){
+			// Obtain names of tables for request
+			$request = preg_replace('/\/\w+\//','',$_SERVER['REQUEST_URI']);
+			$request = preg_replace('/[?][\s\S]+/','',$request);
+		}
 		if (!$database) {
 			$database  = $this->parseRequestParameter($request, 'a-zA-Z0-9\-_');
 		}
