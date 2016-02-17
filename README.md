@@ -607,6 +607,22 @@ $
 
 NB: You MUST use an empty database as a desctructive database fixture ('blog.pgsql') is loaded.
 
+## Pretty URL
+
+You may "rewrite" the URL to remove the "api.php" from the URL.
+
+### Apache
+
+Enable mod_rewrite and add the following to your ".htaccess" file:
+
+```
+RewriteEngine On
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^(.*)$ api.php/$1 [L,QSA]
+```
+
+The ".htaccess" file needs to go in the same folder as "api.php".
 
 ## License
 
