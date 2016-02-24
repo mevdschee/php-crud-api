@@ -844,15 +844,15 @@ class REST_CRUD_API {
 	protected function getParameters($settings) {
 		extract($settings);
 
-		$tables    = $this->parseRequestParameter($request, 'a-zA-Z0-9\-_*,');
-		$key       = $this->parseRequestParameter($request, 'a-zA-Z0-9\-,'); // auto-increment or uuid
+		$tables    = $this->parseRequestParameter($request, 'a-zA-Z0-9\-_,');
+		$key       = $this->parseRequestParameter($request, 'a-zA-Z0-9\-_,'); // auto-increment or uuid
 		$action    = $this->mapMethodToAction($method,$key);
 		$callback  = $this->parseGetParameter($get, 'callback', 'a-zA-Z0-9\-_');
 		$page      = $this->parseGetParameter($get, 'page', '0-9,');
 		$filters   = $this->parseGetParameterArray($get, 'filter', false);
 		$satisfy   = $this->parseGetParameter($get, 'satisfy', 'a-z');
 		$columns   = $this->parseGetParameter($get, 'columns', 'a-zA-Z0-9\-_,');
-		$order     = $this->parseGetParameter($get, 'order', 'a-zA-Z0-9\-_*,');
+		$order     = $this->parseGetParameter($get, 'order', 'a-zA-Z0-9\-_,');
 		$transform = $this->parseGetParameter($get, 'transform', '1');
 		
 		$tables    = $this->processTablesParameter($database,$tables,$action,$db);
