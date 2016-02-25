@@ -3,7 +3,7 @@ class MySQL_CRUD_API extends REST_CRUD_API {
 
 	public function __construct($config) {
 		parent::__construct($config);
-        $this->queries = array(
+		$this->queries = array(
 			'reflect_table'=>'SELECT 
 					"TABLE_NAME"
 				FROM
@@ -140,7 +140,7 @@ class PgSQL_CRUD_API extends REST_CRUD_API {
 
 	public function __construct($config) {
 		parent::__construct($config);
-        $this->queries = array(
+		$this->queries = array(
 			'reflect_table'=>'select
 					"table_name"
 				from
@@ -323,7 +323,7 @@ class MsSQL_CRUD_API extends REST_CRUD_API {
 
 	public function __construct($config) {
 		parent::__construct($config);
-        $this->queries = array(
+		$this->queries = array(
 			'reflect_table'=>'SELECT
 					"TABLE_NAME"
 				FROM
