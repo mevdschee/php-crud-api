@@ -77,7 +77,7 @@ $api = new MySQL_CRUD_API(array(
 $api->executeCommand();
 ```
 
-NB: The "MsSQL_CRUD_API" class does not support the "socket" option. The other variables are not MySQL, PgSQL or MsSQL specific.
+NB: The "socket" option is not supported by MS SQL Server.
 
 ## Usage
 
