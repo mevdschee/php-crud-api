@@ -77,17 +77,7 @@ $api = new MySQL_CRUD_API(array(
 $api->executeCommand();
 ```
 
-For the alternative MsSQL_CRUD_API class the following mapping applies:
-
- - username = UID
- - password = PWD
- - database = Database
- - hostname = Server
- - port = (Server),port
- - socket = (not supported)
- - charset = CharacterSet
-
-The other variables are not MySQL, PgSQL or MsSQL specific.
+NB: The "MsSQL_CRUD_API" class does not support the "socket" option. The other variables are not MySQL, PgSQL or MsSQL specific.
 
 ## Usage
 
