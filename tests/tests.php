@@ -117,7 +117,7 @@ class MySQL_CRUD_API_Test extends PHPUnit_Framework_TestCase
 
 			$i=0;
 			if (mysqli_multi_query($link, file_get_contents($fixture))) {
-				do { $i++; } while (mysqli_next_result($link));
+				do { $i++; mysqli_next_result($link); } while (mysqli_more_results($link));
 			}
 			if (mysqli_errno($link)) {
 				die("Loading '$fixture' failed on statemement #$i with error:\n".mysqli_error($link)."\n");
