@@ -150,7 +150,8 @@ class PgSQL_CRUD_API extends REST_CRUD_API {
 			'reflect_pk'=>'select
 					"column_name"
 				from
-					"information_schema"."table_constraints" tc, "information_schema"."key_column_usage" ku
+					"information_schema"."table_constraints" tc,
+					"information_schema"."key_column_usage" ku
 				where
 					tc."constraint_type" = \'PRIMARY KEY\' and
 					tc."constraint_name" = ku."constraint_name" and
@@ -332,7 +333,8 @@ class MsSQL_CRUD_API extends REST_CRUD_API {
 			'reflect_pk'=>'SELECT
 					"COLUMN_NAME"
 				FROM
-					"INFORMATION_SCHEMA"."TABLE_CONSTRAINTS" tc, "INFORMATION_SCHEMA"."KEY_COLUMN_USAGE" ku
+					"INFORMATION_SCHEMA"."TABLE_CONSTRAINTS" tc,
+					"INFORMATION_SCHEMA"."KEY_COLUMN_USAGE" ku
 				WHERE
 					tc."CONSTRAINT_TYPE" = \'PRIMARY KEY\' AND
 					tc."CONSTRAINT_NAME" = ku."CONSTRAINT_NAME" AND
