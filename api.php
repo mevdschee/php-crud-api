@@ -1,45 +1,61 @@
 <?php
 class MySQL_CRUD_API extends REST_CRUD_API {
 
-	protected $queries = array(
-		'reflect_table'=>'SELECT "TABLE_NAME" FROM "INFORMATION_SCHEMA"."TABLES" WHERE "TABLE_NAME" COLLATE \'utf8_bin\' = ? AND "TABLE_SCHEMA" = ?',
-		'reflect_pk'=>'SELECT "COLUMN_NAME" FROM "INFORMATION_SCHEMA"."COLUMNS" WHERE "COLUMN_KEY" = \'PRI\' AND "TABLE_NAME" = ? AND "TABLE_SCHEMA" = ?',
-		'reflect_belongs_to'=>'SELECT
-				"TABLE_NAME","COLUMN_NAME",
-				"REFERENCED_TABLE_NAME","REFERENCED_COLUMN_NAME"
-			FROM
-				"INFORMATION_SCHEMA"."KEY_COLUMN_USAGE"
-			WHERE
-				"TABLE_NAME" COLLATE \'utf8_bin\' = ? AND
-				"REFERENCED_TABLE_NAME" COLLATE \'utf8_bin\' IN ? AND
-				"TABLE_SCHEMA" = ? AND
-				"REFERENCED_TABLE_SCHEMA" = ?',
-		'reflect_has_many'=>'SELECT
-				"TABLE_NAME","COLUMN_NAME",
-				"REFERENCED_TABLE_NAME","REFERENCED_COLUMN_NAME"
-			FROM
-				"INFORMATION_SCHEMA"."KEY_COLUMN_USAGE"
-			WHERE
-				"TABLE_NAME" COLLATE \'utf8_bin\' IN ? AND
-				"REFERENCED_TABLE_NAME" COLLATE \'utf8_bin\' = ? AND
-				"TABLE_SCHEMA" = ? AND
-				"REFERENCED_TABLE_SCHEMA" = ?',
-		'reflect_habtm'=>'SELECT
-				k1."TABLE_NAME", k1."COLUMN_NAME",
-				k1."REFERENCED_TABLE_NAME", k1."REFERENCED_COLUMN_NAME",
-				k2."TABLE_NAME", k2."COLUMN_NAME",
-				k2."REFERENCED_TABLE_NAME", k2."REFERENCED_COLUMN_NAME"
-			FROM
-				"INFORMATION_SCHEMA"."KEY_COLUMN_USAGE" k1, "INFORMATION_SCHEMA"."KEY_COLUMN_USAGE" k2
-			WHERE
-				k1."TABLE_SCHEMA" = ? AND
-				k2."TABLE_SCHEMA" = ? AND
-				k1."REFERENCED_TABLE_SCHEMA" = ? AND
-				k2."REFERENCED_TABLE_SCHEMA" = ? AND
-				k1."TABLE_NAME" COLLATE \'utf8_bin\' = k2."TABLE_NAME" COLLATE \'utf8_bin\' AND
-				k1."REFERENCED_TABLE_NAME" COLLATE \'utf8_bin\' = ? AND
-				k2."REFERENCED_TABLE_NAME" COLLATE \'utf8_bin\' IN ?'
-	);
+	public function __construct($config) {
+		parent::__construct($config);
+        $this->queries = array(
+			'reflect_table'=>'SELECT 
+					"TABLE_NAME"
+				FROM
+					"INFORMATION_SCHEMA"."TABLES" 
+				WHERE
+					"TABLE_NAME" COLLATE \'utf8_bin\' = ? AND
+					"TABLE_SCHEMA" = ?',
+			'reflect_pk'=>'SELECT
+					"COLUMN_NAME"
+				FROM
+					"INFORMATION_SCHEMA"."COLUMNS"
+				WHERE
+					"COLUMN_KEY" = \'PRI\' AND
+					"TABLE_NAME" = ? AND
+					"TABLE_SCHEMA" = ?',
+			'reflect_belongs_to'=>'SELECT
+					"TABLE_NAME","COLUMN_NAME",
+					"REFERENCED_TABLE_NAME","REFERENCED_COLUMN_NAME"
+				FROM
+					"INFORMATION_SCHEMA"."KEY_COLUMN_USAGE"
+				WHERE
+					"TABLE_NAME" COLLATE \'utf8_bin\' = ? AND
+					"REFERENCED_TABLE_NAME" COLLATE \'utf8_bin\' IN ? AND
+					"TABLE_SCHEMA" = ? AND
+					"REFERENCED_TABLE_SCHEMA" = ?',
+			'reflect_has_many'=>'SELECT
+					"TABLE_NAME","COLUMN_NAME",
+					"REFERENCED_TABLE_NAME","REFERENCED_COLUMN_NAME"
+				FROM
+					"INFORMATION_SCHEMA"."KEY_COLUMN_USAGE"
+				WHERE
+					"TABLE_NAME" COLLATE \'utf8_bin\' IN ? AND
+					"REFERENCED_TABLE_NAME" COLLATE \'utf8_bin\' = ? AND
+					"TABLE_SCHEMA" = ? AND
+					"REFERENCED_TABLE_SCHEMA" = ?',
+			'reflect_habtm'=>'SELECT
+					k1."TABLE_NAME", k1."COLUMN_NAME",
+					k1."REFERENCED_TABLE_NAME", k1."REFERENCED_COLUMN_NAME",
+					k2."TABLE_NAME", k2."COLUMN_NAME",
+					k2."REFERENCED_TABLE_NAME", k2."REFERENCED_COLUMN_NAME"
+				FROM
+					"INFORMATION_SCHEMA"."KEY_COLUMN_USAGE" k1, "INFORMATION_SCHEMA"."KEY_COLUMN_USAGE" k2
+				WHERE
+					k1."TABLE_SCHEMA" = ? AND
+					k2."TABLE_SCHEMA" = ? AND
+					k1."REFERENCED_TABLE_SCHEMA" = ? AND
+					k2."REFERENCED_TABLE_SCHEMA" = ? AND
+					k1."TABLE_NAME" COLLATE \'utf8_bin\' = k2."TABLE_NAME" COLLATE \'utf8_bin\' AND
+					k1."REFERENCED_TABLE_NAME" COLLATE \'utf8_bin\' = ? AND
+					k2."REFERENCED_TABLE_NAME" COLLATE \'utf8_bin\' IN ?'
+		);
+	}
 
 	protected function connectDatabase($hostname,$username,$password,$database,$port,$socket,$charset) {
 		$db = mysqli_connect($hostname,$username,$password,$database,$port,$socket);
@@ -121,70 +137,79 @@ class MySQL_CRUD_API extends REST_CRUD_API {
 
 class PgSQL_CRUD_API extends REST_CRUD_API {
 
-	protected $queries = array(
-		'reflect_table'=>'select "table_name" from "information_schema"."tables" where "table_name" like ? and "table_catalog" = ?',
-		'reflect_pk'=>'select
-				"column_name"
-			from
-				"information_schema"."table_constraints" tc, "information_schema"."key_column_usage" ku
-			where
-				tc."constraint_type" = \'PRIMARY KEY\' and
-				tc."constraint_name" = ku."constraint_name" and
-				ku."table_name" = ? and
-				ku."table_catalog" = ?',
-		'reflect_belongs_to'=>'select
-				cu1."table_name",cu1."column_name",
-				cu2."table_name",cu2."column_name"
-			from
-				"information_schema".referential_constraints rc,
-				"information_schema".key_column_usage cu1,
-				"information_schema".key_column_usage cu2
-			where
-				cu1."constraint_name" = rc."constraint_name" and
-				cu2."constraint_name" = rc."unique_constraint_name" and
-				cu1."table_name" = ? and
-				cu2."table_name" in ? and
-				cu1."table_catalog" = ? and
-				cu2."table_catalog" = ?',
-		'reflect_has_many'=>'select
-				cu1."table_name",cu1."column_name",
-				cu2."table_name",cu2."column_name"
-			from
-				"information_schema".referential_constraints rc,
-				"information_schema".key_column_usage cu1,
-				"information_schema".key_column_usage cu2
-			where
-				cu1."constraint_name" = rc."constraint_name" and
-				cu2."constraint_name" = rc."unique_constraint_name" and
-				cu1."table_name" in ? and
-				cu2."table_name" = ? and
-				cu1."table_catalog" = ? and
-				cu2."table_catalog" = ?',
-		'reflect_habtm'=>'select
-				cua1."table_name",cua1."column_name",
-				cua2."table_name",cua2."column_name",
-				cub1."table_name",cub1."column_name",
-				cub2."table_name",cub2."column_name"
-			from
-				"information_schema".referential_constraints rca,
-				"information_schema".referential_constraints rcb,
-				"information_schema".key_column_usage cua1,
-				"information_schema".key_column_usage cua2,
-				"information_schema".key_column_usage cub1,
-				"information_schema".key_column_usage cub2
-			where
-				cua1."constraint_name" = rca."constraint_name" and
-				cua2."constraint_name" = rca."unique_constraint_name" and
-				cub1."constraint_name" = rcb."constraint_name" and
-				cub2."constraint_name" = rcb."unique_constraint_name" and
-				cua1."table_catalog" = ? and
-				cub1."table_catalog" = ? and
-				cua2."table_catalog" = ? and
-				cub2."table_catalog" = ? and
-				cua1."table_name" = cub1."table_name" and
-				cua2."table_name" = ? and
-				cub2."table_name" in ?'
-	);
+	public function __construct($config) {
+		parent::__construct($config);
+        $this->queries = array(
+			'reflect_table'=>'select
+					"table_name"
+				from
+					"information_schema"."tables"
+				where
+					"table_name" like ? and
+					"table_catalog" = ?',
+			'reflect_pk'=>'select
+					"column_name"
+				from
+					"information_schema"."table_constraints" tc, "information_schema"."key_column_usage" ku
+				where
+					tc."constraint_type" = \'PRIMARY KEY\' and
+					tc."constraint_name" = ku."constraint_name" and
+					ku."table_name" = ? and
+					ku."table_catalog" = ?',
+			'reflect_belongs_to'=>'select
+					cu1."table_name",cu1."column_name",
+					cu2."table_name",cu2."column_name"
+				from
+					"information_schema".referential_constraints rc,
+					"information_schema".key_column_usage cu1,
+					"information_schema".key_column_usage cu2
+				where
+					cu1."constraint_name" = rc."constraint_name" and
+					cu2."constraint_name" = rc."unique_constraint_name" and
+					cu1."table_name" = ? and
+					cu2."table_name" in ? and
+					cu1."table_catalog" = ? and
+					cu2."table_catalog" = ?',
+			'reflect_has_many'=>'select
+					cu1."table_name",cu1."column_name",
+					cu2."table_name",cu2."column_name"
+				from
+					"information_schema".referential_constraints rc,
+					"information_schema".key_column_usage cu1,
+					"information_schema".key_column_usage cu2
+				where
+					cu1."constraint_name" = rc."constraint_name" and
+					cu2."constraint_name" = rc."unique_constraint_name" and
+					cu1."table_name" in ? and
+					cu2."table_name" = ? and
+					cu1."table_catalog" = ? and
+					cu2."table_catalog" = ?',
+			'reflect_habtm'=>'select
+					cua1."table_name",cua1."column_name",
+					cua2."table_name",cua2."column_name",
+					cub1."table_name",cub1."column_name",
+					cub2."table_name",cub2."column_name"
+				from
+					"information_schema".referential_constraints rca,
+					"information_schema".referential_constraints rcb,
+					"information_schema".key_column_usage cua1,
+					"information_schema".key_column_usage cua2,
+					"information_schema".key_column_usage cub1,
+					"information_schema".key_column_usage cub2
+				where
+					cua1."constraint_name" = rca."constraint_name" and
+					cua2."constraint_name" = rca."unique_constraint_name" and
+					cub1."constraint_name" = rcb."constraint_name" and
+					cub2."constraint_name" = rcb."unique_constraint_name" and
+					cua1."table_catalog" = ? and
+					cub1."table_catalog" = ? and
+					cua2."table_catalog" = ? and
+					cub2."table_catalog" = ? and
+					cua1."table_name" = cub1."table_name" and
+					cua2."table_name" = ? and
+					cub2."table_name" in ?'
+		);
+	}
 
 	protected function connectDatabase($hostname,$username,$password,$database,$port,$socket,$charset) {
 		$e = function ($v) { return str_replace(array('\'','\\'),array('\\\'','\\\\'),$v); };
@@ -294,71 +319,80 @@ class PgSQL_CRUD_API extends REST_CRUD_API {
 
 class MsSQL_CRUD_API extends REST_CRUD_API {
 
-	protected $queries = array(
-		'reflect_table'=>'SELECT "TABLE_NAME" FROM "INFORMATION_SCHEMA"."TABLES" WHERE "TABLE_NAME" LIKE ? AND "TABLE_CATALOG" = ?',
-		'reflect_pk'=>'SELECT
-				"COLUMN_NAME"
-			FROM
-				"INFORMATION_SCHEMA"."TABLE_CONSTRAINTS" tc, "INFORMATION_SCHEMA"."KEY_COLUMN_USAGE" ku
-			WHERE
-				tc."CONSTRAINT_TYPE" = \'PRIMARY KEY\' AND
-				tc."CONSTRAINT_NAME" = ku."CONSTRAINT_NAME" AND
-				ku."TABLE_NAME" = ? AND
-				ku."TABLE_CATALOG" = ?',
-		'reflect_belongs_to'=>'SELECT
-				cu1."TABLE_NAME",cu1."COLUMN_NAME",
-				cu2."TABLE_NAME",cu2."COLUMN_NAME"
-			FROM
-				"INFORMATION_SCHEMA".REFERENTIAL_CONSTRAINTS rc,
-				"INFORMATION_SCHEMA".CONSTRAINT_COLUMN_USAGE cu1,
-				"INFORMATION_SCHEMA".CONSTRAINT_COLUMN_USAGE cu2
-			WHERE
-				cu1."CONSTRAINT_NAME" = rc."CONSTRAINT_NAME" AND
-				cu2."CONSTRAINT_NAME" = rc."UNIQUE_CONSTRAINT_NAME" AND
-				cu1."TABLE_NAME" = ? AND
-				cu2."TABLE_NAME" IN ? AND
-				cu1."TABLE_CATALOG" = ? AND
-				cu2."TABLE_CATALOG" = ?',
-		'reflect_has_many'=>'SELECT
-				cu1."TABLE_NAME",cu1."COLUMN_NAME",
-				cu2."TABLE_NAME",cu2."COLUMN_NAME"
-			FROM
-				"INFORMATION_SCHEMA".REFERENTIAL_CONSTRAINTS rc,
-				"INFORMATION_SCHEMA".CONSTRAINT_COLUMN_USAGE cu1,
-				"INFORMATION_SCHEMA".CONSTRAINT_COLUMN_USAGE cu2
-			WHERE
-				cu1."CONSTRAINT_NAME" = rc."CONSTRAINT_NAME" AND
-				cu2."CONSTRAINT_NAME" = rc."UNIQUE_CONSTRAINT_NAME" AND
-				cu1."TABLE_NAME" IN ? AND
-				cu2."TABLE_NAME" = ? AND
-				cu1."TABLE_CATALOG" = ? AND
-				cu2."TABLE_CATALOG" = ?',
-		'reflect_habtm'=>'SELECT
-				cua1."TABLE_NAME",cua1."COLUMN_NAME",
-				cua2."TABLE_NAME",cua2."COLUMN_NAME",
-				cub1."TABLE_NAME",cub1."COLUMN_NAME",
-				cub2."TABLE_NAME",cub2."COLUMN_NAME"
-			FROM
-				"INFORMATION_SCHEMA".REFERENTIAL_CONSTRAINTS rca,
-				"INFORMATION_SCHEMA".REFERENTIAL_CONSTRAINTS rcb,
-				"INFORMATION_SCHEMA".CONSTRAINT_COLUMN_USAGE cua1,
-				"INFORMATION_SCHEMA".CONSTRAINT_COLUMN_USAGE cua2,
-				"INFORMATION_SCHEMA".CONSTRAINT_COLUMN_USAGE cub1,
-				"INFORMATION_SCHEMA".CONSTRAINT_COLUMN_USAGE cub2
-			WHERE
-				cua1."CONSTRAINT_NAME" = rca."CONSTRAINT_NAME" AND
-				cua2."CONSTRAINT_NAME" = rca."UNIQUE_CONSTRAINT_NAME" AND
-				cub1."CONSTRAINT_NAME" = rcb."CONSTRAINT_NAME" AND
-				cub2."CONSTRAINT_NAME" = rcb."UNIQUE_CONSTRAINT_NAME" AND
-				cua1."TABLE_CATALOG" = ? AND
-				cub1."TABLE_CATALOG" = ? AND
-				cua2."TABLE_CATALOG" = ? AND
-				cub2."TABLE_CATALOG" = ? AND
-				cua1."TABLE_NAME" = cub1."TABLE_NAME" AND
-				cua2."TABLE_NAME" = ? AND
-				cub2."TABLE_NAME" IN ?'
-	);
-
+	public function __construct($config) {
+		parent::__construct($config);
+        $this->queries = array(
+			'reflect_table'=>'SELECT
+					"TABLE_NAME"
+				FROM
+					"INFORMATION_SCHEMA"."TABLES"
+				WHERE
+					"TABLE_NAME" LIKE ? AND
+					"TABLE_CATALOG" = ?',
+			'reflect_pk'=>'SELECT
+					"COLUMN_NAME"
+				FROM
+					"INFORMATION_SCHEMA"."TABLE_CONSTRAINTS" tc, "INFORMATION_SCHEMA"."KEY_COLUMN_USAGE" ku
+				WHERE
+					tc."CONSTRAINT_TYPE" = \'PRIMARY KEY\' AND
+					tc."CONSTRAINT_NAME" = ku."CONSTRAINT_NAME" AND
+					ku."TABLE_NAME" = ? AND
+					ku."TABLE_CATALOG" = ?',
+			'reflect_belongs_to'=>'SELECT
+					cu1."TABLE_NAME",cu1."COLUMN_NAME",
+					cu2."TABLE_NAME",cu2."COLUMN_NAME"
+				FROM
+					"INFORMATION_SCHEMA".REFERENTIAL_CONSTRAINTS rc,
+					"INFORMATION_SCHEMA".CONSTRAINT_COLUMN_USAGE cu1,
+					"INFORMATION_SCHEMA".CONSTRAINT_COLUMN_USAGE cu2
+				WHERE
+					cu1."CONSTRAINT_NAME" = rc."CONSTRAINT_NAME" AND
+					cu2."CONSTRAINT_NAME" = rc."UNIQUE_CONSTRAINT_NAME" AND
+					cu1."TABLE_NAME" = ? AND
+					cu2."TABLE_NAME" IN ? AND
+					cu1."TABLE_CATALOG" = ? AND
+					cu2."TABLE_CATALOG" = ?',
+			'reflect_has_many'=>'SELECT
+					cu1."TABLE_NAME",cu1."COLUMN_NAME",
+					cu2."TABLE_NAME",cu2."COLUMN_NAME"
+				FROM
+					"INFORMATION_SCHEMA".REFERENTIAL_CONSTRAINTS rc,
+					"INFORMATION_SCHEMA".CONSTRAINT_COLUMN_USAGE cu1,
+					"INFORMATION_SCHEMA".CONSTRAINT_COLUMN_USAGE cu2
+				WHERE
+					cu1."CONSTRAINT_NAME" = rc."CONSTRAINT_NAME" AND
+					cu2."CONSTRAINT_NAME" = rc."UNIQUE_CONSTRAINT_NAME" AND
+					cu1."TABLE_NAME" IN ? AND
+					cu2."TABLE_NAME" = ? AND
+					cu1."TABLE_CATALOG" = ? AND
+					cu2."TABLE_CATALOG" = ?',
+			'reflect_habtm'=>'SELECT
+					cua1."TABLE_NAME",cua1."COLUMN_NAME",
+					cua2."TABLE_NAME",cua2."COLUMN_NAME",
+					cub1."TABLE_NAME",cub1."COLUMN_NAME",
+					cub2."TABLE_NAME",cub2."COLUMN_NAME"
+				FROM
+					"INFORMATION_SCHEMA".REFERENTIAL_CONSTRAINTS rca,
+					"INFORMATION_SCHEMA".REFERENTIAL_CONSTRAINTS rcb,
+					"INFORMATION_SCHEMA".CONSTRAINT_COLUMN_USAGE cua1,
+					"INFORMATION_SCHEMA".CONSTRAINT_COLUMN_USAGE cua2,
+					"INFORMATION_SCHEMA".CONSTRAINT_COLUMN_USAGE cub1,
+					"INFORMATION_SCHEMA".CONSTRAINT_COLUMN_USAGE cub2
+				WHERE
+					cua1."CONSTRAINT_NAME" = rca."CONSTRAINT_NAME" AND
+					cua2."CONSTRAINT_NAME" = rca."UNIQUE_CONSTRAINT_NAME" AND
+					cub1."CONSTRAINT_NAME" = rcb."CONSTRAINT_NAME" AND
+					cub2."CONSTRAINT_NAME" = rcb."UNIQUE_CONSTRAINT_NAME" AND
+					cua1."TABLE_CATALOG" = ? AND
+					cub1."TABLE_CATALOG" = ? AND
+					cua2."TABLE_CATALOG" = ? AND
+					cub2."TABLE_CATALOG" = ? AND
+					cua1."TABLE_NAME" = cub1."TABLE_NAME" AND
+					cua2."TABLE_NAME" = ? AND
+					cub2."TABLE_NAME" IN ?'
+		);
+	}
+	
 	protected function connectDatabase($hostname,$username,$password,$database,$port,$socket,$charset) {
 		$connectionInfo = array();
 		if ($port) $hostname.=','.$port;
@@ -475,6 +509,7 @@ class MsSQL_CRUD_API extends REST_CRUD_API {
 
 class REST_CRUD_API {
 
+	protected $queries;
 	protected $settings;
 
 	protected function mapMethodToAction($method,$key) {
