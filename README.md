@@ -19,11 +19,6 @@ This is a single file application! Upload "api.php" somewhere and enjoy!
   - Complex filters (with both "and" & "or") are not supported
   - Complex writes (transactions) are not supported
 
-## TODO
-
-  - Set up Travis automated tests
-  - Add an API documentation generator
-
 ## Features
 
   - Single PHP file, easy to deploy.
