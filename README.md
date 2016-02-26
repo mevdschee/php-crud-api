@@ -19,11 +19,6 @@ This is a single file application! Upload "api.php" somewhere and enjoy!
   - Complex filters (with both "and" & "or") are not supported
   - Complex writes (transactions) are not supported
 
-## TODO
-
-  - Set up Travis automated tests
-  - Add an API documentation generator
-
 ## Features
 
   - Single PHP file, easy to deploy.
@@ -82,17 +77,7 @@ $api = new MySQL_CRUD_API(array(
 $api->executeCommand();
 ```
 
-For the alternative MsSQL_CRUD_API class the following mapping applies:
-
- - username = UID
- - password = PWD
- - database = Database
- - hostname = Server
- - port = (Server),port
- - socket = (not supported)
- - charset = CharacterSet
-
-The other variables are not MySQL, PgSQL or MsSQL specific.
+NB: The "socket" option is not supported by MS SQL Server.
 
 ## Usage
 
