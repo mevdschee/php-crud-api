@@ -4,10 +4,10 @@ class MySQL_CRUD_API extends REST_CRUD_API {
 	public function __construct($config) {
 		parent::__construct($config);
 		$this->queries = array(
-			'reflect_table'=>'SELECT 
+			'reflect_table'=>'SELECT
 					"TABLE_NAME"
 				FROM
-					"INFORMATION_SCHEMA"."TABLES" 
+					"INFORMATION_SCHEMA"."TABLES"
 				WHERE
 					"TABLE_NAME" COLLATE \'utf8_bin\' = ? AND
 					"TABLE_SCHEMA" = ?',
@@ -395,7 +395,7 @@ class MsSQL_CRUD_API extends REST_CRUD_API {
 					cub2."TABLE_NAME" IN ?'
 		);
 	}
-	
+
 	protected function connectDatabase($hostname,$username,$password,$database,$port,$socket,$charset) {
 		$connectionInfo = array();
 		if ($port) $hostname.=','.$port;
@@ -600,7 +600,7 @@ class REST_CRUD_API {
 				while ($row = $this->fetch_row($result)) $table_list[] = $row[0];
 				$this->close($result);
 				if ($action!='list') break;
-			}			
+			}
 		}
 		if (empty($table_list)) $this->exitWith404('entity');
 		return $table_list;
@@ -678,7 +678,7 @@ class REST_CRUD_API {
 		}
 		return $order;
 	}
-	
+
 	protected function processFiltersParameter($tables,$filters) {
 		$result = array();
 		foreach ($filters as $filter) {
@@ -774,7 +774,7 @@ class REST_CRUD_API {
 		$tableset = array();
 		$collect = array();
 		$select = array();
-		
+
 		while (count($tables)>1) {
 			$table0 = array_shift($tables);
 			$tableset[] = $table0;
@@ -834,14 +834,14 @@ class REST_CRUD_API {
 		}
 		return $fields;
 	}
-	
+
 	protected function findInputFields($table,$columns,$database,$db) {
 		$fields = array();
 		$fields[$table] = $this->findTableFields($table,$database,$db);
 		$fields[$table] = $this->filterFieldsByColumns($fields[$table],$columns);
 		return $fields;
 	}
-	
+
 	protected function filterFieldsByColumns($fields,$columns) {
 		if ($columns) foreach (array_keys($fields) as $key) {
 			if (!in_array($key, $columns)) {
@@ -850,7 +850,7 @@ class REST_CRUD_API {
 		}
 		return $fields;
 	}
-	
+
 	protected function findTableFields($table,$database,$db) {
 		$fields = array();
 		$result = $this->query($db,'SELECT * FROM "!" WHERE 1=2;',array($table));
@@ -863,7 +863,7 @@ class REST_CRUD_API {
 	protected function filterInputByColumns($input,$columns) {
 		if ($columns) foreach (array_keys((array)$input) as $key) {
 			if (!isset($columns[$key])) {
-				unset($input->$key); 
+				unset($input->$key);
 			}
 		}
 		return $input;
@@ -892,7 +892,7 @@ class REST_CRUD_API {
 		$columns   = $this->parseGetParameter($get, 'columns', 'a-zA-Z0-9\-_,');
 		$order     = $this->parseGetParameter($get, 'order', 'a-zA-Z0-9\-_,');
 		$transform = $this->parseGetParameter($get, 'transform', '1');
-		
+
 		$tables    = $this->processTablesParameter($database,$tables,$action,$db);
 		$key       = $this->processKeyParameter($key,$tables,$database,$db);
 		$filters   = $this->processFiltersParameter($tables,$filters);
@@ -900,11 +900,11 @@ class REST_CRUD_API {
 		$page      = $this->processPageParameter($page);
 		$satisfy   = ($satisfy && strtolower($satisfy)=='any')?'any':'all';
 		$order     = $this->processOrderParameter($order);
-		
+
 		// reflection
 		list($tables,$collect,$select) = $this->findRelations($tables,$database,$db);
 		$fields = $this->findFields($tables,$collect,$select,$columns,$database,$db);
-		
+
 		// permissions
 		if ($table_authorizer) $this->applyTableAuthorizer($table_authorizer,$action,$database,$tables);
 		if ($column_authorizer) $this->applyColumnAuthorizer($column_authorizer,$action,$database,$fields);
@@ -913,13 +913,13 @@ class REST_CRUD_API {
 			// input
 			$context = $this->retrieveInput($post);
 			$input = $this->filterInputByColumns($context,$fields[$tables[0]]);
-			
+
 			if ($input_sanitizer) $this->applyInputSanitizer($input_sanitizer,$action,$database,$tables[0],$input,$fields[$tables[0]]);
 			if ($input_validator) $this->applyInputValidator($input_validator,$action,$database,$tables[0],$input,$fields[$tables[0]],$context);
 
 			$this->convertBinary($input,$fields[$tables[0]]);
 		}
-		
+
 		return compact('action','database','tables','key','callback','page','filters','satisfy','fields','order','transform','db','input','collect','select');
 	}
 
