@@ -487,7 +487,11 @@ The rule "you cannot view unpublished blog posts unless you have the editor or a
 ## Multi-tenancy
 
 The 'tenant_function' allows you to expose an API for a multi-tenant database schema. In the simplest model all tables have a column
-named 'customer_id' and the 'tenant_function' is defined as ```return array('customer_id,eq,'.$_SESSION['customer_id']);````
+named 'customer_id' and the 'tenant_function' is defined as:
+
+```return array('customer_id,eq,'.$_SESSION['customer_id']);````
+
+In this example ```$_SESSION['customer_id'])``` is the authenticated customer in your API.
 
 ## Sanitizing input
 
