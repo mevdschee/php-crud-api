@@ -85,7 +85,7 @@ class MySQL_CRUD_API extends REST_CRUD_API {
 			if ($param===null) return 'NULL';
 			return "'".mysqli_real_escape_string($db,$param)."'";
 		}, $sql);
-		//echo "\n$sql\n";
+		//if (!strpos($sql,'INFORMATION_SCHEMA')) echo "\n$sql\n";
 		return mysqli_query($db,$sql);
 	}
 
@@ -561,6 +561,17 @@ class REST_CRUD_API {
 		}
 	}
 
+	protected function applyRecordAuthorizer($callback,$action,$database,$tables,&$filters) {
+		if (is_callable($callback,true)) foreach ($tables as $i=>$table) {
+			$f = $this->convertFilters($callback($action,$database,$table));
+			if ($f) {
+				if (!isset($filters[$table])) $filters[$table] = array();
+				if (!isset($filters[$table]['and'])) $filters[$table]['and'] = array();
+				$filters[$table]['and'] = array_merge($filters[$table]['and'],$f);
+			}
+		}
+	}
+
 	protected function applyColumnAuthorizer($callback,$action,$database,&$fields) {
 		if (is_callable($callback,true)) foreach ($fields as $table=>$keys) {
 			foreach ($keys as $field) {
@@ -679,9 +690,9 @@ class REST_CRUD_API {
 		return $order;
 	}
 
-	protected function processFiltersParameter($tables,$filters) {
+	protected function convertFilters($filters) {
 		$result = array();
-		foreach ($filters as $filter) {
+		if ($filters) foreach ($filters as $filter) {
 			if ($filter) {
 				$filter = explode(',',$filter,3);
 				if (count($filter)==3) {
@@ -707,6 +718,13 @@ class REST_CRUD_API {
 		return $result;
 	}
 
+	protected function processFiltersParameter($tables,$satisfy,$filters) {
+		$result = $this->convertFilters($filters);
+		if (!$result) return array();
+		$and = ($satisfy && strtolower($satisfy)=='any')?'or':'and';
+		return array($tables[0]=>array($and=>$result));
+	}
+
 	protected function processPageParameter($page) {
 		if ($page) {
 			$page = explode(',',$page,2);
@@ -716,14 +734,20 @@ class REST_CRUD_API {
 		return $page;
 	}
 
-	protected function retrieveObject($key,$fields,$tables,$db) {
+	protected function retrieveObject($key,$fields,$filters,$tables,$db) {
 		if (!$key) return false;
+		$table = $tables[0];
 		$sql = 'SELECT ';
-		$sql .= '"'.implode('","',array_keys($fields[$tables[0]])).'"';
-		$sql .= ' FROM "!" WHERE "!" = ?';
-		if ($result = $this->query($db,$sql,array($tables[0],$key[1],$key[0]))) {
+		$sql .= '"'.implode('","',array_keys($fields[$table])).'"';
+		$sql .= ' FROM "!"';
+		$params = array($table);
+		if (!isset($filters[$table])) $filters[$table] = array();
+		if (!isset($filters[$table]['or'])) $filters[$table]['or'] = array();
+		$filters[$table]['or'][] = array($key[1],'=',$key[0]);
+		$this->addWhereFromFilters($filters[$table],$sql,$params);
+		if ($result = $this->query($db,$sql,$params)) {
 			$object = $this->fetch_assoc($result);
-			foreach ($fields[$tables[0]] as $field) {
+			foreach ($fields[$table] as $field) {
 				if ($this->is_binary_type($field) && $object[$field->name]) {
 					$object[$field->name] = $this->base64_encode($object[$field->name]);
 				}
@@ -745,12 +769,12 @@ class REST_CRUD_API {
 		return $this->insert_id($db,$result);
 	}
 
-	protected function updateObject($key,$input,$tables,$db) {
+	protected function updateObject($key,$input,$filters,$tables,$db) {
 		if (!$input) return false;
 		$input = (array)$input;
-		$params = array();
+		$table = $tables[0];
 		$sql = 'UPDATE "!" SET ';
-		$params[] = $tables[0];
+		$params = array($table);
 		foreach (array_keys($input) as $i=>$k) {
 			if ($i) $sql .= ',';
 			$v = $input[$k];
@@ -758,15 +782,23 @@ class REST_CRUD_API {
 			$params[] = $k;
 			$params[] = $v;
 		}
-		$sql .= ' WHERE "!"=?';
-		$params[] = $key[1];
-		$params[] = $key[0];
+		if (!isset($filters[$table])) $filters[$table] = array();
+		if (!isset($filters[$table]['or'])) $filters[$table]['or'] = array();
+		$filters[$table]['or'][] = array($key[1],'=',$key[0]);
+		$this->addWhereFromFilters($filters[$table],$sql,$params);
 		$result = $this->query($db,$sql,$params);
 		return $this->affected_rows($db, $result);
 	}
 
-	protected function deleteObject($key,$tables,$db) {
-		$result = $this->query($db,'DELETE FROM "!" WHERE "!" = ?',array($tables[0],$key[1],$key[0]));
+	protected function deleteObject($key,$filters,$tables,$db) {
+		$table = $tables[0];
+		$sql = 'DELETE FROM "!"';
+		$params = array($table);
+		if (!isset($filters[$table])) $filters[$table] = array();
+		if (!isset($filters[$table]['or'])) $filters[$table]['or'] = array();
+		$filters[$table]['or'][] = array($key[1],'=',$key[0]);
+		$this->addWhereFromFilters($filters[$table],$sql,$params);
+		$result = $this->query($db,$sql,$params);
 		return $this->affected_rows($db, $result);
 	}
 
@@ -895,10 +927,9 @@ class REST_CRUD_API {
 
 		$tables    = $this->processTablesParameter($database,$tables,$action,$db);
 		$key       = $this->processKeyParameter($key,$tables,$database,$db);
-		$filters   = $this->processFiltersParameter($tables,$filters);
+		$filters   = $this->processFiltersParameter($tables,$satisfy,$filters);
 		if ($columns) $columns = explode(',',$columns);
 		$page      = $this->processPageParameter($page);
-		$satisfy   = ($satisfy && strtolower($satisfy)=='any')?'any':'all';
 		$order     = $this->processOrderParameter($order);
 
 		// reflection
@@ -907,6 +938,7 @@ class REST_CRUD_API {
 
 		// permissions
 		if ($table_authorizer) $this->applyTableAuthorizer($table_authorizer,$action,$database,$tables);
+		if ($record_authorizer) $this->applyRecordAuthorizer($record_authorizer,$action,$database,$tables,$filters);
 		if ($column_authorizer) $this->applyColumnAuthorizer($column_authorizer,$action,$database,$fields);
 
 		if ($post) {
@@ -920,7 +952,32 @@ class REST_CRUD_API {
 			$this->convertBinary($input,$fields[$tables[0]]);
 		}
 
-		return compact('action','database','tables','key','callback','page','filters','satisfy','fields','order','transform','db','input','collect','select');
+		return compact('action','database','tables','key','callback','page','filters','fields','order','transform','db','input','collect','select');
+	}
+
+	protected function addWhereFromFilters($filters,&$sql,&$params) {
+		$first = true;
+		if (isset($filters['or'])) {
+			$first = false;
+			$sql .= ' WHERE (';
+			foreach ($filters['or'] as $i=>$filter) {
+				$sql .= $i==0?'':' OR ';
+				$sql .= '"!" ! ?';
+				$params[] = $filter[0];
+				$params[] = $filter[1];
+				$params[] = $filter[2];
+			}
+			$sql .= ')';
+		}
+		if (isset($filters['and'])) {
+			foreach ($filters['and'] as $i=>$filter) {
+				$sql .= $first?' WHERE ':' AND ';
+				$sql .= '"!" ! ?';
+				$params[] = $filter[0];
+				$params[] = $filter[1];
+				$params[] = $filter[2];
+			}
+		}
 	}
 
 	protected function listCommandInternal($parameters) {
@@ -934,14 +991,8 @@ class REST_CRUD_API {
 			$params = array();
 			$sql = 'SELECT COUNT(*) FROM "!"';
 			$params[] = $table;
-			foreach ($filters as $i=>$filter) {
-				if (is_array($filter)) {
-					$sql .= $i==0?' WHERE ':($satisfy=='all'?' AND ':' OR ');
-					$sql .= '"!" ! ?';
-					$params[] = $filter[0];
-					$params[] = $filter[1];
-					$params[] = $filter[2];
-				}
+			if (isset($filters[$table])) {
+					$this->addWhereFromFilters($filters[$table],$sql,$params);
 			}
 			if ($result = $this->query($db,$sql,$params)) {
 				while ($pages = $this->fetch_row($result)) {
@@ -954,14 +1005,8 @@ class REST_CRUD_API {
 		$sql .= '"'.implode('","',array_keys($fields[$table])).'"';
 		$sql .= ' FROM "!"';
 		$params[] = $table;
-		foreach ($filters as $i=>$filter) {
-			if (is_array($filter)) {
-				$sql .= $i==0?' WHERE ':($satisfy=='all'?' AND ':' OR ');
-				$sql .= '"!" ! ?';
-				$params[] = $filter[0];
-				$params[] = $filter[1];
-				$params[] = $filter[2];
-			}
+		if (isset($filters[$table])) {
+				$this->addWhereFromFilters($filters[$table],$sql,$params);
 		}
 		if (is_array($order)) {
 			$sql .= ' ORDER BY "!" !';
@@ -1014,19 +1059,19 @@ class REST_CRUD_API {
 			$sql .= ' FROM "!"';
 			$params[] = $table;
 			if (isset($select[$table])) {
-				$first_row = true;
 				echo '"relations":{';
+				$first_row = true;
 				foreach ($select[$table] as $field => $path) {
 					$values = $collect[$path[0]][$path[1]];
-					$sql .= $first_row?' WHERE ':' OR ';
-					$sql .= '"!" IN ?';
-					$params[] = $field;
-					$params[] = $values;
+					if (!isset($filters[$table])) $filters[$table] = array();
+					if (!isset($filters[$table]['or'])) $filters[$table]['or'] = array();
+					$filters[$table]['or'][] = array($field,'IN',$values);
 					if ($first_row) $first_row = false;
 					else echo ',';
 					echo '"'.$field.'":"'.implode('.',$path).'"';
 				}
 				echo '}';
+				$this->addWhereFromFilters($filters[$table],$sql,$params);
 			}
 			if ($result = $this->query($db,$sql,$params)) {
 				if (isset($select[$table])) echo ',';
@@ -1066,7 +1111,7 @@ class REST_CRUD_API {
 
 	protected function readCommand($parameters) {
 		extract($parameters);
-		$object = $this->retrieveObject($key,$fields,$tables,$db);
+		$object = $this->retrieveObject($key,$fields,$filters,$tables,$db);
 		if (!$object) $this->exitWith404('object');
 		$this->startOutput($callback);
 		echo json_encode($object);
@@ -1085,14 +1130,14 @@ class REST_CRUD_API {
 		extract($parameters);
 		if (!$input) $this->exitWith404('subject');
 		$this->startOutput($callback);
-		echo json_encode($this->updateObject($key,$input,$tables,$db));
+		echo json_encode($this->updateObject($key,$input,$filters,$tables,$db));
 		$this->endOutput($callback);
 	}
 
 	protected function deleteCommand($parameters) {
 		extract($parameters);
 		$this->startOutput($callback);
-		echo json_encode($this->deleteObject($key,$tables,$db));
+		echo json_encode($this->deleteObject($key,$filters,$tables,$db));
 		$this->endOutput($callback);
 	}
 
@@ -1125,6 +1170,7 @@ class REST_CRUD_API {
 		$charset = isset($charset)?$charset:null;
 
 		$table_authorizer = isset($table_authorizer)?$table_authorizer:null;
+		$record_authorizer = isset($record_authorizer)?$record_authorizer:null;
 		$column_authorizer = isset($column_authorizer)?$column_authorizer:null;
 		$input_sanitizer = isset($input_sanitizer)?$input_sanitizer:null;
 		$input_validator = isset($input_validator)?$input_validator:null;
@@ -1161,7 +1207,7 @@ class REST_CRUD_API {
 			$db = $this->connectDatabase($hostname,$username,$password,$database,$port,$socket,$charset);
 		}
 
-		$this->settings = compact('method', 'request', 'get', 'post', 'database', 'table_authorizer', 'column_authorizer', 'input_sanitizer', 'input_validator', 'db');
+		$this->settings = compact('method', 'request', 'get', 'post', 'database', 'table_authorizer', 'record_authorizer', 'column_authorizer', 'input_sanitizer', 'input_validator', 'db');
 	}
 
 	public static function php_crud_api_transform(&$tables) {
@@ -1205,6 +1251,7 @@ class REST_CRUD_API {
 			header('Access-Control-Allow-Origin: *');
 		}
 		$parameters = $this->getParameters($this->settings);
+
 		switch($parameters['action']){
 			case 'list': $this->listCommand($parameters); break;
 			case 'read': $this->readCommand($parameters); break;
