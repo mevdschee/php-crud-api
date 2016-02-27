@@ -28,7 +28,7 @@ This is a single file application! Upload "api.php" somewhere and enjoy!
   - Supports a JSON object as input
   - Condensed JSON ouput: first row contains field names
   - Sanitize and validate input using callbacks
-  - Permission system for databases, tables and columns
+  - Permission system for databases, tables, records and columns
   - Both JSONP and CORS support for cross-domain requests
   - Combined requests with support for multiple table names
   - Search support on multiple criteria
@@ -64,6 +64,7 @@ $api = new MySQL_CRUD_API(array(
 	'charset=>'utf8',
 // callbacks with their default behavior
 	'table_authorizer'=>function($cmd,$db,$tab) { return true; },
+	'record_authorizer'=>function($cmd,$db,$tab) { return true; },
 	'column_authorizer'=>function($cmd,$db,$tab,$col) { return true; },
 	'input_sanitizer'=>function($cmd,$db,$tab,$col,$typ,$val) { return $val; },
 	'input_validator'=>function($cmd,$db,$tab,$col,$typ,$val,$ctx) { return true; },
