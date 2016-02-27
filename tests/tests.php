@@ -37,7 +37,7 @@ class API
 				'database'=>MySQL_CRUD_API_Config::$database,
 				// callbacks
 				'table_authorizer'=>function($action,$database,$table) { return true; },
-				'record_authorizer'=>function($action,$database,$table) { return ($table=='users'&&$action!='list')?array('id,eq,1'):false; },
+				'record_filter'=>function($action,$database,$table) { return ($table=='users'&&$action!='list')?array('id,eq,1'):false; },
 				'column_authorizer'=>function($action,$database,$table,$column) { return !($column=='password'&&$action=='list'); },
 				'input_sanitizer'=>function($action,$database,$table,$column,$type,$value) { return $value===null?null:strip_tags($value); },
 				'input_validator'=>function($action,$database,$table,$column,$type,$value,$context) { return ($column=='category_id' && !is_numeric($value))?'must be numeric':true; },

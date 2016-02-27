@@ -64,7 +64,7 @@ $api = new MySQL_CRUD_API(array(
 	'charset=>'utf8',
 // callbacks with their default behavior
 	'table_authorizer'=>function($cmd,$db,$tab) { return true; },
-	'record_authorizer'=>function($cmd,$db,$tab) { return false; },
+	'record_filter'=>function($cmd,$db,$tab) { return false; },
 	'column_authorizer'=>function($cmd,$db,$tab,$col) { return true; },
 	'input_sanitizer'=>function($cmd,$db,$tab,$col,$typ,$val) { return $val; },
 	'input_validator'=>function($cmd,$db,$tab,$col,$typ,$val,$ctx) { return true; },
@@ -479,9 +479,9 @@ for a specific CRUD action.
 
 ## Multi-tenancy
 
-By defining a 'column_authorizer' function that returns an array of filters you can support a multi-tenant database. 
-When you add a 'company_id' column to every table and let 'column_authorizer' function return ```array('company_id,eq,1')``` 
-you can limit access to records from company 1. The returned filter is added to read, update and delete commands (but not to create).
+By defining a 'record_filter' function that returns an array of filters you can support a multi-tenant database.
+When you add a 'company_id' column to every table and let 'record_filter' function return ```array('company_id,eq,1')```
+you can limit access to records from company 1. The returned filter is added to read, update and delete commands (not to create).
 
 ## Sanitizing input
 

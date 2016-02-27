@@ -938,7 +938,7 @@ class REST_CRUD_API {
 
 		// permissions
 		if ($table_authorizer) $this->applyTableAuthorizer($table_authorizer,$action,$database,$tables);
-		if ($record_authorizer) $this->applyRecordAuthorizer($record_authorizer,$action,$database,$tables,$filters);
+		if ($record_filter) $this->applyRecordAuthorizer($record_filter,$action,$database,$tables,$filters);
 		if ($column_authorizer) $this->applyColumnAuthorizer($column_authorizer,$action,$database,$fields);
 
 		if ($post) {
@@ -1170,7 +1170,7 @@ class REST_CRUD_API {
 		$charset = isset($charset)?$charset:null;
 
 		$table_authorizer = isset($table_authorizer)?$table_authorizer:null;
-		$record_authorizer = isset($record_authorizer)?$record_authorizer:null;
+		$record_filter = isset($record_filter)?$record_filter:null;
 		$column_authorizer = isset($column_authorizer)?$column_authorizer:null;
 		$input_sanitizer = isset($input_sanitizer)?$input_sanitizer:null;
 		$input_validator = isset($input_validator)?$input_validator:null;
@@ -1207,7 +1207,7 @@ class REST_CRUD_API {
 			$db = $this->connectDatabase($hostname,$username,$password,$database,$port,$socket,$charset);
 		}
 
-		$this->settings = compact('method', 'request', 'get', 'post', 'database', 'table_authorizer', 'record_authorizer', 'column_authorizer', 'input_sanitizer', 'input_validator', 'db');
+		$this->settings = compact('method', 'request', 'get', 'post', 'database', 'table_authorizer', 'record_filter', 'column_authorizer', 'input_sanitizer', 'input_validator', 'db');
 	}
 
 	public static function php_crud_api_transform(&$tables) {
