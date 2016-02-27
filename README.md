@@ -481,7 +481,8 @@ for a specific CRUD action.
 
 By defining a 'record_filter' function that returns an array of filters you can support a multi-tenant database.
 When you add a 'company_id' column to every table and let 'record_filter' function return ```array('company_id,eq,1')```
-you can limit access to records from company 1. The returned filter is added to read, update and delete commands (not to create).
+you can limit access to records from company 1. The returned filter is added to list, read, update and delete commands.
+NB: You still have to make sure only allowed values are sent when creating new records.
 
 ## Sanitizing input
 
