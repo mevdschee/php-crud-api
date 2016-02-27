@@ -481,7 +481,7 @@ for a specific CRUD action.
 
 By defining a 'column_authorizer' function that returns an array of filters you can support a multi-tenant database. 
 When you add a 'company_id' column to every table and let 'column_authorizer' function return ```array('company_id,eq,1')``` 
-you can limit access to records from company 1. The returned filter is added to read, update and delete (but not to create).
+you can limit access to records from company 1. The returned filter is added to read, update and delete commands (but not to create).
 
 ## Sanitizing input
 
