@@ -28,7 +28,8 @@ This is a single file application! Upload "api.php" somewhere and enjoy!
   - Supports a JSON object as input
   - Condensed JSON ouput: first row contains field names
   - Sanitize and validate input using callbacks
-  - Permission system for databases, tables, records and columns
+  - Permission system for databases, tables, columns and records
+  - Multi-tenant database layouts are supported
   - Both JSONP and CORS support for cross-domain requests
   - Combined requests with support for multiple table names
   - Search support on multiple criteria
