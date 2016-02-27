@@ -37,8 +37,9 @@ class API
 				'database'=>MySQL_CRUD_API_Config::$database,
 				// callbacks
 				'table_authorizer'=>function($action,$database,$table) { return true; },
-				'record_filter'=>function($action,$database,$table) { return ($table=='users'&&$action!='list')?array('id,eq,1'):false; },
 				'column_authorizer'=>function($action,$database,$table,$column) { return !($column=='password'&&$action=='list'); },
+				'record_filter'=>function($action,$database,$table) { return ($table=='posts')?array('id,ne,13'):false; },
+				'tenancy_function'=>function($action,$database,$table,$column) { return ($table=='users'&&$column=='id')?1:null; },
 				'input_sanitizer'=>function($action,$database,$table,$column,$type,$value) { return $value===null?null:strip_tags($value); },
 				'input_validator'=>function($action,$database,$table,$column,$type,$value,$context) { return ($column=='category_id' && !is_numeric($value))?'must be numeric':true; },
 				// for tests
@@ -305,14 +306,14 @@ class MySQL_CRUD_API_Test extends PHPUnit_Framework_TestCase
 		  $test->expect(4+$i);
 		}
 		$test->get('/posts?page=2,2&order=id');
-		$test->expect('{"posts":{"columns":["id","user_id","category_id","content"],"records":[["5","1","1","#1"],["6","1","1","#2"]],"results":12}}');
+		$test->expect('{"posts":{"columns":["id","user_id","category_id","content"],"records":[["5","1","1","#1"],["6","1","1","#2"]],"results":11}}');
 	}
 
 	public function testListWithPaginateLastPage()
 	{
 		$test = new API($this);
 		$test->get('/posts?page=3,5&order=id');
-		$test->expect('{"posts":{"columns":["id","user_id","category_id","content"],"records":[["13","1","1","#9"],["14","1","1","#10"]],"results":12}}');
+		$test->expect('{"posts":{"columns":["id","user_id","category_id","content"],"records":[["14","1","1","#10"]],"results":11}}');
 	}
 
 	public function testListExampleFromReadme()
@@ -438,7 +439,7 @@ class MySQL_CRUD_API_Test extends PHPUnit_Framework_TestCase
 	{
 		$test = new API($this);
 		$test->get('/users,posts,tags');
-		$test->expect('{"users":{"columns":["id","username"],"records":[["1","user1"],["2","user2"]]},"posts":{"relations":{"user_id":"users.id"},"columns":["id","user_id","category_id","content"],"records":[["1","1","1","blog started"],["2","1","2","\u20ac Hello world, \u039a\u03b1\u03bb\u03b7\u03bc\u1f73\u03c1\u03b1 \u03ba\u1f79\u03c3\u03bc\u03b5, \u30b3\u30f3\u30cb\u30c1\u30cf"],["5","1","1","#1"],["6","1","1","#2"],["7","1","1","#3"],["8","1","1","#4"],["9","1","1","#5"],["10","1","1","#6"],["11","1","1","#7"],["12","1","1","#8"],["13","1","1","#9"],["14","1","1","#10"]]},"post_tags":{"relations":{"post_id":"posts.id"},"columns":["id","post_id","tag_id"],"records":[["1","1","1"],["2","1","2"],["3","2","1"],["4","2","2"]]},"tags":{"relations":{"id":"post_tags.tag_id"},"columns":["id","name"],"records":[["1","funny"],["2","important"]]}}');
+		$test->expect('{"users":{"columns":["id","username"],"records":[["1","user1"]]},"posts":{"relations":{"user_id":"users.id"},"columns":["id","user_id","category_id","content"],"records":[["1","1","1","blog started"],["2","1","2","\u20ac Hello world, \u039a\u03b1\u03bb\u03b7\u03bc\u1f73\u03c1\u03b1 \u03ba\u1f79\u03c3\u03bc\u03b5, \u30b3\u30f3\u30cb\u30c1\u30cf"],["5","1","1","#1"],["6","1","1","#2"],["7","1","1","#3"],["8","1","1","#4"],["9","1","1","#5"],["10","1","1","#6"],["11","1","1","#7"],["12","1","1","#8"],["14","1","1","#10"]]},"post_tags":{"relations":{"post_id":"posts.id"},"columns":["id","post_id","tag_id"],"records":[["1","1","1"],["2","1","2"],["3","2","1"],["4","2","2"]]},"tags":{"relations":{"id":"post_tags.tag_id"},"columns":["id","name"],"records":[["1","funny"],["2","important"]]}}');
 	}
 
 	public function testEditUser()
@@ -446,6 +447,22 @@ class MySQL_CRUD_API_Test extends PHPUnit_Framework_TestCase
 		$test = new API($this);
 		$test->put('/users/1','{"password":"testtest"}');
 		$test->expect('1');
+	}
+
+	public function testEditUserWithId()
+	{
+		$test = new API($this);
+		$test->put('/users/1','{"id":"2","password":"testtest2"}');
+		$test->expect('1');
+		$test->get('/users/1');
+		$test->expect('{"id":"1","username":"user1","password":"testtest2"}');
+	}
+
+	public function testReadOtherUser()
+	{
+		$test = new API($this);
+		$test->get('/users/2');
+		$test->expect(false,'Not found (object)');
 	}
 
 	public function testEditOtherUser()

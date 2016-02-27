@@ -561,7 +561,7 @@ class REST_CRUD_API {
 		}
 	}
 
-	protected function applyRecordAuthorizer($callback,$action,$database,$tables,&$filters) {
+	protected function applyRecordFilter($callback,$action,$database,$tables,&$filters) {
 		if (is_callable($callback,true)) foreach ($tables as $i=>$table) {
 			$f = $this->convertFilters($callback($action,$database,$table));
 			if ($f) {
@@ -572,11 +572,42 @@ class REST_CRUD_API {
 		}
 	}
 
+	protected function applyTenancyFunction($callback,$action,$database,$fields,&$filters) {
+		if (is_callable($callback,true)) foreach ($fields as $table=>$keys) {
+			foreach ($keys as $field) {
+				$v = $callback($action,$database,$table,$field->name);
+				if ($v!==null) {
+					if (!isset($filters[$table])) $filters[$table] = array();
+					if (!isset($filters[$table]['and'])) $filters[$table]['and'] = array();
+					$filters[$table]['and'][] = array($field->name,is_array($v)?'IN':'=',$v);
+				}
+			}
+		}
+	}
+
 	protected function applyColumnAuthorizer($callback,$action,$database,&$fields) {
 		if (is_callable($callback,true)) foreach ($fields as $table=>$keys) {
 			foreach ($keys as $field) {
 				if (!$callback($action,$database,$table,$field->name)) {
 					unset($fields[$table][$field->name]);
+				}
+			}
+		}
+	}
+
+	protected function applyInputTenancy($callback,$action,$database,$table,&$input,$keys) {
+		if (is_callable($callback,true)) foreach ((array)$input as $key=>$value) {
+			if (isset($keys[$key])) {
+				$v = $callback($action,$database,$table,$key);
+				if ($v!==null) {
+					if (is_array($v)) {
+						if (in_array($input->$key,$v)) {
+							$v = $input->$key;
+						} else {
+							$v = null;
+						}
+					}
+					$input->$key = $v;
 				}
 			}
 		}
@@ -938,14 +969,16 @@ class REST_CRUD_API {
 
 		// permissions
 		if ($table_authorizer) $this->applyTableAuthorizer($table_authorizer,$action,$database,$tables);
-		if ($record_filter) $this->applyRecordAuthorizer($record_filter,$action,$database,$tables,$filters);
+		if ($record_filter) $this->applyRecordFilter($record_filter,$action,$database,$tables,$filters);
 		if ($column_authorizer) $this->applyColumnAuthorizer($column_authorizer,$action,$database,$fields);
+		if ($tenancy_function) $this->applyTenancyFunction($tenancy_function,$action,$database,$fields,$filters);
 
 		if ($post) {
 			// input
 			$context = $this->retrieveInput($post);
 			$input = $this->filterInputByColumns($context,$fields[$tables[0]]);
 
+			if ($tenancy_function) $this->applyInputTenancy($tenancy_function,$action,$database,$tables[0],$input,$fields[$tables[0]]);
 			if ($input_sanitizer) $this->applyInputSanitizer($input_sanitizer,$action,$database,$tables[0],$input,$fields[$tables[0]]);
 			if ($input_validator) $this->applyInputValidator($input_validator,$action,$database,$tables[0],$input,$fields[$tables[0]],$context);
 
@@ -976,6 +1009,7 @@ class REST_CRUD_API {
 				$params[] = $filter[0];
 				$params[] = $filter[1];
 				$params[] = $filter[2];
+				$first = false;
 			}
 		}
 	}
@@ -1172,6 +1206,7 @@ class REST_CRUD_API {
 		$table_authorizer = isset($table_authorizer)?$table_authorizer:null;
 		$record_filter = isset($record_filter)?$record_filter:null;
 		$column_authorizer = isset($column_authorizer)?$column_authorizer:null;
+		$tenancy_function = isset($tenancy_function)?$tenancy_function:null;
 		$input_sanitizer = isset($input_sanitizer)?$input_sanitizer:null;
 		$input_validator = isset($input_validator)?$input_validator:null;
 
@@ -1207,7 +1242,7 @@ class REST_CRUD_API {
 			$db = $this->connectDatabase($hostname,$username,$password,$database,$port,$socket,$charset);
 		}
 
-		$this->settings = compact('method', 'request', 'get', 'post', 'database', 'table_authorizer', 'record_filter', 'column_authorizer', 'input_sanitizer', 'input_validator', 'db');
+		$this->settings = compact('method', 'request', 'get', 'post', 'database', 'table_authorizer', 'record_filter', 'column_authorizer', 'tenancy_function', 'input_sanitizer', 'input_validator', 'db');
 	}
 
 	public static function php_crud_api_transform(&$tables) {

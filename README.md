@@ -477,12 +477,15 @@ By default a single database is exposed with all it's tables and columns in read
 a 'table_authorizer' and/or a 'column_authorizer' function that returns a boolean indicating whether or not the table or column is allowed
 for a specific CRUD action.
 
+## Record filter
+
+By defining a 'record_filter' function you can apply a forced filter, for instance to implement roles in a database system.
+The rule "you cannot view unpublished blog posts unless you have the editor or admin role" can be implemented with this filter.
+
 ## Multi-tenancy
 
-By defining a 'record_filter' function that returns an array of filters you can support a multi-tenant database.
-When you add a 'company_id' column to every table and let 'record_filter' function return ```array('company_id,eq,1')```
-you can limit access to records from company 1. The returned filter is added to list, read, update and delete commands.
-NB: You still have to make sure only allowed values are sent when creating new records.
+The 'tenant_function' allows you to expose an API for a multi-tenant database schema. In the simplest model all tables have a column
+named 'customer_id' and the 'tenant_function' is defined as ```return array('customer_id,eq,'.$_SESSION['customer_id']);````
 
 ## Sanitizing input
 
