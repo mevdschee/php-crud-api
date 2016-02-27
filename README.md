@@ -64,7 +64,7 @@ $api = new MySQL_CRUD_API(array(
 	'charset=>'utf8',
 // callbacks with their default behavior
 	'table_authorizer'=>function($cmd,$db,$tab) { return true; },
-	'record_authorizer'=>function($cmd,$db,$tab) { return true; },
+	'record_authorizer'=>function($cmd,$db,$tab) { return false; },
 	'column_authorizer'=>function($cmd,$db,$tab,$col) { return true; },
 	'input_sanitizer'=>function($cmd,$db,$tab,$col,$typ,$val) { return $val; },
 	'input_validator'=>function($cmd,$db,$tab,$col,$typ,$val,$ctx) { return true; },
