@@ -477,6 +477,12 @@ By default a single database is exposed with all it's tables and columns in read
 a 'table_authorizer' and/or a 'column_authorizer' function that returns a boolean indicating whether or not the table or column is allowed
 for a specific CRUD action.
 
+## Multi-tenancy
+
+By defining a 'column_authorizer' function that returns an array of filters you can support a multi-tenant database. 
+When you add a 'company_id' column to every table and let 'column_authorizer' function return array('company_id,eq,1') 
+you can limit access to records from company 1. The returned filter is added to read, update and delete (but not to create).
+
 ## Sanitizing input
 
 By default all input is accepted and sent to the database. If you want to strip (certain) HTML tags before storing you may specify a
