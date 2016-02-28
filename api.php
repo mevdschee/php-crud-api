@@ -898,17 +898,13 @@ class REST_CRUD_API {
 		return $fields;
 	}
 
-	protected function findInputFields($table,$columns,$database,$db) {
-		$fields = array();
-		$fields[$table] = $this->findTableFields($table,$database,$db);
-		$fields[$table] = $this->filterFieldsByColumns($fields[$table],$columns);
-		return $fields;
-	}
-
 	protected function filterFieldsByColumns($fields,$columns) {
-		if ($columns) foreach (array_keys($fields) as $key) {
-			if (!in_array($key, $columns)) {
-				unset($fields[$key]);
+		if ($columns) {
+			$columns = explode(',',$columns);
+			foreach (array_keys($fields) as $key) {
+				if (!in_array($key, $columns)) {
+					unset($fields[$key]);
+				}
 			}
 		}
 		return $fields;
@@ -923,9 +919,9 @@ class REST_CRUD_API {
 		return $fields;
 	}
 
-	protected function filterInputByColumns($input,$columns) {
-		if ($columns) foreach (array_keys((array)$input) as $key) {
-			if (!isset($columns[$key])) {
+	protected function filterInputByFields($input,$fields) {
+		if ($fields) foreach (array_keys((array)$input) as $key) {
+			if (!isset($fields[$key])) {
 				unset($input->$key);
 			}
 		}
@@ -959,7 +955,6 @@ class REST_CRUD_API {
 		$tables    = $this->processTablesParameter($database,$tables,$action,$db);
 		$key       = $this->processKeyParameter($key,$tables,$database,$db);
 		$filters   = $this->processFiltersParameter($tables,$satisfy,$filters);
-		if ($columns) $columns = explode(',',$columns);
 		$page      = $this->processPageParameter($page);
 		$order     = $this->processOrderParameter($order);
 
@@ -976,7 +971,7 @@ class REST_CRUD_API {
 		if ($post) {
 			// input
 			$context = $this->retrieveInput($post);
-			$input = $this->filterInputByColumns($context,$fields[$tables[0]]);
+			$input = $this->filterInputByFields($context,$fields[$tables[0]]);
 
 			if ($tenancy_function) $this->applyInputTenancy($tenancy_function,$action,$database,$tables[0],$input,$fields[$tables[0]]);
 			if ($input_sanitizer) $this->applyInputSanitizer($input_sanitizer,$action,$database,$tables[0],$input,$fields[$tables[0]]);
