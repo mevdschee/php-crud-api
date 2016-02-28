@@ -723,8 +723,8 @@ class REST_CRUD_API {
 
 	protected function convertFilters($filters) {
 		$result = array();
-		if ($filters) foreach ($filters as $filter) {
-			if ($filter) {
+		if ($filters) {
+			foreach ($filters as $filter) {
 				$filter = explode(',',$filter,3);
 				if (count($filter)==3) {
 					$match = $filter[1];
