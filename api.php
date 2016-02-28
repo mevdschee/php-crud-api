@@ -723,9 +723,9 @@ class REST_CRUD_API {
 
 	protected function convertFilter($field, $comparator, $value) {
 		switch (strtolower($comparator)) {
-			case 'cs': $value = '%'.$this->likeEscape($value).'%'; break;
-			case 'sw': $value = $this->likeEscape($value).'%'; break;
-			case 'ew': $value = '%'.$this->likeEscape($value); break;
+			case 'cs': $comparator = 'LIKE'; $value = '%'.$this->likeEscape($value).'%'; break;
+			case 'sw': $comparator = 'LIKE'; $value = $this->likeEscape($value).'%'; break;
+			case 'ew': $comparator = 'LIKE'; $value = '%'.$this->likeEscape($value); break;
 			case 'eq': $comparator = '='; break;
 			case 'ne': $comparator = '<>'; break;
 			case 'lt': $comparator = '<'; break;
