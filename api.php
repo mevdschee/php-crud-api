@@ -721,28 +721,29 @@ class REST_CRUD_API {
 		return $order;
 	}
 
+	protected function convertFilter($field, $comparator, $value) {
+		switch (strtolower($comparator)) {
+			case 'cs': $value = '%'.$this->likeEscape($value).'%'; break;
+			case 'sw': $value = $this->likeEscape($value).'%'; break;
+			case 'ew': $value = '%'.$this->likeEscape($value); break;
+			case 'eq': $comparator = '='; break;
+			case 'ne': $comparator = '<>'; break;
+			case 'lt': $comparator = '<'; break;
+			case 'le': $comparator = '<='; break;
+			case 'ge': $comparator = '>='; break;
+			case 'gt': $comparator = '>'; break;
+			case 'in': $comparator = 'IN'; $value = explode(',',$value); break;
+		}
+		return array($field, $comparator, $value);
+	}
+
 	protected function convertFilters($filters) {
 		$result = array();
 		if ($filters) {
-			foreach ($filters as $filter) {
-				$filter = explode(',',$filter,3);
+			for ($i=0;$i<count($filters);$i++) {
+				$filter = explode(',',$filters[$i],3);
 				if (count($filter)==3) {
-					$match = $filter[1];
-					$filter[1] = 'LIKE';
-					if ($match=='cs') $filter[2] = '%'.$this->likeEscape($filter[2]).'%';
-					if ($match=='sw') $filter[2] = $this->likeEscape($filter[2]).'%';
-					if ($match=='ew') $filter[2] = '%'.$this->likeEscape($filter[2]);
-					if ($match=='eq') $filter[1] = '=';
-					if ($match=='ne') $filter[1] = '<>';
-					if ($match=='lt') $filter[1] = '<';
-					if ($match=='le') $filter[1] = '<=';
-					if ($match=='ge') $filter[1] = '>=';
-					if ($match=='gt') $filter[1] = '>';
-					if ($match=='in') {
-						$filter[1] = 'IN';
-						$filter[2] = explode(',',$filter[2]);
-					}
-					$result[] = $filter;
+					$result[] = $this->convertFilter($filter[0],$filter[1],$filter[2]);
 				}
 			}
 		}
