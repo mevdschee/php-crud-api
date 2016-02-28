@@ -951,7 +951,7 @@ class REST_CRUD_API {
 		$callback  = $this->parseGetParameter($get, 'callback', 'a-zA-Z0-9\-_');
 		$page      = $this->parseGetParameter($get, 'page', '0-9,');
 		$filters   = $this->parseGetParameterArray($get, 'filter', false);
-		$satisfy   = $this->parseGetParameter($get, 'satisfy', 'a-z');
+		$satisfy   = $this->parseGetParameter($get, 'satisfy', 'a-zA-Z');
 		$columns   = $this->parseGetParameter($get, 'columns', 'a-zA-Z0-9\-_,');
 		$order     = $this->parseGetParameter($get, 'order', 'a-zA-Z0-9\-_,');
 		$transform = $this->parseGetParameter($get, 'transform', '1');
