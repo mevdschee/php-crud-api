@@ -713,11 +713,11 @@ class REST_CRUD_API {
 	}
 
 	protected function processOrderParameter($order) {
-		if ($order) {
-			$order = explode(',',$order,2);
-			if (count($order)<2) $order[1]='ASC';
-			$order[1] = strtoupper($order[1])=='DESC'?'DESC':'ASC';
-		}
+		if (!$order) return false;
+		$order = explode(',',$order,2);
+		if (count($order)<2) $order[1]='ASC';
+		if (!strlen($order[0])) return false;
+		$order[1] = strtoupper($order[1])=='DESC'?'DESC':'ASC';
 		return $order;
 	}
 
@@ -758,11 +758,10 @@ class REST_CRUD_API {
 	}
 
 	protected function processPageParameter($page) {
-		if ($page) {
-			$page = explode(',',$page,2);
-			if (count($page)<2) $page[1]=20;
-			$page[0] = ($page[0]-1)*$page[1];
-		}
+		if (!$page) return false;
+		$page = explode(',',$page,2);
+		if (count($page)<2) $page[1]=20;
+		$page[0] = ($page[0]-1)*$page[1];
 		return $page;
 	}
 
