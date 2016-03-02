@@ -1186,6 +1186,14 @@ class REST_CRUD_API {
 		$this->endOutput($callback);
 	}
 
+	protected function getRequestPathInfo() {
+		if (isset($_GET['path'])) $path = $_GET['path'];
+		elseif (isset($_SERVER['PATH_INFO'])) $path = $_SERVER['PATH_INFO'];
+		elseif (isset($_SERVER['REQUEST_URI'])) $path = substr($_SERVER['REQUEST_URI'],strlen($_SERVER['SCRIPT_NAME']));
+		else $path = '';
+		return $path;
+	}
+
 	public function __construct($config) {
 		extract($config);
 
@@ -1216,7 +1224,7 @@ class REST_CRUD_API {
 			$method = $_SERVER['REQUEST_METHOD'];
 		}
 		if (!$request) {
-			$request = isset($_SERVER['PATH_INFO'])?$_SERVER['PATH_INFO']:'';
+			$request = $this->getRequestPathInfo();
 		}
 		if (!$get) {
 			$get = $_GET;
