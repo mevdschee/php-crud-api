@@ -1187,10 +1187,10 @@ class REST_CRUD_API {
 	}
 
 	protected function getRequestPathInfo() {
+		$path = '';
 		if (isset($_GET['path'])) $path = $_GET['path'];
-		elseif (isset($_SERVER['PATH_INFO'])) $path = $_SERVER['PATH_INFO'];
-		elseif (isset($_SERVER['REQUEST_URI'])) $path = substr($_SERVER['REQUEST_URI'],strlen($_SERVER['SCRIPT_NAME']));
-		else $path = '';
+		if (!$path && isset($_SERVER['PATH_INFO'])) $path = $_SERVER['PATH_INFO'];
+		if (!$path && isset($_SERVER['REQUEST_URI'])) $path = substr($_SERVER['REQUEST_URI'],strlen($_SERVER['SCRIPT_NAME']));
 		return $path;
 	}
 
