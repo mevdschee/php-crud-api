@@ -1216,7 +1216,7 @@ class REST_CRUD_API {
 			$method = $_SERVER['REQUEST_METHOD'];
 		}
 		if (!$request) {
-			$request = $request = isset($_SERVER['PATH_INFO'])?$_SERVER['PATH_INFO']:'';
+			$request = isset($_SERVER['PATH_INFO'])?$_SERVER['PATH_INFO']:'';
 		}
 		if (!$get) {
 			$get = $_GET;
