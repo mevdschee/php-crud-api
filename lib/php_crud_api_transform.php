@@ -8,10 +8,12 @@ function php_crud_api_transform(&$tables) {
 				foreach ($tables[$table_name]['columns'] as $index=>$column) {
 					$object[$column] = $record[$index];
 					foreach ($tables as $relation=>$reltable) {
-						foreach ($reltable['relations'] as $key=>$target) {
-							if ($target == "$table_name.$column") {
-								$column_indices = array_flip($reltable['columns']);
-								$object[$relation] = $get_objects($tables,$relation,$column_indices[$key],$record[$index]);
+						if (isset($reltable['relations'])) {
+							foreach ($reltable['relations'] as $key=>$target) {
+								if ($target == "$table_name.$column") {
+									$column_indices = array_flip($reltable['columns']);
+									$object[$relation] = $get_objects($tables,$relation,$column_indices[$key],$record[$index]);
+								}
 							}
 						}
 					}
