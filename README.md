@@ -58,8 +58,8 @@ These are all the configuration options and their default values:
 
 ```
 $api = new PHP_CRUD_API(array(
-  'dbengine=>'MySQL',
-  'username=>'root',
+	'dbengine=>'MySQL',
+	'username=>'root',
 	'password=>null,
 	'database=>false,
 // for connectivity (defaults to localhost):
@@ -75,8 +75,8 @@ $api = new PHP_CRUD_API(array(
 	'input_sanitizer'=>function($cmd,$db,$tab,$col,$typ,$val) { return $val; },
 	'input_validator'=>function($cmd,$db,$tab,$col,$typ,$val,$ctx) { return true; },
 // dependencies (added for unit testing):
-  'db'=>null,
-  'method'=>$_SERVER['REQUEST_METHOD'],
+	'db'=>null,
+	'method'=>$_SERVER['REQUEST_METHOD'],
 	'request'=>$_SERVER['PATH_INFO'],
 	'get'=>$_GET,
 	'post'=>'php://input',
