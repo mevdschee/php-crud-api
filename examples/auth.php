@@ -12,7 +12,8 @@ if (!isset($_SERVER['PHP_AUTH_USER'])) {
 
 include "api.php";
 
-$api = new SQLSRV_CRUD_API(array(
+$api = new PHP_CRUD_API(array(
+		'dbengine'=>'SQLServer',
 		'hostname'=>'(local)',
 		'username'=>'',
 		'password'=>'',

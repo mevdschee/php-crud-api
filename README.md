@@ -1,7 +1,7 @@
 [![Average time to resolve an issue](http://isitmaintained.com/badge/resolution/mevdschee/php-crud-api.svg)](http://isitmaintained.com/project/mevdschee/php-crud-api "Average time to resolve an issue")
 [![Percentage of issues still open](http://isitmaintained.com/badge/open/mevdschee/php-crud-api.svg)](http://isitmaintained.com/project/mevdschee/php-crud-api "Percentage of issues still open")
 
-# PHP-CRUD-API
+# PHP_CRUD_API
 
 Single file PHP script that adds a REST API to a MySQL InnoDB database. Alternatively both PostgreSQL 9 and MS SQL Server 2012 are fully supported.
 
@@ -47,7 +47,7 @@ Edit the following lines in the bottom of the file "api.php":
 
 ```
 $api = new PHP_CRUD_API(array(
-  'username'=>'xxx',
+	'username'=>'xxx',
 	'password'=>'xxx',
 	'database'=>'xxx',
 ));
@@ -58,15 +58,15 @@ These are all the configuration options and their default values:
 
 ```
 $api = new PHP_CRUD_API(array(
-	'dbengine=>'MySQL',
-	'username=>'root',
-	'password=>null,
-	'database=>false,
+	'dbengine'=>'MySQL',
+	'username'=>'root',
+	'password'=>null,
+	'database'=>false,
 // for connectivity (defaults to localhost):
 	'hostname'=>null,
-	'port=>null,
-	'socket=>null,
-	'charset=>'utf8',
+	'port'=>null,
+	'socket'=>null,
+	'charset'=>'utf8',
 // callbacks with their default behavior
 	'table_authorizer'=>function($cmd,$db,$tab) { return true; },
 	'record_filter'=>function($cmd,$db,$tab) { return false; },
