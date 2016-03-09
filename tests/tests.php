@@ -23,14 +23,8 @@ class API
 
 		$data = 'data://text/plain;base64,'.base64_encode($data);
 
-		switch(MySQL_CRUD_API_Config::$dbengine) {
-			case 'mssql':	$class = 'MsSQL_CRUD_API'; break;
-			case 'pgsql':	$class = 'PgSQL_CRUD_API'; break;
-			case 'mysql':	$class = 'MySQL_CRUD_API'; break;
-			default:	die("DB engine not supported: $dbengine\n");
-		}
-
-		$this->api = new $class(array(
+		$this->api = new PHP_CRUD_API(array(
+				'dbengine'=>MySQL_CRUD_API_Config::$dbengine,
 				'hostname'=>MySQL_CRUD_API_Config::$hostname,
 				'username'=>MySQL_CRUD_API_Config::$username,
 				'password'=>MySQL_CRUD_API_Config::$password,
@@ -107,9 +101,9 @@ class MySQL_CRUD_API_Test extends PHPUnit_Framework_TestCase
 		$password = MySQL_CRUD_API_Config::$password;
 		$database = MySQL_CRUD_API_Config::$database;
 
-		$fixture = __DIR__.'/blog.'.$dbengine;
+		$fixture = __DIR__.'/blog_'.strtolower($dbengine).'.sql';
 
-		if ($dbengine == 'mysql') {
+		if ($dbengine == 'MySQL') {
 
 			$link = mysqli_connect($hostname, $username, $password, $database);
 			if (mysqli_connect_errno()) {
@@ -127,7 +121,7 @@ class MySQL_CRUD_API_Test extends PHPUnit_Framework_TestCase
 
 			mysqli_close($link);
 
-		} elseif ($dbengine == 'mssql') {
+		} elseif ($dbengine == 'SQLServer') {
 
 			$connectionInfo = array();
 			$connectionInfo['UID']=$username;
@@ -148,7 +142,7 @@ class MySQL_CRUD_API_Test extends PHPUnit_Framework_TestCase
 			}
 			sqlsrv_close($conn);
 
-		} elseif ($dbengine == 'pgsql') {
+		} elseif ($dbengine == 'PostgreSQL') {
 
 			$e = function ($v) { return str_replace(array('\'','\\'),array('\\\'','\\\\'),$v); };
 			$hostname = $e($hostname);

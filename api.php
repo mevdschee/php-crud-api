@@ -1,8 +1,27 @@
 <?php
-class MySQL_CRUD_API extends REST_CRUD_API {
+interface DatabaseInterface {
+	public function get_sql($name);
+	public function connectDatabase($hostname,$username,$password,$database,$port,$socket,$charset);
+	public function query($sql,$params);
+	public function fetch_assoc($result);
+	public function fetch_row($result);
+	public function insert_id($result);
+	public function affected_rows($result);
+	public function close($result);
+	public function fetch_fields($result);
+	public function add_limit_to_sql($sql,$limit,$offset);
+	public function likeEscape($string);
+	public function is_binary_type($field);
+	public function base64_encode($string);
+	public function getDefaultCharset();
+}
 
-	public function __construct($config) {
-		parent::__construct($config);
+class MySQL implements DatabaseInterface {
+
+	protected $db;
+	protected $queries;
+
+	public function __construct() {
 		$this->queries = array(
 			'reflect_table'=>'SELECT
 					"TABLE_NAME"
@@ -58,7 +77,11 @@ class MySQL_CRUD_API extends REST_CRUD_API {
 		);
 	}
 
-	protected function connectDatabase($hostname,$username,$password,$database,$port,$socket,$charset) {
+	public function get_sql($name) {
+		return isset($this->queries[$name])?$this->queries[$name]:false;
+	}
+
+	public function connectDatabase($hostname,$username,$password,$database,$port,$socket,$charset) {
 		$db = mysqli_connect($hostname,$username,$password,$database,$port,$socket);
 		if (mysqli_connect_errno()) {
 			throw new \Exception('Connect failed. '.mysqli_connect_error());
@@ -69,10 +92,11 @@ class MySQL_CRUD_API extends REST_CRUD_API {
 		if (!mysqli_query($db,'SET SESSION sql_mode = \'ANSI_QUOTES\';')) {
 			throw new \Exception('Error setting ANSI quotes. '.mysqli_error($db));
 		}
-		return $db;
+		$this->db = $db;
 	}
 
-	protected function query($db,$sql,$params) {
+	public function query($sql,$params) {
+		$db = $this->db;
 		$sql = preg_replace_callback('/\!|\?/', function ($matches) use (&$db,&$params) {
 			$param = array_shift($params);
 			if ($matches[0]=='!') return preg_replace('/[^a-zA-Z0-9\-_=<>]/','',$param);
@@ -89,57 +113,59 @@ class MySQL_CRUD_API extends REST_CRUD_API {
 		return mysqli_query($db,$sql);
 	}
 
-	protected function fetch_assoc($result) {
+	public function fetch_assoc($result) {
 		return mysqli_fetch_assoc($result);
 	}
 
-	protected function fetch_row($result) {
+	public function fetch_row($result) {
 		return mysqli_fetch_row($result);
 	}
 
-	protected function insert_id($db,$result) {
-		return mysqli_insert_id($db);
+	public function insert_id($result) {
+		return mysqli_insert_id($this->db);
 	}
 
-	protected function affected_rows($db,$result) {
-		return mysqli_affected_rows($db);
+	public function affected_rows($result) {
+		return mysqli_affected_rows($this->db);
 	}
 
-	protected function close($result) {
+	public function close($result) {
 		return mysqli_free_result($result);
 	}
 
-	protected function fetch_fields($result) {
+	public function fetch_fields($result) {
 		return mysqli_fetch_fields($result);
 	}
 
-	protected function add_limit_to_sql($sql,$limit,$offset) {
+	public function add_limit_to_sql($sql,$limit,$offset) {
 		return "$sql LIMIT $limit OFFSET $offset";
 	}
 
-	protected function likeEscape($string) {
+	public function likeEscape($string) {
 		return addcslashes($string,'%_');
 	}
 
-	protected function is_binary_type($field) {
+	public function is_binary_type($field) {
 		//echo "$field->name: $field->type ($field->flags)\n";
 		return (($field->flags & 128) && ($field->type>=249) && ($field->type<=252));
 	}
 
-	protected function base64_encode($string) {
+	public function base64_encode($string) {
 		return base64_encode($string);
 	}
 
-	protected function getDefaultCharset() {
+	public function getDefaultCharset() {
 		return 'utf8';
 	}
 
 }
 
-class PgSQL_CRUD_API extends REST_CRUD_API {
+class PostgreSQL implements DatabaseInterface {
 
-	public function __construct($config) {
-		parent::__construct($config);
+	protected $db;
+	protected $queries;
+
+	public function __construct() {
 		$this->queries = array(
 			'reflect_table'=>'select
 					"table_name"
@@ -213,7 +239,11 @@ class PgSQL_CRUD_API extends REST_CRUD_API {
 		);
 	}
 
-	protected function connectDatabase($hostname,$username,$password,$database,$port,$socket,$charset) {
+	public function get_sql($name) {
+		return isset($this->queries[$name])?$this->queries[$name]:false;
+	}
+
+	public function connectDatabase($hostname,$username,$password,$database,$port,$socket,$charset) {
 		$e = function ($v) { return str_replace(array('\'','\\'),array('\\\'','\\\\'),$v); };
 		$conn_string = '';
 		if ($hostname || $socket) {
@@ -242,10 +272,11 @@ class PgSQL_CRUD_API extends REST_CRUD_API {
 			$conn_string.= " options='--client_encoding=$charset'";
 		}
 		$db = pg_connect($conn_string);
-		return $db;
+		$this->db = $db;
 	}
 
-	protected function query($db,$sql,$params) {
+	public function query($sql,$params) {
+		$db = $this->db;
 		$sql = preg_replace_callback('/\!|\?/', function ($matches) use (&$db,&$params) {
 			$param = array_shift($params);
 			if ($matches[0]=='!') return preg_replace('/[^a-zA-Z0-9\-_=<>]/','',$param);
@@ -265,28 +296,28 @@ class PgSQL_CRUD_API extends REST_CRUD_API {
 		return @pg_query($db,$sql);
 	}
 
-	protected function fetch_assoc($result) {
+	public function fetch_assoc($result) {
 		return pg_fetch_assoc($result);
 	}
 
-	protected function fetch_row($result) {
+	public function fetch_row($result) {
 		return pg_fetch_row($result);
 	}
 
-	protected function insert_id($db,$result) {
+	public function insert_id($result) {
 		list($id) = pg_fetch_row($result);
 		return (int)$id;
 	}
 
-	protected function affected_rows($db,$result) {
+	public function affected_rows($result) {
 		return pg_affected_rows($result);
 	}
 
-	protected function close($result) {
+	public function close($result) {
 		return pg_free_result($result);
 	}
 
-	protected function fetch_fields($result) {
+	public function fetch_fields($result) {
 		$keys = array();
 		for($i=0;$i<pg_num_fields($result);$i++) {
 			$field = array();
@@ -297,32 +328,34 @@ class PgSQL_CRUD_API extends REST_CRUD_API {
 		return $keys;
 	}
 
-	protected function add_limit_to_sql($sql,$limit,$offset) {
+	public function add_limit_to_sql($sql,$limit,$offset) {
 		return "$sql LIMIT $limit OFFSET $offset";
 	}
 
-	protected function likeEscape($string) {
+	public function likeEscape($string) {
 		return addcslashes($string,'%_');
 	}
 
-	protected function is_binary_type($field) {
+	public function is_binary_type($field) {
 		return $field->type == 'bytea';
 	}
 
-	protected function base64_encode($string) {
+	public function base64_encode($string) {
 		return base64_encode(hex2bin(substr($string,2)));
 	}
 
-	protected function getDefaultCharset() {
+	public function getDefaultCharset() {
 		return 'UTF8';
 	}
 
 }
 
-class MsSQL_CRUD_API extends REST_CRUD_API {
+class SQLServer implements DatabaseInterface {
 
-	public function __construct($config) {
-		parent::__construct($config);
+	protected $db;
+	protected $queries;
+
+	public function __construct() {
 		$this->queries = array(
 			'reflect_table'=>'SELECT
 					"TABLE_NAME"
@@ -396,7 +429,11 @@ class MsSQL_CRUD_API extends REST_CRUD_API {
 		);
 	}
 
-	protected function connectDatabase($hostname,$username,$password,$database,$port,$socket,$charset) {
+	public function get_sql($name) {
+		return isset($this->queries[$name])?$this->queries[$name]:false;
+	}
+
+	public function connectDatabase($hostname,$username,$password,$database,$port,$socket,$charset) {
 		$connectionInfo = array();
 		if ($port) $hostname.=','.$port;
 		if ($username) $connectionInfo['UID']=$username;
@@ -413,11 +450,12 @@ class MsSQL_CRUD_API extends REST_CRUD_API {
 		if ($socket) {
 			throw new \Exception('Socket connection is not supported.');
 		}
-		return $db;
+		$this->db = $db;
 	}
 
-	protected function query($db,$sql,$params) {
+	public function query($sql,$params) {
 		$args = array();
+		$db = $this->db;
 		$sql = preg_replace_callback('/\!|\?/', function ($matches) use (&$db,&$params,&$args) {
 			static $i=-1;
 			$i++;
@@ -452,33 +490,33 @@ class MsSQL_CRUD_API extends REST_CRUD_API {
 		return sqlsrv_query($db,$sql,$args)?:null;
 	}
 
-	protected function fetch_assoc($result) {
+	public function fetch_assoc($result) {
 		$values = sqlsrv_fetch_array($result, SQLSRV_FETCH_ASSOC);
 		if ($values) $values = array_map(function($v){ return is_null($v)?null:(string)$v; },$values);
 		return $values;
 	}
 
-	protected function fetch_row($result) {
+	public function fetch_row($result) {
 		$values = sqlsrv_fetch_array($result, SQLSRV_FETCH_NUMERIC);
 		if ($values) $values = array_map(function($v){ return is_null($v)?null:(string)$v; },$values);
 		return $values;
 	}
 
-	protected function insert_id($db,$result) {
+	public function insert_id($result) {
 		sqlsrv_next_result($result);
 		sqlsrv_fetch($result);
 		return (int)sqlsrv_get_field($result, 0);
 	}
 
-	protected function affected_rows($db,$result) {
+	public function affected_rows($result) {
 		return sqlsrv_rows_affected($result);
 	}
 
-	protected function close($result) {
+	public function close($result) {
 		return sqlsrv_free_stmt($result);
 	}
 
-	protected function fetch_fields($result) {
+	public function fetch_fields($result) {
 		//var_dump(sqlsrv_field_metadata($result));
 		return array_map(function($a){
 			$p = array();
@@ -489,30 +527,29 @@ class MsSQL_CRUD_API extends REST_CRUD_API {
 		},sqlsrv_field_metadata($result));
 	}
 
-	protected function add_limit_to_sql($sql,$limit,$offset) {
+	public function add_limit_to_sql($sql,$limit,$offset) {
 		return "$sql OFFSET $offset ROWS FETCH NEXT $limit ROWS ONLY";
 	}
 
-	protected function likeEscape($string) {
+	public function likeEscape($string) {
 		return str_replace(array('%','_'),array('[%]','[_]'),$string);
 	}
 
-	protected function is_binary_type($field) {
+	public function is_binary_type($field) {
 		return ($field->type>=-4 && $field->type<=-2);
 	}
 
-	protected function base64_encode($string) {
+	public function base64_encode($string) {
 		return base64_encode($string);
 	}
 
-	protected function getDefaultCharset() {
+	public function getDefaultCharset() {
 		return 'UTF-8';
 	}
 }
 
-class REST_CRUD_API {
+class PHP_CRUD_API {
 
-	protected $queries;
 	protected $settings;
 
 	protected function mapMethodToAction($method,$key) {
@@ -561,9 +598,9 @@ class REST_CRUD_API {
 		}
 	}
 
-	protected function applyRecordFilter($callback,$action,$database,$tables,&$filters) {
+	protected function applyRecordFilter($callback,$action,$database,$tables,&$filters,$db) {
 		if (is_callable($callback,true)) foreach ($tables as $i=>$table) {
-			$f = $this->convertFilters($callback($action,$database,$table));
+			$f = $this->convertFilters($db,$callback($action,$database,$table));
 			if ($f) {
 				if (!isset($filters[$table])) $filters[$table] = array();
 				if (!isset($filters[$table]['and'])) $filters[$table]['and'] = array();
@@ -638,9 +675,9 @@ class REST_CRUD_API {
 		$table_array = explode(',',$tables);
 		$table_list = array();
 		foreach ($table_array as $table) {
-			if ($result = $this->query($db,$this->queries['reflect_table'],array($table,$database))) {
-				while ($row = $this->fetch_row($result)) $table_list[] = $row[0];
-				$this->close($result);
+			if ($result = $db->query($db->get_sql('reflect_table'),array($table,$database))) {
+				while ($row = $db->fetch_row($result)) $table_list[] = $row[0];
+				$db->close($result);
 				if ($action!='list') break;
 			}
 		}
@@ -701,12 +738,12 @@ class REST_CRUD_API {
 		if (!$key) return false;
 		$count = 0;
 		$field = false;
-		if ($result = $this->query($db,$this->queries['reflect_pk'],array($tables[0],$database))) {
-			while ($row = $this->fetch_row($result)) {
+		if ($result = $db->query($db->get_sql('reflect_pk'),array($tables[0],$database))) {
+			while ($row = $db->fetch_row($result)) {
 				$count++;
 				$field = $row[0];
 			}
-			$this->close($result);
+			$db->close($result);
 		}
 		if ($count!=1 || $field==false) $this->exitWith404('1pk');
 		return array($key,$field);
@@ -721,11 +758,11 @@ class REST_CRUD_API {
 		return $order;
 	}
 
-	protected function convertFilter($field, $comparator, $value) {
+	protected function convertFilter($db, $field, $comparator, $value) {
 		switch (strtolower($comparator)) {
-			case 'cs': $comparator = 'LIKE'; $value = '%'.$this->likeEscape($value).'%'; break;
-			case 'sw': $comparator = 'LIKE'; $value = $this->likeEscape($value).'%'; break;
-			case 'ew': $comparator = 'LIKE'; $value = '%'.$this->likeEscape($value); break;
+			case 'cs': $comparator = 'LIKE'; $value = '%'.$db->likeEscape($value).'%'; break;
+			case 'sw': $comparator = 'LIKE'; $value = $db->likeEscape($value).'%'; break;
+			case 'ew': $comparator = 'LIKE'; $value = '%'.$db->likeEscape($value); break;
 			case 'eq': $comparator = '='; break;
 			case 'ne': $comparator = '<>'; break;
 			case 'lt': $comparator = '<'; break;
@@ -737,21 +774,21 @@ class REST_CRUD_API {
 		return array($field, $comparator, $value);
 	}
 
-	protected function convertFilters($filters) {
+	protected function convertFilters($db,$filters) {
 		$result = array();
 		if ($filters) {
 			for ($i=0;$i<count($filters);$i++) {
 				$filter = explode(',',$filters[$i],3);
 				if (count($filter)==3) {
-					$result[] = $this->convertFilter($filter[0],$filter[1],$filter[2]);
+					$result[] = $this->convertFilter($db,$filter[0],$filter[1],$filter[2]);
 				}
 			}
 		}
 		return $result;
 	}
 
-	protected function processFiltersParameter($tables,$satisfy,$filters) {
-		$result = $this->convertFilters($filters);
+	protected function processFiltersParameter($tables,$satisfy,$filters,$db) {
+		$result = $this->convertFilters($db, $filters);
 		if (!$result) return array();
 		$and = ($satisfy && strtolower($satisfy)=='any')?'or':'and';
 		return array($tables[0]=>array($and=>$result));
@@ -776,14 +813,14 @@ class REST_CRUD_API {
 		if (!isset($filters[$table]['or'])) $filters[$table]['or'] = array();
 		$filters[$table]['or'][] = array($key[1],'=',$key[0]);
 		$this->addWhereFromFilters($filters[$table],$sql,$params);
-		if ($result = $this->query($db,$sql,$params)) {
-			$object = $this->fetch_assoc($result);
+		if ($result = $db->query($sql,$params)) {
+			$object = $db->fetch_assoc($result);
 			foreach ($fields[$table] as $field) {
-				if ($this->is_binary_type($field) && $object[$field->name]) {
-					$object[$field->name] = $this->base64_encode($object[$field->name]);
+				if ($db->is_binary_type($field) && $object[$field->name]) {
+					$object[$field->name] = $db->base64_encode($object[$field->name]);
 				}
 			}
-			$this->close($result);
+			$db->close($result);
 		}
 		return $object;
 	}
@@ -795,9 +832,9 @@ class REST_CRUD_API {
 		$values = implode(',',str_split(str_repeat('?', count($input))));
 		$params = array_merge(array_keys($input),array_values($input));
 		array_unshift($params, $tables[0]);
-		$result = $this->query($db,'INSERT INTO "!" ("'.$keys.'") VALUES ('.$values.')',$params);
+		$result = $db->query('INSERT INTO "!" ("'.$keys.'") VALUES ('.$values.')',$params);
 		if (!$result) return null;
-		return $this->insert_id($db,$result);
+		return $db->insert_id($result);
 	}
 
 	protected function updateObject($key,$input,$filters,$tables,$db) {
@@ -817,8 +854,8 @@ class REST_CRUD_API {
 		if (!isset($filters[$table]['or'])) $filters[$table]['or'] = array();
 		$filters[$table]['or'][] = array($key[1],'=',$key[0]);
 		$this->addWhereFromFilters($filters[$table],$sql,$params);
-		$result = $this->query($db,$sql,$params);
-		return $this->affected_rows($db, $result);
+		$result = $db->query($sql,$params);
+		return $db->affected_rows($result);
 	}
 
 	protected function deleteObject($key,$filters,$tables,$db) {
@@ -829,8 +866,8 @@ class REST_CRUD_API {
 		if (!isset($filters[$table]['or'])) $filters[$table]['or'] = array();
 		$filters[$table]['or'][] = array($key[1],'=',$key[0]);
 		$this->addWhereFromFilters($filters[$table],$sql,$params);
-		$result = $this->query($db,$sql,$params);
-		return $this->affected_rows($db, $result);
+		$result = $db->query($sql,$params);
+		return $db->affected_rows($result);
 	}
 
 	protected function findRelations($tables,$database,$db) {
@@ -842,20 +879,20 @@ class REST_CRUD_API {
 			$table0 = array_shift($tables);
 			$tableset[] = $table0;
 
-			$result = $this->query($db,$this->queries['reflect_belongs_to'],array($table0,$tables,$database,$database));
-			while ($row = $this->fetch_row($result)) {
+			$result = $db->query($db->get_sql('reflect_belongs_to'),array($table0,$tables,$database,$database));
+			while ($row = $db->fetch_row($result)) {
 				$collect[$row[0]][$row[1]]=array();
 				$select[$row[2]][$row[3]]=array($row[0],$row[1]);
 				if (!in_array($row[0],$tableset)) $tableset[] = $row[0];
 			}
-			$result = $this->query($db,$this->queries['reflect_has_many'],array($tables,$table0,$database,$database));
-			while ($row = $this->fetch_row($result)) {
+			$result = $db->query($db->get_sql('reflect_has_many'),array($tables,$table0,$database,$database));
+			while ($row = $db->fetch_row($result)) {
 				$collect[$row[2]][$row[3]]=array();
 				$select[$row[0]][$row[1]]=array($row[2],$row[3]);
 				if (!in_array($row[2],$tableset)) $tableset[] = $row[2];
 			}
-			$result = $this->query($db,$this->queries['reflect_habtm'],array($database,$database,$database,$database,$table0,$tables));
-			while ($row = $this->fetch_row($result)) {
+			$result = $db->query($db->get_sql('reflect_habtm'),array($database,$database,$database,$database,$table0,$tables));
+			while ($row = $db->fetch_row($result)) {
 				$collect[$row[2]][$row[3]]=array();
 				$select[$row[0]][$row[1]]=array($row[2],$row[3]);
 				$collect[$row[4]][$row[5]]=array();
@@ -911,8 +948,8 @@ class REST_CRUD_API {
 
 	protected function findTableFields($table,$database,$db) {
 		$fields = array();
-		$result = $this->query($db,'SELECT * FROM "!" WHERE 1=2;',array($table));
-		foreach ($this->fetch_fields($result) as $field) {
+		$result = $db->query('SELECT * FROM "!" WHERE 1=2;',array($table));
+		foreach ($db->fetch_fields($result) as $field) {
 			$fields[$field->name] = $field;
 		}
 		return $fields;
@@ -927,9 +964,9 @@ class REST_CRUD_API {
 		return $input;
 	}
 
-	protected function convertBinary(&$input,$keys) {
+	protected function convertBinary(&$input,$keys,$db) {
 		foreach ($keys as $key=>$field) {
-			if (isset($input->$key) && $input->$key && $this->is_binary_type($field)) {
+			if (isset($input->$key) && $input->$key && $db->is_binary_type($field)) {
 				$data = $input->$key;
 				$data = str_pad(strtr($data, '-_', '+/'), strlen($data) % 4, '=', STR_PAD_RIGHT);
 				$input->$key = (object)array('type'=>'base64','data'=>$data);
@@ -953,7 +990,7 @@ class REST_CRUD_API {
 
 		$tables    = $this->processTablesParameter($database,$tables,$action,$db);
 		$key       = $this->processKeyParameter($key,$tables,$database,$db);
-		$filters   = $this->processFiltersParameter($tables,$satisfy,$filters);
+		$filters   = $this->processFiltersParameter($tables,$satisfy,$filters, $db);
 		$page      = $this->processPageParameter($page);
 		$order     = $this->processOrderParameter($order);
 
@@ -963,7 +1000,7 @@ class REST_CRUD_API {
 
 		// permissions
 		if ($table_authorizer) $this->applyTableAuthorizer($table_authorizer,$action,$database,$tables);
-		if ($record_filter) $this->applyRecordFilter($record_filter,$action,$database,$tables,$filters);
+		if ($record_filter) $this->applyRecordFilter($record_filter,$action,$database,$tables,$filters,$db);
 		if ($column_authorizer) $this->applyColumnAuthorizer($column_authorizer,$action,$database,$fields);
 		if ($tenancy_function) $this->applyTenancyFunction($tenancy_function,$action,$database,$fields,$filters);
 
@@ -976,7 +1013,7 @@ class REST_CRUD_API {
 			if ($input_sanitizer) $this->applyInputSanitizer($input_sanitizer,$action,$database,$tables[0],$input,$fields[$tables[0]]);
 			if ($input_validator) $this->applyInputValidator($input_validator,$action,$database,$tables[0],$input,$fields[$tables[0]],$context);
 
-			$this->convertBinary($input,$fields[$tables[0]]);
+			$this->convertBinary($input,$fields[$tables[0]],$db);
 		}
 
 		return compact('action','database','tables','key','callback','page','filters','fields','order','transform','db','input','collect','select');
@@ -1022,8 +1059,8 @@ class REST_CRUD_API {
 			if (isset($filters[$table])) {
 					$this->addWhereFromFilters($filters[$table],$sql,$params);
 			}
-			if ($result = $this->query($db,$sql,$params)) {
-				while ($pages = $this->fetch_row($result)) {
+			if ($result = $db->query($sql,$params)) {
+				while ($pages = $db->fetch_row($result)) {
 					$count = $pages[0];
 				}
 			}
@@ -1042,21 +1079,21 @@ class REST_CRUD_API {
 			$params[] = $order[1];
 		}
 		if (is_array($order) && is_array($page)) {
-			$sql = $this->add_limit_to_sql($sql,$page[1],$page[0]);
+			$sql = $db->add_limit_to_sql($sql,$page[1],$page[0]);
 		}
-		if ($result = $this->query($db,$sql,$params)) {
+		if ($result = $db->query($sql,$params)) {
 			echo '"columns":';
 			$keys = array();
 			$base64 = array();
 			foreach ($fields[$table] as $field) {
-				$base64[] = $this->is_binary_type($field);
+				$base64[] = $db->is_binary_type($field);
 				$keys[] = $field->name;
 			}
 			echo json_encode($keys);
 			$keys = array_flip($keys);
 			echo ',"records":[';
 			$first_row = true;
-			while ($row = $this->fetch_row($result)) {
+			while ($row = $db->fetch_row($result)) {
 				if ($first_row) $first_row = false;
 				else echo ',';
 				if (isset($collect[$table])) {
@@ -1066,12 +1103,12 @@ class REST_CRUD_API {
 				}
 				foreach ($base64 as $k=>$v) {
 					if ($v && $row[$k]) {
-						$row[$k] = $this->base64_encode($row[$k]);
+						$row[$k] = $db->base64_encode($row[$k]);
 					}
 				}
 				echo json_encode($row);
 			}
-			$this->close($result);
+			$db->close($result);
 			echo ']';
 			if ($count) echo ',';
 		}
@@ -1101,20 +1138,20 @@ class REST_CRUD_API {
 				echo '}';
 				$this->addWhereFromFilters($filters[$table],$sql,$params);
 			}
-			if ($result = $this->query($db,$sql,$params)) {
+			if ($result = $db->query($sql,$params)) {
 				if (isset($select[$table])) echo ',';
 				echo '"columns":';
 				$keys = array();
 				$base64 = array();
 				foreach ($fields[$table] as $field) {
-					$base64[] = $this->is_binary_type($field);
+					$base64[] = $db->is_binary_type($field);
 					$keys[] = $field->name;
 				}
 				echo json_encode($keys);
 				$keys = array_flip($keys);
 				echo ',"records":[';
 				$first_row = true;
-				while ($row = $this->fetch_row($result)) {
+				while ($row = $db->fetch_row($result)) {
 					if ($first_row) $first_row = false;
 					else echo ',';
 					if (isset($collect[$table])) {
@@ -1124,12 +1161,12 @@ class REST_CRUD_API {
 					}
 					foreach ($base64 as $k=>$v) {
 						if ($v && $row[$k]) {
-							$row[$k] = $this->base64_encode($row[$k]);
+							$row[$k] = $db->base64_encode($row[$k]);
 						}
 					}
 					echo json_encode($row);
 				}
-				$this->close($result);
+				$db->close($result);
 				echo ']';
 			}
 			echo '}';
@@ -1204,6 +1241,7 @@ class REST_CRUD_API {
 		$input_sanitizer = isset($input_sanitizer)?$input_sanitizer:null;
 		$input_validator = isset($input_validator)?$input_validator:null;
 
+		$dbengine = isset($dbengine)?$dbengine:null;
 		$db = isset($db)?$db:null;
 		$method = isset($method)?$method:null;
 		$request = isset($request)?$request:null;
@@ -1211,6 +1249,9 @@ class REST_CRUD_API {
 		$post = isset($post)?$post:null;
 
 		// defaults
+		if (!$dbengine) {
+			$dbengine = 'MySQL';
+		}
 		if (!$method) {
 			$method = $_SERVER['REQUEST_METHOD'];
 		}
@@ -1223,9 +1264,6 @@ class REST_CRUD_API {
 		if (!$post) {
 			$post = 'php://input';
 		}
-		if (!$charset) {
-			$charset = $this->getDefaultCharset();
-		}
 
 		// connect
 		$request = trim($request,'/');
@@ -1233,7 +1271,11 @@ class REST_CRUD_API {
 			$database  = $this->parseRequestParameter($request, 'a-zA-Z0-9\-_');
 		}
 		if (!$db) {
-			$db = $this->connectDatabase($hostname,$username,$password,$database,$port,$socket,$charset);
+			$db = new $dbengine();
+			if (!$charset) {
+				$charset = $db->getDefaultCharset();
+			}
+			$db->connectDatabase($hostname,$username,$password,$database,$port,$socket,$charset);
 		}
 
 		$this->settings = compact('method', 'request', 'get', 'post', 'database', 'table_authorizer', 'record_filter', 'column_authorizer', 'tenancy_function', 'input_sanitizer', 'input_validator', 'db');
@@ -1295,7 +1337,7 @@ class REST_CRUD_API {
 
 // uncomment the lines below when running in stand-alone mode:
 
-// $api = new MySQL_CRUD_API(array(
+// $api = new PHP_CRUD_API(array(
 // 	'hostname'=>'localhost',
 //	'username'=>'xxx',
 //	'password'=>'xxx',
@@ -1306,7 +1348,7 @@ class REST_CRUD_API {
 
 // For Microsoft SQL Server use:
 
-// $api = new MsSQL_CRUD_API(array(
+// $api = new PHP_CRUD_API(array(
 // 	'hostname'=>'(local)',
 // 	'username'=>'',
 // 	'password'=>'',
@@ -1317,7 +1359,7 @@ class REST_CRUD_API {
 
 // For PostgreSQL use:
 
-// $api = new PgSQL_CRUD_API(array(
+// $api = new PHP_CRUD_API(array(
 // 	'hostname'=>'localhost',
 // 	'username'=>'xxx',
 // 	'password'=>'xxx',
