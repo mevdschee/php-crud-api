@@ -1,6 +1,6 @@
 <?php
 interface DatabaseInterface {
-	public function get_sql($name);
+	public function getSql($name);
 	public function connectDatabase($hostname,$username,$password,$database,$port,$socket,$charset);
 	public function query($sql,$params);
 	public function fetch_assoc($result);
@@ -77,7 +77,7 @@ class MySQL implements DatabaseInterface {
 		);
 	}
 
-	public function get_sql($name) {
+	public function getSql($name) {
 		return isset($this->queries[$name])?$this->queries[$name]:false;
 	}
 
@@ -239,7 +239,7 @@ class PostgreSQL implements DatabaseInterface {
 		);
 	}
 
-	public function get_sql($name) {
+	public function getSql($name) {
 		return isset($this->queries[$name])?$this->queries[$name]:false;
 	}
 
@@ -429,7 +429,7 @@ class SQLServer implements DatabaseInterface {
 		);
 	}
 
-	public function get_sql($name) {
+	public function getSql($name) {
 		return isset($this->queries[$name])?$this->queries[$name]:false;
 	}
 
@@ -676,7 +676,7 @@ class PHP_CRUD_API {
 		$table_array = explode(',',$tables);
 		$table_list = array();
 		foreach ($table_array as $table) {
-			if ($result = $this->db->query($this->db->get_sql('reflect_table'),array($table,$database))) {
+			if ($result = $this->db->query($this->db->getSql('reflect_table'),array($table,$database))) {
 				while ($row = $this->db->fetch_row($result)) $table_list[] = $row[0];
 				$this->db->close($result);
 				if ($action!='list') break;
@@ -739,7 +739,7 @@ class PHP_CRUD_API {
 		if (!$key) return false;
 		$count = 0;
 		$field = false;
-		if ($result = $this->db->query($this->db->get_sql('reflect_pk'),array($tables[0],$database))) {
+		if ($result = $this->db->query($this->db->getSql('reflect_pk'),array($tables[0],$database))) {
 			while ($row = $this->db->fetch_row($result)) {
 				$count++;
 				$field = $row[0];
@@ -880,19 +880,19 @@ class PHP_CRUD_API {
 			$table0 = array_shift($tables);
 			$tableset[] = $table0;
 
-			$result = $this->db->query($this->db->get_sql('reflect_belongs_to'),array($table0,$tables,$database,$database));
+			$result = $this->db->query($this->db->getSql('reflect_belongs_to'),array($table0,$tables,$database,$database));
 			while ($row = $this->db->fetch_row($result)) {
 				$collect[$row[0]][$row[1]]=array();
 				$select[$row[2]][$row[3]]=array($row[0],$row[1]);
 				if (!in_array($row[0],$tableset)) $tableset[] = $row[0];
 			}
-			$result = $this->db->query($this->db->get_sql('reflect_has_many'),array($tables,$table0,$database,$database));
+			$result = $this->db->query($this->db->getSql('reflect_has_many'),array($tables,$table0,$database,$database));
 			while ($row = $this->db->fetch_row($result)) {
 				$collect[$row[2]][$row[3]]=array();
 				$select[$row[0]][$row[1]]=array($row[2],$row[3]);
 				if (!in_array($row[2],$tableset)) $tableset[] = $row[2];
 			}
-			$result = $this->db->query($this->db->get_sql('reflect_habtm'),array($database,$database,$database,$database,$table0,$tables));
+			$result = $this->db->query($this->db->getSql('reflect_habtm'),array($database,$database,$database,$database,$table0,$tables));
 			while ($row = $this->db->fetch_row($result)) {
 				$collect[$row[2]][$row[3]]=array();
 				$select[$row[0]][$row[1]]=array($row[2],$row[3]);
