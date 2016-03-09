@@ -1340,6 +1340,7 @@ class PHP_CRUD_API {
 // uncomment the lines below when running in stand-alone mode:
 
 // $api = new PHP_CRUD_API(array(
+// 	'dbengine'=>'MySQL',
 // 	'hostname'=>'localhost',
 //	'username'=>'xxx',
 //	'password'=>'xxx',
@@ -1348,9 +1349,10 @@ class PHP_CRUD_API {
 // ));
 // $api->executeCommand();
 
-// For Microsoft SQL Server use:
+// For Microsoft SQL Server 2012 use:
 
 // $api = new PHP_CRUD_API(array(
+// 	'dbengine'=>'SQLServer',
 // 	'hostname'=>'(local)',
 // 	'username'=>'',
 // 	'password'=>'',
@@ -1359,9 +1361,10 @@ class PHP_CRUD_API {
 // ));
 // $api->executeCommand();
 
-// For PostgreSQL use:
+// For PostgreSQL 9 use:
 
 // $api = new PHP_CRUD_API(array(
+// 	'dbengine'=>'PostgreSQL',
 // 	'hostname'=>'localhost',
 // 	'username'=>'xxx',
 // 	'password'=>'xxx',

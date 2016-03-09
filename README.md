@@ -46,10 +46,10 @@ This is a single file application! Upload "api.php" somewhere and enjoy!
 Edit the following lines in the bottom of the file "api.php":
 
 ```
-$api = new MySQL_CRUD_API(array(
-	'username'=>'xxx',
+$api = new PHP_CRUD_API(array(
+  'username'=>'xxx',
 	'password'=>'xxx',
-	'database'=>'xxx'
+	'database'=>'xxx',
 ));
 $api->executeCommand();
 ```
@@ -57,8 +57,9 @@ $api->executeCommand();
 These are all the configuration options and their default values:
 
 ```
-$api = new MySQL_CRUD_API(array(
-	'username=>'root'
+$api = new PHP_CRUD_API(array(
+  'dbengine=>'MySQL',
+  'username=>'root',
 	'password=>null,
 	'database=>false,
 // for connectivity (defaults to localhost):
@@ -74,8 +75,8 @@ $api = new MySQL_CRUD_API(array(
 	'input_sanitizer'=>function($cmd,$db,$tab,$col,$typ,$val) { return $val; },
 	'input_validator'=>function($cmd,$db,$tab,$col,$typ,$val,$ctx) { return true; },
 // dependencies (added for unit testing):
-	'db'=>null,
-	'method'=>$_SERVER['REQUEST_METHOD'],
+  'db'=>null,
+  'method'=>$_SERVER['REQUEST_METHOD'],
 	'request'=>$_SERVER['PATH_INFO'],
 	'get'=>$_GET,
 	'post'=>'php://input',
@@ -578,7 +579,7 @@ OK (19 tests, 39 assertions)
 $
 ```
 
-NB: You MUST use an empty database as a desctructive database fixture ('blog.mysql') is loaded.
+NB: You MUST use an empty database as a desctructive database fixture ('blog_mysql.sql') is loaded.
 
 ### SQL server on Windows:
 
@@ -594,7 +595,7 @@ OK (19 tests, 39 assertions)
 C:\mysql-crud-api-master>
 ```
 
-NB: You MUST use an empty database as a desctructive database fixture ('blog.mssql') is loaded.
+NB: You MUST use an empty database as a desctructive database fixture ('blog_sqlserver.sql') is loaded.
 
 ### PostgreSQL on Linux
 
@@ -611,7 +612,7 @@ OK (22 tests, 42 assertions)
 $
 ```
 
-NB: You MUST use an empty database as a desctructive database fixture ('blog.pgsql') is loaded.
+NB: You MUST use an empty database as a desctructive database fixture ('blog_postgresql.sql') is loaded.
 
 ## Pretty URL
 
