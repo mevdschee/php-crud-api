@@ -1,6 +1,6 @@
 <?php
 
-class MySQL_CRUD_API_Config
+class PHP_CRUD_API_Config
 {
 	public static $dbengine='MySQL';             // 'MySQL', 'SQLServer' or 'PostgreSQL'
 	public static $hostname='{{test_hostname}}'; // 'localhost' for mysql or '(Local)' for mssql

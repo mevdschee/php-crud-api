@@ -24,11 +24,11 @@ class API
 		$data = 'data://text/plain;base64,'.base64_encode($data);
 
 		$this->api = new PHP_CRUD_API(array(
-				'dbengine'=>MySQL_CRUD_API_Config::$dbengine,
-				'hostname'=>MySQL_CRUD_API_Config::$hostname,
-				'username'=>MySQL_CRUD_API_Config::$username,
-				'password'=>MySQL_CRUD_API_Config::$password,
-				'database'=>MySQL_CRUD_API_Config::$database,
+				'dbengine'=>PHP_CRUD_API_Config::$dbengine,
+				'hostname'=>PHP_CRUD_API_Config::$hostname,
+				'username'=>PHP_CRUD_API_Config::$username,
+				'password'=>PHP_CRUD_API_Config::$password,
+				'database'=>PHP_CRUD_API_Config::$database,
 				// callbacks
 				'table_authorizer'=>function($action,$database,$table) { return true; },
 				'column_authorizer'=>function($action,$database,$table,$column) { return !($column=='password'&&$action=='list'); },
@@ -87,19 +87,19 @@ class API
 	}
 }
 
-class MySQL_CRUD_API_Test extends PHPUnit_Framework_TestCase
+class PHP_CRUD_API_Test extends PHPUnit_Framework_TestCase
 {
 	public static function setUpBeforeClass()
 	{
-		if (MySQL_CRUD_API_Config::$database=='{{test_database}}') {
+		if (PHP_CRUD_API_Config::$database=='{{test_database}}') {
 			die("Configure database in 'config.php' before running tests.\n");
 		}
 
-		$dbengine = MySQL_CRUD_API_Config::$dbengine;
-		$hostname = MySQL_CRUD_API_Config::$hostname;
-		$username = MySQL_CRUD_API_Config::$username;
-		$password = MySQL_CRUD_API_Config::$password;
-		$database = MySQL_CRUD_API_Config::$database;
+		$dbengine = PHP_CRUD_API_Config::$dbengine;
+		$hostname = PHP_CRUD_API_Config::$hostname;
+		$username = PHP_CRUD_API_Config::$username;
+		$password = PHP_CRUD_API_Config::$password;
+		$database = PHP_CRUD_API_Config::$database;
 
 		$fixture = __DIR__.'/blog_'.strtolower($dbengine).'.sql';
 
