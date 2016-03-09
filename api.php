@@ -1227,6 +1227,7 @@ class PHP_CRUD_API {
 		extract($config);
 
 		// initialize
+		$dbengine = isset($dbengine)?$dbengine:null;
 		$hostname = isset($hostname)?$hostname:null;
 		$username = isset($username)?$username:null;
 		$password = isset($password)?$password:null;
@@ -1242,7 +1243,6 @@ class PHP_CRUD_API {
 		$input_sanitizer = isset($input_sanitizer)?$input_sanitizer:null;
 		$input_validator = isset($input_validator)?$input_validator:null;
 
-		$dbengine = isset($dbengine)?$dbengine:null;
 		$db = isset($db)?$db:null;
 		$method = isset($method)?$method:null;
 		$request = isset($request)?$request:null;
