@@ -550,6 +550,7 @@ class SQLServer implements DatabaseInterface {
 
 class PHP_CRUD_API {
 
+	protected $db;
 	protected $settings;
 
 	protected function mapMethodToAction($method,$key) {
@@ -598,9 +599,9 @@ class PHP_CRUD_API {
 		}
 	}
 
-	protected function applyRecordFilter($callback,$action,$database,$tables,&$filters,$db) {
+	protected function applyRecordFilter($callback,$action,$database,$tables,&$filters) {
 		if (is_callable($callback,true)) foreach ($tables as $i=>$table) {
-			$f = $this->convertFilters($db,$callback($action,$database,$table));
+			$f = $this->convertFilters($callback($action,$database,$table));
 			if ($f) {
 				if (!isset($filters[$table])) $filters[$table] = array();
 				if (!isset($filters[$table]['and'])) $filters[$table]['and'] = array();
@@ -669,15 +670,15 @@ class PHP_CRUD_API {
 		if (!empty($errors)) $this->exitWith422($errors);
 	}
 
-	protected function processTablesParameter($database,$tables,$action,$db) {
+	protected function processTablesParameter($database,$tables,$action) {
 		$blacklist = array('information_schema','mysql','sys','pg_catalog');
 		if (in_array(strtolower($database), $blacklist)) return array();
 		$table_array = explode(',',$tables);
 		$table_list = array();
 		foreach ($table_array as $table) {
-			if ($result = $db->query($db->get_sql('reflect_table'),array($table,$database))) {
-				while ($row = $db->fetch_row($result)) $table_list[] = $row[0];
-				$db->close($result);
+			if ($result = $this->db->query($this->db->get_sql('reflect_table'),array($table,$database))) {
+				while ($row = $this->db->fetch_row($result)) $table_list[] = $row[0];
+				$this->db->close($result);
 				if ($action!='list') break;
 			}
 		}
@@ -734,16 +735,16 @@ class PHP_CRUD_API {
 		}
 	}
 
-	protected function processKeyParameter($key,$tables,$database,$db) {
+	protected function processKeyParameter($key,$tables,$database) {
 		if (!$key) return false;
 		$count = 0;
 		$field = false;
-		if ($result = $db->query($db->get_sql('reflect_pk'),array($tables[0],$database))) {
-			while ($row = $db->fetch_row($result)) {
+		if ($result = $this->db->query($this->db->get_sql('reflect_pk'),array($tables[0],$database))) {
+			while ($row = $this->db->fetch_row($result)) {
 				$count++;
 				$field = $row[0];
 			}
-			$db->close($result);
+			$this->db->close($result);
 		}
 		if ($count!=1 || $field==false) $this->exitWith404('1pk');
 		return array($key,$field);
@@ -758,11 +759,11 @@ class PHP_CRUD_API {
 		return $order;
 	}
 
-	protected function convertFilter($db, $field, $comparator, $value) {
+	protected function convertFilter($field, $comparator, $value) {
 		switch (strtolower($comparator)) {
-			case 'cs': $comparator = 'LIKE'; $value = '%'.$db->likeEscape($value).'%'; break;
-			case 'sw': $comparator = 'LIKE'; $value = $db->likeEscape($value).'%'; break;
-			case 'ew': $comparator = 'LIKE'; $value = '%'.$db->likeEscape($value); break;
+			case 'cs': $comparator = 'LIKE'; $value = '%'.$this->db->likeEscape($value).'%'; break;
+			case 'sw': $comparator = 'LIKE'; $value = $this->db->likeEscape($value).'%'; break;
+			case 'ew': $comparator = 'LIKE'; $value = '%'.$this->db->likeEscape($value); break;
 			case 'eq': $comparator = '='; break;
 			case 'ne': $comparator = '<>'; break;
 			case 'lt': $comparator = '<'; break;
@@ -774,21 +775,21 @@ class PHP_CRUD_API {
 		return array($field, $comparator, $value);
 	}
 
-	protected function convertFilters($db,$filters) {
+	protected function convertFilters($filters) {
 		$result = array();
 		if ($filters) {
 			for ($i=0;$i<count($filters);$i++) {
 				$filter = explode(',',$filters[$i],3);
 				if (count($filter)==3) {
-					$result[] = $this->convertFilter($db,$filter[0],$filter[1],$filter[2]);
+					$result[] = $this->convertFilter($filter[0],$filter[1],$filter[2]);
 				}
 			}
 		}
 		return $result;
 	}
 
-	protected function processFiltersParameter($tables,$satisfy,$filters,$db) {
-		$result = $this->convertFilters($db, $filters);
+	protected function processFiltersParameter($tables,$satisfy,$filters) {
+		$result = $this->convertFilters($filters);
 		if (!$result) return array();
 		$and = ($satisfy && strtolower($satisfy)=='any')?'or':'and';
 		return array($tables[0]=>array($and=>$result));
@@ -802,7 +803,7 @@ class PHP_CRUD_API {
 		return $page;
 	}
 
-	protected function retrieveObject($key,$fields,$filters,$tables,$db) {
+	protected function retrieveObject($key,$fields,$filters,$tables) {
 		if (!$key) return false;
 		$table = $tables[0];
 		$sql = 'SELECT ';
@@ -813,31 +814,31 @@ class PHP_CRUD_API {
 		if (!isset($filters[$table]['or'])) $filters[$table]['or'] = array();
 		$filters[$table]['or'][] = array($key[1],'=',$key[0]);
 		$this->addWhereFromFilters($filters[$table],$sql,$params);
-		if ($result = $db->query($sql,$params)) {
-			$object = $db->fetch_assoc($result);
+		if ($result = $this->db->query($sql,$params)) {
+			$object = $this->db->fetch_assoc($result);
 			foreach ($fields[$table] as $field) {
-				if ($db->is_binary_type($field) && $object[$field->name]) {
-					$object[$field->name] = $db->base64_encode($object[$field->name]);
+				if ($this->db->is_binary_type($field) && $object[$field->name]) {
+					$object[$field->name] = $this->db->base64_encode($object[$field->name]);
 				}
 			}
-			$db->close($result);
+			$this->db->close($result);
 		}
 		return $object;
 	}
 
-	protected function createObject($input,$tables,$db) {
+	protected function createObject($input,$tables) {
 		if (!$input) return false;
 		$input = (array)$input;
 		$keys = implode('","',str_split(str_repeat('!', count($input))));
 		$values = implode(',',str_split(str_repeat('?', count($input))));
 		$params = array_merge(array_keys($input),array_values($input));
 		array_unshift($params, $tables[0]);
-		$result = $db->query('INSERT INTO "!" ("'.$keys.'") VALUES ('.$values.')',$params);
+		$result = $this->db->query('INSERT INTO "!" ("'.$keys.'") VALUES ('.$values.')',$params);
 		if (!$result) return null;
-		return $db->insert_id($result);
+		return $this->db->insert_id($result);
 	}
 
-	protected function updateObject($key,$input,$filters,$tables,$db) {
+	protected function updateObject($key,$input,$filters,$tables) {
 		if (!$input) return false;
 		$input = (array)$input;
 		$table = $tables[0];
@@ -854,11 +855,11 @@ class PHP_CRUD_API {
 		if (!isset($filters[$table]['or'])) $filters[$table]['or'] = array();
 		$filters[$table]['or'][] = array($key[1],'=',$key[0]);
 		$this->addWhereFromFilters($filters[$table],$sql,$params);
-		$result = $db->query($sql,$params);
-		return $db->affected_rows($result);
+		$result = $this->db->query($sql,$params);
+		return $this->db->affected_rows($result);
 	}
 
-	protected function deleteObject($key,$filters,$tables,$db) {
+	protected function deleteObject($key,$filters,$tables) {
 		$table = $tables[0];
 		$sql = 'DELETE FROM "!"';
 		$params = array($table);
@@ -866,11 +867,11 @@ class PHP_CRUD_API {
 		if (!isset($filters[$table]['or'])) $filters[$table]['or'] = array();
 		$filters[$table]['or'][] = array($key[1],'=',$key[0]);
 		$this->addWhereFromFilters($filters[$table],$sql,$params);
-		$result = $db->query($sql,$params);
-		return $db->affected_rows($result);
+		$result = $this->db->query($sql,$params);
+		return $this->db->affected_rows($result);
 	}
 
-	protected function findRelations($tables,$database,$db) {
+	protected function findRelations($tables,$database) {
 		$tableset = array();
 		$collect = array();
 		$select = array();
@@ -879,20 +880,20 @@ class PHP_CRUD_API {
 			$table0 = array_shift($tables);
 			$tableset[] = $table0;
 
-			$result = $db->query($db->get_sql('reflect_belongs_to'),array($table0,$tables,$database,$database));
-			while ($row = $db->fetch_row($result)) {
+			$result = $this->db->query($this->db->get_sql('reflect_belongs_to'),array($table0,$tables,$database,$database));
+			while ($row = $this->db->fetch_row($result)) {
 				$collect[$row[0]][$row[1]]=array();
 				$select[$row[2]][$row[3]]=array($row[0],$row[1]);
 				if (!in_array($row[0],$tableset)) $tableset[] = $row[0];
 			}
-			$result = $db->query($db->get_sql('reflect_has_many'),array($tables,$table0,$database,$database));
-			while ($row = $db->fetch_row($result)) {
+			$result = $this->db->query($this->db->get_sql('reflect_has_many'),array($tables,$table0,$database,$database));
+			while ($row = $this->db->fetch_row($result)) {
 				$collect[$row[2]][$row[3]]=array();
 				$select[$row[0]][$row[1]]=array($row[2],$row[3]);
 				if (!in_array($row[2],$tableset)) $tableset[] = $row[2];
 			}
-			$result = $db->query($db->get_sql('reflect_habtm'),array($database,$database,$database,$database,$table0,$tables));
-			while ($row = $db->fetch_row($result)) {
+			$result = $this->db->query($this->db->get_sql('reflect_habtm'),array($database,$database,$database,$database,$table0,$tables));
+			while ($row = $this->db->fetch_row($result)) {
 				$collect[$row[2]][$row[3]]=array();
 				$select[$row[0]][$row[1]]=array($row[2],$row[3]);
 				$collect[$row[4]][$row[5]]=array();
@@ -925,10 +926,10 @@ class PHP_CRUD_API {
 		return $input;
 	}
 
-	protected function findFields($tables,$columns,$database,$db) {
+	protected function findFields($tables,$columns,$database) {
 		$fields = array();
 		foreach ($tables as $i=>$table) {
-			$fields[$table] = $this->findTableFields($table,$database,$db);
+			$fields[$table] = $this->findTableFields($table,$database);
 			if ($i==0) $fields[$table] = $this->filterFieldsByColumns($fields[$table],$columns);
 		}
 		return $fields;
@@ -946,10 +947,10 @@ class PHP_CRUD_API {
 		return $fields;
 	}
 
-	protected function findTableFields($table,$database,$db) {
+	protected function findTableFields($table,$database) {
 		$fields = array();
-		$result = $db->query('SELECT * FROM "!" WHERE 1=2;',array($table));
-		foreach ($db->fetch_fields($result) as $field) {
+		$result = $this->db->query('SELECT * FROM "!" WHERE 1=2;',array($table));
+		foreach ($this->db->fetch_fields($result) as $field) {
 			$fields[$field->name] = $field;
 		}
 		return $fields;
@@ -964,9 +965,9 @@ class PHP_CRUD_API {
 		return $input;
 	}
 
-	protected function convertBinary(&$input,$keys,$db) {
+	protected function convertBinary(&$input,$keys) {
 		foreach ($keys as $key=>$field) {
-			if (isset($input->$key) && $input->$key && $db->is_binary_type($field)) {
+			if (isset($input->$key) && $input->$key && $this->db->is_binary_type($field)) {
 				$data = $input->$key;
 				$data = str_pad(strtr($data, '-_', '+/'), strlen($data) % 4, '=', STR_PAD_RIGHT);
 				$input->$key = (object)array('type'=>'base64','data'=>$data);
@@ -988,19 +989,19 @@ class PHP_CRUD_API {
 		$order     = $this->parseGetParameter($get, 'order', 'a-zA-Z0-9\-_,');
 		$transform = $this->parseGetParameter($get, 'transform', '1');
 
-		$tables    = $this->processTablesParameter($database,$tables,$action,$db);
-		$key       = $this->processKeyParameter($key,$tables,$database,$db);
-		$filters   = $this->processFiltersParameter($tables,$satisfy,$filters, $db);
+		$tables    = $this->processTablesParameter($database,$tables,$action);
+		$key       = $this->processKeyParameter($key,$tables,$database);
+		$filters   = $this->processFiltersParameter($tables,$satisfy,$filters);
 		$page      = $this->processPageParameter($page);
 		$order     = $this->processOrderParameter($order);
 
 		// reflection
-		list($tables,$collect,$select) = $this->findRelations($tables,$database,$db);
-		$fields = $this->findFields($tables,$columns,$database,$db);
+		list($tables,$collect,$select) = $this->findRelations($tables,$database);
+		$fields = $this->findFields($tables,$columns,$database);
 
 		// permissions
 		if ($table_authorizer) $this->applyTableAuthorizer($table_authorizer,$action,$database,$tables);
-		if ($record_filter) $this->applyRecordFilter($record_filter,$action,$database,$tables,$filters,$db);
+		if ($record_filter) $this->applyRecordFilter($record_filter,$action,$database,$tables,$filters);
 		if ($column_authorizer) $this->applyColumnAuthorizer($column_authorizer,$action,$database,$fields);
 		if ($tenancy_function) $this->applyTenancyFunction($tenancy_function,$action,$database,$fields,$filters);
 
@@ -1013,10 +1014,10 @@ class PHP_CRUD_API {
 			if ($input_sanitizer) $this->applyInputSanitizer($input_sanitizer,$action,$database,$tables[0],$input,$fields[$tables[0]]);
 			if ($input_validator) $this->applyInputValidator($input_validator,$action,$database,$tables[0],$input,$fields[$tables[0]],$context);
 
-			$this->convertBinary($input,$fields[$tables[0]],$db);
+			$this->convertBinary($input,$fields[$tables[0]]);
 		}
 
-		return compact('action','database','tables','key','callback','page','filters','fields','order','transform','db','input','collect','select');
+		return compact('action','database','tables','key','callback','page','filters','fields','order','transform','input','collect','select');
 	}
 
 	protected function addWhereFromFilters($filters,&$sql,&$params) {
@@ -1059,8 +1060,8 @@ class PHP_CRUD_API {
 			if (isset($filters[$table])) {
 					$this->addWhereFromFilters($filters[$table],$sql,$params);
 			}
-			if ($result = $db->query($sql,$params)) {
-				while ($pages = $db->fetch_row($result)) {
+			if ($result = $this->db->query($sql,$params)) {
+				while ($pages = $this->db->fetch_row($result)) {
 					$count = $pages[0];
 				}
 			}
@@ -1079,21 +1080,21 @@ class PHP_CRUD_API {
 			$params[] = $order[1];
 		}
 		if (is_array($order) && is_array($page)) {
-			$sql = $db->add_limit_to_sql($sql,$page[1],$page[0]);
+			$sql = $this->db->add_limit_to_sql($sql,$page[1],$page[0]);
 		}
-		if ($result = $db->query($sql,$params)) {
+		if ($result = $this->db->query($sql,$params)) {
 			echo '"columns":';
 			$keys = array();
 			$base64 = array();
 			foreach ($fields[$table] as $field) {
-				$base64[] = $db->is_binary_type($field);
+				$base64[] = $this->db->is_binary_type($field);
 				$keys[] = $field->name;
 			}
 			echo json_encode($keys);
 			$keys = array_flip($keys);
 			echo ',"records":[';
 			$first_row = true;
-			while ($row = $db->fetch_row($result)) {
+			while ($row = $this->db->fetch_row($result)) {
 				if ($first_row) $first_row = false;
 				else echo ',';
 				if (isset($collect[$table])) {
@@ -1103,12 +1104,12 @@ class PHP_CRUD_API {
 				}
 				foreach ($base64 as $k=>$v) {
 					if ($v && $row[$k]) {
-						$row[$k] = $db->base64_encode($row[$k]);
+						$row[$k] = $this->db->base64_encode($row[$k]);
 					}
 				}
 				echo json_encode($row);
 			}
-			$db->close($result);
+			$this->db->close($result);
 			echo ']';
 			if ($count) echo ',';
 		}
@@ -1138,20 +1139,20 @@ class PHP_CRUD_API {
 				echo '}';
 				$this->addWhereFromFilters($filters[$table],$sql,$params);
 			}
-			if ($result = $db->query($sql,$params)) {
+			if ($result = $this->db->query($sql,$params)) {
 				if (isset($select[$table])) echo ',';
 				echo '"columns":';
 				$keys = array();
 				$base64 = array();
 				foreach ($fields[$table] as $field) {
-					$base64[] = $db->is_binary_type($field);
+					$base64[] = $this->db->is_binary_type($field);
 					$keys[] = $field->name;
 				}
 				echo json_encode($keys);
 				$keys = array_flip($keys);
 				echo ',"records":[';
 				$first_row = true;
-				while ($row = $db->fetch_row($result)) {
+				while ($row = $this->db->fetch_row($result)) {
 					if ($first_row) $first_row = false;
 					else echo ',';
 					if (isset($collect[$table])) {
@@ -1161,12 +1162,12 @@ class PHP_CRUD_API {
 					}
 					foreach ($base64 as $k=>$v) {
 						if ($v && $row[$k]) {
-							$row[$k] = $db->base64_encode($row[$k]);
+							$row[$k] = $this->db->base64_encode($row[$k]);
 						}
 					}
 					echo json_encode($row);
 				}
-				$db->close($result);
+				$this->db->close($result);
 				echo ']';
 			}
 			echo '}';
@@ -1176,7 +1177,7 @@ class PHP_CRUD_API {
 
 	protected function readCommand($parameters) {
 		extract($parameters);
-		$object = $this->retrieveObject($key,$fields,$filters,$tables,$db);
+		$object = $this->retrieveObject($key,$fields,$filters,$tables);
 		if (!$object) $this->exitWith404('object');
 		$this->startOutput($callback);
 		echo json_encode($object);
@@ -1187,7 +1188,7 @@ class PHP_CRUD_API {
 		extract($parameters);
 		if (!$input) $this->exitWith404('input');
 		$this->startOutput($callback);
-		echo json_encode($this->createObject($input,$tables,$db));
+		echo json_encode($this->createObject($input,$tables));
 		$this->endOutput($callback);
 	}
 
@@ -1195,14 +1196,14 @@ class PHP_CRUD_API {
 		extract($parameters);
 		if (!$input) $this->exitWith404('subject');
 		$this->startOutput($callback);
-		echo json_encode($this->updateObject($key,$input,$filters,$tables,$db));
+		echo json_encode($this->updateObject($key,$input,$filters,$tables));
 		$this->endOutput($callback);
 	}
 
 	protected function deleteCommand($parameters) {
 		extract($parameters);
 		$this->startOutput($callback);
-		echo json_encode($this->deleteObject($key,$filters,$tables,$db));
+		echo json_encode($this->deleteObject($key,$filters,$tables));
 		$this->endOutput($callback);
 	}
 
@@ -1278,7 +1279,8 @@ class PHP_CRUD_API {
 			$db->connectDatabase($hostname,$username,$password,$database,$port,$socket,$charset);
 		}
 
-		$this->settings = compact('method', 'request', 'get', 'post', 'database', 'table_authorizer', 'record_filter', 'column_authorizer', 'tenancy_function', 'input_sanitizer', 'input_validator', 'db');
+		$this->db = $db;
+		$this->settings = compact('method', 'request', 'get', 'post', 'database', 'table_authorizer', 'record_filter', 'column_authorizer', 'tenancy_function', 'input_sanitizer', 'input_validator');
 	}
 
 	public static function php_crud_api_transform(&$tables) {
