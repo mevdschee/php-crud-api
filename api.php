@@ -888,8 +888,7 @@ class REST_CRUD_API {
 		return $input;
 	}
 
-	protected function findFields($tables,$collect,$select,$columns,$database,$db) {
-		$tables = array_unique(array_merge($tables,array_keys($collect),array_keys($select)));
+	protected function findFields($tables,$columns,$database,$db) {
 		$fields = array();
 		foreach ($tables as $i=>$table) {
 			$fields[$table] = $this->findTableFields($table,$database,$db);
@@ -960,7 +959,7 @@ class REST_CRUD_API {
 
 		// reflection
 		list($tables,$collect,$select) = $this->findRelations($tables,$database,$db);
-		$fields = $this->findFields($tables,$collect,$select,$columns,$database,$db);
+		$fields = $this->findFields($tables,$columns,$database,$db);
 
 		// permissions
 		if ($table_authorizer) $this->applyTableAuthorizer($table_authorizer,$action,$database,$tables);
