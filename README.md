@@ -47,7 +47,7 @@ Edit the following lines in the bottom of the file "api.php":
 
 ```
 $api = new PHP_CRUD_API(array(
-  'username'=>'xxx',
+	'username'=>'xxx',
 	'password'=>'xxx',
 	'database'=>'xxx',
 ));
@@ -58,15 +58,15 @@ These are all the configuration options and their default values:
 
 ```
 $api = new PHP_CRUD_API(array(
-	'dbengine=>'MySQL',
-	'username=>'root',
-	'password=>null,
-	'database=>false,
+	'dbengine'=>'MySQL',
+	'username'=>'root',
+	'password'=>null,
+	'database'=>false,
 // for connectivity (defaults to localhost):
 	'hostname'=>null,
-	'port=>null,
-	'socket=>null,
-	'charset=>'utf8',
+	'port'=>null,
+	'socket'=>null,
+	'charset'=>'utf8',
 // callbacks with their default behavior
 	'table_authorizer'=>function($cmd,$db,$tab) { return true; },
 	'record_filter'=>function($cmd,$db,$tab) { return false; },
