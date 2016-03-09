@@ -1,18 +1,18 @@
 <?php
 interface DatabaseInterface {
 	public function getSql($name);
-	public function connectDatabase($hostname,$username,$password,$database,$port,$socket,$charset);
+	public function connect($hostname,$username,$password,$database,$port,$socket,$charset);
 	public function query($sql,$params);
-	public function fetch_assoc($result);
-	public function fetch_row($result);
-	public function insert_id($result);
-	public function affected_rows($result);
+	public function fetchAssoc($result);
+	public function fetchRow($result);
+	public function insertId($result);
+	public function affectedRows($result);
 	public function close($result);
-	public function fetch_fields($result);
-	public function add_limit_to_sql($sql,$limit,$offset);
+	public function fetchFields($result);
+	public function addLimitToSql($sql,$limit,$offset);
 	public function likeEscape($string);
-	public function is_binary_type($field);
-	public function base64_encode($string);
+	public function isBinaryType($field);
+	public function base64Encode($string);
 	public function getDefaultCharset();
 }
 
@@ -81,7 +81,7 @@ class MySQL implements DatabaseInterface {
 		return isset($this->queries[$name])?$this->queries[$name]:false;
 	}
 
-	public function connectDatabase($hostname,$username,$password,$database,$port,$socket,$charset) {
+	public function connect($hostname,$username,$password,$database,$port,$socket,$charset) {
 		$db = mysqli_connect($hostname,$username,$password,$database,$port,$socket);
 		if (mysqli_connect_errno()) {
 			throw new \Exception('Connect failed. '.mysqli_connect_error());
@@ -113,19 +113,19 @@ class MySQL implements DatabaseInterface {
 		return mysqli_query($db,$sql);
 	}
 
-	public function fetch_assoc($result) {
+	public function fetchAssoc($result) {
 		return mysqli_fetch_assoc($result);
 	}
 
-	public function fetch_row($result) {
+	public function fetchRow($result) {
 		return mysqli_fetch_row($result);
 	}
 
-	public function insert_id($result) {
+	public function insertId($result) {
 		return mysqli_insert_id($this->db);
 	}
 
-	public function affected_rows($result) {
+	public function affectedRows($result) {
 		return mysqli_affected_rows($this->db);
 	}
 
@@ -133,11 +133,11 @@ class MySQL implements DatabaseInterface {
 		return mysqli_free_result($result);
 	}
 
-	public function fetch_fields($result) {
+	public function fetchFields($result) {
 		return mysqli_fetch_fields($result);
 	}
 
-	public function add_limit_to_sql($sql,$limit,$offset) {
+	public function addLimitToSql($sql,$limit,$offset) {
 		return "$sql LIMIT $limit OFFSET $offset";
 	}
 
@@ -145,12 +145,12 @@ class MySQL implements DatabaseInterface {
 		return addcslashes($string,'%_');
 	}
 
-	public function is_binary_type($field) {
+	public function isBinaryType($field) {
 		//echo "$field->name: $field->type ($field->flags)\n";
 		return (($field->flags & 128) && ($field->type>=249) && ($field->type<=252));
 	}
 
-	public function base64_encode($string) {
+	public function base64Encode($string) {
 		return base64_encode($string);
 	}
 
@@ -243,7 +243,7 @@ class PostgreSQL implements DatabaseInterface {
 		return isset($this->queries[$name])?$this->queries[$name]:false;
 	}
 
-	public function connectDatabase($hostname,$username,$password,$database,$port,$socket,$charset) {
+	public function connect($hostname,$username,$password,$database,$port,$socket,$charset) {
 		$e = function ($v) { return str_replace(array('\'','\\'),array('\\\'','\\\\'),$v); };
 		$conn_string = '';
 		if ($hostname || $socket) {
@@ -296,20 +296,20 @@ class PostgreSQL implements DatabaseInterface {
 		return @pg_query($db,$sql);
 	}
 
-	public function fetch_assoc($result) {
+	public function fetchAssoc($result) {
 		return pg_fetch_assoc($result);
 	}
 
-	public function fetch_row($result) {
+	public function fetchRow($result) {
 		return pg_fetch_row($result);
 	}
 
-	public function insert_id($result) {
+	public function insertId($result) {
 		list($id) = pg_fetch_row($result);
 		return (int)$id;
 	}
 
-	public function affected_rows($result) {
+	public function affectedRows($result) {
 		return pg_affected_rows($result);
 	}
 
@@ -317,7 +317,7 @@ class PostgreSQL implements DatabaseInterface {
 		return pg_free_result($result);
 	}
 
-	public function fetch_fields($result) {
+	public function fetchFields($result) {
 		$keys = array();
 		for($i=0;$i<pg_num_fields($result);$i++) {
 			$field = array();
@@ -328,7 +328,7 @@ class PostgreSQL implements DatabaseInterface {
 		return $keys;
 	}
 
-	public function add_limit_to_sql($sql,$limit,$offset) {
+	public function addLimitToSql($sql,$limit,$offset) {
 		return "$sql LIMIT $limit OFFSET $offset";
 	}
 
@@ -336,11 +336,11 @@ class PostgreSQL implements DatabaseInterface {
 		return addcslashes($string,'%_');
 	}
 
-	public function is_binary_type($field) {
+	public function isBinaryType($field) {
 		return $field->type == 'bytea';
 	}
 
-	public function base64_encode($string) {
+	public function base64Encode($string) {
 		return base64_encode(hex2bin(substr($string,2)));
 	}
 
@@ -433,7 +433,7 @@ class SQLServer implements DatabaseInterface {
 		return isset($this->queries[$name])?$this->queries[$name]:false;
 	}
 
-	public function connectDatabase($hostname,$username,$password,$database,$port,$socket,$charset) {
+	public function connect($hostname,$username,$password,$database,$port,$socket,$charset) {
 		$connectionInfo = array();
 		if ($port) $hostname.=','.$port;
 		if ($username) $connectionInfo['UID']=$username;
@@ -490,25 +490,25 @@ class SQLServer implements DatabaseInterface {
 		return sqlsrv_query($db,$sql,$args)?:null;
 	}
 
-	public function fetch_assoc($result) {
+	public function fetchAssoc($result) {
 		$values = sqlsrv_fetch_array($result, SQLSRV_FETCH_ASSOC);
 		if ($values) $values = array_map(function($v){ return is_null($v)?null:(string)$v; },$values);
 		return $values;
 	}
 
-	public function fetch_row($result) {
+	public function fetchRow($result) {
 		$values = sqlsrv_fetch_array($result, SQLSRV_FETCH_NUMERIC);
 		if ($values) $values = array_map(function($v){ return is_null($v)?null:(string)$v; },$values);
 		return $values;
 	}
 
-	public function insert_id($result) {
+	public function insertId($result) {
 		sqlsrv_next_result($result);
 		sqlsrv_fetch($result);
 		return (int)sqlsrv_get_field($result, 0);
 	}
 
-	public function affected_rows($result) {
+	public function affectedRows($result) {
 		return sqlsrv_rows_affected($result);
 	}
 
@@ -516,7 +516,7 @@ class SQLServer implements DatabaseInterface {
 		return sqlsrv_free_stmt($result);
 	}
 
-	public function fetch_fields($result) {
+	public function fetchFields($result) {
 		//var_dump(sqlsrv_field_metadata($result));
 		return array_map(function($a){
 			$p = array();
@@ -527,7 +527,7 @@ class SQLServer implements DatabaseInterface {
 		},sqlsrv_field_metadata($result));
 	}
 
-	public function add_limit_to_sql($sql,$limit,$offset) {
+	public function addLimitToSql($sql,$limit,$offset) {
 		return "$sql OFFSET $offset ROWS FETCH NEXT $limit ROWS ONLY";
 	}
 
@@ -535,11 +535,11 @@ class SQLServer implements DatabaseInterface {
 		return str_replace(array('%','_'),array('[%]','[_]'),$string);
 	}
 
-	public function is_binary_type($field) {
+	public function isBinaryType($field) {
 		return ($field->type>=-4 && $field->type<=-2);
 	}
 
-	public function base64_encode($string) {
+	public function base64Encode($string) {
 		return base64_encode($string);
 	}
 
@@ -677,7 +677,7 @@ class PHP_CRUD_API {
 		$table_list = array();
 		foreach ($table_array as $table) {
 			if ($result = $this->db->query($this->db->getSql('reflect_table'),array($table,$database))) {
-				while ($row = $this->db->fetch_row($result)) $table_list[] = $row[0];
+				while ($row = $this->db->fetchRow($result)) $table_list[] = $row[0];
 				$this->db->close($result);
 				if ($action!='list') break;
 			}
@@ -740,7 +740,7 @@ class PHP_CRUD_API {
 		$count = 0;
 		$field = false;
 		if ($result = $this->db->query($this->db->getSql('reflect_pk'),array($tables[0],$database))) {
-			while ($row = $this->db->fetch_row($result)) {
+			while ($row = $this->db->fetchRow($result)) {
 				$count++;
 				$field = $row[0];
 			}
@@ -815,10 +815,10 @@ class PHP_CRUD_API {
 		$filters[$table]['or'][] = array($key[1],'=',$key[0]);
 		$this->addWhereFromFilters($filters[$table],$sql,$params);
 		if ($result = $this->db->query($sql,$params)) {
-			$object = $this->db->fetch_assoc($result);
+			$object = $this->db->fetchAssoc($result);
 			foreach ($fields[$table] as $field) {
-				if ($this->db->is_binary_type($field) && $object[$field->name]) {
-					$object[$field->name] = $this->db->base64_encode($object[$field->name]);
+				if ($this->db->isBinaryType($field) && $object[$field->name]) {
+					$object[$field->name] = $this->db->base64Encode($object[$field->name]);
 				}
 			}
 			$this->db->close($result);
@@ -835,7 +835,7 @@ class PHP_CRUD_API {
 		array_unshift($params, $tables[0]);
 		$result = $this->db->query('INSERT INTO "!" ("'.$keys.'") VALUES ('.$values.')',$params);
 		if (!$result) return null;
-		return $this->db->insert_id($result);
+		return $this->db->insertId($result);
 	}
 
 	protected function updateObject($key,$input,$filters,$tables) {
@@ -856,7 +856,7 @@ class PHP_CRUD_API {
 		$filters[$table]['or'][] = array($key[1],'=',$key[0]);
 		$this->addWhereFromFilters($filters[$table],$sql,$params);
 		$result = $this->db->query($sql,$params);
-		return $this->db->affected_rows($result);
+		return $this->db->affectedRows($result);
 	}
 
 	protected function deleteObject($key,$filters,$tables) {
@@ -868,7 +868,7 @@ class PHP_CRUD_API {
 		$filters[$table]['or'][] = array($key[1],'=',$key[0]);
 		$this->addWhereFromFilters($filters[$table],$sql,$params);
 		$result = $this->db->query($sql,$params);
-		return $this->db->affected_rows($result);
+		return $this->db->affectedRows($result);
 	}
 
 	protected function findRelations($tables,$database) {
@@ -881,19 +881,19 @@ class PHP_CRUD_API {
 			$tableset[] = $table0;
 
 			$result = $this->db->query($this->db->getSql('reflect_belongs_to'),array($table0,$tables,$database,$database));
-			while ($row = $this->db->fetch_row($result)) {
+			while ($row = $this->db->fetchRow($result)) {
 				$collect[$row[0]][$row[1]]=array();
 				$select[$row[2]][$row[3]]=array($row[0],$row[1]);
 				if (!in_array($row[0],$tableset)) $tableset[] = $row[0];
 			}
 			$result = $this->db->query($this->db->getSql('reflect_has_many'),array($tables,$table0,$database,$database));
-			while ($row = $this->db->fetch_row($result)) {
+			while ($row = $this->db->fetchRow($result)) {
 				$collect[$row[2]][$row[3]]=array();
 				$select[$row[0]][$row[1]]=array($row[2],$row[3]);
 				if (!in_array($row[2],$tableset)) $tableset[] = $row[2];
 			}
 			$result = $this->db->query($this->db->getSql('reflect_habtm'),array($database,$database,$database,$database,$table0,$tables));
-			while ($row = $this->db->fetch_row($result)) {
+			while ($row = $this->db->fetchRow($result)) {
 				$collect[$row[2]][$row[3]]=array();
 				$select[$row[0]][$row[1]]=array($row[2],$row[3]);
 				$collect[$row[4]][$row[5]]=array();
@@ -950,7 +950,7 @@ class PHP_CRUD_API {
 	protected function findTableFields($table,$database) {
 		$fields = array();
 		$result = $this->db->query('SELECT * FROM "!" WHERE 1=2;',array($table));
-		foreach ($this->db->fetch_fields($result) as $field) {
+		foreach ($this->db->fetchFields($result) as $field) {
 			$fields[$field->name] = $field;
 		}
 		return $fields;
@@ -967,7 +967,7 @@ class PHP_CRUD_API {
 
 	protected function convertBinary(&$input,$keys) {
 		foreach ($keys as $key=>$field) {
-			if (isset($input->$key) && $input->$key && $this->db->is_binary_type($field)) {
+			if (isset($input->$key) && $input->$key && $this->db->isBinaryType($field)) {
 				$data = $input->$key;
 				$data = str_pad(strtr($data, '-_', '+/'), strlen($data) % 4, '=', STR_PAD_RIGHT);
 				$input->$key = (object)array('type'=>'base64','data'=>$data);
@@ -1061,7 +1061,7 @@ class PHP_CRUD_API {
 					$this->addWhereFromFilters($filters[$table],$sql,$params);
 			}
 			if ($result = $this->db->query($sql,$params)) {
-				while ($pages = $this->db->fetch_row($result)) {
+				while ($pages = $this->db->fetchRow($result)) {
 					$count = $pages[0];
 				}
 			}
@@ -1080,21 +1080,21 @@ class PHP_CRUD_API {
 			$params[] = $order[1];
 		}
 		if (is_array($order) && is_array($page)) {
-			$sql = $this->db->add_limit_to_sql($sql,$page[1],$page[0]);
+			$sql = $this->db->addLimitToSql($sql,$page[1],$page[0]);
 		}
 		if ($result = $this->db->query($sql,$params)) {
 			echo '"columns":';
 			$keys = array();
 			$base64 = array();
 			foreach ($fields[$table] as $field) {
-				$base64[] = $this->db->is_binary_type($field);
+				$base64[] = $this->db->isBinaryType($field);
 				$keys[] = $field->name;
 			}
 			echo json_encode($keys);
 			$keys = array_flip($keys);
 			echo ',"records":[';
 			$first_row = true;
-			while ($row = $this->db->fetch_row($result)) {
+			while ($row = $this->db->fetchRow($result)) {
 				if ($first_row) $first_row = false;
 				else echo ',';
 				if (isset($collect[$table])) {
@@ -1104,7 +1104,7 @@ class PHP_CRUD_API {
 				}
 				foreach ($base64 as $k=>$v) {
 					if ($v && $row[$k]) {
-						$row[$k] = $this->db->base64_encode($row[$k]);
+						$row[$k] = $this->db->base64Encode($row[$k]);
 					}
 				}
 				echo json_encode($row);
@@ -1145,14 +1145,14 @@ class PHP_CRUD_API {
 				$keys = array();
 				$base64 = array();
 				foreach ($fields[$table] as $field) {
-					$base64[] = $this->db->is_binary_type($field);
+					$base64[] = $this->db->isBinaryType($field);
 					$keys[] = $field->name;
 				}
 				echo json_encode($keys);
 				$keys = array_flip($keys);
 				echo ',"records":[';
 				$first_row = true;
-				while ($row = $this->db->fetch_row($result)) {
+				while ($row = $this->db->fetchRow($result)) {
 					if ($first_row) $first_row = false;
 					else echo ',';
 					if (isset($collect[$table])) {
@@ -1162,7 +1162,7 @@ class PHP_CRUD_API {
 					}
 					foreach ($base64 as $k=>$v) {
 						if ($v && $row[$k]) {
-							$row[$k] = $this->db->base64_encode($row[$k]);
+							$row[$k] = $this->db->base64Encode($row[$k]);
 						}
 					}
 					echo json_encode($row);
@@ -1276,7 +1276,7 @@ class PHP_CRUD_API {
 			if (!$charset) {
 				$charset = $db->getDefaultCharset();
 			}
-			$db->connectDatabase($hostname,$username,$password,$database,$port,$socket,$charset);
+			$db->connect($hostname,$username,$password,$database,$port,$socket,$charset);
 		}
 
 		$this->db = $db;
