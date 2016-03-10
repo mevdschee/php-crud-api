@@ -569,13 +569,13 @@ There are PHPUnit tests in the file 'tests.php'. You need to configure your test
 ```
 $ wget https://phar.phpunit.de/phpunit.phar
 $ php phpunit.phar tests/tests.php
-PHPUnit 4.7.3 by Sebastian Bergmann and contributors.
+PHPUnit 5.1.3 by Sebastian Bergmann and contributors.
 
-...................
+.....................................                             37 / 37 (100%)
 
-Time: 464 ms, Memory: 12.00Mb
+Time: 433 ms, Memory: 11.00Mb
 
-OK (19 tests, 39 assertions)
+OK (37 tests, 61 assertions)
 $
 ```
 
@@ -602,13 +602,13 @@ NB: You MUST use an empty database as a desctructive database fixture ('blog_sql
 ```
 $ wget https://phar.phpunit.de/phpunit.phar
 $ php phpunit.phar tests/tests.php
-PHPUnit 4.7.3 by Sebastian Bergmann and contributors.
+PHPUnit 5.1.3 by Sebastian Bergmann and contributors.
 
-......................
+.....................................                             37 / 37 (100%)
 
-Time: 894 ms, Memory: 2.75Mb
+Time: 856 ms, Memory: 11.25Mb
 
-OK (22 tests, 42 assertions)
+OK (37 tests, 61 assertions)
 $
 ```
 
