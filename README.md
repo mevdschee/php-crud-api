@@ -134,6 +134,7 @@ Search is implemented with the "filter" parameter. You need to specify the colum
   - ge: greater or equal (number is higher than or equal to value)
   - gt: greater than (number is higher than value)
   - in: in (number is in comma seperated list of values)
+  - ni: not in (number is not in comma seperated list of values)
   - is: is null (field contains "NULL" value)
   - no: not null (field does not contain "NULL" value)
 
