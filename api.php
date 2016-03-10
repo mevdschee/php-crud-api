@@ -484,6 +484,7 @@ class SQLServer implements DatabaseInterface {
 		//var_dump($params);
 		//echo "\n$sql\n";
 		//var_dump($args);
+		//file_put_contents('sql.txt',"\n$sql\n".var_export($args,true)."\n",FILE_APPEND);
 		if (strtoupper(substr($sql,0,6))=='INSERT') {
 			$sql .= ';SELECT SCOPE_IDENTITY()';
 		}
@@ -814,6 +815,7 @@ class PHP_CRUD_API {
 		if (!isset($filters[$table]['or'])) $filters[$table]['or'] = array();
 		$filters[$table]['or'][] = array($key[1],'=',$key[0]);
 		$this->addWhereFromFilters($filters[$table],$sql,$params);
+		$object = null;
 		if ($result = $this->db->query($sql,$params)) {
 			$object = $this->db->fetchAssoc($result);
 			foreach ($fields[$table] as $field) {
@@ -856,6 +858,7 @@ class PHP_CRUD_API {
 		$filters[$table]['or'][] = array($key[1],'=',$key[0]);
 		$this->addWhereFromFilters($filters[$table],$sql,$params);
 		$result = $this->db->query($sql,$params);
+		if (!$result) return null;
 		return $this->db->affectedRows($result);
 	}
 
@@ -868,6 +871,7 @@ class PHP_CRUD_API {
 		$filters[$table]['or'][] = array($key[1],'=',$key[0]);
 		$this->addWhereFromFilters($filters[$table],$sql,$params);
 		$result = $this->db->query($sql,$params);
+		if (!$result) return null;
 		return $this->db->affectedRows($result);
 	}
 

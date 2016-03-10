@@ -584,15 +584,16 @@ NB: You MUST use an empty database as a desctructive database fixture ('blog_mys
 ### SQL server on Windows:
 
 ```
-C:\mysql-crud-api-master>php.exe phpunit.phar tests\tests.php
-PHPUnit 4.7.3 by Sebastian Bergmann and contributors.
+C:\php-crud-api>"C:\PHP\php.exe" phpunit.phar tests\tests.php
+PHPUnit 5.2.10 by Sebastian Bergmann and contributors.
 
-...................
+.....................................                            37 / 37 (100%)
 
-Time: 676 ms, Memory: 7.25Mb
+Time: 1.07 seconds, Memory: 6.50Mb
 
-OK (19 tests, 39 assertions)
-C:\mysql-crud-api-master>
+OK (37 tests, 59 assertions)
+
+C:\php-crud-api>
 ```
 
 NB: You MUST use an empty database as a desctructive database fixture ('blog_sqlserver.sql') is loaded.
