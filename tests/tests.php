@@ -479,7 +479,7 @@ class PHP_CRUD_API_Test extends PHPUnit_Framework_TestCase
 	{
 		$test = new API($this);
 		$test->get('/categories?filter[]=icon,no,null&transform=1');
-		$test->expect('0');
+		$test->expect('{"categories":[]}');
 	}
 
 }
