@@ -488,14 +488,16 @@ for a specific CRUD action.
 ## Record filter
 
 By defining a 'record_filter' function you can apply a forced filter, for instance to implement roles in a database system.
-The rule "you cannot view unpublished blog posts unless you have the editor or admin role" can be implemented with this filter.
+The rule "you cannot view unpublished blog posts unless you have the admin role" can be implemented with this filter.
+
+```return ($table=='posts' && $_SESSION['role']!='admin')?array('published,no,null'):false;```
 
 ## Multi-tenancy
 
 The 'tenant_function' allows you to expose an API for a multi-tenant database schema. In the simplest model all tables have a column
 named 'customer_id' and the 'tenant_function' is defined as:
 
-```return array('customer_id,eq,'.$_SESSION['customer_id']);```
+```return $col=='customer_id'?$_SESSION['customer_id']:null```
 
 In this example ```$_SESSION['customer_id'])``` is the authenticated customer in your API.
 
