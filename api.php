@@ -1,5 +1,5 @@
 <?php
-//var_dump($_SERVER['REQUEST_METHOD'],$_SERVER['PATH_INFO']);
+//var_dump($_SERVER['REQUEST_METHOD'],$_SERVER['PATH_INFO']); die();
 
 interface DatabaseInterface {
 	public function getSql($name);

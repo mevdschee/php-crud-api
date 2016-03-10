@@ -642,7 +642,7 @@ The ".htaccess" file needs to go in the same folder as "api.php".
 If you have trouble getting the file to work you may want to check the two environment variables used. Uncomment the following line:
 
 ```
-var_dump($_SERVER['REQUEST_METHOD'],$_SERVER['PATH_INFO']);
+var_dump($_SERVER['REQUEST_METHOD'],$_SERVER['PATH_INFO']); die();
 ```
 
 And then visit:
