@@ -637,6 +637,29 @@ RewriteRule ^(.*)$ api.php/$1 [L,QSA]
 
 The ".htaccess" file needs to go in the same folder as "api.php".
 
+## Debugging
+
+If you have trouble getting the file to work you may want to check the two environment variables used. Uncomment the following line:
+
+```
+var_dump($_SERVER['REQUEST_METHOD'],$_SERVER['PATH_INFO']);
+```
+
+And then visit:
+
+```
+http://localhost/api.php/posts
+```
+
+This should output:
+
+```
+string(3) "GET"
+string(6) "/posts"
+```
+
+If it does not, something is wrong on your hosting environment.
+
 ## License
 
 MIT

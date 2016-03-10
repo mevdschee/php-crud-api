@@ -1,4 +1,6 @@
 <?php
+//var_dump($_SERVER['REQUEST_METHOD'],$_SERVER['PATH_INFO']);
+
 interface DatabaseInterface {
 	public function getSql($name);
 	public function connect($hostname,$username,$password,$database,$port,$socket,$charset);
