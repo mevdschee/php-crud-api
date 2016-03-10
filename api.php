@@ -99,7 +99,7 @@ class MySQL implements DatabaseInterface {
 		$db = $this->db;
 		$sql = preg_replace_callback('/\!|\?/', function ($matches) use (&$db,&$params) {
 			$param = array_shift($params);
-			if ($matches[0]=='!') return preg_replace('/[^a-zA-Z0-9\-_=<>]/','',$param);
+			if ($matches[0]=='!') return preg_replace('/[^a-zA-Z0-9\-_=<> ]/','',$param);
 			if (is_array($param)) return '('.implode(',',array_map(function($v) use (&$db) {
 				return "'".mysqli_real_escape_string($db,$v)."'";
 			},$param)).')';
@@ -279,7 +279,7 @@ class PostgreSQL implements DatabaseInterface {
 		$db = $this->db;
 		$sql = preg_replace_callback('/\!|\?/', function ($matches) use (&$db,&$params) {
 			$param = array_shift($params);
-			if ($matches[0]=='!') return preg_replace('/[^a-zA-Z0-9\-_=<>]/','',$param);
+			if ($matches[0]=='!') return preg_replace('/[^a-zA-Z0-9\-_=<> ]/','',$param);
 			if (is_array($param)) return '('.implode(',',array_map(function($v) use (&$db) {
 				return "'".pg_escape_string($db,$v)."'";
 			},$param)).')';
@@ -461,7 +461,7 @@ class SQLServer implements DatabaseInterface {
 			$i++;
 			$param = $params[$i];
 			if ($matches[0]=='!') {
-				return preg_replace('/[^a-zA-Z0-9\-_=<>]/','',$param);
+				return preg_replace('/[^a-zA-Z0-9\-_=<> ]/','',$param);
 			}
 			// This is workaround because SQLSRV cannot accept NULL in a param
 			if ($matches[0]=='?' && is_null($param)) {
@@ -772,6 +772,8 @@ class PHP_CRUD_API {
 			case 'ge': $comparator = '>='; break;
 			case 'gt': $comparator = '>'; break;
 			case 'in': $comparator = 'IN'; $value = explode(',',$value); break;
+			case 'is': $comparator = 'IS'; $value = null; break;
+			case 'no': $comparator = 'IS NOT'; $value = null; break;
 		}
 		return array($field, $comparator, $value);
 	}

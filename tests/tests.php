@@ -468,4 +468,18 @@ class PHP_CRUD_API_Test extends PHPUnit_Framework_TestCase
 		$test->expect('0');
 	}
 
+	public function testFilterCategoryOnNullIcon()
+	{
+		$test = new API($this);
+		$test->get('/categories?filter[]=icon,is,null&transform=1');
+		$test->expect('{"categories":[{"id":"1","name":"anouncement","icon":null},{"id":"2","name":"alert();","icon":null}]}');
+	}
+
+	public function testFilterCategoryOnNotNullIcon()
+	{
+		$test = new API($this);
+		$test->get('/categories?filter[]=icon,no,null&transform=1');
+		$test->expect('0');
+	}
+
 }
