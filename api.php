@@ -772,6 +772,7 @@ class PHP_CRUD_API {
 			case 'ge': $comparator = '>='; break;
 			case 'gt': $comparator = '>'; break;
 			case 'in': $comparator = 'IN'; $value = explode(',',$value); break;
+			case 'ni': $comparator = 'NOT IN'; $value = explode(',',$value); break;
 			case 'is': $comparator = 'IS'; $value = null; break;
 			case 'no': $comparator = 'IS NOT'; $value = null; break;
 		}

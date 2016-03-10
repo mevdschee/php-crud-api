@@ -482,4 +482,11 @@ class PHP_CRUD_API_Test extends PHPUnit_Framework_TestCase
 		$test->expect('{"categories":[]}');
 	}
 
+	public function testFilterPostsNotIn()
+	{
+		$test = new API($this);
+		$test->get('/posts?filter[]=id,ni,1,2,3,4,7,8,9,10,11,12,13,14&transform=1');
+		$test->expect('{"posts":[{"id":"5","user_id":"1","category_id":"1","content":"#1"},{"id":"6","user_id":"1","category_id":"1","content":"#2"}]}');
+	}
+
 }
