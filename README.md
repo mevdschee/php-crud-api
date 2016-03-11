@@ -49,7 +49,7 @@ After configuring you can directly benefit from generated API documentation. On 
 
     http://localhost/api.php
     
-Try the [editor](http://editor.swagger.io/) to quickly view it!
+Try the [editor](http://editor.swagger.io/) to quickly view it! Choose "File" > "Paste JSON..." from the menu.
 
 ## Configuration
 
