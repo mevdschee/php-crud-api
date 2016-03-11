@@ -25,6 +25,12 @@ class MySQL implements DatabaseInterface {
 
 	public function __construct() {
 		$this->queries = array(
+			'list_tables'=>'SELECT
+					"TABLE_NAME","TABLE_COMMENT"
+				FROM
+					"INFORMATION_SCHEMA"."TABLES"
+				WHERE
+					"TABLE_SCHEMA" = ?',
 			'reflect_table'=>'SELECT
 					"TABLE_NAME"
 				FROM
@@ -1328,19 +1334,233 @@ class PHP_CRUD_API {
 		return $tree;
 	}
 
+	protected function swagger($settings) {
+		extract($settings);
+
+		$tables = array();
+		if ($result = $this->db->query($this->db->getSql('list_tables'),array($database))) {
+			while ($row = $this->db->fetchRow($result)) {
+				$table = array(
+					'name'=>$row[0],
+					'comments'=>$row[1],
+					'list_actions'=>array(
+						array('name'=>'list','method'=>'get'),
+					),
+					'create_actions'=>array(
+						array('name'=>'create','method'=>'post'),
+					),
+					'other_actions'=>array(
+						array('name'=>'read','method'=>'get'),
+						array('name'=>'update','method'=>'put'),
+						array('name'=>'delete','method'=>'delete'),
+					),
+				);
+				foreach (array('list_actions','create_actions','other_actions') as $path) {
+					foreach ($table[$path] as $i=>$action) {
+						$table_list = array($table['name']);
+						$fields = $this->findFields($table_list,false,$database);
+						if ($table_authorizer) $this->applyTableAuthorizer($table_authorizer,$action['name'],$database,$table_list);
+						if ($column_authorizer) $this->applyColumnAuthorizer($column_authorizer,$action['name'],$database,$fields);
+						if (!$table_list || !$fields) $table[$path][$i] = false;
+						$table[$path][$i]['fields'] = $fields[$table['name']];
+					}
+					// remove unauthorized tables and tables without fields
+					$table[$path] = array_filter($table[$path]);
+				}
+				if ($table['list_actions']||$table['create_actions']||$table['other_actions']) $tables[] = $table;
+			}
+			$this->db->close($result);
+		}
+
+	//var_dump($tables);die();
+
+		echo '{"swagger":"2.0",';
+		echo '"info":{';
+		echo '"title":"'.$database.'",';
+		echo '"description":"API generated with [PHP_CRUD_API](https://github.com/mevdschee/php-crud-api)",';
+		echo '"version":"1.0.0"';
+		echo '},';
+		echo '"host":"'.$_SERVER['HTTP_HOST'].'",';
+		echo '"basePath":"'.$_SERVER['SCRIPT_NAME'].'",';
+		echo '"schemes":["http"],';
+		echo '"consumes":["application/json","application/x-www-form-urlencoded"],';
+		echo '"produces":["application/json"],';
+		echo '"tags":[';
+		foreach ($tables as $i=>$table) {
+			if ($i>0) echo ',';
+			echo '{';
+			echo '"name":"'.$table['name'].'",';
+			echo '"description":"'.$table['comments'].'"';
+			echo '}';
+		}
+		echo '],';
+		echo '"paths":{';
+		foreach ($tables as $i=>$table) {
+			if ($table['list_actions']) {
+				if ($i>0) echo ',';
+				echo '"/'.$table['name'].'{,related}":{';
+				foreach ($table['list_actions'] as $j=>$action) {
+					if ($j>0) echo ',';
+					echo '"'.$action['method'].'":{';
+					echo '"tags":["'.$table['name'].'"],';
+					echo '"summary":"List '.$table['name'].'.",';
+					echo '"parameters":[';
+					echo '{';
+					echo '"name":",related",';
+					echo '"in":"path",';
+					echo '"description":"One or more related entities (start with comma).",';
+					echo '"required":true,';
+					echo '"type":"string"';
+					echo '}';
+					echo '],';
+					echo '"responses":{';
+					echo '"200":{';
+					echo '"description":"An array of '.$table['name'].'",';
+					echo '"schema":{';
+					echo '"type":"array",';
+					echo '"items":{';
+					echo '"type": "object",';
+					echo '"properties": {';
+					foreach (array_keys($action['fields']) as $k=>$field) {
+						if ($k>0) echo ',';
+						echo '"'.$field.'": {';
+						echo '"type": "string"';
+						echo '}';
+					}
+					echo '}'; //properties
+					echo '}'; //items
+					echo '}'; //schema
+					echo '}'; //200
+					echo '}'; //responses
+					echo '}'; //method
+				}
+				echo '}';
+			}
+			if ($table['create_actions']) {
+				if ($i>0 || $table['list_actions']) echo ',';
+				echo '"/'.$table['name'].'":{';
+				foreach ($table['create_actions'] as $j=>$action) {
+					if ($j>0) echo ',';
+					echo '"'.$action['method'].'":{';
+					echo '"tags":["'.$table['name'].'"],';
+					echo '"summary":"Create item.",';
+					echo '"parameters":[{';
+					echo '"name":"item",';
+					echo '"in":"body",';
+					echo '"description":"Item to create.",';
+					echo '"required":false,';
+					echo '"schema":{';
+					echo '"type": "object",';
+					echo '"properties": {';
+					foreach (array_keys($action['fields']) as $k=>$field) {
+						if ($k>0) echo ',';
+						echo '"'.$field.'": {';
+						echo '"type": "string"';
+						echo '}';
+					}
+					echo '}'; //properties
+					echo '}'; //schema
+					echo '}],';
+					echo '"responses":{';
+					echo '"200":{';
+					echo '"description":"Identifier of created item.",';
+					echo '"schema":{';
+					echo '"type":"integer"';
+					echo '}';
+					echo '}';
+					echo '}';
+					echo '}';
+				}
+				echo '}';
+			}
+			if ($table['other_actions']) {
+				if ($i>0 || $table['list_actions'] || $table['create_actions']) echo ',';
+				echo '"/'.$table['name'].'/{id}":{';
+				foreach ($table['other_actions'] as $j=>$action) {
+					if ($j>0) echo ',';
+					echo '"'.$action['method'].'":{';
+					echo '"tags":["'.$table['name'].'"],';
+					echo '"summary":"'.ucfirst($action['name']).' item.",';
+					echo '"parameters":[';
+					echo '{';
+					echo '"name":"id",';
+					echo '"in":"path",';
+					echo '"description":"Identifier for item.",';
+					echo '"required":true,';
+					echo '"type":"string"';
+					echo '}';
+					if ($action['name']=='update') {
+						echo ',{';
+						echo '"name":"item",';
+						echo '"in":"body",';
+						echo '"description":"Properties of item to update.",';
+						echo '"required":false,';
+						echo '"schema":{';
+						echo '"type": "object",';
+						echo '"properties": {';
+						foreach (array_keys($action['fields']) as $k=>$field) {
+							if ($k>0) echo ',';
+							echo '"'.$field.'": {';
+							echo '"type": "string"';
+							echo '}';
+						}
+						echo '}'; //properties
+						echo '}'; //schema
+						echo '}';
+					}
+					echo '],';
+					if ($action['name']=='read') {
+						echo '"responses":{';
+						echo '"200":{';
+						echo '"description":"The requested item.",';
+						echo '"schema":{';
+						echo '"type": "object",';
+						echo '"properties": {';
+						foreach (array_keys($action['fields']) as $k=>$field) {
+							if ($k>0) echo ',';
+							echo '"'.$field.'": {';
+							echo '"type": "string"';
+							echo '}';
+						}
+						echo '}'; //properties
+						echo '}'; //schema
+						echo '}';
+						echo '}';
+					} else {
+						echo '"responses":{';
+						echo '"200":{';
+						echo '"description":"Number of affected rows.",';
+						echo '"schema":{';
+						echo '"type":"integer"';
+						echo '}';
+						echo '}';
+						echo '}';
+					}
+					echo '}';
+				}
+				echo '}';
+			}
+		}
+		echo '}';
+			echo '}';
+	}
+
 	public function executeCommand() {
 		if (isset($_SERVER['REQUEST_METHOD'])) {
 			header('Access-Control-Allow-Origin: *');
 		}
-		$parameters = $this->getParameters($this->settings);
-
-		switch($parameters['action']){
-			case 'list': $this->listCommand($parameters); break;
-			case 'read': $this->readCommand($parameters); break;
-			case 'create': $this->createCommand($parameters); break;
-			case 'update': $this->updateCommand($parameters); break;
-			case 'delete': $this->deleteCommand($parameters); break;
-			case 'headers': $this->headersCommand($parameters); break;
+		if (!$this->settings['request']) {
+			$this->swagger($this->settings);
+		} else {
+			$parameters = $this->getParameters($this->settings);
+			switch($parameters['action']){
+				case 'list': $this->listCommand($parameters); break;
+				case 'read': $this->readCommand($parameters); break;
+				case 'create': $this->createCommand($parameters); break;
+				case 'update': $this->updateCommand($parameters); break;
+				case 'delete': $this->deleteCommand($parameters); break;
+				case 'headers': $this->headersCommand($parameters); break;
+			}
 		}
 	}
 
