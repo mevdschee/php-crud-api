@@ -43,14 +43,6 @@ This is a single file application! Upload "api.php" somewhere and enjoy!
   - Binary fields supported with base64 encoding
   - Generated API documentation in Swagger 2.0 format
 
-## Documentation
-
-After configuring you can directly benefit from generated API documentation. On the URL below you find the generated API documentation in Swagger 2.0 format.
-
-    http://localhost/api.php
-    
-Try the [editor](http://editor.swagger.io/) to quickly view it! Choose "File" > "Paste JSON..." from the menu.
-
 ## Configuration
 
 Edit the following lines in the bottom of the file "api.php":
@@ -95,6 +87,14 @@ $api->executeCommand();
 ```
 
 NB: The "socket" option is not supported by MS SQL Server.
+
+## Documentation
+
+After configuring you can directly benefit from generated API documentation. On the URL below you find the generated API documentation in Swagger 2.0 format.
+
+    http://localhost/api.php
+    
+Try the [editor](http://editor.swagger.io/) to quickly view it! Choose "File" > "Paste JSON..." from the menu.
 
 ## Usage
 
