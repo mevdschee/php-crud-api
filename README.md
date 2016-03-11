@@ -41,6 +41,7 @@ This is a single file application! Upload "api.php" somewhere and enjoy!
   - Relation detection and filtering on foreign keys
   - Relation "transforms" for PHP and JavaScript
   - Binary fields supported with base64 encoding
+  - Generated API documentation in Swagger 2.0 format
 
 ## Configuration
 
