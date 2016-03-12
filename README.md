@@ -90,7 +90,7 @@ NB: The "socket" option is not supported by MS SQL Server.
 
 ## Documentation
 
-After configuring you can directly benefit from generated API documentation. On the URL below you find the generated API documentation in Swagger 2.0 format.
+After configuring you can directly benefit from generated API documentation. On the URL below you find the generated API specification in Swagger 2.0 format.
 
     http://localhost/api.php
     
