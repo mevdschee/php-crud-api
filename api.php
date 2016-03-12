@@ -175,6 +175,12 @@ class PostgreSQL implements DatabaseInterface {
 
 	public function __construct() {
 		$this->queries = array(
+			'list_tables'=>'select
+					"table_name","table_comment"
+				from
+					"information_schema"."tables"
+				where
+					"table_catalog" = ?',
 			'reflect_table'=>'select
 					"table_name"
 				from
@@ -365,6 +371,12 @@ class SQLServer implements DatabaseInterface {
 
 	public function __construct() {
 		$this->queries = array(
+			'list_tables'=>'SELECT
+					"TABLE_NAME","TABLE_COMMENT"
+				FROM
+					"INFORMATION_SCHEMA"."TABLES"
+				WHERE
+					"TABLE_CATALOG" = ?',
 			'reflect_table'=>'SELECT
 					"TABLE_NAME"
 				FROM
