@@ -1387,7 +1387,7 @@ class PHP_CRUD_API {
 		echo '},';
 		echo '"host":"'.$_SERVER['HTTP_HOST'].'",';
 		echo '"basePath":"'.$_SERVER['SCRIPT_NAME'].'",';
-		echo '"schemes":["http"],';
+		echo '"schemes":["http'.((!empty($_SERVER['HTTPS'])&&$_SERVER['HTTPS']!=='off')?'s':'').'"],';
 		echo '"consumes":["application/json","application/x-www-form-urlencoded"],';
 		echo '"produces":["application/json"],';
 		echo '"tags":[';
