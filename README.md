@@ -553,11 +553,11 @@ In the above example you see how binary data is sent. Both "base64url" and stand
 
 ## Sending NULL
 
-When using the POST method (x-www-form-urlencoded, see rfc1738) a database NULL value can be set using the "__is_null" suffix:
+When using the POST method (x-www-form-urlencoded, see rfc1738) a database NULL value can be set using a parameter with the "__is_null" suffix:
 
 ```
 PUT http://localhost/api.php/categories/2
-name=Internet&icon__is_null
+name=Internet&icon__is_null=1
 ```
 
 When sending JSON data, then sending a NULL value for a nullable database field is easier as you can use the JSON "null" value (without quotes).
