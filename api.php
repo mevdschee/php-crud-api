@@ -693,16 +693,20 @@ class PHP_CRUD_API {
 	protected function processTableAndIncludeParameters($database,$table,$include,$action) {
 		$blacklist = array('information_schema','mysql','sys','pg_catalog');
 		if (in_array(strtolower($database), $blacklist)) return array();
-		$table_array = array_merge(array($table),explode(',',$include));
 		$table_list = array();
-		foreach ($table_array as $table) {
-			if ($result = $this->db->query($this->db->getSql('reflect_table'),array($table,$database))) {
-				while ($row = $this->db->fetchRow($result)) $table_list[] = $row[0];
-				$this->db->close($result);
-				if ($action!='list') break;
-			}
+		if ($result = $this->db->query($this->db->getSql('reflect_table'),array($table,$database))) {
+			while ($row = $this->db->fetchRow($result)) $table_list[] = $row[0];
+			$this->db->close($result);
 		}
 		if (empty($table_list)) $this->exitWith404('entity');
+		if ($action=='list') {
+			foreach (explode(',',$include) as $table) {
+				if ($result = $this->db->query($this->db->getSql('reflect_table'),array($table,$database))) {
+					while ($row = $this->db->fetchRow($result)) $table_list[] = $row[0];
+					$this->db->close($result);
+				}
+			}
+		}
 		return $table_list;
 	}
 
@@ -1014,7 +1018,7 @@ class PHP_CRUD_API {
 		$satisfy   = $this->parseGetParameter($get, 'satisfy', 'a-zA-Z');
 		$columns   = $this->parseGetParameter($get, 'columns', 'a-zA-Z0-9\-_,');
 		$order     = $this->parseGetParameter($get, 'order', 'a-zA-Z0-9\-_,');
-		$transform = $this->parseGetParameter($get, 'transform', '1');
+		$transform = $this->parseGetParameter($get, 'transform', 't1');
 
 		$tables    = $this->processTableAndIncludeParameters($database,$table,$include,$action);
 		$key       = $this->processKeyParameter($key,$tables,$database);
@@ -1398,7 +1402,7 @@ class PHP_CRUD_API {
 		echo '"host":"'.$_SERVER['HTTP_HOST'].'",';
 		echo '"basePath":"'.$_SERVER['SCRIPT_NAME'].'",';
 		echo '"schemes":["http'.((!empty($_SERVER['HTTPS'])&&$_SERVER['HTTPS']!=='off')?'s':'').'"],';
-		echo '"consumes":["application/json","application/x-www-form-urlencoded"],';
+		echo '"consumes":["application/json"],';
 		echo '"produces":["application/json"],';
 		echo '"tags":[';
 		foreach ($tables as $i=>$table) {
@@ -1425,6 +1429,58 @@ class PHP_CRUD_API {
 						echo '"name":"include",';
 						echo '"in":"query",';
 						echo '"description":"One or more related entities (comma separated).",';
+						echo '"required":false,';
+						echo '"type":"string"';
+						echo '},';
+						echo '{';
+						echo '"name":"order",';
+						echo '"in":"query",';
+						echo '"description":"Column you want to sort on and the sort direction (comma separated). Example: id,desc",';
+						echo '"required":false,';
+						echo '"type":"string"';
+						echo '},';
+						echo '{';
+						echo '"name":"page",';
+						echo '"in":"query",';
+						echo '"description":"Page number and page size (comma separated). NB: You cannot use \"page\" without \"order\"! Example: 1,10",';
+						echo '"required":false,';
+						echo '"type":"string"';
+						echo '},';
+						echo '{';
+						echo '"name":"transform",';
+						echo '"in":"query",';
+						echo '"description":"Transform the records to object format. NB: This can also be done client-side in JavaScript!",';
+						echo '"required":false,';
+						echo '"type":"boolean"';
+						echo '},';
+						echo '{';
+						echo '"name":"columns",';
+						echo '"in":"query",';
+						echo '"description":"The columns you want to retrieve (comma separated).",';
+						echo '"required":false,';
+						echo '"type":"string"';
+						echo '},';
+						echo '{';
+						echo '"name":"filter[]",';
+						echo '"in":"query",';
+						echo '"description":"Filters to be applied. Each filter consists of a column, an operator and a value (comma separated). Example: id,eq,1",';
+						echo '"required":false,';
+						echo '"type":"array",';
+						echo '"collectionFormat":"multi",';
+						echo '"items":{"type":"string"}';
+						echo '},';
+						echo '{';
+						echo '"name":"satisfy",';
+						echo '"in":"query",';
+						echo '"description":"Should all filters match (default)? Or any?",';
+						echo '"required":false,';
+						echo '"type":"string",';
+						echo '"enum":["any"]';
+						echo '},';
+						echo '{';
+						echo '"name":"callback",';
+						echo '"in":"query",';
+						echo '"description":"JSONP callback function name",';
 						echo '"required":false,';
 						echo '"type":"string"';
 						echo '}';
