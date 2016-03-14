@@ -510,7 +510,7 @@ named 'customer_id' and the 'tenant_function' is defined as:
 
 ```return $col=='customer_id'?$_SESSION['customer_id']:null```
 
-In this example ```$_SESSION['customer_id'])``` is the authenticated customer in your API.
+In this example ```$_SESSION['customer_id']``` is the authenticated customer in your API.
 
 ## Sanitizing input
 
