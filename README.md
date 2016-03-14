@@ -93,7 +93,7 @@ NB: The "socket" option is not supported by MS SQL Server.
 After configuring you can directly benefit from generated API documentation. On the URL below you find the generated API specification in Swagger 2.0 format.
 
     http://localhost/api.php
-    
+
 Try the [editor](http://editor.swagger.io/) to quickly view it! Choose "File" > "Paste JSON..." from the menu.
 
 ## Usage
@@ -322,12 +322,12 @@ Output:
 
 ## Relations
 
-The explanation of this feature is based on the datastructure from the ```blog.sql``` database file. This database is a very simple blog datastructure with corresponding foreign key relations between the tables.
+The explanation of this feature is based on the data structure from the ```blog.sql``` database file. This database is a very simple blog data structure with corresponding foreign key relations between the tables.
 
 You can get the "post" that has "id" equal to "1" with it's corresponding "categories", "tags" and "comments" using:
 
 ```
-GET http://localhost/api.php/posts,categories,tags,comments?filter=id,eq,1
+GET http://localhost/api.php/posts?relate=categories,tags,comments&filter=id,eq,1
 ```
 
 Output:
@@ -557,7 +557,7 @@ When using the POST method (x-www-form-urlencoded, see rfc1738) a database NULL 
 
 ```
 PUT http://localhost/api.php/categories/2
-name=Internet&icon__is_null=1
+name=Internet&icon__is_null
 ```
 
 When sending JSON data, then sending a NULL value for a nullable database field is easier as you can use the JSON "null" value (without quotes).

@@ -1372,24 +1372,23 @@ class PHP_CRUD_API {
 			$this->db->close($result);
 		}
 
-		foreach ($tables as &$table)	{
+		foreach ($tables as $t=>$table)	{
 			foreach (array('list_actions','create_actions','other_actions') as $path) {
-				foreach ($table[$path] as $i=>&$action) {
+				foreach ($table[$path] as $i=>$action) {
 					$table_list = array($table['name']);
 					$fields = $this->findFields($table_list,false,$database);
 					if ($table_authorizer) $this->applyTableAuthorizer($table_authorizer,$action['name'],$database,$table_list);
 					if ($column_authorizer) $this->applyColumnAuthorizer($column_authorizer,$action['name'],$database,$fields);
-					if (!$table_list || !$fields[$table['name']]) $action = false;
-					else $action['fields'] = $fields[$table['name']];
+					if (!$table_list || !$fields[$table['name']]) $tables[$t][$path][$i] = false;
+					else $tables[$t][$path][$i]['fields'] = $fields[$table['name']];
 				}
 				// remove unauthorized tables and tables without fields
-				$table[$path] = array_values(array_filter($table[$path]));
+				$tables[$t][$path] = array_values(array_filter($tables[$t][$path]));
 			}
-			if (!$table['list_actions']&&!$table['create_actions']&&!$table['other_actions']) $table = false;
+			if (!$table['list_actions']&&!$table['create_actions']&&!$table['other_actions']) $tables[$t] = false;
 		}
 		$tables = array_values(array_filter($tables));
 		//var_dump($tables);die();
-
 
 		echo '{"swagger":"2.0",';
 		echo '"info":{';
