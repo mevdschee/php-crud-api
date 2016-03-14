@@ -690,10 +690,10 @@ class PHP_CRUD_API {
 		if (!empty($errors)) $this->exitWith422($errors);
 	}
 
-	protected function processTablesParameter($database,$tables,$action) {
+	protected function processTableAndIncludeParameters($database,$table,$include,$action) {
 		$blacklist = array('information_schema','mysql','sys','pg_catalog');
 		if (in_array(strtolower($database), $blacklist)) return array();
-		$table_array = explode(',',$tables);
+		$table_array = array_merge(array($table),explode(',',$include));
 		$table_list = array();
 		foreach ($table_array as $table) {
 			if ($result = $this->db->query($this->db->getSql('reflect_table'),array($table,$database))) {
@@ -1004,9 +1004,10 @@ class PHP_CRUD_API {
 	protected function getParameters($settings) {
 		extract($settings);
 
-		$tables    = $this->parseRequestParameter($request, 'a-zA-Z0-9\-_,');
-		$key       = $this->parseRequestParameter($request, 'a-zA-Z0-9\-_,'); // auto-increment or uuid
+		$table     = $this->parseRequestParameter($request, 'a-zA-Z0-9\-_');
+		$key       = $this->parseRequestParameter($request, 'a-zA-Z0-9\-_'); // auto-increment or uuid
 		$action    = $this->mapMethodToAction($method,$key);
+		$include   = $this->parseGetParameter($get, 'include', 'a-zA-Z0-9\-_,');
 		$callback  = $this->parseGetParameter($get, 'callback', 'a-zA-Z0-9\-_');
 		$page      = $this->parseGetParameter($get, 'page', '0-9,');
 		$filters   = $this->parseGetParameterArray($get, 'filter', false);
@@ -1015,7 +1016,7 @@ class PHP_CRUD_API {
 		$order     = $this->parseGetParameter($get, 'order', 'a-zA-Z0-9\-_,');
 		$transform = $this->parseGetParameter($get, 'transform', '1');
 
-		$tables    = $this->processTablesParameter($database,$tables,$action);
+		$tables    = $this->processTableAndIncludeParameters($database,$table,$include,$action);
 		$key       = $this->processKeyParameter($key,$tables,$database);
 		$filters   = $this->processFiltersParameter($tables,$satisfy,$filters);
 		$page      = $this->processPageParameter($page);
@@ -1355,13 +1356,11 @@ class PHP_CRUD_API {
 				$table = array(
 					'name'=>$row[0],
 					'comments'=>$row[1],
-					'list_actions'=>array(
+					'root_actions'=>array(
 						array('name'=>'list','method'=>'get'),
-					),
-					'create_actions'=>array(
 						array('name'=>'create','method'=>'post'),
 					),
-					'other_actions'=>array(
+					'id_actions'=>array(
 						array('name'=>'read','method'=>'get'),
 						array('name'=>'update','method'=>'put'),
 						array('name'=>'delete','method'=>'delete'),
@@ -1373,7 +1372,7 @@ class PHP_CRUD_API {
 		}
 
 		foreach ($tables as $t=>$table)	{
-			foreach (array('list_actions','create_actions','other_actions') as $path) {
+			foreach (array('root_actions','id_actions') as $path) {
 				foreach ($table[$path] as $i=>$action) {
 					$table_list = array($table['name']);
 					$fields = $this->findFields($table_list,false,$database);
@@ -1385,7 +1384,7 @@ class PHP_CRUD_API {
 				// remove unauthorized tables and tables without fields
 				$tables[$t][$path] = array_values(array_filter($tables[$t][$path]));
 			}
-			if (!$table['list_actions']&&!$table['create_actions']&&!$table['other_actions']) $tables[$t] = false;
+			if (!$table['root_actions']&&!$table['id_actions']) $tables[$t] = false;
 		}
 		$tables = array_values(array_filter($tables));
 		//var_dump($tables);die();
@@ -1412,91 +1411,83 @@ class PHP_CRUD_API {
 		echo '],';
 		echo '"paths":{';
 		foreach ($tables as $i=>$table) {
-			if ($table['list_actions']) {
+			if ($table['root_actions']) {
 				if ($i>0) echo ',';
-				echo '"/'.$table['name'].'{,related}":{';
-				foreach ($table['list_actions'] as $j=>$action) {
-					if ($j>0) echo ',';
-					echo '"'.$action['method'].'":{';
-					echo '"tags":["'.$table['name'].'"],';
-					echo '"summary":"List '.$table['name'].'.",';
-					echo '"parameters":[';
-					echo '{';
-					echo '"name":",related",';
-					echo '"in":"path",';
-					echo '"description":"One or more related entities (start with comma).",';
-					echo '"required":true,';
-					echo '"type":"string"';
-					echo '}';
-					echo '],';
-					echo '"responses":{';
-					echo '"200":{';
-					echo '"description":"An array of '.$table['name'].'",';
-					echo '"schema":{';
-					echo '"type":"array",';
-					echo '"items":{';
-					echo '"type": "object",';
-					echo '"properties": {';
-					foreach (array_keys($action['fields']) as $k=>$field) {
-						if ($k>0) echo ',';
-						echo '"'.$field.'": {';
-						echo '"type": "string"';
-						echo '}';
-					}
-					echo '}'; //properties
-					echo '}'; //items
-					echo '}'; //schema
-					echo '}'; //200
-					echo '}'; //responses
-					echo '}'; //method
-				}
-				echo '}';
-			}
-			if ($table['create_actions']) {
-				if ($i>0 || $table['list_actions']) echo ',';
 				echo '"/'.$table['name'].'":{';
-				foreach ($table['create_actions'] as $j=>$action) {
+				foreach ($table['root_actions'] as $j=>$action) {
 					if ($j>0) echo ',';
 					echo '"'.$action['method'].'":{';
 					echo '"tags":["'.$table['name'].'"],';
-					echo '"summary":"Create item.",';
-					echo '"parameters":[{';
-					echo '"name":"item",';
-					echo '"in":"body",';
-					echo '"description":"Item to create.",';
-					echo '"required":false,';
-					echo '"schema":{';
-					echo '"type": "object",';
-					echo '"properties": {';
-					foreach (array_keys($action['fields']) as $k=>$field) {
-						if ($k>0) echo ',';
-						echo '"'.$field.'": {';
-						echo '"type": "string"';
+					echo '"summary":"'.ucfirst($action['name']).'",';
+					if ($action['name']=='list') {
+						echo '"parameters":[';
+						echo '{';
+						echo '"name":"include",';
+						echo '"in":"query",';
+						echo '"description":"One or more related entities (comma separated).",';
+						echo '"required":false,';
+						echo '"type":"string"';
 						echo '}';
+						echo '],';
+						echo '"responses":{';
+						echo '"200":{';
+						echo '"description":"An array of '.$table['name'].'",';
+						echo '"schema":{';
+						echo '"type":"array",';
+						echo '"items":{';
+						echo '"type": "object",';
+						echo '"properties": {';
+						foreach (array_keys($action['fields']) as $k=>$field) {
+							if ($k>0) echo ',';
+							echo '"'.$field.'": {';
+							echo '"type": "string"';
+							echo '}';
+						}
+						echo '}'; //properties
+						echo '}'; //items
+						echo '}'; //schema
+						echo '}'; //200
+						echo '}'; //responses
 					}
-					echo '}'; //properties
-					echo '}'; //schema
-					echo '}],';
-					echo '"responses":{';
-					echo '"200":{';
-					echo '"description":"Identifier of created item.",';
-					echo '"schema":{';
-					echo '"type":"integer"';
-					echo '}';
-					echo '}';
-					echo '}';
-					echo '}';
+					if ($action['name']=='create') {
+						echo '"parameters":[{';
+						echo '"name":"item",';
+						echo '"in":"body",';
+						echo '"description":"Item to create.",';
+						echo '"required":false,';
+						echo '"schema":{';
+						echo '"type": "object",';
+						echo '"properties": {';
+						foreach (array_keys($action['fields']) as $k=>$field) {
+							if ($k>0) echo ',';
+							echo '"'.$field.'": {';
+							echo '"type": "string"';
+							echo '}';
+						}
+						echo '}'; //properties
+						echo '}'; //schema
+						echo '}],';
+						echo '"responses":{';
+						echo '"200":{';
+						echo '"description":"Identifier of created item.",';
+						echo '"schema":{';
+						echo '"type":"integer"';
+						echo '}';//schema
+						echo '}';//200
+						echo '}';//responses
+					}
+					echo '}';//method
 				}
 				echo '}';
 			}
-			if ($table['other_actions']) {
-				if ($i>0 || $table['list_actions'] || $table['create_actions']) echo ',';
+			if ($table['id_actions']) {
+				if ($i>0 || $table['root_actions']) echo ',';
 				echo '"/'.$table['name'].'/{id}":{';
-				foreach ($table['other_actions'] as $j=>$action) {
+				foreach ($table['id_actions'] as $j=>$action) {
 					if ($j>0) echo ',';
 					echo '"'.$action['method'].'":{';
 					echo '"tags":["'.$table['name'].'"],';
-					echo '"summary":"'.ucfirst($action['name']).' item.",';
+					echo '"summary":"'.ucfirst($action['name']).'",';
 					echo '"parameters":[';
 					echo '{';
 					echo '"name":"id",';

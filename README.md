@@ -327,7 +327,7 @@ The explanation of this feature is based on the data structure from the ```blog.
 You can get the "post" that has "id" equal to "1" with it's corresponding "categories", "tags" and "comments" using:
 
 ```
-GET http://localhost/api.php/posts?relate=categories,tags,comments&filter=id,eq,1
+GET http://localhost/api.php/posts?include=categories,tags,comments&filter=id,eq,1
 ```
 
 Output:

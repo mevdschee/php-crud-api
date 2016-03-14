@@ -313,14 +313,14 @@ class PHP_CRUD_API_Test extends PHPUnit_Framework_TestCase
 	public function testListExampleFromReadme()
 	{
 		$test = new API($this);
-		$test->get('/posts,categories,tags,comments?filter=id,eq,1');
+		$test->get('/posts?include=categories,tags,comments&filter=id,eq,1');
 		$test->expect('{"posts":{"columns":["id","user_id","category_id","content"],"records":[["1","1","1","blog started"]]},"post_tags":{"relations":{"post_id":"posts.id"},"columns":["id","post_id","tag_id"],"records":[["1","1","1"],["2","1","2"]]},"categories":{"relations":{"id":"posts.category_id"},"columns":["id","name","icon"],"records":[["1","anouncement",null]]},"tags":{"relations":{"id":"post_tags.tag_id"},"columns":["id","name"],"records":[["1","funny"],["2","important"]]},"comments":{"relations":{"post_id":"posts.id"},"columns":["id","post_id","message"],"records":[["1","1","great"],["2","1","fantastic"]]}}');
 	}
 
 	public function testListExampleFromReadmeWithTransform()
 	{
 		$test = new API($this);
-		$test->get('/posts,categories,tags,comments?filter=id,eq,1&transform=1');
+		$test->get('/posts?include=categories,tags,comments&filter=id,eq,1&transform=1');
 		$test->expect('{"posts":[{"id":"1","post_tags":[{"id":"1","post_id":"1","tag_id":"1","tags":[{"id":"1","name":"funny"}]},{"id":"2","post_id":"1","tag_id":"2","tags":[{"id":"2","name":"important"}]}],"comments":[{"id":"1","post_id":"1","message":"great"},{"id":"2","post_id":"1","message":"fantastic"}],"user_id":"1","category_id":"1","categories":[{"id":"1","name":"anouncement","icon":null}],"content":"blog started"}]}');
 	}
 
@@ -432,7 +432,7 @@ class PHP_CRUD_API_Test extends PHPUnit_Framework_TestCase
 	public function testMissingIntermediateTable()
 	{
 		$test = new API($this);
-		$test->get('/users,posts,tags');
+		$test->get('/users?include=posts,tags');
 		$test->expect('{"users":{"columns":["id","username"],"records":[["1","user1"]]},"posts":{"relations":{"user_id":"users.id"},"columns":["id","user_id","category_id","content"],"records":[["1","1","1","blog started"],["2","1","2","\u20ac Hello world, \u039a\u03b1\u03bb\u03b7\u03bc\u1f73\u03c1\u03b1 \u03ba\u1f79\u03c3\u03bc\u03b5, \u30b3\u30f3\u30cb\u30c1\u30cf"],["5","1","1","#1"],["6","1","1","#2"],["7","1","1","#3"],["8","1","1","#4"],["9","1","1","#5"],["10","1","1","#6"],["11","1","1","#7"],["12","1","1","#8"],["14","1","1","#10"]]},"post_tags":{"relations":{"post_id":"posts.id"},"columns":["id","post_id","tag_id"],"records":[["1","1","1"],["2","1","2"],["3","2","1"],["4","2","2"]]},"tags":{"relations":{"id":"post_tags.tag_id"},"columns":["id","name"],"records":[["1","funny"],["2","important"]]}}');
 	}
 
