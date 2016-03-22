@@ -16,7 +16,7 @@ function call($method, $url, $data = false) {
 	return curl_exec($ch);
 }
 
-$response = call('GET','http://localhost/api.php/posts,categories,tags,comments?filter=id,eq,1');
+$response = call('GET','http://localhost/api.php/posts?include=categories,tags,comments&filter=id,eq,1');
 $jsonObject = json_decode($response,true);
 
 $jsonObject = php_crud_api_transform($jsonObject);
