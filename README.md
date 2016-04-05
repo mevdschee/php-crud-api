@@ -179,10 +179,11 @@ Output:
 
 ### List + Column selection
 
-By default all columns are selected. With the "columns" parameter you can select specific columns (comma seperated):
+By default all columns are selected. With the "columns" parameter you can select specific columns. Multiple columns should be comma seperated. An asterisk ("*") may be used as a wildcard to indicate "all columns":
 
 ```
 GET http://localhost/api.php/categories?columns=name
+GET http://localhost/api.php/categories?columns=categories.name
 ```
 
 Output:

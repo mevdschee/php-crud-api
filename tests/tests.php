@@ -489,4 +489,32 @@ class PHP_CRUD_API_Test extends PHPUnit_Framework_TestCase
 		$test->expect('{"posts":[{"id":"5","user_id":"1","category_id":"1","content":"#1"},{"id":"6","user_id":"1","category_id":"1","content":"#2"}]}');
 	}
 
+	public function testColumnsWithTable()
+	{
+		$test = new API($this);
+		$test->get('/posts?columns=posts.content&filter=id,eq,1&transform=1');
+		$test->expect('{"posts":[{"content":"blog started"}]}');
+	}
+
+	public function testColumnsWithTableWildcard()
+	{
+		$test = new API($this);
+		$test->get('/posts?columns=posts.*&filter=id,eq,1&transform=1');
+		$test->expect('{"posts":[{"id":"1","user_id":"1","category_id":"1","content":"blog started"}]}');
+	}
+
+	public function testColumnsOnInclude()
+	{
+		$test = new API($this);
+		$test->get('/posts?include=categories&columns=categories.name&filter=id,eq,1&transform=1');
+		$test->expect('{"posts":[{"category_id":"1","categories":[{"id":"1","name":"anouncement"}]}]}');
+	}
+
+	public function testColumnsOnWrongInclude()
+	{
+		$test = new API($this);
+		$test->get('/posts?include=categories&columns=categories&filter=id,eq,1&transform=1');
+		$test->expect('{"posts":[{"category_id":"1","categories":[{"id":"1"}]}]}');
+	}
+
 }

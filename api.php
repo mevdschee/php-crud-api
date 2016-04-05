@@ -956,22 +956,43 @@ class PHP_CRUD_API {
 		return $input;
 	}
 
+	protected function addRelationColumns($columns,$select) {
+		if ($columns) {
+			foreach ($select as $table=>$keys) {
+				foreach ($keys as $key=>$other) {
+					$columns.=",$table.$key,".implode('.',$other);
+				}
+		  }
+		}
+		return $columns;
+	}
+
 	protected function findFields($tables,$columns,$database) {
 		$fields = array();
 		foreach ($tables as $i=>$table) {
 			$fields[$table] = $this->findTableFields($table,$database);
-			if ($i==0) $fields[$table] = $this->filterFieldsByColumns($fields[$table],$columns);
+			$fields[$table] = $this->filterFieldsByColumns($fields[$table],$columns,$i==0,$table);
 		}
 		return $fields;
 	}
 
-	protected function filterFieldsByColumns($fields,$columns) {
+	protected function filterFieldsByColumns($fields,$columns,$first,$table) {
 		if ($columns) {
 			$columns = explode(',',$columns);
 			foreach (array_keys($fields) as $key) {
-				if (!in_array($key, $columns)) {
-					unset($fields[$key]);
+				$delete = true;
+				foreach ($columns as $column) {
+					if (strpos($column,'.')) {
+						if ($column=="$table.$key" || $column=="$table.*") {
+							$delete = false;
+						}
+					} elseif ($first) {
+						if ($column==$key || $column=="*") {
+							$delete = false;
+						}
+					}
 				}
+				if ($delete) unset($fields[$key]);
 			}
 		}
 		return $fields;
@@ -1016,7 +1037,7 @@ class PHP_CRUD_API {
 		$page      = $this->parseGetParameter($get, 'page', '0-9,');
 		$filters   = $this->parseGetParameterArray($get, 'filter', false);
 		$satisfy   = $this->parseGetParameter($get, 'satisfy', 'a-zA-Z');
-		$columns   = $this->parseGetParameter($get, 'columns', 'a-zA-Z0-9\-_,');
+		$columns   = $this->parseGetParameter($get, 'columns', 'a-zA-Z0-9\-_,.*');
 		$order     = $this->parseGetParameter($get, 'order', 'a-zA-Z0-9\-_,');
 		$transform = $this->parseGetParameter($get, 'transform', 't1');
 
@@ -1028,6 +1049,7 @@ class PHP_CRUD_API {
 
 		// reflection
 		list($tables,$collect,$select) = $this->findRelations($tables,$database);
+		$columns = $this->addRelationColumns($columns,$select);
 		$fields = $this->findFields($tables,$columns,$database);
 
 		// permissions
