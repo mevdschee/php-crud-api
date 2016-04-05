@@ -192,7 +192,7 @@ Output:
 {"categories":{"columns":["name"],"records":[["Web development"],["Internet"]]}}
 ```
 
-NB: Column selection cannot be applied to related tables.
+NB: Columns that are used to identify relations are automatically added and cannot be left out.
 
 ### List + Order
 
