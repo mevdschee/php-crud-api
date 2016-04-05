@@ -517,4 +517,11 @@ class PHP_CRUD_API_Test extends PHPUnit_Framework_TestCase
 		$test->expect('{"posts":[{"category_id":"1","categories":[{"id":"1"}]}]}');
 	}
 
+	public function testColumnsOnImplicitJoin()
+	{
+		$test = new API($this);
+		$test->get('/posts?include=tags&columns=posts.id,tags.name&filter=id,eq,1&transform=1');
+		$test->expect('{"posts":[{"id":"1","post_tags":[{"post_id":"1","tag_id":"1","tags":[{"id":"1","name":"funny"}]},{"post_id":"1","tag_id":"2","tags":[{"id":"2","name":"important"}]}]}]}');
+	}
+
 }
