@@ -90,7 +90,7 @@ NB: The "socket" option is not supported by MS SQL Server.
 
 ## Documentation
 
-After configuring you can directly benefit from generated API documentation. On the URL below you find the generated API specification in Swagger 2.0 format.
+After configuring you can directly benefit from generated API documentation. On the URL below you find the generated API specification in [Swagger](http://swagger.io/) 2.0 format.
 
     http://localhost/api.php
 
@@ -511,7 +511,7 @@ named 'customer_id' and the 'tenant_function' is defined as:
 
 ```return $col=='customer_id'?$_SESSION['customer_id']:null```
 
-In this example ```$_SESSION['customer_id'])``` is the authenticated customer in your API.
+In this example ```$_SESSION['customer_id']``` is the authenticated customer in your API.
 
 ## Sanitizing input
 
