@@ -1478,7 +1478,7 @@ class PHP_CRUD_API {
 						echo '{';
 						echo '"name":"columns",';
 						echo '"in":"query",';
-						echo '"description":"The columns you want to retrieve (comma separated).",';
+						echo '"description":"The table columns you want to retrieve (comma separated). Example: posts.*,categories.name",';
 						echo '"required":false,';
 						echo '"type":"string"';
 						echo '},';
