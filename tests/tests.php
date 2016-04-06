@@ -164,6 +164,21 @@ class PHP_CRUD_API_Test extends PHPUnit_Framework_TestCase
 			}
 			pg_close($db);
 
+		} elseif ($dbengine == 'SQLite') {
+
+			$db = new SQLite3($database);
+			if (!$db) {
+				die("Could not open '$database' SQLite database: ".SQLite3::lastErrorMsg().' ('.SQLite3::lastErrorCode().")\n");
+			}
+			$queries = preg_split('/;\s*\n/', file_get_contents($fixture));
+			array_pop($queries);
+			foreach ($queries as $i=>$query) {
+				if (!$db->query($query.';')) {
+					$i++;
+					die("Loading '$fixture' failed on statemement #$i with error:\n".$db->lastErrorCode().': '.$db->lastErrorMsg()."\n");
+				}
+			}
+			$db->close();
 		}
 	}
 
