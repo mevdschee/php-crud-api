@@ -6,8 +6,9 @@ function callback(jsonObject) {
   jsonObject = php_crud_api_transform(jsonObject);
   document.getElementById('output').innerHTML = JSON.stringify(jsonObject, undefined, 4);
 }
+var apiUrl = document.location.href.split('?')[0].split('/').slice(0,-2).join('/') + '/api.php';
+document.write("<script src='" + apiUrl + "\/posts?include=categories,tags,comments&filter=id,eq,1&callback=callback' defer='defer'><\/script>");
 </script>
-<script src="http://localhost/api.php/posts?include=categories,tags,comments&filter=id,eq,1&callback=callback" defer="defer"></script>
 </head>
 <body>
 <pre id="output"></pre>
