@@ -1597,9 +1597,9 @@ class PHP_CRUD_API {
 				// remove unauthorized tables and tables without fields
 				$tables[$t][$path] = array_values(array_filter($tables[$t][$path]));
 			}
-			if (!$table['root_actions']&&!$table['id_actions']) $tables[$t] = false;
+			if (!$tables[$t]['root_actions']&&!$tables[$t]['id_actions']) $tables[$t] = false;
 		}
-		$tables = array_values(array_filter($tables));
+		$tables = array_merge(array_filter($tables));
 		//var_dump($tables);die();
 
 		echo '{"swagger":"2.0",';
