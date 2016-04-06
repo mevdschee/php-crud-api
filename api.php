@@ -10,7 +10,7 @@ interface DatabaseInterface {
 	public function insertId($result);
 	public function affectedRows($result);
 	public function close($result);
-	public function fetchFields($result);
+	public function fetchFields($table);
 	public function addLimitToSql($sql,$limit,$offset);
 	public function likeEscape($string);
 	public function isBinaryType($field);
@@ -117,7 +117,7 @@ class MySQL implements DatabaseInterface {
 			if ($param===null) return 'NULL';
 			return "'".mysqli_real_escape_string($db,$param)."'";
 		}, $sql);
-		//if (!strpos($sql,'INFORMATION_SCHEMA')) echo "\n$sql\n";
+		//if (!strpos($sql,'INFORMATION_SCHEMA'))	echo "\n$sql\n";
 		return mysqli_query($db,$sql);
 	}
 
@@ -141,7 +141,8 @@ class MySQL implements DatabaseInterface {
 		return mysqli_free_result($result);
 	}
 
-	public function fetchFields($result) {
+	public function fetchFields($table) {
+		$result = $this->query('SELECT * FROM "!" WHERE 1=2;',array($table));
 		return mysqli_fetch_fields($result);
 	}
 
@@ -331,7 +332,8 @@ class PostgreSQL implements DatabaseInterface {
 		return pg_free_result($result);
 	}
 
-	public function fetchFields($result) {
+	public function fetchFields($table) {
+		$result = $this->query('SELECT * FROM "!" WHERE 1=2;',array($table));
 		$keys = array();
 		for($i=0;$i<pg_num_fields($result);$i++) {
 			$field = array();
@@ -537,7 +539,8 @@ class SQLServer implements DatabaseInterface {
 		return sqlsrv_free_stmt($result);
 	}
 
-	public function fetchFields($result) {
+	public function fetchFields($table) {
+		$result = $this->query('SELECT * FROM "!" WHERE 1=2;',array($table));
 		//var_dump(sqlsrv_field_metadata($result));
 		return array_map(function($a){
 			$p = array();
@@ -689,7 +692,7 @@ class SQLite implements DatabaseInterface {
 				return "'".$db->escapeString($v)."'";
 			},$param)).')';
 			if (is_object($param) && $param->type=='base64') {
-				return "'".$db->escapeString(base64_decode($param->data))."'";
+				return "x'".bin2hex(base64_decode($param->data))."'";
 			}
 			if ($param===null) return 'NULL';
 			return "'".$db->escapeString($param)."'";
@@ -723,14 +726,11 @@ class SQLite implements DatabaseInterface {
 		return $result->finalize();
 	}
 
-	public function fetchFields($result) {
-		$values = $result->fetchArray();
+	public function fetchFields($table) {
+		$result = $this->query('SELECT * FROM "sys/columns" WHERE "self"=?;',array($table));
 		$fields = array();
-		for($i = 0; $i < $result->numColumns() ; $i++){
-			$tab = array();
-			$tab['type'] = $result->columnType($i);
-			$tab['name'] = $result->columnName($i);
-			$fields[strtolower($tab['name'])] = (object)$tab;
+		while ($row = $this->fetchAssoc($result)){
+			$fields[strtolower($row['name'])] = (object)$row;
 		}
 		return $fields;
 	}
@@ -744,7 +744,7 @@ class SQLite implements DatabaseInterface {
 	}
 
 	public function isBinaryType($field) {
-		return ($field->type==4);
+		return (substr($field->type,0,4)=='blob');
 	}
 
 	public function base64Encode($string) {
@@ -1188,8 +1188,7 @@ class PHP_CRUD_API {
 
 	protected function findTableFields($table,$database) {
 		$fields = array();
-		$result = $this->db->query('SELECT * FROM "!" WHERE 1=2;',array($table));
-		foreach ($this->db->fetchFields($result) as $field) {
+		foreach ($this->db->fetchFields($table) as $field) {
 			$fields[$field->name] = $field;
 		}
 		return $fields;
