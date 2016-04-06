@@ -3,13 +3,12 @@
 
 # PHP_CRUD_API
 
-Single file PHP script that adds a REST API to a MySQL InnoDB database. Alternatively both PostgreSQL 9 and MS SQL Server 2012 are fully supported.
+Single file PHP script that adds a REST API to a MySQL InnoDB database. Alternatively both SQLite 3, PostgreSQL 9 and MS SQL Server 2012 are fully supported.
 
 ## Requirements
 
-  - PHP 5.3 or higher with MySQLi, libpq or SQLSRV enabled
+  - PHP 5.3 or higher with MySQLi, libpq, SQLSRV or sqlite3 enabled
   - PHP on Windows when connecting to SQL Server 2012
-  - PostgreSQL 9 or higher when connecting to PostgreSQL
 
 ## Installation
 
@@ -86,7 +85,7 @@ $api = new PHP_CRUD_API(array(
 $api->executeCommand();
 ```
 
-NB: The "socket" option is not supported by MS SQL Server.
+NB: The "socket" option is not supported by MS SQL Server. SQLite expects the filename in the "database" field.
 
 ## Documentation
 
@@ -630,6 +629,23 @@ $
 ```
 
 NB: You MUST use an empty database as a desctructive database fixture ('blog_postgresql.sql') is loaded.
+
+### SQLite on Linux
+
+```
+$ wget https://phar.phpunit.de/phpunit.phar
+$ php phpunit.phar tests/tests.php
+PHPUnit 5.1.3 by Sebastian Bergmann and contributors.
+
+.............................................                     45 / 45 (100%)
+
+Time: 1.84 seconds, Memory: 11.25Mb
+
+OK (45 tests, 69 assertions)
+$
+```
+
+NB: You MUST use an empty database as a desctructive database fixture ('blog_sqlite.sql') is loaded.
 
 ## Pretty URL
 

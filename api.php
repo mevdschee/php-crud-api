@@ -1874,3 +1874,11 @@ class PHP_CRUD_API {
 // 	'charset'=>'UTF8'
 // ));
 // $api->executeCommand();
+
+// For SQLite 3 use:
+
+// $api = new PHP_CRUD_API(array(
+// 	'dbengine'=>'SQLite',
+// 	'database'=>'xxx',
+// ));
+// $api->executeCommand();
