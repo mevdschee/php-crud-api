@@ -14,8 +14,8 @@ AppComponent =
   .Class({
     constructor: [
       ng.http.Http, function(http) {
-        http.post("http://localhost:8000/blog.php/posts",JSON.stringify({user_id:1,category_id:1,content:"from angular"})).subscribe();
-        http.get("http://localhost:8000/blog.php/posts").map(response => php_crud_api_transform(response.json()))
+        http.post("http://localhost/api.php/posts",JSON.stringify({user_id:1,category_id:1,content:"from angular"})).subscribe();
+        http.get("http://localhost/api.php/posts").map(response => php_crud_api_transform(response.json()))
           .subscribe(response => this.posts = response.posts);
       }
     ]
