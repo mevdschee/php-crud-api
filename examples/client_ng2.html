@@ -5,7 +5,7 @@
 <script src="https://code.angularjs.org/2.0.0-beta.13/angular2-all.umd.min.js"></script>
 <script src="../lib/php_crud_api_transform.js"></script>
 <script>
-AppComponent = 
+AppComponent =
   ng.core.Component({
     selector: 'my-app',
     providers: [ng.http.HTTP_PROVIDERS],
@@ -14,13 +14,15 @@ AppComponent =
   .Class({
     constructor: [
       ng.http.Http, function(http) {
-        http.post("http://localhost/api.php/posts",JSON.stringify({user_id:1,category_id:1,content:"from angular"})).subscribe();
-        http.get("http://localhost/api.php/posts").map(response => php_crud_api_transform(response.json()))
+        http.post("http://localhost:8000/blog.php/posts",JSON.stringify({user_id:1,category_id:1,content:"from angular"})).subscribe();
+        http.get("http://localhost:8000/blog.php/posts").map(response => php_crud_api_transform(response.json()))
           .subscribe(response => this.posts = response.posts);
       }
     ]
   });
-ng.platform.browser.bootstrap(AppComponent);
+document.addEventListener("DOMContentLoaded", function(event) {
+  ng.platform.browser.bootstrap(AppComponent);
+});
 </script>
 </head>
 <body>
