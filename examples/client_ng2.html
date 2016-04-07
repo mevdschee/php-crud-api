@@ -1,0 +1,29 @@
+<html>
+<head>
+<script src="https://code.angularjs.org/2.0.0-beta.13/angular2-polyfills.min.js"></script>
+<script src="https://code.angularjs.org/2.0.0-beta.13/Rx.umd.min.js"></script>
+<script src="https://code.angularjs.org/2.0.0-beta.13/angular2-all.umd.min.js"></script>
+<script src="../lib/php_crud_api_transform.js"></script>
+<script>
+AppComponent = 
+  ng.core.Component({
+    selector: 'my-app',
+    providers: [ng.http.HTTP_PROVIDERS],
+    template: '<ul><li *ngFor="#x of posts">{{ x.id + ", " + x.content }}</li></ul>'
+  })
+  .Class({
+    constructor: [
+      ng.http.Http, function(http) {
+        http.post("http://localhost/api.php/posts",JSON.stringify({user_id:1,category_id:1,content:"from angular"})).subscribe();
+        http.get("http://localhost/api.php/posts").map(response => php_crud_api_transform(response.json()))
+          .subscribe(response => this.posts = response.posts);
+      }
+    ]
+  });
+ng.platform.browser.bootstrap(AppComponent);
+</script>
+</head>
+<body>
+    <my-app>Loading...</my-app>
+</body>
+</html>
