@@ -16,8 +16,7 @@ AppComponent =
       ng.http.Http, function(http) {
         var url = "http://localhost/api.php/posts";
         http.post(url,JSON.stringify({user_id:1,category_id:1,content:"from angular2"})).subscribe();
-        http.get(url).map(response => php_crud_api_transform(response.json()))
-          .subscribe(response => this.posts = response.posts);
+        http.get(url).map(res => php_crud_api_transform(res.json())).subscribe(res => this.posts = res.posts);
       }
     ]
   });
