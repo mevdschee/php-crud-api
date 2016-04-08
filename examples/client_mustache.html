@@ -8,11 +8,11 @@
 	{{#posts}}
 		<li>
 			{{id}}, {{content}}
-			<a href="javascript:void(0)" onclick="PostList.delete({{id}});">del</a>
+			<a href="javascript:void(0)" key="{{id}}">del</a>
 		</li>
 	{{/posts}}
 	<li>
-		<form onsubmit="PostList.submit(this);return false;">
+		<form>
 			<input name="content"/>
 		</form>
 	</li>
@@ -24,11 +24,14 @@ var PostList = new (function(){
 	var element = null;
 	var template = null;
 	var url = '../api.php/posts';
-	self.delete = function(id) {
+	self.delete = function() {
+		var id = $(this).attr('key');
 		$.ajax({url:url+'/'+id, type: 'DELETE', success:self.update});
 	};
-	self.submit = function(form) {
-		$.post(url, {user_id:1,category_id:1,content:$('input',form).val()}, self.update);
+	self.submit = function(e) {
+		e.preventDefault();
+		var content = $(this).find('input[name="content"]').val();
+		$.post(url, {user_id:1,category_id:1,content:content}, self.update);
 	};
 	self.render = function(data) {
 		$(self.element).html(Mustache.to_html($(self.template).html(),php_crud_api_transform(data)));
@@ -42,6 +45,8 @@ var PostList = new (function(){
 	self.init = function(element,template) {
 		self.element = element;
 		self.template = template;
+		$(self.element).on('submit','form',self.submit);
+		$(self.element).on('click','a',self.delete)
 		self.post();
 	}
 })();
