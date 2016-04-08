@@ -5,8 +5,9 @@
 <script src="../lib/php_crud_api_transform.js"></script>
 <script>
 $(function(){ 
-	$.post("http://localhost/api.php/posts/posts", {user_id:1,category_id:1,content:"from knock out"});
-	$.get("http://localhost/api.php/posts/posts", function(data) {
+	var url = 'http://localhost/api.php/posts';
+	$.post(url, {user_id:1,category_id:1,content:"from knockout"});
+	$.get(url, function(data) {
 		$('#myApplication').html('<ul data-bind="foreach: posts"><li><span data-bind="text: id"></span>, <span data-bind="text: content"></span></li></ul>')
 		ko.applyBindings(php_crud_api_transform(data),$('#myApplication')[0]);
 	});	

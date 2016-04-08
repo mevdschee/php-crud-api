@@ -2,45 +2,23 @@
 <head>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/15.0.0/react.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/15.0.0/react-dom.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/zepto/1.1.6/zepto.min.js"></script>
 <script src="../lib/php_crud_api_transform.js"></script>
 <script>
 'use strict';
 
 var PostList = React.createClass({
   displayName: 'PostList',
-
-  render: function render() {
-    var createItem = function createItem(item) {
-      return React.createElement(
-        'li',
-        null,
-        item.id,
-        ', ',
-        item.content
-      );
-    };
-    return React.createElement(
-      'ul',
-      null,
-      this.props.posts.map(createItem)
-    );
-  }
-});
-
-var myApplication = React.createClass({
-  displayName: 'myApplication',
+  url: 'http://localhost/api.php/posts',
 
   getInitialState: function getInitialState() {
     return { posts: [] };
   },
-  onChange: function onChange(e) {
-    this.setState({ text: e.target.value });
-  },
   
   componentDidMount: function() {
-    $.post("http://localhost:8000/blog.php/posts", {user_id:1,category_id:1,content:"from react"});
-	this.serverRequest = $.get("http://localhost:8000/blog.php/posts", function (result) {
-      this.setState(result);
+    $.post(this.url, {user_id:1,category_id:1,content:"from react"});
+	this.serverRequest = $.get(this.url, function (data) {
+      this.setState(php_crud_api_transform(data));
     }.bind(this));
   },
 
@@ -48,25 +26,27 @@ var myApplication = React.createClass({
     this.serverRequest.abort();
   },
   
-  handleSubmit: function handleSubmit(e) {
-    e.preventDefault();
-    var nextItems = this.state.items.concat([{ text: this.state.text, id: Date.now() }]);
-    var nextText = '';
-  },
   render: function render() {
+    var createPost = function(post) {
+      return React.createElement(
+        'li',
+        {key: post.id},
+        post.id,
+        ', ',
+        post.content
+      );
+    };
     return React.createElement(
-      'div',
+      'ul',
       null,
-      React.createElement(PostList, { posts: this.state.posts })
+      this.state.posts.map(createPost)
     );
   }
 });
+$(function(){ ReactDOM.render(React.createElement(PostList, null), document.getElementById('myApplication')); });
 </script>
 </head>
 <body>
 <div id="myApplication">Loading...</div>
-<script>
-ReactDOM.render(React.createElement(PostList, null), document.getElementById('myApplication'));
-</script>
 </body>
 </html>

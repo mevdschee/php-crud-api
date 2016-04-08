@@ -14,8 +14,9 @@ AppComponent =
   .Class({
     constructor: [
       ng.http.Http, function(http) {
-        http.post("http://localhost/api.php/posts",JSON.stringify({user_id:1,category_id:1,content:"from angular"})).subscribe();
-        http.get("http://localhost/api.php/posts").map(response => php_crud_api_transform(response.json()))
+		var url = "http://localhost/api.php/posts";
+        http.post(url,JSON.stringify({user_id:1,category_id:1,content:"from angular2"})).subscribe();
+        http.get(url).map(response => php_crud_api_transform(response.json()))
           .subscribe(response => this.posts = response.posts);
       }
     ]
@@ -27,6 +28,6 @@ document.addEventListener("DOMContentLoaded", function(event) {
 </script>
 </head>
 <body>
-    <my-app>Loading...</my-app>
+<my-app>Loading...</my-app>
 </body>
 </html>
