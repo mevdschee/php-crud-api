@@ -5,19 +5,19 @@
 <script>
 var app = angular.module('myApplication', []);
 app.controller('postController', function($scope, $http) {
-    var url = 'http://localhost/api.php/posts';
-	$http.post(url,{user_id:1,category_id:1,content:"from angular"});
-    $http.get(url).success(function(response){
-		$scope.posts = php_crud_api_transform(response).posts;
-	});
+  var url = 'http://localhost/api.php/posts';
+  $http.post(url,{user_id:1,category_id:1,content:"from angular"});
+  $http.get(url).success(function(res){
+    $scope.posts = php_crud_api_transform(res).posts;
+  });
 });
 </script>
 </head>
 <body>
 <div ng-app="myApplication" ng-controller="postController">
-	<ul>
-		<li ng-repeat="x in posts">{{ x.id + ', ' + x.content }}</li>
-	</ul>
+  <ul>
+    <li ng-repeat="x in posts">{{ x.id + ', ' + x.content }}</li>
+  </ul>
 </div>
 </body>
 </html>
