@@ -1,0 +1,19 @@
+<html>
+<head>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/knockout/3.4.0/knockout-min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/zepto/1.1.6/zepto.min.js"></script>
+<script src="../lib/php_crud_api_transform.js"></script>
+<script>
+$(function(){ 
+	$.post("http://localhost/api.php/posts/posts", {user_id:1,category_id:1,content:"from knock out"});
+	$.get("http://localhost/api.php/posts/posts", function(data) {
+		$('#myApplication').html('<ul data-bind="foreach: posts"><li><span data-bind="text: id"></span>, <span data-bind="text: content"></span></li></ul>')
+		ko.applyBindings(php_crud_api_transform(data),$('#myApplication')[0]);
+	});	
+});
+</script>
+</head>
+<body>
+<div id="myApplication">Loading...</div>
+</body>
+</html>
