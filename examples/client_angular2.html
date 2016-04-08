@@ -1,8 +1,8 @@
 <html>
 <head>
-<script src="https://code.angularjs.org/2.0.0-beta.13/angular2-polyfills.min.js"></script>
-<script src="https://code.angularjs.org/2.0.0-beta.13/Rx.umd.min.js"></script>
-<script src="https://code.angularjs.org/2.0.0-beta.13/angular2-all.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/2.0.0-beta.14/angular2-polyfills.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/2.0.0-beta.14/Rx.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/2.0.0-beta.14/angular2-all.umd.min.js"></script>
 <script src="../lib/php_crud_api_transform.js"></script>
 <script>
 AppComponent =
@@ -14,10 +14,9 @@ AppComponent =
   .Class({
     constructor: [
       ng.http.Http, function(http) {
-		var url = "http://localhost/api.php/posts";
+        var url = "http://localhost/api.php/posts";
         http.post(url,JSON.stringify({user_id:1,category_id:1,content:"from angular2"})).subscribe();
-        http.get(url).map(response => php_crud_api_transform(response.json()))
-          .subscribe(response => this.posts = response.posts);
+        http.get(url).map(res => php_crud_api_transform(res.json())).subscribe(res => this.posts = res.posts);
       }
     ]
   });
