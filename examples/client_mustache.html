@@ -11,7 +11,11 @@
 			<a href="javascript:void(0)" onclick="PostList.delete({{id}});">del</a>
 		</li>
 	{{/posts}}
-	<li><form onsubmit="PostList.submit(this);return false;"><input name="content"/></form></li>
+	<li>
+		<form onsubmit="PostList.submit(this);return false;">
+			<input name="content"/>
+		</form>
+	</li>
 </ul>
 </script>
 <script>
