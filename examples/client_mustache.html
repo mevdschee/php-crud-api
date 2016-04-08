@@ -22,6 +22,7 @@
 var PostList = new (function(){
 	var self = this;
 	var element = null;
+	var template = null;
 	var url = '../api.php/posts';
 	self.delete = function(id) {
 		$.ajax({url:url+'/'+id, type: 'DELETE', success:self.update});
@@ -30,8 +31,7 @@ var PostList = new (function(){
 		$.post(url, {user_id:1,category_id:1,content:$('input',form).val()}, self.update);
 	};
 	self.render = function(data) {
-		var template = $('#PostList_Item').html();
-		$(self.element).html(Mustache.to_html(template, php_crud_api_transform(data)));
+		$(self.element).html(Mustache.to_html($(self.template).html(),php_crud_api_transform(data)));
 	};
 	self.update = function() {
 		$.get(url, self.render);
@@ -39,12 +39,13 @@ var PostList = new (function(){
 	self.post = function() {
 		$.post(url, {user_id:1,category_id:1,content:"from mustache"}, self.update);
 	};
-	self.init = function(element) {
+	self.init = function(element,template) {
 		self.element = element;
+		self.template = template;
 		self.post();
 	}
 })();
-$(function(){ PostList.init('#myApplication'); });
+$(function(){ PostList.init('#myApplication','#PostList_Item'); });
 </script>
 </head>
 <body>
