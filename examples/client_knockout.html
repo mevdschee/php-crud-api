@@ -4,13 +4,26 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/zepto/1.1.6/zepto.min.js"></script>
 <script src="../lib/php_crud_api_transform.js"></script>
 <script>
-$(function(){ 
-	var url = 'http://localhost/api.php/posts';
-	$.post(url, {user_id:1,category_id:1,content:"from knockout"});
-	$.get(url, function(data) {
-		$('#myApplication').html('<ul data-bind="foreach: posts"><li><span data-bind="text: id"></span>, <span data-bind="text: content"></span></li></ul>')
-		ko.applyBindings(php_crud_api_transform(data),$('#myApplication')[0]);
-	});	
+var url = '../api.php/posts';
+function PostList(){
+	var self = this;
+	self.posts = ko.observableArray([]);
+	self.set = function(array) {
+		self.posts.removeAll();
+		for (i=0;i<array.length;i++) {
+    	self.posts.push(array[i]);
+		}
+	};
+	self.update = function() {
+		$.get(url, function(data) {
+			self.set(php_crud_api_transform(data).posts);
+		});
+	};
+	$.post(url, {user_id:1,category_id:1,content:"from knockout"}, self.update.bind(self));
+};
+$(function(){
+	$('#myApplication').html('<ul data-bind="foreach: posts"><li><span data-bind="text: id"></span>, <span data-bind="text: content"></span></li></ul>');
+	ko.applyBindings(new PostList(),$('#myApplication')[0]);
 });
 </script>
 </head>
