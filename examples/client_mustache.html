@@ -45,7 +45,7 @@ function PostList(element, template) {
 		$.post(url, {user_id:1,category_id:1,content:content}, self.update);
 	};
 	self.render = function(data) {
-		$(element).html(Mustache.to_html($(template).html(),php_crud_api_transform(data)));
+		element.html(Mustache.to_html(template.html(),php_crud_api_transform(data)));
 	};
 	self.update = function() {
 		$.get(url, self.render);
@@ -53,12 +53,12 @@ function PostList(element, template) {
 	self.post = function() {
 		$.post(url, {user_id:1,category_id:1,content:"from mustache"}, self.update);
 	};
-	$(element).on('submit','form',self.submit);
-	$(element).on('click','a.edit',self.edit)
-	$(element).on('click','a.delete',self.delete)
+	element.on('submit','form',self.submit);
+	element.on('click','a.edit',self.edit)
+	element.on('click','a.delete',self.delete)
 	self.post();
 };
-$(function(){ new PostList('#PostListDiv','#PostListTemplate'); });
+$(function(){ new PostList($('#PostListDiv'),$('#PostListTemplate')); });
 </script>
 </head>
 <body>

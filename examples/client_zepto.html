@@ -43,15 +43,15 @@ function PostList(element,template) {
 	};
 	self.render = function(data) {
 		data = php_crud_api_transform(data);
-		$(element).html($(template).html());
-		var item = $(element).find('li').first().remove();
+		element.html(template.html());
+		var item = element.find('li').first().remove();
 		for (var i=0;i<data.posts.length; i++) {
 			var clone = item.clone();
 			clone.find('span').each(function(){
 				var field = $(this).attr("class");
 				$(this).text(data.posts[i][field]);
 			});
-			clone.insertBefore($(element).find('li').last());
+			clone.insertBefore(element.find('li').last());
 		}
 	};
 	self.update = function() {
@@ -60,12 +60,12 @@ function PostList(element,template) {
 	self.post = function() {
 		$.post(url, {user_id:1,category_id:1,content:"from zepto"}, self.update);
 	};
-	$(element).on('submit','form',self.submit);
-	$(element).on('click','a.edit',self.edit)
-	$(element).on('click','a.delete',self.delete)
+	element.on('submit','form',self.submit);
+	element.on('click','a.edit',self.edit)
+	element.on('click','a.delete',self.delete)
 	self.post();
 };
-$(function(){ new PostList('#PostListDiv','#PostListTemplate'); });
+$(function(){ new PostList($('#PostListDiv'),$('#PostListTemplate')); });
 </script>
 </head>
 <body>
