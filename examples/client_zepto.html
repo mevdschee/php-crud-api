@@ -29,7 +29,7 @@ function PostList(element,template) {
 	};
 	self.render = function(data) {
 		data = php_crud_api_transform(data);
-		$(element).html($(template).find('ul').clone());
+		$(element).html($(template).find('ul').html());
 		var item = $(element).find('li').first().remove();
 		for (var i=0;i<data.posts.length; i++) {
 			var clone = item.clone();
