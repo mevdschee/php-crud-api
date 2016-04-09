@@ -32,12 +32,12 @@ function PostList(element,template) {
 		$(element).html($(template).find('ul').clone());
 		var item = $(element).find('li').first().remove();
 		for (var i=0;i<data.posts.length; i++) {
-			var item = item.clone();
-			item.find('span').each(function(){
+			var clone = item.clone();
+			clone.find('span').each(function(){
 				var field = $(this).attr("class");
 				$(this).text(data.posts[i][field]);
 			});
-			item.insertBefore($(element).find('li').last());
+			clone.insertBefore($(element).find('li').last());
 		}
 	};
 	self.update = function() {
