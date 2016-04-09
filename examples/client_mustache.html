@@ -29,18 +29,14 @@ function PostList(element, template) {
 		var content = li.find('span.content').text();
 		content = prompt('Value',content);
 		if (content!==null) {
-			$.ajax({url:url+'/'+id, type: 'PUT', data: {content:content}, success:function(){
-				li.find('span.content').text(content);
-			}});
+			$.ajax({url:url+'/'+id, type: 'PUT', data: {content:content}, success:self.update});
 		}
 	};
 	self.delete = function() {
 		var li = $(this).parent('li');
 		var id = li.find('span.id').text();
 		if (confirm("Deleting #"+id+". Continue?")) {
-			$.ajax({url:url+'/'+id, type: 'DELETE', success:function(){
-				li.remove();
-			}});
+			$.ajax({url:url+'/'+id, type: 'DELETE', success:self.update});
 		}
 	};
 	self.submit = function(e) {
