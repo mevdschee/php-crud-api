@@ -30,7 +30,9 @@ function PostList(element, template) {
 	};
 	self.delete = function() {
 		var id = $(this).attr('key');
-		$.ajax({url:url+'/'+id, type: 'DELETE', success:self.update});
+		if (confirm("Deleting #"+id+". Are you sure?")) {
+			$.ajax({url:url+'/'+id, type: 'DELETE', success:self.update});
+		}
 	};
 	self.submit = function(e) {
 		e.preventDefault();
