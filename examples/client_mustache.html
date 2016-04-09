@@ -32,7 +32,7 @@ function PostList(element, template) {
 	};
 	self.delete = function() {
 		var id = $(this).attr('key');
-		if (confirm("Deleting #"+id+". Are you sure?")) {
+		if (confirm("Deleting #"+id+". Continue?")) {
 			$.ajax({url:url+'/'+id, type: 'DELETE', success:self.update});
 		}
 	};
