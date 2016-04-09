@@ -37,7 +37,7 @@ function PostList(element, template) {
 	self.delete = function() {
 		var li = $(this).parent('li');
 		var id = li.find('span.id').text();
-		if (confirm("Deleting #"+id+". Are you sure?")) {
+		if (confirm("Deleting #"+id+". Continue?")) {
 			$.ajax({url:url+'/'+id, type: 'DELETE', success:function(){
 				li.remove();
 			}});
