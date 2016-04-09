@@ -26,7 +26,9 @@ function PostList(element, template) {
 	self.edit = function() {
 		var id = $(this).attr('key');
 		var content = prompt('Value',$(this).attr('value'));
-		$.ajax({url:url+'/'+id, type: 'PUT', data: {content:content}, success:self.update});
+		if (content!==null) {
+			$.ajax({url:url+'/'+id, type: 'PUT', data: {content:content}, success:self.update});
+		}
 	};
 	self.delete = function() {
 		var id = $(this).attr('key');
