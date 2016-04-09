@@ -3,7 +3,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mustache.js/2.2.1/mustache.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/zepto/1.1.6/zepto.min.js"></script>
 <script src="../lib/php_crud_api_transform.js"></script>
-<script id="PostList_Item" type="x-tmpl-mustache">
+<script id="PostList_Item" type="text/mustache">
 <ul>
 	{{#posts}}
 		<li>
@@ -19,10 +19,8 @@
 </ul>
 </script>
 <script>
-var PostList = new (function(){
+function PostList(element, template) {
 	var self = this;
-	var element = null;
-	var template = null;
 	var url = '../api.php/posts';
 	self.delete = function() {
 		var id = $(this).attr('key');
@@ -34,7 +32,7 @@ var PostList = new (function(){
 		$.post(url, {user_id:1,category_id:1,content:content}, self.update);
 	};
 	self.render = function(data) {
-		$(self.element).html(Mustache.to_html($(self.template).html(),php_crud_api_transform(data)));
+		$(element).html(Mustache.to_html($(template).html(),php_crud_api_transform(data)));
 	};
 	self.update = function() {
 		$.get(url, self.render);
@@ -42,15 +40,11 @@ var PostList = new (function(){
 	self.post = function() {
 		$.post(url, {user_id:1,category_id:1,content:"from mustache"}, self.update);
 	};
-	self.init = function(element,template) {
-		self.element = element;
-		self.template = template;
-		$(self.element).on('submit','form',self.submit);
-		$(self.element).on('click','a',self.delete)
-		self.post();
-	}
-})();
-$(function(){ PostList.init('#myApplication','#PostList_Item'); });
+	$(element).on('submit','form',self.submit);
+	$(element).on('click','a',self.delete)
+	self.post();
+};
+$(function(){ new PostList('#myApplication','#PostList_Item'); });
 </script>
 </head>
 <body>
