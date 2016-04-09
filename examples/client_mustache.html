@@ -7,9 +7,9 @@
 <ul>
 	{{#posts}}
 		<li>
-			{{id}}, {{content}}
-			<a href="javascript:void(0)" class="edit" key="{{id}}" value="{{content}}">edit</a>
-			<a href="javascript:void(0)" class="delete" key="{{id}}">del</a>
+			<span class="id">{{id}}</span>, <span class="content">{{content}}</span>
+			<a href="javascript:void(0)" class="edit">edit</a>
+			<a href="javascript:void(0)" class="delete">del</a>
 		</li>
 	{{/posts}}
 	<li>
@@ -24,16 +24,23 @@ function PostList(element, template) {
 	var self = this;
 	var url = '../api.php/posts';
 	self.edit = function() {
-		var id = $(this).attr('key');
-		var content = prompt('Value',$(this).attr('value'));
+		var li = $(this).parent('li');
+		var id = li.find('span.id').text();
+		var content = li.find('span.content').text();
+		content = prompt('Value',content);
 		if (content!==null) {
-			$.ajax({url:url+'/'+id, type: 'PUT', data: {content:content}, success:self.update});
+			$.ajax({url:url+'/'+id, type: 'PUT', data: {content:content}, success:function(){
+				li.find('span.content').text(content);
+			}});
 		}
 	};
 	self.delete = function() {
-		var id = $(this).attr('key');
+		var li = $(this).parent('li');
+		var id = li.find('span.id').text();
 		if (confirm("Deleting #"+id+". Are you sure?")) {
-			$.ajax({url:url+'/'+id, type: 'DELETE', success:self.update});
+			$.ajax({url:url+'/'+id, type: 'DELETE', success:function(){
+				li.remove();
+			}});
 		}
 	};
 	self.submit = function(e) {
