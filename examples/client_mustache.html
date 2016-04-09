@@ -3,7 +3,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mustache.js/2.2.1/mustache.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/zepto/1.1.6/zepto.min.js"></script>
 <script src="../lib/php_crud_api_transform.js"></script>
-<script id="PostList_Item" type="text/mustache">
+<script id="PostListTemplate" type="text/mustache">
 <ul>
 	{{#posts}}
 		<li>
@@ -44,10 +44,10 @@ function PostList(element, template) {
 	$(element).on('click','a',self.delete)
 	self.post();
 };
-$(function(){ new PostList('#myApplication','#PostList_Item'); });
+$(function(){ new PostList('#PostListDiv','#PostListTemplate'); });
 </script>
 </head>
 <body>
-<div id="myApplication">Loading...</div>
+<div id="PostListDiv">Loading...</div>
 </body>
 </html>
