@@ -8,7 +8,8 @@
 	{{#posts}}
 		<li>
 			{{id}}, {{content}}
-			<a href="javascript:void(0)" key="{{id}}">del</a>
+			<a href="javascript:void(0)" class="edit" key="{{id}}" value="{{content}}">edit</a>
+			<a href="javascript:void(0)" class="delete" key="{{id}}">del</a>
 		</li>
 	{{/posts}}
 	<li>
@@ -22,6 +23,11 @@
 function PostList(element, template) {
 	var self = this;
 	var url = '../api.php/posts';
+	self.edit = function() {
+		var id = $(this).attr('key');
+		var content = prompt('Value',$(this).attr('value'));
+		$.ajax({url:url+'/'+id, type: 'PUT', data: {content:content}, success:self.update});
+	};
 	self.delete = function() {
 		var id = $(this).attr('key');
 		$.ajax({url:url+'/'+id, type: 'DELETE', success:self.update});
@@ -41,7 +47,8 @@ function PostList(element, template) {
 		$.post(url, {user_id:1,category_id:1,content:"from mustache"}, self.update);
 	};
 	$(element).on('submit','form',self.submit);
-	$(element).on('click','a',self.delete)
+	$(element).on('click','a.edit',self.edit)
+	$(element).on('click','a.delete',self.delete)
 	self.post();
 };
 $(function(){ new PostList('#PostListDiv','#PostListTemplate'); });
