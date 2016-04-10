@@ -1,6 +1,7 @@
 <html>
 <head>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/knockout/3.4.0/knockout-min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/knockout.mapping/2.4.1/knockout.mapping.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/zepto/1.1.6/zepto.min.js"></script>
 <script src="../lib/php_crud_api_transform.js"></script>
 <script id="posts-template" type="text/html">
@@ -26,7 +27,7 @@ function Post(id,content){
 	self.id = ko.observable(id);
 	self.content = ko.observable(content);
 }
-function PostList(element){
+function PostList(){
 	var self = this;
 	self.posts = ko.observableArray([]);
 	self.form = ko.observable('');
@@ -52,7 +53,7 @@ function PostList(element){
 			self.posts.push(new Post(array[i].id,array[i].content));
 		}
 		self.form('');
-		if (!self.bound){ ko.applyBindings(self,element); self.bound = true; }
+		if (!self.bound){ ko.applyBindings(self); self.bound = true; }
 	};
 	self.update = function() {
 		$.get(url, self.render);
@@ -62,10 +63,10 @@ function PostList(element){
 	}
 	self.post();
 };
-$(function(){	new PostList($('#myApplication')[0]); });
+$(function(){	new PostList(); });
 </script>
 </head>
 <body>
-<div data-bind="template: { name: 'posts-template'}" id="myApplication">Loading...</div>
+<div data-bind="template: { name: 'posts-template'}">Loading...</div>
 </body>
 </html>
