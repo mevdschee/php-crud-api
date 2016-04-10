@@ -1,4 +1,4 @@
-(function (element, template) {
+window.components['post-list'] = function (element, template) {
 	var self = this;
 	var url = '../api.php/posts';
 	self.edit = function() {
@@ -35,4 +35,4 @@
 	element.on('click','a.edit',self.edit)
 	element.on('click','a.delete',self.delete)
 	self.post();
-});
+};
