@@ -15,22 +15,11 @@ $(function(){
 		}});
 		$.ajax({dataType:'text', url: name+'.html',success:function(data){
 			template = data;
-			$.ajax({dataType:'text', url: name+'.js',success:function(data){
-				var h = window.onerror;
-				window.onerror = function(msg, url, line, col, error) {
-					var extra = !col ? '' : '\ncolumn: ' + col;
-					extra += !error ? '' : '\nerror: ' + error;
-					url = !url?name+'.js':url;
-					alert("Error: " + msg + "\nurl: " + url + "\nline: " + line + extra);
-					return true;
-				};
-				$('<script>').appendTo('body').text(data);
-				window.onerror = h;
-				if (!window.components[name]) alert('could not load '+name+'.js');
-				$(['div.component[component="'+name+'"]']).each(function(){
-					window.components[name]($(this),template);
-				});
-			}});
+			$('<script>').attr('src',name+'.js').appendTo('body').on('load',function(){
+        $(['div.component[component="'+name+'"]']).each(function(){
+  				window.components[name]($(this),template);
+  			});
+      });
 		}});
 	}
 
