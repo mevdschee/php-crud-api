@@ -322,7 +322,7 @@ Output:
 
 ## Relations
 
-The explanation of this feature is based on the data structure from the ```blog.sql``` database file. This database is a very simple blog data structure with corresponding foreign key relations between the tables.
+The explanation of this feature is based on the data structure from the ```blog.sql``` database file. This database is a very simple blog data structure with corresponding foreign key relations between the tables. These foreign key constraints are required as the relationship detection is based on them, not on column naming.
 
 You can get the "post" that has "id" equal to "1" with it's corresponding "categories", "tags" and "comments" using:
 
