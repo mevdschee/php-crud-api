@@ -11,7 +11,7 @@ var w3component = $(function(){
 		$.ajax({dataType:'text', url: name+'.html',success:function(template){
 			$('<script>').attr('src',name+'.js').appendTo('body').on('load',function(){
 				$(['div.w3component[w3component="'+name+'"]']).each(function(){
-					self.components[name]($(this),template);
+					self.components[name.split('/').pop()]($(this),template);
 				});
 			});
 		}});

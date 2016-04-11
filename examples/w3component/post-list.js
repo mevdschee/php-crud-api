@@ -1,4 +1,4 @@
-w3component.components['w3component/post-list'] = function (element, template) {
+w3component.components['post-list'] = function (element, template) {
 	var self = this;
 	var url = '../api.php/posts';
 	self.edit = function() {
