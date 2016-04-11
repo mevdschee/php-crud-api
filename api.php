@@ -1881,3 +1881,14 @@ class PHP_CRUD_API {
 // 	'database'=>'xxx',
 // ));
 // $api->executeCommand();
+
+$api = new PHP_CRUD_API(array(
+	'hostname'=>'localhost',
+	'username'=>'root',
+	'password'=>'',
+	'database'=>'php-crud-api',
+
+	'charset'=>'utf8',
+
+));
+$api->executeCommand();
