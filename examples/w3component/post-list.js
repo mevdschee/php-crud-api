@@ -29,7 +29,7 @@ w3component.components['post-list'] = function (element, template) {
 		$.get(url, self.render);
 	};
 	self.post = function() {
-		$.post(url, {user_id:1,category_id:1,content:"from mustache"}, self.update);
+		$.post(url, {user_id:1,category_id:1,content:"from w3component"}, self.update);
 	};
 	element.on('submit','form',self.submit);
 	element.on('click','a.edit',self.edit)
