@@ -6,6 +6,6 @@
 <script src="w3component/w3component.js"></script>
 </head>
 <body>
-<div class="w3component" w3component="w3component/post-list">Loading...</div>
+<div class="w3component" data-src="w3component/post-list">Loading...</div>
 </body>
 </html>
