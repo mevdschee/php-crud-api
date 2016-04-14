@@ -932,12 +932,12 @@ class PHP_CRUD_API {
 	protected function startOutput($callback) {
 		if ($callback) {
 			if (isset($_SERVER['REQUEST_METHOD'])) {
-				header('Content-Type: application/javascript; charset=utf-8');
+				header('Content-Type: application/javascript');
 			}
 			echo $callback.'(';
 		} else {
 			if (isset($_SERVER['REQUEST_METHOD'])) {
-				header('Content-Type: application/json; charset=utf-8');
+				header('Content-Type: application/json');
 			}
 		}
 	}
