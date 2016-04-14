@@ -920,6 +920,7 @@ class PHP_CRUD_API {
 		$headers = array();
 		$headers[]='Access-Control-Allow-Headers: Content-Type';
 		$headers[]='Access-Control-Allow-Methods: OPTIONS, GET, PUT, POST, DELETE';
+		$headers[]='Access-Control-Allow-Credentials: true';
 		$headers[]='Access-Control-Max-Age: 1728000';
 		if (isset($_SERVER['REQUEST_METHOD'])) {
 			foreach ($headers as $header) header($header);
@@ -1878,7 +1879,6 @@ class PHP_CRUD_API {
 
 // $api = new PHP_CRUD_API(array(
 // 	'dbengine'=>'SQLite',
-// 	'database'=>'xxx',
+// 	'database'=>'data/blog.db',
 // ));
 // $api->executeCommand();
-
