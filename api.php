@@ -932,12 +932,12 @@ class PHP_CRUD_API {
 	protected function startOutput($callback) {
 		if ($callback) {
 			if (isset($_SERVER['REQUEST_METHOD'])) {
-				header('Content-Type: application/javascript');
+				header('Content-Type: application/javascript; charset=utf-8');
 			}
 			echo $callback.'(';
 		} else {
 			if (isset($_SERVER['REQUEST_METHOD'])) {
-				header('Content-Type: application/json');
+				header('Content-Type: application/json; charset=utf-8');
 			}
 		}
 	}
@@ -1603,6 +1603,7 @@ class PHP_CRUD_API {
 		$tables = array_merge(array_filter($tables));
 		//var_dump($tables);die();
 
+		header('Content-Type: application/json; charset=utf-8');
 		echo '{"swagger":"2.0",';
 		echo '"info":{';
 		echo '"title":"'.$database.'",';

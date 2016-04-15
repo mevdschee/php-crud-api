@@ -390,7 +390,7 @@ class PHP_CRUD_API_Test extends PHPUnit_Framework_TestCase
 	{
 		$test = new API($this);
 		$test->options('/posts/2');
-		$test->expect('["Access-Control-Allow-Headers: Content-Type","Access-Control-Allow-Methods: OPTIONS, GET, PUT, POST, DELETE","Access-Control-Max-Age: 1728000"]',false);
+		$test->expect('["Access-Control-Allow-Headers: Content-Type","Access-Control-Allow-Methods: OPTIONS, GET, PUT, POST, DELETE","Access-Control-Allow-Credentials: true","Access-Control-Max-Age: 1728000"]',false);
 	}
 
 	public function testHidingPasswordColumn()
