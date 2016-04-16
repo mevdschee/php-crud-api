@@ -1500,6 +1500,9 @@ class PHP_CRUD_API {
 		}
 		if (!$request) {
 			$request = isset($_SERVER['PATH_INFO'])?$_SERVER['PATH_INFO']:'';
+			if (!$request) {
+				$request = isset($_SERVER['ORIG_PATH_INFO'])?$_SERVER['ORIG_PATH_INFO']:'';
+			}
 		}
 		if (!$get) {
 			$get = $_GET;
