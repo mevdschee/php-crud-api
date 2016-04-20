@@ -72,7 +72,7 @@ $api = new PHP_CRUD_API(array(
 	'table_authorizer'=>function($cmd,$db,$tab) { return true; },
 	'record_filter'=>function($cmd,$db,$tab) { return false; },
 	'column_authorizer'=>function($cmd,$db,$tab,$col) { return true; },
-	'tenant_function'=>function($cmd,$db,$tab,$col) { return null; },
+	'tenancy_function'=>function($cmd,$db,$tab,$col) { return null; },
 	'input_sanitizer'=>function($cmd,$db,$tab,$col,$typ,$val) { return $val; },
 	'input_validator'=>function($cmd,$db,$tab,$col,$typ,$val,$ctx) { return true; },
 // dependencies (added for unit testing):
