@@ -20,6 +20,7 @@ This is a single file application! Upload "api.php" somewhere and enjoy!
   - Composite primary or foreign keys are not supported
   - Complex filters (with both "and" & "or") are not supported
   - Complex writes (transactions) are not supported
+  - Aggregation functions (like "sum" or "count") are not supported
   - Batch operations for insert, update and delete are not supported
 
 ## Features
