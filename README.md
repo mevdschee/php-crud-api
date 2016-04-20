@@ -20,6 +20,7 @@ This is a single file application! Upload "api.php" somewhere and enjoy!
   - Composite primary or foreign keys are not supported
   - Complex filters (with both "and" & "or") are not supported
   - Complex writes (transactions) are not supported
+  - Complex queries calling functions (like "concat" or "sum") are not supported
   - Batch operations for insert, update and delete are not supported
 
 ## Features
@@ -72,7 +73,7 @@ $api = new PHP_CRUD_API(array(
 	'table_authorizer'=>function($cmd,$db,$tab) { return true; },
 	'record_filter'=>function($cmd,$db,$tab) { return false; },
 	'column_authorizer'=>function($cmd,$db,$tab,$col) { return true; },
-	'tenant_function'=>function($cmd,$db,$tab,$col) { return null; },
+	'tenancy_function'=>function($cmd,$db,$tab,$col) { return null; },
 	'input_sanitizer'=>function($cmd,$db,$tab,$col,$typ,$val) { return $val; },
 	'input_validator'=>function($cmd,$db,$tab,$col,$typ,$val,$ctx) { return true; },
 // dependencies (added for unit testing):
@@ -505,8 +506,8 @@ The rule "you cannot view unpublished blog posts unless you have the admin role"
 
 ## Multi-tenancy
 
-The 'tenant_function' allows you to expose an API for a multi-tenant database schema. In the simplest model all tables have a column
-named 'customer_id' and the 'tenant_function' is defined as:
+The 'tenancy_function' allows you to expose an API for a multi-tenant database schema. In the simplest model all tables have a column
+named 'customer_id' and the 'tenancy_function' is defined as:
 
 ```return $col=='customer_id'?$_SESSION['customer_id']:null```
 
