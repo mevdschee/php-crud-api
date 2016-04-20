@@ -1244,8 +1244,8 @@ class PHP_CRUD_API {
 		if ($table_authorizer) $this->applyTableAuthorizer($table_authorizer,$action,$database,$tables);
 		if (!isset($tables[0])) $this->exitWith404('entity');
 		if ($record_filter) $this->applyRecordFilter($record_filter,$action,$database,$tables,$filters);
-		if ($column_authorizer) $this->applyColumnAuthorizer($column_authorizer,$action,$database,$fields);
 		if ($tenancy_function) $this->applyTenancyFunction($tenancy_function,$action,$database,$fields,$filters);
+		if ($column_authorizer) $this->applyColumnAuthorizer($column_authorizer,$action,$database,$fields);
 
 		if ($post) {
 			// input
