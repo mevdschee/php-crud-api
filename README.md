@@ -505,8 +505,8 @@ The rule "you cannot view unpublished blog posts unless you have the admin role"
 
 ## Multi-tenancy
 
-The 'tenant_function' allows you to expose an API for a multi-tenant database schema. In the simplest model all tables have a column
-named 'customer_id' and the 'tenant_function' is defined as:
+The 'tenancy_function' allows you to expose an API for a multi-tenant database schema. In the simplest model all tables have a column
+named 'customer_id' and the 'tenancy_function' is defined as:
 
 ```return $col=='customer_id'?$_SESSION['customer_id']:null```
 
