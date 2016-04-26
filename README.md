@@ -1,7 +1,7 @@
 [![Average time to resolve an issue](http://isitmaintained.com/badge/resolution/mevdschee/php-crud-api.svg)](http://isitmaintained.com/project/mevdschee/php-crud-api "Average time to resolve an issue")
 [![Percentage of issues still open](http://isitmaintained.com/badge/open/mevdschee/php-crud-api.svg)](http://isitmaintained.com/project/mevdschee/php-crud-api "Percentage of issues still open")
 
-# PHP_CRUD_API
+# PHP-CRUD-API
 
 Single file PHP script that adds a REST API to a MySQL InnoDB database. Alternatively SQLite 3, PostgreSQL 9 and MS SQL Server 2012 are fully supported.
 
