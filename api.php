@@ -1122,6 +1122,7 @@ class PHP_CRUD_API {
 			}
 		}
 		$tableset[] = array_shift($tables);
+		$tableset = array_unique($tableset);
 		return array($tableset,$collect,$select);
 	}
 
