@@ -842,17 +842,18 @@ class PHP_CRUD_API {
 	}
 
 	protected function applyInputTenancy($callback,$action,$database,$table,&$input,$keys) {
-		if (is_callable($callback,true)) foreach ((array)$input as $key=>$value) {
-			if (isset($keys[$key])) {
-				$v = $callback($action,$database,$table,$key);
-				if ($v!==null) {
-					if (is_array($v)) {
-						if (in_array($input->$key,$v)) {
-							$v = $input->$key;
-						} else {
-							$v = null;
-						}
+		if (is_callable($callback,true)) foreach ($keys as $key=>$field) {
+			$v = $callback($action,$database,$table,$key);
+			if ($v!==null) {
+				if (is_array($v)) {
+					if (!count($v)) {
+						$input->$key = null;
+					} elseif (!isset($input->$key)) {
+						$input->$key = $v[0];
+					} elseif (!in_array($input->$key,$v)) {
+						$input->$key = null;
 					}
+				} else {
 					$input->$key = $v;
 				}
 			}
