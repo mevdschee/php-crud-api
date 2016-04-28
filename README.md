@@ -128,7 +128,7 @@ Output:
 {"categories":[{"id":"1","name":"Internet"},{"id":"3","name":"Web development"}]}
 ```
 
-NB: This transform is CPU and memory intensive and can also be executed client-side.
+NB: This transform is CPU and memory intensive and can also be executed client-side (see: [lib](https://github.com/mevdschee/php-crud-api/tree/master/lib)).
 
 ### List + Filter
 
