@@ -192,7 +192,7 @@ Output:
 {"categories":{"columns":["name"],"records":[["Web development"],["Internet"]]}}
 ```
 
-NB: Columns that are used to include related entities are automatically added and cannot be left out.
+NB: Columns that are used to include related entities are automatically added and cannot be left out of the output.
 
 ### List + Order
 
