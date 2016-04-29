@@ -118,6 +118,7 @@ class MySQL implements DatabaseInterface {
 			return "'".mysqli_real_escape_string($db,$param)."'";
 		}, $sql);
 		//if (!strpos($sql,'INFORMATION_SCHEMA'))	echo "\n$sql\n";
+		//var_dump($sql);
 		return mysqli_query($db,$sql);
 	}
 
@@ -788,9 +789,11 @@ class PHP_CRUD_API {
 		return $characters?preg_replace("/[^$characters]/",'',$value):$value;
 	}
 
+	// Provides a way to split the parameters - useful for filters that do not require the [] notation
+	// Can be used for any other parmeters that can accept array notation on the URL
 	protected function parseGetParameterArray($get,$name,$characters) {
 		$values = isset($get[$name])?$get[$name]:false;
-		if (!is_array($values)) $values = array($values);
+		if (!is_array($values)) $values = explode('|||',$values);
 		if ($characters) {
 			foreach ($values as &$value) {
 				$value = preg_replace("/[^$characters]/",'',$value);
@@ -842,18 +845,17 @@ class PHP_CRUD_API {
 	}
 
 	protected function applyInputTenancy($callback,$action,$database,$table,&$input,$keys) {
-		if (is_callable($callback,true)) foreach ($keys as $key=>$field) {
-			$v = $callback($action,$database,$table,$key);
-			if ($v!==null) {
-				if (is_array($v)) {
-					if (!count($v)) {
-						$input->$key = null;
-					} elseif (!isset($input->$key)) {
-						$input->$key = $v[0];
-					} elseif (!in_array($input->$key,$v)) {
-						$input->$key = null;
+		if (is_callable($callback,true)) foreach ((array)$input as $key=>$value) {
+			if (isset($keys[$key])) {
+				$v = $callback($action,$database,$table,$key);
+				if ($v!==null) {
+					if (is_array($v)) {
+						if (in_array($input->$key,$v)) {
+							$v = $input->$key;
+						} else {
+							$v = null;
+						}
 					}
-				} else {
 					$input->$key = $v;
 				}
 			}
@@ -964,20 +966,31 @@ class PHP_CRUD_API {
 		return array($key,$field);
 	}
 
+	// Accepts more than 1 order parameter now
 	protected function processOrderParameter($order) {
 		if (!$order) return false;
-		$order = explode(',',$order,2);
-		if (count($order)<2) $order[1]='ASC';
-		if (!strlen($order[0])) return false;
-		$order[1] = strtoupper($order[1])=='DESC'?'DESC':'ASC';
-		return $order;
+                $final=array();
+                $order=explode(',',$order);
+                foreach($order as $k=>$v)
+                {
+                        if(in_array(strtoupper($v),array('ASC','DESC')))
+                                continue;
+                        $o='"'.$v.'"';
+                        $o.=' '.(($k<count($order)-1)?(strtoupper($order[$k+1])=='DESC'?'DESC':'ASC'):'ASC');
+                        $final[]=$o;
+                }
+                return $final;
+
 	}
 
+	// Added Password and md5 from MySQL repertoire
 	protected function convertFilter($field, $comparator, $value) {
 		switch (strtolower($comparator)) {
 			case 'cs': $comparator = 'LIKE'; $value = '%'.$this->db->likeEscape($value).'%'; break;
 			case 'sw': $comparator = 'LIKE'; $value = $this->db->likeEscape($value).'%'; break;
 			case 'ew': $comparator = 'LIKE'; $value = '%'.$this->db->likeEscape($value); break;
+			case 'password':
+			case 'md5': $comparator="=".strtolower($comparator);$value=explode(',',$value);break;
 			case 'eq': $comparator = '='; break;
 			case 'ne': $comparator = '<>'; break;
 			case 'lt': $comparator = '<'; break;
@@ -1216,9 +1229,22 @@ class PHP_CRUD_API {
 		}
 	}
 
+	// Allows for the operation to be listed in the URL as the name op
+	// Allows for easier debugging of problems prior to switching to HTTP PUT and HTTP POST
 	protected function getParameters($settings) {
 		extract($settings);
-
+		if(isset($get['op']))
+			$method=$get['op'];
+		if($get['op']=='POST' || $get['op']=='PUT')
+		{
+			$op=$get['op'];
+			unset($get['op']);
+			$post=$get;
+			unset($get);
+		}
+		else
+			if(isset($get['op']))
+				unset($get['op']);
 		$table     = $this->parseRequestParameter($request, 'a-zA-Z0-9\-_');
 		$key       = $this->parseRequestParameter($request, 'a-zA-Z0-9\-_'); // auto-increment or uuid
 		$action    = $this->mapMethodToAction($method,$key);
@@ -1251,7 +1277,7 @@ class PHP_CRUD_API {
 
 		if ($post) {
 			// input
-			$context = $this->retrieveInput($post);
+			$context = $op=='POST'||$op=='PUT'?$post:$this->retrieveInput($post);
 			$input = $this->filterInputByFields($context,$fields[$tables[0]]);
 
 			if ($tenancy_function) $this->applyInputTenancy($tenancy_function,$action,$database,$tables[0],$input,$fields[$tables[0]]);
@@ -1319,9 +1345,10 @@ class PHP_CRUD_API {
 				$this->addWhereFromFilters($filters[$table],$sql,$params);
 		}
 		if (is_array($order)) {
-			$sql .= ' ORDER BY "!" !';
-			$params[] = $order[0];
-			$params[] = $order[1];
+			// Allow multiple order by clauses
+			$sql .= ' ORDER BY '.implode(',',$order);
+			//$params[] = $order[0];
+			//$params[] = $order[1];
 		}
 		if (is_array($order) && is_array($page)) {
 			$sql = $this->db->addLimitToSql($sql,$page[1],$page[0]);
@@ -1848,14 +1875,15 @@ class PHP_CRUD_API {
 // uncomment the lines below when running in stand-alone mode:
 
 // $api = new PHP_CRUD_API(array(
-// 	'dbengine'=>'MySQL',
-// 	'hostname'=>'localhost',
-//	'username'=>'xxx',
-//	'password'=>'xxx',
-//	'database'=>'xxx',
-// 	'charset'=>'utf8'
+//      'dbengine'=>'MySQL',
+//      'hostname'=>'localhost',
+//      'username'=>'xxx',
+//      'password'=>'xxx',
+//      'database'=>'xxx',
+//      'charset'=>'utf8'
 // ));
 // $api->executeCommand();
+
 
 // For Microsoft SQL Server 2012 use:
 
