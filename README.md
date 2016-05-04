@@ -489,7 +489,7 @@ You can call the ```mysql_crud_api_tranform()``` function to structure the data 
 }
 ```
 
-This transform function is available for PHP and JavaScript in the files ```mysql_crud_api_tranform.php``` and ```mysql_crud_api_tranform.js```.
+This transform function is available for PHP and JavaScript in the files ```mysql_crud_api_tranform.php``` and ```mysql_crud_api_tranform.js``` in the "lib" folder.
 
 ## Permissions
 
