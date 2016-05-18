@@ -999,6 +999,8 @@ class PHP_CRUD_API {
 				$filter = explode(',',$filters[$i],3);
 				if (count($filter)==3) {
 					$result[] = $this->convertFilter($filter[0],$filter[1],$filter[2]);
+				} elseif (count($filter)==2) {
+					$result[] = $this->convertFilter($filter[0],$filter[1],null);
 				}
 			}
 		}
