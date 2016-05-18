@@ -153,6 +153,7 @@ GET http://localhost/api.php/categories?filter=name,eq,Internet
 GET http://localhost/api.php/categories?filter=name,sw,Inter
 GET http://localhost/api.php/categories?filter=id,le,1
 GET http://localhost/api.php/categories?filter=id,lt,2
+GET http://localhost/api.php/categories?filter=description,is,
 ```
 
 Output:
