@@ -374,7 +374,7 @@ class SQLServer implements DatabaseInterface {
 	public function __construct() {
 		$this->queries = array(
 			'list_tables'=>'SELECT
-					"TABLE_NAME","TABLE_COMMENT"
+					"TABLE_NAME",\'\' as "TABLE_COMMENT"
 				FROM
 					"INFORMATION_SCHEMA"."TABLES"
 				WHERE
