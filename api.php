@@ -949,11 +949,10 @@ class PHP_CRUD_API {
 		}
 	}
 
-	protected function processKeyParameter($key,$tables,$database) {
-		if (!$key) return false;
+	protected function findPrimaryKey($table,$database) {
 		$count = 0;
 		$field = false;
-		if ($result = $this->db->query($this->db->getSql('reflect_pk'),array($tables[0],$database))) {
+		if ($result = $this->db->query($this->db->getSql('reflect_pk'),array($table,$database))) {
 			while ($row = $this->db->fetchRow($result)) {
 				$count++;
 				$field = $row[0];
@@ -961,6 +960,12 @@ class PHP_CRUD_API {
 			$this->db->close($result);
 		}
 		if ($count!=1 || $field==false) $this->exitWith404('1pk');
+		return $field;
+	}
+
+	protected function processKeyParameter($key,$tables,$database) {
+		if (!$key) return false;
+		$field = $this->findPrimaryKey($tables[0],$database);
 		return array($key,$field);
 	}
 
@@ -1595,10 +1600,22 @@ class PHP_CRUD_API {
 		}
 
 		foreach ($tables as $t=>$table)	{
+			$table_list = array($table['name']);
+			$table_fields = $this->findFields($table_list,false,$database);
+			$table_names = array_map(function($v){ return $v['name'];},$tables);
+			
+			$result = $this->db->query($this->db->getSql('reflect_belongs_to'),array($table_list[0],$table_names,$database,$database));
+			while ($row = $this->db->fetchRow($result)) {
+				$table_fields[$table['name']][$row[1]]->references=$row[2];
+			}
+			$result = $this->db->query($this->db->getSql('reflect_has_many'),array($table_names,$table_list[0],$database,$database));
+			while ($row = $this->db->fetchRow($result)) {
+				$table_fields[$table['name']][$row[3]]->related[]=array($row[0],$row[1]);
+			}
+			
 			foreach (array('root_actions','id_actions') as $path) {
 				foreach ($table[$path] as $i=>$action) {
-					$table_list = array($table['name']);
-					$fields = $this->findFields($table_list,false,$database);
+					$fields = $table_fields;
 					if ($table_authorizer) $this->applyTableAuthorizer($table_authorizer,$action['name'],$database,$table_list);
 					if ($column_authorizer) $this->applyColumnAuthorizer($column_authorizer,$action['name'],$database,$fields);
 					if (!$table_list || !$fields[$table['name']]) $tables[$t][$path][$i] = false;
@@ -1717,6 +1734,12 @@ class PHP_CRUD_API {
 							if ($k>0) echo ',';
 							echo '"'.$field.'": {';
 							echo '"type": "string"';
+							if (isset($action['fields'][$field]->related)) {
+								echo ',"x-related": '.json_encode($action['fields'][$field]->related);
+							}
+							if (isset($action['fields'][$field]->references)) {
+								echo ',"x-references": "'.$action['fields'][$field]->references.'"';
+							}
 							echo '}';
 						}
 						echo '}'; //properties
@@ -1803,6 +1826,12 @@ class PHP_CRUD_API {
 							if ($k>0) echo ',';
 							echo '"'.$field.'": {';
 							echo '"type": "string"';
+							if (isset($action['fields'][$field]->related)) {
+								echo ',"x-related": '.json_encode($action['fields'][$field]->related);
+							}
+							if (isset($action['fields'][$field]->references)) {
+								echo ',"x-references": "'.$action['fields'][$field]->references.'"';
+							}
 							echo '}';
 						}
 						echo '}'; //properties
