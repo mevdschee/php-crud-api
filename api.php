@@ -1610,10 +1610,10 @@ class PHP_CRUD_API {
 			}
 			$result = $this->db->query($this->db->getSql('reflect_has_many'),array($table_names,$table_list[0],$database,$database));
 			while ($row = $this->db->fetchRow($result)) {
-				$table_fields[$table['name']][$row[3]]->related[]=array($row[0],$row[1]);
+				$table_fields[$table['name']][$row[3]]->referenced[]=array($row[0],$row[1]);
 			}
-			$primary = $this->findPrimaryKey($table_list[0],$database);
-			$table_fields[$table['name']][$primary]->primary = true;
+			$primaryKey = $this->findPrimaryKey($table_list[0],$database);
+			$table_fields[$table['name']][$primaryKey]->primaryKey = true;
 			
 			foreach (array('root_actions','id_actions') as $path) {
 				foreach ($table[$path] as $i=>$action) {
@@ -1736,14 +1736,14 @@ class PHP_CRUD_API {
 							if ($k>0) echo ',';
 							echo '"'.$field.'": {';
 							echo '"type": "string"';
-							if (isset($action['fields'][$field]->related)) {
-								echo ',"x-related": '.json_encode($action['fields'][$field]->related);
+							if (isset($action['fields'][$field]->referenced)) {
+								echo ',"x-referenced": '.json_encode($action['fields'][$field]->referenced);
 							}
 							if (isset($action['fields'][$field]->references)) {
 								echo ',"x-references": "'.$action['fields'][$field]->references.'"';
 							}
-							if (isset($action['fields'][$field]->primary)) {
-								echo ',"x-primary": true';
+							if (isset($action['fields'][$field]->primaryKey)) {
+								echo ',"x-primary-key": true';
 							}
 							echo '}';
 						}
@@ -1831,14 +1831,14 @@ class PHP_CRUD_API {
 							if ($k>0) echo ',';
 							echo '"'.$field.'": {';
 							echo '"type": "string"';
-							if (isset($action['fields'][$field]->related)) {
-								echo ',"x-related": '.json_encode($action['fields'][$field]->related);
+							if (isset($action['fields'][$field]->referenced)) {
+								echo ',"x-referenced": '.json_encode($action['fields'][$field]->referenced);
 							}
 							if (isset($action['fields'][$field]->references)) {
 								echo ',"x-references": "'.$action['fields'][$field]->references.'"';
 							}
-							if (isset($action['fields'][$field]->primary)) {
-								echo ',"x-primary": true';
+							if (isset($action['fields'][$field]->primaryKey)) {
+								echo ',"x-primary-key": true';
 							}
 							echo '}';
 						}

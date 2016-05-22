@@ -44,7 +44,7 @@ function foot($debug) {
     return $html;
 }
 
-function listRecords($apiUrl,$subject,$field,$id,$references,$related,$primary) {
+function listRecords($apiUrl,$subject,$field,$id,$references,$referenced,$primaryKey) {
     $filter = '';
     $html = '';
     if ($field) {
@@ -73,7 +73,7 @@ function listRecords($apiUrl,$subject,$field,$id,$references,$related,$primary) 
             }
         }
         $html.= '<td>';
-        foreach ($related as $i=>$relations) {
+        foreach ($referenced as $i=>$relations) {
             $id = $record[$i];
             if ($relations) foreach ($relations as $j=>$relation) {
                 if ($j) $html.= ' ';
@@ -83,7 +83,7 @@ function listRecords($apiUrl,$subject,$field,$id,$references,$related,$primary) 
         }
         $html.= '</td>';
         $html.= '<td>';
-        $html.= '<a href="?action=view&subject='.$subject.'&id='.$record[$primary].'">view</a>';
+        $html.= '<a href="?action=view&subject='.$subject.'&id='.$record[$primaryKey].'">view</a>';
         $html.= '</td>';
         $html.= '</tr>';
     }
@@ -91,7 +91,7 @@ function listRecords($apiUrl,$subject,$field,$id,$references,$related,$primary) 
     return $html;
 }
 
-function viewRecord($apiUrl,$subject,$id,$references,$related,$primary) {
+function viewRecord($apiUrl,$subject,$id,$references,$referenced,$primaryKey) {
     $data = apiCall('GET',$apiUrl.'/'.$subject.'/'.$id);
     $html = '<table>';
     $i=0;
@@ -108,7 +108,7 @@ function viewRecord($apiUrl,$subject,$id,$references,$related,$primary) {
     }
     $html.= '<tr><th>related</th><td>';
     $keys = array_keys($data);
-    foreach ($related as $i=>$relations) {
+    foreach ($referenced as $i=>$relations) {
         $id = $data[$keys[$i]];
         if ($relations) foreach ($relations as $j=>$relation) {
             if ($j) $html.= ' ';
@@ -118,7 +118,7 @@ function viewRecord($apiUrl,$subject,$id,$references,$related,$primary) {
     }
     $html.= '</td></tr>';
     $html.= '<tr><th>actions</th><td>';
-    $html.= '<a href="?action=view&subject='.$subject.'&id='.$data[$keys[$primary]].'">view</a>';
+    $html.= '<a href="?action=view&subject='.$subject.'&id='.$data[$keys[$primaryKey]].'">view</a>';
     $html.= '</td></tr>';
     $html.= '</table>';
     return $html;
@@ -151,20 +151,20 @@ function references($subject,$properties) {
     return $references;
 }
 
-function related($subject,$properties) {
+function referenced($subject,$properties) {
     if (!$subject || !$properties) return false;
-    $related = array();
+    $referenced = array();
     foreach ($properties as $field=>$property) {
-        $related[] = isset($property['x-related'])?$property['x-related']:false;
+        $referenced[] = isset($property['x-referenced'])?$property['x-referenced']:false;
     }
-    return $related;
+    return $referenced;
 }
 
-function primary($subject,$properties) {
+function primaryKey($subject,$properties) {
     if (!$subject || !$properties) return false;
     $i = 0;
     foreach ($properties as $field=>$property) {
-        if (isset($property['x-primary'])) return $i;
+        if (isset($property['x-primary-key'])) return $i;
         $i++;
     }
     return false;
@@ -177,8 +177,8 @@ $id = isset($_GET['id'])?$_GET['id']:'';
 $definition = apiCall('GET',$apiUrl);
 $properties = properties($subject,$action,$definition);
 $references = references($subject,$properties);
-$related = related($subject,$properties);
-$primary = primary($subject,$properties);
+$referenced = referenced($subject,$properties);
+$primaryKey = primaryKey($subject,$properties);
 $debug = $debug?json_encode($definition,JSON_PRETTY_PRINT):false;
 
 echo head();
@@ -188,8 +188,8 @@ echo '</div>';
 echo '<div class="content">';
 switch ($action){
     case '': echo home(); break;
-    case 'list': echo listRecords($apiUrl,$subject,$field,$id,$references,$related,$primary); break;
-    case 'view': echo viewRecord($apiUrl,$subject,$id,$references,$related,$primary); break;
+    case 'list': echo listRecords($apiUrl,$subject,$field,$id,$references,$referenced,$primaryKey); break;
+    case 'view': echo viewRecord($apiUrl,$subject,$id,$references,$referenced,$primaryKey); break;
 }
 echo '</div>';
 echo foot($debug);
