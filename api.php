@@ -1612,6 +1612,8 @@ class PHP_CRUD_API {
 			while ($row = $this->db->fetchRow($result)) {
 				$table_fields[$table['name']][$row[3]]->related[]=array($row[0],$row[1]);
 			}
+			$primary = $this->findPrimaryKey($table_list[0],$database);
+			$table_fields[$table['name']][$primary]->primary = true;
 			
 			foreach (array('root_actions','id_actions') as $path) {
 				foreach ($table[$path] as $i=>$action) {
@@ -1740,6 +1742,9 @@ class PHP_CRUD_API {
 							if (isset($action['fields'][$field]->references)) {
 								echo ',"x-references": "'.$action['fields'][$field]->references.'"';
 							}
+							if (isset($action['fields'][$field]->primary)) {
+								echo ',"x-primary": true';
+							}
 							echo '}';
 						}
 						echo '}'; //properties
@@ -1831,6 +1836,9 @@ class PHP_CRUD_API {
 							}
 							if (isset($action['fields'][$field]->references)) {
 								echo ',"x-references": "'.$action['fields'][$field]->references.'"';
+							}
+							if (isset($action['fields'][$field]->primary)) {
+								echo ',"x-primary": true';
 							}
 							echo '}';
 						}

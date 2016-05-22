@@ -44,7 +44,7 @@ function foot($debug) {
     return $html;
 }
 
-function listRecords($apiUrl,$subject,$field,$id,$references,$related) {
+function listRecords($apiUrl,$subject,$field,$id,$references,$related,$primary) {
     $filter = '';
     $html = '';
     if ($field) {
@@ -56,10 +56,11 @@ function listRecords($apiUrl,$subject,$field,$id,$references,$related) {
     $data = apiCall('GET',$apiUrl.'/'.$subject.$filter  );
     $html.= '<table>';
     $html.= '<tr>';
-    foreach ($data[$subject]['columns'] as $column) {
+    foreach ($data[$subject]['columns'] as $i=>$column) {
         $html.= '<th>'.$column.'</th>';
     }
     $html.= '<th>related</th>';
+    $html.= '<th>actions</th>';
     $html.= '</tr>';
     foreach ($data[$subject]['records'] as $record) {
         $html.= '<tr>';
@@ -74,12 +75,15 @@ function listRecords($apiUrl,$subject,$field,$id,$references,$related) {
         $html.= '<td>';
         foreach ($related as $i=>$relations) {
             $id = $record[$i];
-            foreach ($relations as $j=>$relation) {
+            if ($relations) foreach ($relations as $j=>$relation) {
                 if ($j) $html.= ' ';
                 $href = '?action=list&subject='.$relation[0].'&field='.$relation[1].'&id='.$id;
                 $html.= '<a href="'.$href.'">'.$relation[0].'</a>';
             }
         }
+        $html.= '</td>';
+        $html.= '<td>';
+        $html.= '<a href="?action=view&subject='.$subject.'&id='.$record[$primary].'">view</a>';
         $html.= '</td>';
         $html.= '</tr>';
     }
@@ -87,7 +91,7 @@ function listRecords($apiUrl,$subject,$field,$id,$references,$related) {
     return $html;
 }
 
-function viewRecord($apiUrl,$subject,$id,$references,$related) {
+function viewRecord($apiUrl,$subject,$id,$references,$related,$primary) {
     $data = apiCall('GET',$apiUrl.'/'.$subject.'/'.$id);
     $html = '<table>';
     $i=0;
@@ -103,22 +107,24 @@ function viewRecord($apiUrl,$subject,$id,$references,$related) {
         $i++;
     }
     $html.= '<tr><th>related</th><td>';
+    $keys = array_keys($data);
     foreach ($related as $i=>$relations) {
-        $keys = array_keys($data);
         $id = $data[$keys[$i]];
-        foreach ($relations as $j=>$relation) {
+        if ($relations) foreach ($relations as $j=>$relation) {
             if ($j) $html.= ' ';
             $href = '?action=list&subject='.$relation[0].'&field='.$relation[1].'&id='.$id;
             $html.= '<a href="'.$href.'">'.$relation[0].'</a>';
         }
     }
     $html.= '</td></tr>';
+    $html.= '<tr><th>actions</th><td>';
+    $html.= '<a href="?action=view&subject='.$subject.'&id='.$data[$keys[$primary]].'">view</a>';
+    $html.= '</td></tr>';
     $html.= '</table>';
     return $html;
 }
 
-
-function references($subject,$action,$definition) {
+function properties($subject,$action,$definition) {
     if (!$subject || !$definition) return false;
     if ($action=='view') {
         $path = '/'.$subject.'/{id}';
@@ -133,6 +139,11 @@ function references($subject,$action,$definition) {
         }
         $properties = $definition['paths'][$path]['get']['responses']['200']['schema']['items']['properties'];
     }
+    return $properties;
+}
+
+function references($subject,$properties) {
+    if (!$subject || !$properties) return false;
     $references = array();
     foreach ($properties as $field=>$property) {
         $references[] = isset($property['x-references'])?$property['x-references']:false;
@@ -140,21 +151,8 @@ function references($subject,$action,$definition) {
     return $references;
 }
 
-function related($subject,$action,$definition) {
-    if (!$subject || !$definition) return false;
-    if ($action=='view') {
-        $path = '/'.$subject.'/{id}';
-        if (!isset($definition['paths'][$path]['get']['responses']['200']['schema']['properties'])) {
-            return false;
-        }
-        $properties = $definition['paths'][$path]['get']['responses']['200']['schema']['properties'];
-    } else {
-        $path = '/'.$subject;
-        if (!isset($definition['paths'][$path]['get']['responses']['200']['schema']['items']['properties'])) {
-            return false;
-        }
-        $properties = $definition['paths'][$path]['get']['responses']['200']['schema']['items']['properties'];
-    }
+function related($subject,$properties) {
+    if (!$subject || !$properties) return false;
     $related = array();
     foreach ($properties as $field=>$property) {
         $related[] = isset($property['x-related'])?$property['x-related']:false;
@@ -162,14 +160,25 @@ function related($subject,$action,$definition) {
     return $related;
 }
 
+function primary($subject,$properties) {
+    if (!$subject || !$properties) return false;
+    $i = 0;
+    foreach ($properties as $field=>$property) {
+        if (isset($property['x-primary'])) return $i;
+        $i++;
+    }
+    return false;
+}
 
 $action = isset($_GET['action'])?$_GET['action']:'';
 $subject = isset($_GET['subject'])?$_GET['subject']:'';
 $field = isset($_GET['field'])?$_GET['field']:'';
 $id = isset($_GET['id'])?$_GET['id']:'';
 $definition = apiCall('GET',$apiUrl);
-$references = references($subject,$action,$definition);
-$related = related($subject,$action,$definition);
+$properties = properties($subject,$action,$definition);
+$references = references($subject,$properties);
+$related = related($subject,$properties);
+$primary = primary($subject,$properties);
 $debug = $debug?json_encode($definition,JSON_PRETTY_PRINT):false;
 
 echo head();
@@ -179,8 +188,8 @@ echo '</div>';
 echo '<div class="content">';
 switch ($action){
     case '': echo home(); break;
-    case 'list': echo listRecords($apiUrl,$subject,$field,$id,$references,$related); break;
-    case 'view': echo viewRecord($apiUrl,$subject,$id,$references,$related); break;
+    case 'list': echo listRecords($apiUrl,$subject,$field,$id,$references,$related,$primary); break;
+    case 'view': echo viewRecord($apiUrl,$subject,$id,$references,$related,$primary); break;
 }
 echo '</div>';
 echo foot($debug);
