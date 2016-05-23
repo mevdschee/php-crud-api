@@ -28,7 +28,7 @@ class PHP_CRUD_UI {
     function menu($parameters) {
         extract($parameters);
         
-        $html= '<ul class="nav nav-pills">';
+        $html= '<ul class="nav nav-pills nav-stacked">';
         foreach ($definition['tags'] as $tag) {
             $active = $tag['name']==$subject?' class="active"':'';
             $html.= '<li'.$active.'><a href="'.$this->url($base,$tag['name'],'list').'">'.$tag['name'].'</a></li>';
@@ -50,8 +50,15 @@ class PHP_CRUD_UI {
         $html.= '<meta name="viewport" content="width=device-width, initial-scale=1">';
         $html.= '<link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet">';
         $html.= '<link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap-theme.min.css" rel="stylesheet">';
-        $html.= '<script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>';
-        $html.= '</head><body>';
+        $html.= '</head><body><div class="container">';
+        $html.= '<div class="row">';
+        $html.= '<div class="col-md-4"><h3>PHP-CRUD-UI</h3></div>';
+        $html.= '</div>';
+        return $html;
+    }
+
+    function foot() {
+        $html.= '</div></body></html>';
         return $html;
     }
 
@@ -114,20 +121,20 @@ class PHP_CRUD_UI {
         }
         $data = $this->call('GET',$url.'/'.$subject.'?'.http_build_query($args));
         
-        $html = '';
+        $html = '<h4>'.$subject.'</h4>';
         if ($field) {
-            $html .= '<p>filtered where "'.$field.'" = "'.$id.'".';
+            $html .= '<div class="alert alert-info" role="alert">Filtered where "'.$field.'" = "'.$id.'".';
             $href = $this->url($base,$subject,'list');
-            $html .= ' <a href="'.$href.'">remove</a></p>';
+            $html .= '<div style="float:right;"><a href="'.$href.'">Show all</a></div></div>';
         }    
         $html.= '<table class="table">';
-        $html.= '<tr>';
+        $html.= '<thead><tr>';
         foreach ($data[$subject]['columns'] as $i=>$column) {
             $html.= '<th>'.$column.'</th>';
         }
         $html.= '<th>has many</th>';
         $html.= '<th>actions</th>';
-        $html.= '</tr>';
+        $html.= '</tr></thead><tbody>';
         foreach ($data[$subject]['records'] as $record) {
             $html.= '<tr>';
             foreach ($record as $i=>$value) {
@@ -158,7 +165,7 @@ class PHP_CRUD_UI {
             $html.= '</td>';
             $html.= '</tr>';
         }
-        $html.= '</table>';
+        $html.= '</tbody></table>';
         return $html;
     }
 
@@ -202,7 +209,8 @@ class PHP_CRUD_UI {
         $primaryKey = $this->primaryKey($subject,$properties);
         
         $data = $this->call('GET',$url.'/'.$subject.'/'.$id);
-        $html = '<form>';
+        $html = '<h4>'.$subject.'</h4>';
+        $html.= '<form>';
         $i=0;
         foreach ($data as $column=>$field) {
             $html.= '<div class="form-group">';
@@ -334,20 +342,21 @@ class PHP_CRUD_UI {
         $parameters = $this->getParameters($this->settings);
         
         $html = $this->head();
-        $html.= '<div class="container-fluid">';
         $html.= '<div class="row">';
+        $html.= '<div class="col-md-4">';
         $html.= $this->menu($parameters);
         $html.= '</div>';
-        $html.= '<div class="row">';
-
+        
+        $html.= '<div class="col-md-8">';
         switch($parameters['action']){
             case '':     $html.= $this->home($parameters); break;
             case 'list': $html.= $this->listRecords($parameters); break;
             case 'edit': $html.= $this->editRecord($parameters); break;
         }
+        $html.= '</div>';
         
         $html.= '</div>';
-        $html.= '</div>';
+        $html.= $this->foot();
         return $html;
     }
 }
