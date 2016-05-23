@@ -352,8 +352,8 @@ class PHP_CRUD_UI {
     }
 }
 
-session_start();
-$ui = new PHP_CRUD_UI(array(
-    'url' => 'http://localhost:8001/blog.php',
-));
-echo $ui->executeCommand();
+//session_start();
+//$ui = new PHP_CRUD_UI(array(
+//    'url' => 'http://localhost/api.php',
+//));
+//echo $ui->executeCommand();
