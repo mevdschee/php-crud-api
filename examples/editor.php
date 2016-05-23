@@ -45,6 +45,15 @@ function head() {
     return $html;
 }
 
+function displayColumn($columns) {
+	$names = array('name','title','description');
+	foreach ($names as $name) {
+		if (isset($columns[$name])) return $columns[$name];
+	}
+	return false;
+}
+
+
 function referenceText($subject,$data,$field,$id,$definition) {
     $properties = properties($subject,$definition);
     $references = references($subject,$properties);
@@ -52,19 +61,25 @@ function referenceText($subject,$data,$field,$id,$definition) {
     $primaryKey = primaryKey($subject,$properties);
     
     $indices = array_flip($data[$subject]['columns']);
+	$displayColumn = displayColumn($indices);
+	
     $records = $data[$subject]['records'];
     foreach ($records as $record) {
         if ($record[$indices[$field]]==$id) {
-            $text = '';
-            $first = true;
-            foreach ($record as $i=>$value) {
-                if (!$references[$i] && $i!=$primaryKey) {
-                    if (!$first) $text.= ' - ';
-                    $text.= $value;
-                    $first = false;
-                }
-            } 
-            return $text;
+			if ($displayColumn===false) {
+				$text = '';
+				$first = true;
+				foreach ($record as $i=>$value) {
+					if (!$references[$i] && $i!=$primaryKey) {
+						if (!$first) $text.= ' - ';
+						$text.= $value;
+						$first = false;
+					}
+				} 
+				return $text;
+			} else {
+				return $record[$indices[$displayColumn]];
+			}
         }
     }
     return '?';
@@ -102,16 +117,16 @@ function listRecords($apiUrl,$subject,$field,$id,$definition) {
     $html.= '</tr>';
     foreach ($data[$subject]['records'] as $record) {
         $html.= '<tr>';
-        foreach ($record as $i=>$field) {
+        foreach ($record as $i=>$value) {
             if ($references[$i]) {
                 $html.= '<td>';
-                $href = '?action=list&subject='.$references[$i][0].'&field='.$references[$i][1].'&id='.$id;
+                $href = '?action=list&subject='.$references[$i][0].'&field='.$references[$i][1].'&id='.$value;
                 $html.= '<a href="'.$href.'">';
-                $html.= referenceText($references[$i][0],$data,$references[$i][1],$field,$definition);
+                $html.= referenceText($references[$i][0],$data,$references[$i][1],$value,$definition);
                 $html.= '</a>';
                 $html.= '</td>';
             } else {
-                $html.= '<td>'.$field.'</td>';
+                $html.= '<td>'.$value.'</td>';
             }
         }
         $html.= '<td>';
@@ -139,18 +154,26 @@ function selectSubject($apiUrl,$subject,$name,$value,$definition) {
     $primaryKey = primaryKey($subject,$properties);
     
     $data = apiCall('GET',$apiUrl.'/'.$subject);
-    $html = '<select class="form-control">';
+    
+	$indices = array_flip($data[$subject]['columns']);
+	$displayColumn = displayColumn($indices);
+	
+	$html = '<select class="form-control">';
     foreach ($data[$subject]['records'] as $record) {
-        $text = '';
-        $first = true;
-        foreach ($record as $i=>$field) {
-            if (!$references[$i] && $i!=$primaryKey) {
-                if (!$first) $text.= ' - ';
-                $text.= $field;
-                $first = false;
-            }
-        } 
-        $html.= '<option value="'.$record[$primaryKey].'">'.$text.'</option>';
+		if ($displayColumn===false) {
+			$text = '';
+			$first = true;
+			foreach ($record as $i=>$field) {
+				if (!$references[$i] && $i!=$primaryKey) {
+					if (!$first) $text.= ' - ';
+					$text.= $field;
+					$first = false;
+				}
+			} 
+			$html.= '<option value="'.$record[$primaryKey].'">'.$text.'</option>';
+		} else {
+			$html.= '<option value="'.$record[$primaryKey].'">'.$record[$displayColumn].'</option>';
+		}
     }
     $html.= '</select>';
     return $html;
