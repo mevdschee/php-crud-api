@@ -45,51 +45,75 @@ function head() {
     return $html;
 }
 
+function referenceText($subject,$data,$field,$id,$definition) {
+    $properties = properties($subject,$definition);
+    $references = references($subject,$properties);
+    $referenced = referenced($subject,$properties);
+    $primaryKey = primaryKey($subject,$properties);
+    
+    $indices = array_flip($data[$subject]['columns']);
+    $records = $data[$subject]['records'];
+    foreach ($records as $record) {
+        if ($record[$indices[$field]]==$id) {
+            $text = '';
+            $first = true;
+            foreach ($record as $i=>$value) {
+                if (!$references[$i] && $i!=$primaryKey) {
+                    if (!$first) $text.= ' - ';
+                    $text.= $value;
+                    $first = false;
+                }
+            } 
+            return $text;
+        }
+    }
+    return '?';
+}
+
 function listRecords($apiUrl,$subject,$field,$id,$definition) {
     $properties = properties($subject,$definition);
     $references = references($subject,$properties);
     $referenced = referenced($subject,$properties);
     $primaryKey = primaryKey($subject,$properties);
     
-    $filter = '';
+    $args = array();
+    if ($field) {
+        $args['filter']=$field.',eq,'.$id; 
+    }
+    $include = implode(',',array_filter(array_map(function($v){ return $v[0]; },$references)));
+    if ($include) {
+        $args['include']=$include; 
+    }
+    $data = apiCall('GET',$apiUrl.'/'.$subject.'?'.http_build_query($args));
+    
     $html = '';
     if ($field) {
-        $filter = '?filter[]='.$field.',eq,'.$id; 
         $html .= '<p>filtered where "'.$field.'" = "'.$id.'".';
         $href = '?action=list&subject='.$subject;
         $html .= ' <a href="'.$href.'">remove</a></p>';
-    }
-    $data = apiCall('GET',$apiUrl.'/'.$subject.$filter  );
+    }    
     $html.= '<table class="table">';
     $html.= '<tr>';
     foreach ($data[$subject]['columns'] as $i=>$column) {
-        if (!$references[$i]) {
-            $html.= '<th>'.$column.'</th>';
-        }
+        $html.= '<th>'.$column.'</th>';
     }
-    $html.= '<th>belongs to</th>';
     $html.= '<th>has many</th>';
     $html.= '<th>actions</th>';
     $html.= '</tr>';
     foreach ($data[$subject]['records'] as $record) {
         $html.= '<tr>';
         foreach ($record as $i=>$field) {
-            if (!$references[$i]) {
+            if ($references[$i]) {
+                $html.= '<td>';
+                $href = '?action=list&subject='.$references[$i][0].'&field='.$references[$i][1].'&id='.$id;
+                $html.= '<a href="'.$href.'">';
+                $html.= referenceText($references[$i][0],$data,$references[$i][1],$field,$definition);
+                $html.= '</a>';
+                $html.= '</td>';
+            } else {
                 $html.= '<td>'.$field.'</td>';
             }
         }
-        $html.= '<td>';
-        $first = true;
-        foreach ($references as $i=>$relation) {
-            $id = $record[$i];
-            if ($relation) {
-                if (!$first) $html.= ', ';
-                $href = '?action=list&subject='.$relation[0].'&field='.$relation[1].'&id='.$id;
-                $html.= '<a href="'.$href.'">'.$relation[0].'</a>';
-                $first = false;
-            }
-        }
-        $html.= '</td>';
         $html.= '<td>';
         foreach ($referenced as $i=>$relations) {
             $id = $record[$i];
@@ -120,7 +144,7 @@ function selectSubject($apiUrl,$subject,$name,$value,$definition) {
         $text = '';
         $first = true;
         foreach ($record as $i=>$field) {
-            if (!$references[$i]) {
+            if (!$references[$i] && $i!=$primaryKey) {
                 if (!$first) $text.= ' - ';
                 $text.= $field;
                 $first = false;
@@ -147,7 +171,8 @@ function editRecord($apiUrl,$subject,$id,$definition) {
         if ($references[$i]) {
             $html.= selectSubject($apiUrl,$references[$i][0],$column,$field,$definition);
         } else {
-            $html.= '<input class="form-control" id="'.$column.'" value="'.$field.'"/>';
+            $readonly = $i==$primaryKey?' readonly':'';
+            $html.= '<input class="form-control" id="'.$column.'" value="'.$field.'"'.$readonly.'/>';
         }
         $html.= '</div>';
         $i++;
