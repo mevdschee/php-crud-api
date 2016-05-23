@@ -187,6 +187,8 @@ class PHP_CRUD_UI {
         
         $html = '<select class="form-control">';
         foreach ($data[$subject]['records'] as $record) {
+            $selected = $record[$primaryKey]==$value?' selected':'';
+            $html.= '<option value="'.$record[$primaryKey].'"'.$selected.'>';
             if ($displayColumn===false) {
                 $text = '';
                 $first = true;
@@ -197,10 +199,11 @@ class PHP_CRUD_UI {
                         $first = false;
                     }
                 } 
-                $html.= '<option value="'.$record[$primaryKey].'">'.$text.'</option>';
+                $html.= $text;
             } else {
-                $html.= '<option value="'.$record[$primaryKey].'">'.$record[$displayColumn].'</option>';
+                $html.= $record[$displayColumn];
             }
+            $html.= '</option>';
         }
         $html.= '</select>';
         return $html;
