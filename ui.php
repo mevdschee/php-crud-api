@@ -123,7 +123,7 @@ class PHP_CRUD_UI {
         }
         $data = $this->call('GET',$url.'/'.$subject.'?'.http_build_query($args));
         
-        $html = '<h4>'.$subject.'</h4>';
+        $html = '<h4>'.$subject.': list</h4>';
         if ($field) {
             $html .= '<div class="alert alert-info" role="alert">Filtered where "'.$field.'" = "'.$id.'".';
             $href = $this->url($base,$subject,'list');
@@ -215,7 +215,7 @@ class PHP_CRUD_UI {
         $primaryKey = $this->primaryKey($subject,$properties);
         
         $data = $this->call('GET',$url.'/'.$subject.'/'.$id);
-        $html = '<h4>'.$subject.'</h4>';
+        $html = '<h4>'.$subject.': edit</h4>';
         $html.= '<form>';
         $i=0;
         foreach ($data as $column=>$field) {
