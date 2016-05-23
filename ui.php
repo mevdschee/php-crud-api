@@ -4,7 +4,7 @@ class PHP_CRUD_UI {
 
     protected $settings;
     
-    function apiCall($method, $url, $data = false) {
+    function call($method, $url, $data = false) {
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
         curl_setopt($ch, CURLOPT_URL, $url);
@@ -112,7 +112,7 @@ class PHP_CRUD_UI {
         if ($include) {
             $args['include']=$include; 
         }
-        $data = $this->apiCall('GET',$url.'/'.$subject.'?'.http_build_query($args));
+        $data = $this->call('GET',$url.'/'.$subject.'?'.http_build_query($args));
         
         $html = '';
         if ($field) {
@@ -167,7 +167,7 @@ class PHP_CRUD_UI {
         $references = $this->references($subject,$properties);
         $primaryKey = $this->primaryKey($subject,$properties);
         
-        $data = $this->apiCall('GET',$url.'/'.$subject);
+        $data = $this->call('GET',$url.'/'.$subject);
         
         $indices = array_flip($data[$subject]['columns']);
         $displayColumn = $this->displayColumn($indices);
@@ -201,7 +201,7 @@ class PHP_CRUD_UI {
         $referenced = $this->referenced($subject,$properties);
         $primaryKey = $this->primaryKey($subject,$properties);
         
-        $data = $this->apiCall('GET',$url.'/'.$subject.'/'.$id);
+        $data = $this->call('GET',$url.'/'.$subject.'/'.$id);
         $html = '<form>';
         $i=0;
         foreach ($data as $column=>$field) {
@@ -280,7 +280,7 @@ class PHP_CRUD_UI {
         if (!$definition) {
             $definition = isset($_SESSION['definition'])?$_SESSION['definition']:null;
             if (!$definition) {
-                $definition = $this->apiCall('GET',$url);
+                $definition = $this->call('GET',$url);
                 $_SESSION['definition'] = $definition;
             }
         }
