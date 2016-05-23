@@ -58,7 +58,7 @@ class PHP_CRUD_UI {
     }
 
     function foot() {
-        $html.= '</div></body></html>';
+        $html = '</div></body></html>';
         return $html;
     }
 
@@ -111,6 +111,8 @@ class PHP_CRUD_UI {
         $referenced = $this->referenced($subject,$properties);
         $primaryKey = $this->primaryKey($subject,$properties);
         
+        $related = !empty(array_filter($referenced));
+        
         $args = array();
         if ($field) {
             $args['filter']=$field.',eq,'.$id; 
@@ -132,7 +134,9 @@ class PHP_CRUD_UI {
         foreach ($data[$subject]['columns'] as $i=>$column) {
             $html.= '<th>'.$column.'</th>';
         }
-        $html.= '<th>has many</th>';
+        if ($related) {
+            $html.= '<th>related</th>';
+        }
         $html.= '<th>actions</th>';
         $html.= '</tr></thead><tbody>';
         foreach ($data[$subject]['records'] as $record) {
@@ -149,16 +153,18 @@ class PHP_CRUD_UI {
                     $html.= '<td>'.$value.'</td>';
                 }
             }
-            $html.= '<td>';
-            foreach ($referenced as $i=>$relations) {
-                $id = $record[$i];
-                if ($relations) foreach ($relations as $j=>$relation) {
-                    if ($j) $html.= ', ';
-                    $href = $this->url($base,$relation[0],'list',$id,$relation[1]); 
-                    $html.= '<a href="'.$href.'">'.$relation[0].'</a>';
+            if ($related) {
+                $html.= '<td>';
+                foreach ($referenced as $i=>$relations) {
+                    $id = $record[$i];
+                    if ($relations) foreach ($relations as $j=>$relation) {
+                        if ($j) $html.= ', ';
+                        $href = $this->url($base,$relation[0],'list',$id,$relation[1]); 
+                        $html.= '<a href="'.$href.'">'.$relation[0].'</a>';
+                    }
                 }
+                $html.= '</td>';
             }
-            $html.= '</td>';
             $html.= '<td>';
             $href = $this->url($base,$subject,'edit',$record[$primaryKey]);
             $html.= '<a href="'.$href.'">edit</a>';
