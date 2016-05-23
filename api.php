@@ -1606,7 +1606,7 @@ class PHP_CRUD_API {
 			
 			$result = $this->db->query($this->db->getSql('reflect_belongs_to'),array($table_list[0],$table_names,$database,$database));
 			while ($row = $this->db->fetchRow($result)) {
-				$table_fields[$table['name']][$row[1]]->references=$row[2];
+				$table_fields[$table['name']][$row[1]]->references=array($row[2],$row[3]);
 			}
 			$result = $this->db->query($this->db->getSql('reflect_has_many'),array($table_names,$table_list[0],$database,$database));
 			while ($row = $this->db->fetchRow($result)) {
@@ -1740,7 +1740,7 @@ class PHP_CRUD_API {
 								echo ',"x-referenced": '.json_encode($action['fields'][$field]->referenced);
 							}
 							if (isset($action['fields'][$field]->references)) {
-								echo ',"x-references": "'.$action['fields'][$field]->references.'"';
+								echo ',"x-references": '.json_encode($action['fields'][$field]->references);
 							}
 							if (isset($action['fields'][$field]->primaryKey)) {
 								echo ',"x-primary-key": true';
@@ -1835,7 +1835,7 @@ class PHP_CRUD_API {
 								echo ',"x-referenced": '.json_encode($action['fields'][$field]->referenced);
 							}
 							if (isset($action['fields'][$field]->references)) {
-								echo ',"x-references": "'.$action['fields'][$field]->references.'"';
+								echo ',"x-references": '.json_encode($action['fields'][$field]->references);
 							}
 							if (isset($action['fields'][$field]->primaryKey)) {
 								echo ',"x-primary-key": true';
