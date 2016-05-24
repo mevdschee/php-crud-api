@@ -949,24 +949,22 @@ class PHP_CRUD_API {
 		}
 	}
 
-	protected function findPrimaryKey($table,$database) {
-		$count = 0;
-		$field = false;
+	protected function findPrimaryKeys($table,$database) {
+		$fields = array();
 		if ($result = $this->db->query($this->db->getSql('reflect_pk'),array($table,$database))) {
 			while ($row = $this->db->fetchRow($result)) {
-				$count++;
-				$field = $row[0];
+				$fields[] = $row[0];
 			}
 			$this->db->close($result);
 		}
-		if ($count!=1 || $field==false) $this->exitWith404('1pk');
-		return $field;
+		return $fields;
 	}
 
 	protected function processKeyParameter($key,$tables,$database) {
 		if (!$key) return false;
-		$field = $this->findPrimaryKey($tables[0],$database);
-		return array($key,$field);
+		$fields = $this->findPrimaryKeys($tables[0],$database);
+		if (count($fields)!=1) $this->exitWith404('1pk');
+		return array($key,$fields[0]);
 	}
 
 	protected function processOrderParameter($order) {
@@ -1612,8 +1610,10 @@ class PHP_CRUD_API {
 			while ($row = $this->db->fetchRow($result)) {
 				$table_fields[$table['name']][$row[3]]->referenced[]=array($row[0],$row[1]);
 			}
-			$primaryKey = $this->findPrimaryKey($table_list[0],$database);
-			$table_fields[$table['name']][$primaryKey]->primaryKey = true;
+			$primaryKeys = $this->findPrimaryKeys($table_list[0],$database);
+			foreach ($primaryKeys as $primaryKey) {
+				$table_fields[$table['name']][$primaryKey]->primaryKey = true;
+			}
 			
 			foreach (array('root_actions','id_actions') as $path) {
 				foreach ($table[$path] as $i=>$action) {
