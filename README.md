@@ -5,6 +5,11 @@
 
 Single file PHP script that adds a REST API to a MySQL InnoDB database. Alternatively SQLite 3, PostgreSQL 9 and MS SQL Server 2012 are fully supported.
 
+Related projects:
+
+  - [PHP-SP-API](https://github.com/mevdschee/php-sp-api): Single file PHP script that adds a REST API to a SQL database.
+  - [PHP-CRUD-UI](https://github.com/mevdschee/php-crud-ui): Single file PHP script that adds a UI to a PHP-CRUD-API project.
+
 ## Requirements
 
   - PHP 5.3 or higher with MySQLi, libpq, SQLSRV or sqlite3 enabled
