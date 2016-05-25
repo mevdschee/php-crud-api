@@ -1493,6 +1493,7 @@ class PHP_CRUD_API {
 		$tenancy_function = isset($tenancy_function)?$tenancy_function:null;
 		$input_sanitizer = isset($input_sanitizer)?$input_sanitizer:null;
 		$input_validator = isset($input_validator)?$input_validator:null;
+		$no_extensions = isset($no_extensions)?$no_extensions:null;
 
 		$db = isset($db)?$db:null;
 		$method = isset($method)?$method:null;
@@ -1534,7 +1535,7 @@ class PHP_CRUD_API {
 		}
 
 		$this->db = $db;
-		$this->settings = compact('method', 'request', 'get', 'post', 'database', 'table_authorizer', 'record_filter', 'column_authorizer', 'tenancy_function', 'input_sanitizer', 'input_validator');
+		$this->settings = compact('method', 'request', 'get', 'post', 'database', 'table_authorizer', 'record_filter', 'column_authorizer', 'tenancy_function', 'input_sanitizer', 'input_validator', 'no_extensions');
 	}
 
 	public static function php_crud_api_transform(&$tables) {
@@ -1604,16 +1605,18 @@ class PHP_CRUD_API {
 			$table_fields = $this->findFields($table_list,false,$database);
 			$table_names = array_map(function($v){ return $v['name'];},$tables);
 			
-			$result = $this->db->query($this->db->getSql('reflect_belongs_to'),array($table_list[0],$table_names,$database,$database));
-			while ($row = $this->db->fetchRow($result)) {
-				$table_fields[$table['name']][$row[1]]->references=array($row[2],$row[3]);
+			if (!$no_extensions) {
+				$result = $this->db->query($this->db->getSql('reflect_belongs_to'),array($table_list[0],$table_names,$database,$database));
+				while ($row = $this->db->fetchRow($result)) {
+					$table_fields[$table['name']][$row[1]]->references=array($row[2],$row[3]);
+				}
+				$result = $this->db->query($this->db->getSql('reflect_has_many'),array($table_names,$table_list[0],$database,$database));
+				while ($row = $this->db->fetchRow($result)) {
+					$table_fields[$table['name']][$row[3]]->referenced[]=array($row[0],$row[1]);
+				}
+				$primaryKey = $this->findPrimaryKey($table_list[0],$database);
+				$table_fields[$table['name']][$primaryKey]->primaryKey = true;
 			}
-			$result = $this->db->query($this->db->getSql('reflect_has_many'),array($table_names,$table_list[0],$database,$database));
-			while ($row = $this->db->fetchRow($result)) {
-				$table_fields[$table['name']][$row[3]]->referenced[]=array($row[0],$row[1]);
-			}
-			$primaryKey = $this->findPrimaryKey($table_list[0],$database);
-			$table_fields[$table['name']][$primaryKey]->primaryKey = true;
 			
 			foreach (array('root_actions','id_actions') as $path) {
 				foreach ($table[$path] as $i=>$action) {
