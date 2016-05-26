@@ -1620,6 +1620,7 @@ class PHP_CRUD_API {
 			
 			foreach (array('root_actions','id_actions') as $path) {
 				foreach ($table[$path] as $i=>$action) {
+					$table_list = array($table['name']);
 					$fields = $table_fields;
 					if ($table_authorizer) $this->applyTableAuthorizer($table_authorizer,$action['name'],$database,$table_list);
 					if ($column_authorizer) $this->applyColumnAuthorizer($column_authorizer,$action['name'],$database,$fields);
