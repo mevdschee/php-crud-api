@@ -1769,6 +1769,15 @@ class PHP_CRUD_API {
 							if ($k>0) echo ',';
 							echo '"'.$field.'": {';
 							echo '"type": "string"';
+							if (isset($action['fields'][$field]->referenced)) {
+								echo ',"x-referenced": '.json_encode($action['fields'][$field]->referenced);
+							}
+							if (isset($action['fields'][$field]->references)) {
+								echo ',"x-references": '.json_encode($action['fields'][$field]->references);
+							}
+							if (isset($action['fields'][$field]->primaryKey)) {
+								echo ',"x-primary-key": true';
+							}
 							echo '}';
 						}
 						echo '}'; //properties
@@ -1816,6 +1825,15 @@ class PHP_CRUD_API {
 							if ($k>0) echo ',';
 							echo '"'.$field.'": {';
 							echo '"type": "string"';
+							if (isset($action['fields'][$field]->referenced)) {
+								echo ',"x-referenced": '.json_encode($action['fields'][$field]->referenced);
+							}
+							if (isset($action['fields'][$field]->references)) {
+								echo ',"x-references": '.json_encode($action['fields'][$field]->references);
+							}
+							if (isset($action['fields'][$field]->primaryKey)) {
+								echo ',"x-primary-key": true';
+							}
 							echo '}';
 						}
 						echo '}'; //properties
