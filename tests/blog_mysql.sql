@@ -14,7 +14,7 @@ CREATE TABLE `categories` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 INSERT INTO `categories` (`id`, `name`, `icon`) VALUES
-(1,	'anouncement',	NULL),
+(1,	'announcement',	NULL),
 (2,	'article',	NULL);
 
 DROP TABLE IF EXISTS `comments`;

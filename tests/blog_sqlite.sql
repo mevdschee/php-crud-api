@@ -7,7 +7,7 @@ CREATE TABLE "categories" (
   "icon" blob NULL
 );
 
-INSERT INTO "categories" ("id", "name", "icon") VALUES (1,	'anouncement',	NULL);
+INSERT INTO "categories" ("id", "name", "icon") VALUES (1,	'announcement',	NULL);
 INSERT INTO "categories" ("id", "name", "icon") VALUES (2,	'article',	NULL);
 
 DROP TABLE IF EXISTS "comments";

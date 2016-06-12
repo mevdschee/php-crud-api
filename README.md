@@ -150,8 +150,8 @@ Search is implemented with the "filter" parameter. You need to specify the colum
   - le: lower or equal (number is lower than or equal to value)
   - ge: greater or equal (number is higher than or equal to value)
   - gt: greater than (number is higher than value)
-  - in: in (number is in comma seperated list of values)
-  - ni: not in (number is not in comma seperated list of values)
+  - in: in (number is in comma separated list of values)
+  - ni: not in (number is not in comma separated list of values)
   - is: is null (field contains "NULL" value)
   - no: not null (field does not contain "NULL" value)
 
@@ -186,7 +186,7 @@ Output:
 
 ### List + Column selection
 
-By default all columns are selected. With the "columns" parameter you can select specific columns. Multiple columns should be comma seperated. An asterisk ("*") may be used as a wildcard to indicate "all columns":
+By default all columns are selected. With the "columns" parameter you can select specific columns. Multiple columns should be comma separated. An asterisk ("*") may be used as a wildcard to indicate "all columns":
 
 ```
 GET http://localhost/api.php/categories?columns=name
