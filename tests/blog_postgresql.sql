@@ -97,7 +97,7 @@ CREATE TABLE users (
 --
 
 INSERT INTO "categories" ("name", "icon") VALUES
-('anouncement',	NULL),
+('announcement',	NULL),
 ('article',	NULL);
 
 --
