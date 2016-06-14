@@ -1096,7 +1096,7 @@ class PHP_CRUD_API {
 		return $this->db->affectedRows($result);
 	}
 
-	protected function findRelations($tables,$database) {
+	protected function findRelations($tables,$database,$auto_include) {
 		$tableset = array();
 		$collect = array();
 		$select = array();
@@ -1107,18 +1107,22 @@ class PHP_CRUD_API {
 
 			$result = $this->db->query($this->db->getSql('reflect_belongs_to'),array($table0,$tables,$database,$database));
 			while ($row = $this->db->fetchRow($result)) {
+				if (!$auto_include && !in_array($row[0],array_merge($tables,$tableset))) continue;
 				$collect[$row[0]][$row[1]]=array();
 				$select[$row[2]][$row[3]]=array($row[0],$row[1]);
 				if (!in_array($row[0],$tableset)) $tableset[] = $row[0];
 			}
 			$result = $this->db->query($this->db->getSql('reflect_has_many'),array($tables,$table0,$database,$database));
 			while ($row = $this->db->fetchRow($result)) {
+				if (!$auto_include && !in_array($row[2],array_merge($tables,$tableset))) continue;
 				$collect[$row[2]][$row[3]]=array();
 				$select[$row[0]][$row[1]]=array($row[2],$row[3]);
 				if (!in_array($row[2],$tableset)) $tableset[] = $row[2];
 			}
 			$result = $this->db->query($this->db->getSql('reflect_habtm'),array($database,$database,$database,$database,$table0,$tables));
 			while ($row = $this->db->fetchRow($result)) {
+				if (!$auto_include && !in_array($row[2],array_merge($tables,$tableset))) continue;
+				if (!$auto_include && !in_array($row[4],array_merge($tables,$tableset))) continue;
 				$collect[$row[2]][$row[3]]=array();
 				$select[$row[0]][$row[1]]=array($row[2],$row[3]);
 				$collect[$row[4]][$row[5]]=array();
@@ -1243,7 +1247,7 @@ class PHP_CRUD_API {
 		$order     = $this->processOrderParameter($order);
 
 		// reflection
-		list($tables,$collect,$select) = $this->findRelations($tables,$database);
+		list($tables,$collect,$select) = $this->findRelations($tables,$database,$auto_include);
 		$columns = $this->addRelationColumns($columns,$select);
 		$fields = $this->findFields($tables,$columns,$database);
 
@@ -1493,7 +1497,8 @@ class PHP_CRUD_API {
 		$tenancy_function = isset($tenancy_function)?$tenancy_function:null;
 		$input_sanitizer = isset($input_sanitizer)?$input_sanitizer:null;
 		$input_validator = isset($input_validator)?$input_validator:null;
-		$no_extensions = isset($no_extensions)?$no_extensions:null;
+		$extensions = isset($extensions)?$extensions:null;
+		$auto_include = isset($auto_include)?$auto_include:null;
 
 		$db = isset($db)?$db:null;
 		$method = isset($method)?$method:null;
@@ -1533,9 +1538,15 @@ class PHP_CRUD_API {
 			}
 			$db->connect($hostname,$username,$password,$database,$port,$socket,$charset);
 		}
+		if ($extensions===null) {
+			$extensions = true;
+		}
+		if ($auto_include===null) {
+			$auto_include = true;
+		}
 
 		$this->db = $db;
-		$this->settings = compact('method', 'request', 'get', 'post', 'database', 'table_authorizer', 'record_filter', 'column_authorizer', 'tenancy_function', 'input_sanitizer', 'input_validator', 'no_extensions');
+		$this->settings = compact('method', 'request', 'get', 'post', 'database', 'table_authorizer', 'record_filter', 'column_authorizer', 'tenancy_function', 'input_sanitizer', 'input_validator', 'extensions', 'auto_include');
 	}
 
 	public static function php_crud_api_transform(&$tables) {
@@ -1605,7 +1616,7 @@ class PHP_CRUD_API {
 			$table_fields = $this->findFields($table_list,false,$database);
 			$table_names = array_map(function($v){ return $v['name'];},$tables);
 			
-			if (!$no_extensions) {
+			if ($extensions) {
 				$result = $this->db->query($this->db->getSql('reflect_belongs_to'),array($table_list[0],$table_names,$database,$database));
 				while ($row = $this->db->fetchRow($result)) {
 					$table_fields[$table['name']][$row[1]]->references=array($row[2],$row[3]);
