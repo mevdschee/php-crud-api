@@ -141,7 +141,7 @@ CREATE TABLE [users](
 GO
 SET IDENTITY_INSERT [categories] ON
 GO
-INSERT [categories] ([id], [name], [icon]) VALUES (1, N'anouncement', NULL)
+INSERT [categories] ([id], [name], [icon]) VALUES (1, N'announcement', NULL)
 GO
 INSERT [categories] ([id], [name], [icon]) VALUES (2, N'article', NULL)
 GO

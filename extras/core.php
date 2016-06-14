@@ -39,7 +39,7 @@ switch ($method) {
     $sql = "delete `$table` where id=$key"; break;
 }
  
-// excecute SQL statement
+// execute SQL statement
 $result = mysqli_query($link,$sql);
  
 // die if SQL statement failed
