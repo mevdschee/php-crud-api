@@ -1378,9 +1378,11 @@ class PHP_CRUD_API {
 				$first_row = true;
 				foreach ($select[$table] as $field => $path) {
 					$values = $collect[$path[0]][$path[1]];
-					if (!isset($filters[$table])) $filters[$table] = array();
-					if (!isset($filters[$table]['or'])) $filters[$table]['or'] = array();
-					$filters[$table]['or'][] = array($field,'IN',$values);
+					if ($values) {
+						if (!isset($filters[$table])) $filters[$table] = array();
+						if (!isset($filters[$table]['or'])) $filters[$table]['or'] = array();
+						$filters[$table]['or'][] = array($field,'IN',$values);
+					}
 					if ($first_row) $first_row = false;
 					else echo ',';
 					echo '"'.$field.'":"'.implode('.',$path).'"';
