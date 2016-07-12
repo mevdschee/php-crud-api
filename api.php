@@ -1392,7 +1392,9 @@ class PHP_CRUD_API {
 					echo '"'.$field.'":"'.implode('.',$path).'"';
 				}
 				echo '}';
-				$this->addWhereFromFilters($filters[$table],$sql,$params);
+				if (isset($filters[$table])) {
+					$this->addWhereFromFilters($filters[$table],$sql,$params);
+				}
 			}
 			if ($result = $this->db->query($sql,$params)) {
 				if (isset($select[$table])) echo ',';
