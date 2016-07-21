@@ -654,6 +654,8 @@ class SQLite implements DatabaseInterface {
 		}
 		$version = $this->db->querySingle('pragma schema_version');
 		if ($version != $this->db->querySingle('SELECT "version" from "sys/version"')) {
+			// reflection may take a while
+			set_time_limit(3600);
 			// update version data
 			$this->query('DELETE FROM "sys/version"');
 			$this->query('INSERT into "sys/version" ("version") VALUES (?)',array($version));
