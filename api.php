@@ -809,8 +809,7 @@ class PHP_CRUD_API {
 	protected function mapMethodToAction($method,$key) {
 		switch ($method) {
 			case 'OPTIONS': return 'headers';
-			case 'GET': return 'read';
-			//case 'GET': return $key?'read':'list';
+			case 'GET': return $key?'read':'list';
 			case 'PUT': return 'update';
 			case 'POST': return 'create';
 			case 'DELETE': return 'delete';
