@@ -2,6 +2,7 @@
 	return array(
 		'authentication' => array(
 			'enabled' => false, // Set to true if you want auth
+			'useCookies' => false, // Set to true if you want the token stored in a cookie
 			'users' => array( // Set the usernames and password you are willing to accept
 				'someusername' => 'somepassword',
 				'jusername' => 'jpassword',

@@ -1269,24 +1269,61 @@ class PHP_CRUD_API {
 		}
 	}
 
-	protected function setCookie($configAuth) {
-		$user = "token";
+	protected function setSession($configAuth) {
+		$tokenName = "token";
 		$claims = array(
 			'sub' => $configAuth["sub"],
-			'name' => $user
+			'name' => $tokenName
 		);
 
-		if (!isset($_COOKIE[$user])) {
+		// Check to see if we need to generate a token
+		if (!isset($_SESSION['auth']['user']) || time() >
+				$_SESSION['auth']['expire']) {
+			$token = $this->generateToken($claims,
+				$configAuth["time"],$configAuth["ttl"],
+				$configAuth["algorithm"],$configAuth["secret"]);
+
+			$_SESSION['auth'] = array(
+				'user' => $configAuth["sub"],
+				'token' => $token,
+				'time' => time(),
+				'expire' => time() + $configAuth["ttl"],
+				'claims' => $claims
+			);
+		} else {
+			if ($_SESSION['auth']['user'] == $configAuth["sub"]) {
+				$token = $this->generateToken($claims,
+					$configAuth["time"],$configAuth["ttl"],
+					$configAuth["algorithm"],$configAuth["secret"]);
+
+				$_SESSION['auth']['token'] = $token;
+				$_SESSION['auth']['expire'] = time() + $configAuth["ttl"];
+			}
+		}
+	}
+
+	protected function setCookie($configAuth) {
+		$tokenName = "token";
+		$claims = array(
+			'sub' => $configAuth["sub"],
+			'name' => $tokenName
+		);
+
+		if (!isset($_COOKIE[$tokenName])) {
 			$this->settings["authenticated"] = true;
 			$cookie_value = $this->generateToken($claims,
 				$configAuth["time"],$configAuth["ttl"],
 				$configAuth["algorithm"],$configAuth["secret"]);
 
-			$_COOKIE[$user] = $cookie_value;
-			setcookie($user, $cookie_value, time() +
+			$_COOKIE[$tokenName] = $cookie_value;
+			setcookie($tokenName, $cookie_value, time() +
 				$configAuth["ttl"], '/');
 		} else {
-			setcookie($user, $_COOKIE[$user], time() +
+			$claims = $this->getVerifiedClaims($_COOKIE[$tokenName],
+				$configAuth["time"],$configAuth["leeway"],$configAuth["ttl"],
+				$configAuth["algorithm"],$configAuth["secret"]);
+
+			setcookie($tokenName, $_COOKIE[$tokenName], time() +
 				$configAuth["ttl"], '/');
 		}
 	}
@@ -1312,7 +1349,7 @@ class PHP_CRUD_API {
 			$configuration = include('config.php');
 		}
 
-		$table     = $this->parseRequestParameter($request, 'a-zA-Z0-9\-_');
+		$table = $this->parseRequestParameter($request, 'a-zA-Z0-9\-_');
 		$isGetToken = false;
 
 		if ($configuration["authentication"]["enabled"] && $table == "getToken") {
@@ -1324,7 +1361,18 @@ class PHP_CRUD_API {
 			if ($this->checkPassword($configAuth, $passedUsername,
 					$passedPassword)) {
 				$configAuth['sub'] = $passedUsername;
-				$this->setCookie($configAuth);
+
+				if ($configAuth['useCookies']) {
+					if (isset($_SESSION['auth'])) {
+						unset($_SESSION['auth']);
+					}
+					$this->setCookie($configAuth);
+				} else {
+					if (isset($_COOKIE["token"])) {
+						unset($_COOKIE['token']);
+					}
+					$this->setSession($configAuth);
+				}
 			}
 		}
 		$key       = $this->parseRequestParameter($request, 'a-zA-Z0-9\-_'); // auto-increment or uuid
@@ -1582,10 +1630,10 @@ class PHP_CRUD_API {
 		$this->endOutput($callback);
 	}
 
-	protected function tokenCommand() {
+	protected function tokenCommand($token) {
 		$callback = "";
 		$this->startOutput($callback);
-		$json = '{"token": "' .$_COOKIE["token"]. '"}';
+		$json = '{"token": "' .$token. '"}';
 		echo $json;
 		$this->endOutput($callback);
 	}
@@ -2027,15 +2075,24 @@ class PHP_CRUD_API {
 		if (!$this->settings['request']) {
 			$this->swagger($this->settings);
 		} else {
+			if (!isset($configuration)) {
+				$configuration = include('config.php');
+			}
+
+			// Checks to see if we should start or resume a PHP Session
+			if (!$configuration['authentication']['useCookies']) {
+				session_start();
+			}
+
 			$parameters = $this->getParameters($this->settings);
 
 			if(isset($parameters[0]) && $parameters[0] == 'token') {
-				$this->tokenCommand();
-			} else {
-				if (!isset($configuration)) {
-					$configuration = include('config.php');
+				if (isset($_SESSION['auth']['user'])) {
+					$this->tokenCommand($_SESSION['auth']['token']);
+				} else {
+					$this->tokenCommand($_COOKIE['token']);
 				}
-
+			} else {
 				if ($parameters['action'] == 'list') {
 					$this->listCommand($parameters);
 				} else if ($parameters['action'] == 'read') {
