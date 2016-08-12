@@ -7,12 +7,12 @@
 				'jusername' => 'jpassword',
 			),
 			'secret' => 'DFGf9ggdfgDFGDFiikjkjdfg',
+			// Choices are 'HS256', 'HS384', 'HS512'
 			'algorithm' => 'HS256',
 			'time' => time(),
 			'leeway' => 5,
 			'ttl' => 600, // Values is in seconds
-			'sub' => '1234567890',
-			'admin' => true
+			'sub' => ''
 		)
 	);
 ?>

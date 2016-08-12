@@ -1273,8 +1273,7 @@ class PHP_CRUD_API {
 		$user = "token";
 		$claims = array(
 			'sub' => $configAuth["sub"],
-			'name' => $user,
-			'admin' => $configAuth["admin"]
+			'name' => $user
 		);
 
 		if (!isset($_COOKIE[$user])) {
@@ -1324,6 +1323,7 @@ class PHP_CRUD_API {
 
 			if ($this->checkPassword($configAuth, $passedUsername,
 					$passedPassword)) {
+				$configAuth['sub'] = $passedUsername;
 				$this->setCookie($configAuth);
 			}
 		}
@@ -2072,9 +2072,9 @@ class PHP_CRUD_API {
 // $api = new PHP_CRUD_API(array(
 // 	'dbengine'=>'MySQL',
 // 	'hostname'=>'localhost',
-// 	'username'=>'xxx',
-// 	'password'=>'xxx',
-// 	'database'=>'xxx',
+// 	'username'=>'',
+// 	'password'=>'',
+// 	'database'=>'',
 // 	'charset'=>'utf8'
 // ));
 // $api->executeCommand();
