@@ -1,6 +1,8 @@
 <?php
 //var_dump($_SERVER['REQUEST_METHOD'],$_SERVER['PATH_INFO']); die();
 
+$configuration = include('config.php');
+
 interface DatabaseInterface {
 	public function getSql($name);
 	public function connect($hostname,$username,$password,$database,$port,$socket,$charset);
@@ -764,6 +766,46 @@ class PHP_CRUD_API {
 	protected $db;
 	protected $settings;
 
+	protected function getVerifiedClaims($token,$time,$leeway,$ttl,$algorithm,$secret) {
+		$algorithms = array('HS256'=>'sha256','HS384'=>'sha384','HS512'=>'sha512');
+		if (!isset($algorithms[$algorithm])) return false;
+		$hmac = $algorithms[$algorithm];
+		$token = explode('.',$token);
+		if (count($token)<3) return false;
+		$header = json_decode(base64_decode(strtr($token[0],'-_','+/')),true);
+		if (!$secret) return false;
+		if ($header['typ']!='JWT') return false;
+		if ($header['alg']!=$algorithm) return false;
+		$signature = bin2hex(base64_decode(strtr($token[2],'-_','+/')));
+		if ($signature!=hash_hmac($hmac,"$token[0].$token[1]",$secret)) return false;
+		$claims = json_decode(base64_decode(strtr($token[1],'-_','+/')),true);
+		if (!$claims) return false;
+		if (isset($claims['nbf']) && $time+$leeway<$claims['nbf']) return false;
+		if (isset($claims['iat']) && $time+$leeway<$claims['iat']) return false;
+		if (isset($claims['exp']) && $time-$leeway>$claims['exp']) return false;
+		if (isset($claims['iat']) && !isset($claims['exp'])) {
+			if ($time-$leeway>$claims['iat']+$ttl) return false;
+		}
+		return $claims;
+	}
+
+	protected function generateToken($claims,$time,$ttl,$algorithm,$secret) {
+		$algorithms = array('HS256'=>'sha256','HS384'=>'sha384','HS512'=>'sha512');
+		$header = array();
+		$header['typ']='JWT';
+		$header['alg']=$algorithm;
+		$token = array();
+		$token[0] = rtrim(strtr(base64_encode(json_encode((object)$header)),'+/','-_'),'=');
+		$claims['iat'] = $time;
+		$claims['exp'] = $time + $ttl;
+		$token[1] = rtrim(strtr(base64_encode(json_encode((object)$claims)),'+/','-_'),'=');
+		if (!isset($algorithms[$algorithm])) return false;
+		$hmac = $algorithms[$algorithm];
+		$signature = hash_hmac($hmac,"$token[0].$token[1]",$secret,true);
+		$token[2] = rtrim(strtr(base64_encode($signature),'+/','-_'),'=');
+		return implode('.',$token);
+	}
+
 	protected function mapMethodToAction($method,$key) {
 		switch ($method) {
 			case 'OPTIONS': return 'headers';
@@ -1227,10 +1269,112 @@ class PHP_CRUD_API {
 		}
 	}
 
+	protected function setSession($configAuth) {
+		$tokenName = "token";
+		$claims = array(
+			'sub' => $configAuth["sub"],
+			'name' => $tokenName
+		);
+
+		// Check to see if we need to generate a token
+		if (!isset($_SESSION['auth']['user']) || time() >
+				$_SESSION['auth']['expire']) {
+			$token = $this->generateToken($claims,
+				$configAuth["time"],$configAuth["ttl"],
+				$configAuth["algorithm"],$configAuth["secret"]);
+
+			$_SESSION['auth'] = array(
+				'user' => $configAuth["sub"],
+				'token' => $token,
+				'time' => time(),
+				'expire' => time() + $configAuth["ttl"],
+				'claims' => $claims
+			);
+		} else {
+			if ($_SESSION['auth']['user'] == $configAuth["sub"]) {
+				$token = $this->generateToken($claims,
+					$configAuth["time"],$configAuth["ttl"],
+					$configAuth["algorithm"],$configAuth["secret"]);
+
+				$_SESSION['auth']['token'] = $token;
+				$_SESSION['auth']['expire'] = time() + $configAuth["ttl"];
+			}
+		}
+	}
+
+	protected function setCookie($configAuth) {
+		$tokenName = "token";
+		$claims = array(
+			'sub' => $configAuth["sub"],
+			'name' => $tokenName
+		);
+
+		if (!isset($_COOKIE[$tokenName])) {
+			$this->settings["authenticated"] = true;
+			$cookie_value = $this->generateToken($claims,
+				$configAuth["time"],$configAuth["ttl"],
+				$configAuth["algorithm"],$configAuth["secret"]);
+
+			$_COOKIE[$tokenName] = $cookie_value;
+			setcookie($tokenName, $cookie_value, time() +
+				$configAuth["ttl"], '/');
+		} else {
+			$claims = $this->getVerifiedClaims($_COOKIE[$tokenName],
+				$configAuth["time"],$configAuth["leeway"],$configAuth["ttl"],
+				$configAuth["algorithm"],$configAuth["secret"]);
+
+			setcookie($tokenName, $_COOKIE[$tokenName], time() +
+				$configAuth["ttl"], '/');
+		}
+	}
+
+	protected function checkPassword($configAuth, $username, $password) {
+		if ($configAuth['enabled']) {
+			foreach($configAuth['users'] as $user=>$pass) {
+				if ($user == $username && $pass == $password) {
+					return true;
+				}
+			}
+
+			return false;
+		}
+
+		return true;
+	}
+
 	protected function getParameters($settings) {
 		extract($settings);
 
-		$table     = $this->parseRequestParameter($request, 'a-zA-Z0-9\-_');
+		if (!isset($configuration)) {
+			$configuration = include('config.php');
+		}
+
+		$table = $this->parseRequestParameter($request, 'a-zA-Z0-9\-_');
+		$isGetToken = false;
+
+		if ($configuration["authentication"]["enabled"] && $table == "getToken") {
+			$isGetToken = true;
+			$configAuth = $configuration["authentication"];
+			$passedUsername = $this->parseGetParameter($get, 'username', 'a-zA-Z0-9\-_,');
+			$passedPassword = $this->parseGetParameter($get, 'password', 'a-zA-Z0-9\-_,');
+
+			if ($this->checkPassword($configAuth, $passedUsername,
+					$passedPassword)) {
+				$configAuth['sub'] = $passedUsername;
+
+				if ($configAuth['useCookies']) {
+					if (isset($_SESSION['auth'])) {
+						unset($_SESSION['auth']);
+					}
+					$this->setCookie($configAuth);
+				} else {
+					if (isset($_COOKIE["token"])) {
+						unset($_COOKIE['token']);
+					}
+					$this->setSession($configAuth);
+				}
+			}
+		}
 		$key       = $this->parseRequestParameter($request, 'a-zA-Z0-9\-_'); // auto-increment or uuid
 		$action    = $this->mapMethodToAction($method,$key);
 		$include   = $this->parseGetParameter($get, 'include', 'a-zA-Z0-9\-_,');
@@ -1242,37 +1386,41 @@ class PHP_CRUD_API {
 		$order     = $this->parseGetParameter($get, 'order', 'a-zA-Z0-9\-_,');
 		$transform = $this->parseGetParameter($get, 'transform', 't1');
 
-		$tables    = $this->processTableAndIncludeParameters($database,$table,$include,$action);
-		$key       = $this->processKeyParameter($key,$tables,$database);
-		$filters   = $this->processFiltersParameter($tables,$satisfy,$filters);
-		$page      = $this->processPageParameter($page);
-		$order     = $this->processOrderParameter($order);
+		if (!$isGetToken) {
+			$tables    = $this->processTableAndIncludeParameters($database,$table,$include,$action);
+			$key       = $this->processKeyParameter($key,$tables,$database);
+			$filters   = $this->processFiltersParameter($tables,$satisfy,$filters);
+			$page      = $this->processPageParameter($page);
+			$order     = $this->processOrderParameter($order);
 
-		// reflection
-		list($tables,$collect,$select) = $this->findRelations($tables,$database,$auto_include);
-		$columns = $this->addRelationColumns($columns,$select);
-		$fields = $this->findFields($tables,$columns,$database);
+			// reflection
+			list($tables,$collect,$select) = $this->findRelations($tables,$database,$auto_include);
+			$columns = $this->addRelationColumns($columns,$select);
+			$fields = $this->findFields($tables,$columns,$database);
 
-		// permissions
-		if ($table_authorizer) $this->applyTableAuthorizer($table_authorizer,$action,$database,$tables);
-		if (!isset($tables[0])) $this->exitWith404('entity');
-		if ($record_filter) $this->applyRecordFilter($record_filter,$action,$database,$tables,$filters);
-		if ($tenancy_function) $this->applyTenancyFunction($tenancy_function,$action,$database,$fields,$filters);
-		if ($column_authorizer) $this->applyColumnAuthorizer($column_authorizer,$action,$database,$fields);
+			// permissions
+			if ($table_authorizer) $this->applyTableAuthorizer($table_authorizer,$action,$database,$tables);
+			if (!isset($tables[0])) $this->exitWith404('entity');
+			if ($record_filter) $this->applyRecordFilter($record_filter,$action,$database,$tables,$filters);
+			if ($tenancy_function) $this->applyTenancyFunction($tenancy_function,$action,$database,$fields,$filters);
+			if ($column_authorizer) $this->applyColumnAuthorizer($column_authorizer,$action,$database,$fields);
 
-		if ($post) {
-			// input
-			$context = $this->retrieveInput($post);
-			$input = $this->filterInputByFields($context,$fields[$tables[0]]);
+			if ($post) {
+				// input
+				$context = $this->retrieveInput($post);
+				$input = $this->filterInputByFields($context,$fields[$tables[0]]);
 
-			if ($tenancy_function) $this->applyInputTenancy($tenancy_function,$action,$database,$tables[0],$input,$fields[$tables[0]]);
-			if ($input_sanitizer) $this->applyInputSanitizer($input_sanitizer,$action,$database,$tables[0],$input,$fields[$tables[0]]);
-			if ($input_validator) $this->applyInputValidator($input_validator,$action,$database,$tables[0],$input,$fields[$tables[0]],$context);
+				if ($tenancy_function) $this->applyInputTenancy($tenancy_function,$action,$database,$tables[0],$input,$fields[$tables[0]]);
+				if ($input_sanitizer) $this->applyInputSanitizer($input_sanitizer,$action,$database,$tables[0],$input,$fields[$tables[0]]);
+				if ($input_validator) $this->applyInputValidator($input_validator,$action,$database,$tables[0],$input,$fields[$tables[0]],$context);
 
-			$this->convertBinary($input,$fields[$tables[0]]);
+				$this->convertBinary($input,$fields[$tables[0]]);
+			}
+
+			return compact('action','database','tables','key','callback','page','filters','fields','order','transform','input','collect','select');
+		} else {
+			return array('token');
 		}
-
-		return compact('action','database','tables','key','callback','page','filters','fields','order','transform','input','collect','select');
 	}
 
 	protected function addWhereFromFilters($filters,&$sql,&$params) {
@@ -1482,6 +1630,22 @@ class PHP_CRUD_API {
 		$this->endOutput($callback);
 	}
 
+	protected function tokenCommand($token) {
+		$callback = "";
+		$this->startOutput($callback);
+		$json = '{"token": "' .$token. '"}';
+		echo $json;
+		$this->endOutput($callback);
+	}
+
+	protected function invalidToken() {
+		$callback = "";
+		$this->startOutput($callback);
+		$json = '{"error": "Your token is invalid or it has expired"}';
+		echo $json;
+		$this->endOutput($callback);
+	}
+
 	public function __construct($config) {
 		extract($config);
 
@@ -1619,7 +1783,7 @@ class PHP_CRUD_API {
 			$table_list = array($table['name']);
 			$table_fields = $this->findFields($table_list,false,$database);
 			$table_names = array_map(function($v){ return $v['name'];},$tables);
-			
+
 			if ($extensions) {
 				$result = $this->db->query($this->db->getSql('reflect_belongs_to'),array($table_list[0],$table_names,$database,$database));
 				while ($row = $this->db->fetchRow($result)) {
@@ -1634,7 +1798,7 @@ class PHP_CRUD_API {
 					$table_fields[$table['name']][$primaryKey]->primaryKey = true;
 				}
 			}
-			
+
 			foreach (array('root_actions','id_actions') as $path) {
 				foreach ($table[$path] as $i=>$action) {
 					$table_list = array($table['name']);
@@ -1911,18 +2075,53 @@ class PHP_CRUD_API {
 		if (!$this->settings['request']) {
 			$this->swagger($this->settings);
 		} else {
+			if (!isset($configuration)) {
+				$configuration = include('config.php');
+			}
+
+			// Checks to see if we should start or resume a PHP Session
+			if (!$configuration['authentication']['useCookies']) {
+				session_start();
+			}
+
 			$parameters = $this->getParameters($this->settings);
-			switch($parameters['action']){
-				case 'list': $this->listCommand($parameters); break;
-				case 'read': $this->readCommand($parameters); break;
-				case 'create': $this->createCommand($parameters); break;
-				case 'update': $this->updateCommand($parameters); break;
-				case 'delete': $this->deleteCommand($parameters); break;
-				case 'headers': $this->headersCommand($parameters); break;
+
+			if(isset($parameters[0]) && $parameters[0] == 'token') {
+				if (isset($_SESSION['auth']['user'])) {
+					$this->tokenCommand($_SESSION['auth']['token']);
+				} else {
+					$this->tokenCommand($_COOKIE['token']);
+				}
+			} else {
+				if ($parameters['action'] == 'list') {
+					$this->listCommand($parameters);
+				} else if ($parameters['action'] == 'read') {
+					$this->readCommand($parameters);
+				} else if($configuration['authentication']['enabled']) {
+					if (isset($_COOKIE["token"]) &&
+							($_COOKIE["token"] == $this->settings["get"]["token"])) {
+						$this->setCookie($configuration["authentication"]);
+
+						switch($parameters['action']) {
+							case 'create': $this->createCommand($parameters); break;
+							case 'update': $this->updateCommand($parameters); break;
+							case 'delete': $this->deleteCommand($parameters); break;
+							case 'headers': $this->headersCommand($parameters); break;
+						}
+					} else {
+						$this->invalidToken();
+					}
+				} else {
+					switch($parameters['action']) {
+						case 'create': $this->createCommand($parameters); break;
+						case 'update': $this->updateCommand($parameters); break;
+						case 'delete': $this->deleteCommand($parameters); break;
+						case 'headers': $this->headersCommand($parameters); break;
+					}
+				}
 			}
 		}
 	}
-
 }
 
 // uncomment the lines below when running in stand-alone mode:
@@ -1930,9 +2129,9 @@ class PHP_CRUD_API {
 // $api = new PHP_CRUD_API(array(
 // 	'dbengine'=>'MySQL',
 // 	'hostname'=>'localhost',
-//	'username'=>'xxx',
-//	'password'=>'xxx',
-//	'database'=>'xxx',
+// 	'username'=>'',
+// 	'password'=>'',
+// 	'database'=>'',
 // 	'charset'=>'utf8'
 // ));
 // $api->executeCommand();
