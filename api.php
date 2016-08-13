@@ -2053,6 +2053,7 @@ class PHP_API_AUTH {
 		extract($this->settings);
 		$no_session = $authenticator && $secret; 
 		if (!$no_session) {
+			ini_set('session.cookie_httponly', 1);
 			session_start();
 		}
 		if ($method==$verb && trim($path,'/')==$request) {
