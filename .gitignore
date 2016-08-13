@@ -3,3 +3,4 @@
 .settings/
 phpunit.phar
 tests/config.php
+config.php
