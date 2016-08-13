@@ -7,6 +7,7 @@ Single file PHP script that adds a REST API to a MySQL InnoDB database. Alternat
 
 Related projects:
 
+  - [PHP-API-AUTH](https://github.com/mevdschee/php-api-auth): Authentication add-on supporting JWT + username/password.
   - [PHP-SP-API](https://github.com/mevdschee/php-sp-api): Single file PHP script that adds a REST API to a SQL database.
   - [PHP-CRUD-UI](https://github.com/mevdschee/php-crud-ui): Single file PHP script that adds a UI to a PHP-CRUD-API project.
 
@@ -46,7 +47,7 @@ This is a single file application! Upload "api.php" somewhere and enjoy!
   - Relation "transforms" for PHP and JavaScript
   - Binary fields supported with base64 encoding
   - Generate API documentation using Swagger tools
-  - Authentication via JWT token or username/password
+  - Authentication via JWT token or username/password (via [PHP-API-AUTH](https://github.com/mevdschee/php-api-auth))
 
 ## Configuration
 
