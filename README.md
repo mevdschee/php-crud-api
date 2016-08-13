@@ -46,7 +46,7 @@ This is a single file application! Upload "api.php" somewhere and enjoy!
   - Relation "transforms" for PHP and JavaScript
   - Binary fields supported with base64 encoding
   - Generate API documentation using Swagger tools
-  - Authentication via JWT tokens or username/password
+  - Authentication via JWT token or username/password
 
 ## Configuration
 
