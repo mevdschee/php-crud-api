@@ -21,7 +21,7 @@ This is a single file application! Upload "api.php" somewhere and enjoy!
 
 ## Limitations
 
-  - Authentication is limited to config file only
+  - Authentication is not included
   - Composite primary or foreign keys are not supported
   - Complex filters (with both "and" & "or") are not supported
   - Complex writes (transactions) are not supported
@@ -47,7 +47,6 @@ This is a single file application! Upload "api.php" somewhere and enjoy!
   - Relation "transforms" for PHP and JavaScript
   - Binary fields supported with base64 encoding
   - Generate API documentation using Swagger tools
-  - Enable file based authentication
 
 ## Configuration
 
@@ -96,25 +95,6 @@ $api->executeCommand();
 ```
 
 NB: The "socket" option is not supported by MS SQL Server. SQLite expects the filename in the "database" field.
-
-Rename config-template.php to config.php and edit the options to your needs
-
-```
-'authentication' => array(
-	'enabled' => false, // Set to true if you want auth
-	'users' => array( // Set the usernames and password you are willing to accept
-		'someusername' => 'somepassword',
-		'jusername' => 'jpassword',
-	),
-	'secret' => 'DFGf9ggdfgDFGDFiikjkjdfg',
-	'algorithm' => 'HS256',
-	'time' => time(),
-	'leeway' => 5,
-	'ttl' => 600, // Values is in seconds
-	'sub' => '1234567890',
-	'admin' => true
-)
-```
 
 ## Documentation
 
@@ -348,20 +328,6 @@ Output:
 ```
 1
 ```
-
-### Generate Token
-If in the config you set enabled to true, under authentication, you can call your api like this:
-
-```
-http://localhost/api.php/getToken?username=youruser&password=yourpass
-```
-
-This will return you some json with a token that you then can use for the the following actiions
-
-- Create
-- Update
-- Delete
-- Headers
 
 ## Relations
 
