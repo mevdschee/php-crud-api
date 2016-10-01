@@ -152,7 +152,7 @@ class PHP_CRUD_API_Test extends PHPUnit_Framework_TestCase
 			$conn_string = "host='$hostname' dbname='$database' user='$username' password='$password' options='--client_encoding=UTF8'";
 			$db = pg_connect($conn_string);
 			if (!$db) {
-				die("Connect failed: ".print_r( sqlsrv_errors(), true));
+				die("Connect failed: ". pg_last_error());
 			}
 			$queries = preg_split('/;\s*\n/', file_get_contents($fixture));
 			array_pop($queries);
