@@ -2087,7 +2087,10 @@ class PHP_API_AUTH {
 // 	'secret'=>'someVeryLongPassPhraseChangeMe',
 // ));
 // $auth->executeCommand();
-// if (empty($_SESSION['user'])) exit(403);
+// if (empty($_SESSION['user'])) {
+//	header('HTTP/1.0 403 Forbidden');
+//	exit(0);
+// }
 
 // uncomment the lines below for form+session based authentication (see "login.html"):
 
@@ -2095,7 +2098,10 @@ class PHP_API_AUTH {
 // 	'authenticator'=>function($user,$pass){ $_SESSION['user']=($user=='admin' && $pass=='admin'); }
 // ));
 // $auth->executeCommand();
-// if (empty($_SESSION['user'])) exit(403);
+// if (empty($_SESSION['user'])) {
+//	header('HTTP/1.0 403 Forbidden');
+//	exit(0);
+// }
 
 // uncomment the lines below when running in stand-alone mode:
 
