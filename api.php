@@ -2088,7 +2088,7 @@ class PHP_API_AUTH {
 // ));
 // $auth->executeCommand();
 // if (empty($_SESSION['user'])) {
-//	header('HTTP/1.0 403 Forbidden');
+//	header('HTTP/1.0 401 Unauthorized');
 //	exit(0);
 // }
 
@@ -2099,7 +2099,7 @@ class PHP_API_AUTH {
 // ));
 // $auth->executeCommand();
 // if (empty($_SESSION['user'])) {
-//	header('HTTP/1.0 403 Forbidden');
+//	header('HTTP/1.0 401 Unauthorized');
 //	exit(0);
 // }
 
