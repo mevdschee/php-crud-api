@@ -84,11 +84,24 @@ CREATE TABLE `users` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `username` varchar(255) COLLATE utf8_general_ci NOT NULL,
   `password` varchar(255) COLLATE utf8_general_ci NOT NULL,
+  `location` point NOT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
 
-INSERT INTO `users` (`id`, `username`, `password`) VALUES
-(1,	'user1',	'pass1'),
-(2,	'user2',	'pass2');
+INSERT INTO `users` (`id`, `username`, `password`, `location`) VALUES
+(1,	'user1',	'pass1', ST_GeomFromText('POINT (30 20)')),
+(2,	'user2',	'pass2', ST_GeomFromText('POINT (70 20)'));
+
+DROP TABLE IF EXISTS `countries`;
+CREATE TABLE `countries` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) NOT NULL,
+  `shape` polygon NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+INSERT INTO `countries` (`id`, `name`, `shape`) VALUES
+(1,	'Left',	ST_GeomFromText('POLYGON ((30 10, 40 40, 20 40, 10 20, 30 10))')),
+(2,	'Right',	ST_GeomFromText('POLYGON ((70 10, 80 40, 60 40, 50 20, 70 10))'));
 
 -- 2015-02-14 17:55:38
