@@ -1928,7 +1928,7 @@ class PHP_CRUD_API {
 	}
 }
 
-// require 'auth.php'; // from the PHP-API-AUTH project
+// require 'auth.php'; // from the PHP-API-AUTH project, see: https://github.com/mevdschee/php-api-auth
 
 // uncomment the lines below for token+session based authentication (see "login_token.html" + "login_token.php"):
 
