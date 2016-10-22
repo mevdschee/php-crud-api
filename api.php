@@ -511,7 +511,7 @@ class SQLServer implements DatabaseInterface {
 			if ($matches[0]=='!') {
 				$key = preg_replace('/[^a-zA-Z0-9\-_=<> ]/','',is_object($param)?$param->key:$param);
 				if (is_object($param) && $param->type=='base64') {
-					return "CAST(N'' AS XML).value('xs:base64Binary(xs:hexBinary(sql:column(\"$key\")))', 'VARCHAR(MAX)')";
+					return "CAST(N'' AS XML).value('xs:base64Binary(xs:hexBinary(sql:column(\"$key\")))', 'VARCHAR(MAX)') as \"$key\"";
 				}
 				if (is_object($param) && $param->type=='wkt') {
 					return "\"$key\".STAsText() as \"$key\"";
@@ -526,12 +526,13 @@ class SQLServer implements DatabaseInterface {
 					$args = array_merge($args,$param);
 					return '('.implode(',',str_split(str_repeat('?',count($param)))).')';
 				}
-				if (is_object($param)) {
-					switch($param->type) {
-						case 'base64':
-							$args[] = bin2hex(base64_decode($param->value));
-							return 'CONVERT(VARBINARY(MAX),?,2)';
-					}
+				if (is_object($param) && $param->type=='base64') {
+					$args[] = bin2hex(base64_decode($param->value));
+					return 'CONVERT(VARBINARY(MAX),?,2)';
+				}
+				if (is_object($param) && $param->type=='wkt') {
+					$args[] = $param->value;
+					return 'geometry::STGeomFromText(?,0)';
 				}
 				$args[] = $param;
 				return '?';
