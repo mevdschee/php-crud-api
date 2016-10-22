@@ -14,7 +14,7 @@ interface DatabaseInterface {
 	public function addLimitToSql($sql,$limit,$offset);
 	public function likeEscape($string);
 	public function isBinaryType($field);
-	public function base64Encode($string);
+	public function isGeometryType($field);
 	public function getDefaultCharset();
 }
 
@@ -107,15 +107,28 @@ class MySQL implements DatabaseInterface {
 		$db = $this->db;
 		$sql = preg_replace_callback('/\!|\?/', function ($matches) use (&$db,&$params) {
 			$param = array_shift($params);
-			if ($matches[0]=='!') return preg_replace('/[^a-zA-Z0-9\-_=<> ]/','',$param);
-			if (is_array($param)) return '('.implode(',',array_map(function($v) use (&$db) {
-				return "'".mysqli_real_escape_string($db,$v)."'";
-			},$param)).')';
-			if (is_object($param) && $param->type=='base64') {
-				return "x'".bin2hex(base64_decode($param->data))."'";
+			if ($matches[0]=='!') {
+				$key = preg_replace('/[^a-zA-Z0-9\-_=<> ]/','',is_object($param)?$param->key:$param);
+				if (is_object($param) && $param->type=='base64') {
+					return "TO_BASE64(\"$key\") as \"$key\"";
+				}
+				if (is_object($param) && $param->type=='wkt') {
+					return "ST_AsText(\"$key\") as \"$key\"";
+				}
+				return '"'.$key.'"';
+			} else {
+				if (is_array($param)) return '('.implode(',',array_map(function($v) use (&$db) {
+					return "'".mysqli_real_escape_string($db,$v)."'";
+				},$param)).')';
+				if (is_object($param) && $param->type=='base64') {
+					return "x'".bin2hex(base64_decode($param->value))."'";
+				}
+				if (is_object($param) && $param->type=='wkt') {
+					return "ST_GeomFromText('".mysqli_real_escape_string($db,$param->value)."')";
+				}
+				if ($param===null) return 'NULL';
+				return "'".mysqli_real_escape_string($db,$param)."'";
 			}
-			if ($param===null) return 'NULL';
-			return "'".mysqli_real_escape_string($db,$param)."'";
 		}, $sql);
 		//if (!strpos($sql,'INFORMATION_SCHEMA'))	echo "\n$sql\n";
 		return mysqli_query($db,$sql);
@@ -142,7 +155,7 @@ class MySQL implements DatabaseInterface {
 	}
 
 	public function fetchFields($table) {
-		$result = $this->query('SELECT * FROM "!" WHERE 1=2;',array($table));
+		$result = $this->query('SELECT * FROM ! WHERE 1=2;',array($table));
 		return mysqli_fetch_fields($result);
 	}
 
@@ -161,10 +174,6 @@ class MySQL implements DatabaseInterface {
 
 	public function isGeometryType($field) {
 		return ($field->type==255);
-	}
-
-	public function base64Encode($string) {
-		return base64_encode($string);
 	}
 
 	public function getDefaultCharset() {
@@ -298,15 +307,28 @@ class PostgreSQL implements DatabaseInterface {
 		$db = $this->db;
 		$sql = preg_replace_callback('/\!|\?/', function ($matches) use (&$db,&$params) {
 			$param = array_shift($params);
-			if ($matches[0]=='!') return preg_replace('/[^a-zA-Z0-9\-_=<> ]/','',$param);
-			if (is_array($param)) return '('.implode(',',array_map(function($v) use (&$db) {
-				return "'".pg_escape_string($db,$v)."'";
-			},$param)).')';
-			if (is_object($param) && $param->type=='base64') {
-				return "'\x".bin2hex(base64_decode($param->data))."'";
+			if ($matches[0]=='!') {
+				$key = preg_replace('/[^a-zA-Z0-9\-_=<> ]/','',is_object($param)?$param->key:$param);
+				if (is_object($param) && $param->type=='base64') {
+					return "encode(\"$key\",'base64') as \"$key\"";
+				}
+				if (is_object($param) && $param->type=='wkt') {
+					return "ST_AsText(\"$key\") as \"$key\"";
+				}
+				return '"'.$key.'"';
+			} else {
+				if (is_array($param)) return '('.implode(',',array_map(function($v) use (&$db) {
+					return "'".pg_escape_string($db,$v)."'";
+				},$param)).')';
+				if (is_object($param) && $param->type=='base64') {
+					return "'\x".bin2hex(base64_decode($param->value))."'";
+				}
+				if (is_object($param) && $param->type=='wkt') {
+					return "ST_GeomFromText('".pg_escape_string($db,$param->value)."')";
+				}
+				if ($param===null) return 'NULL';
+				return "'".pg_escape_string($db,$param)."'";
 			}
-			if ($param===null) return 'NULL';
-			return "'".pg_escape_string($db,$param)."'";
 		}, $sql);
 		if (strtoupper(substr($sql,0,6))=='INSERT') {
 			$sql .= ' RETURNING id;';
@@ -337,7 +359,7 @@ class PostgreSQL implements DatabaseInterface {
 	}
 
 	public function fetchFields($table) {
-		$result = $this->query('SELECT * FROM "!" WHERE 1=2;',array($table));
+		$result = $this->query('SELECT * FROM ! WHERE 1=2;',array($table));
 		$keys = array();
 		for($i=0;$i<pg_num_fields($result);$i++) {
 			$field = array();
@@ -360,8 +382,8 @@ class PostgreSQL implements DatabaseInterface {
 		return $field->type == 'bytea';
 	}
 
-	public function base64Encode($string) {
-		return base64_encode(hex2bin(substr($string,2)));
+	public function isGeometryType($field) {
+		return $field->type == 'geometry';
 	}
 
 	public function getDefaultCharset() {
@@ -500,7 +522,7 @@ class SQLServer implements DatabaseInterface {
 			if (is_object($param)) {
 				switch($param->type) {
 					case 'base64':
-						$args[] = bin2hex(base64_decode($param->data));
+						$args[] = bin2hex(base64_decode($param->value));
 						return 'CONVERT(VARBINARY(MAX),?,2)';
 				}
 			}
@@ -544,7 +566,7 @@ class SQLServer implements DatabaseInterface {
 	}
 
 	public function fetchFields($table) {
-		$result = $this->query('SELECT * FROM "!" WHERE 1=2;',array($table));
+		$result = $this->query('SELECT * FROM ! WHERE 1=2;',array($table));
 		//var_dump(sqlsrv_field_metadata($result));
 		return array_map(function($a){
 			$p = array();
@@ -567,8 +589,8 @@ class SQLServer implements DatabaseInterface {
 		return ($field->type>=-4 && $field->type<=-2);
 	}
 
-	public function base64Encode($string) {
-		return base64_encode($string);
+	public function isGeometryType($field) {
+		return false;
 	}
 
 	public function getDefaultCharset() {
@@ -693,15 +715,19 @@ class SQLite implements DatabaseInterface {
 		$db = $this->db;
 		$sql = preg_replace_callback('/\!|\?/', function ($matches) use (&$db,&$params) {
 			$param = array_shift($params);
-			if ($matches[0]=='!') return preg_replace('/[^a-zA-Z0-9\-_=<> ]/','',$param);
-			if (is_array($param)) return '('.implode(',',array_map(function($v) use (&$db) {
-				return "'".$db->escapeString($v)."'";
-			},$param)).')';
-			if (is_object($param) && $param->type=='base64') {
-				return "x'".bin2hex(base64_decode($param->data))."'";
+			if ($matches[0]=='!') {
+				$key = preg_replace('/[^a-zA-Z0-9\-_=<> ]/','',is_object($param)?$param->key:$param);
+				return '"'.$key.'"';
+			} else {
+				if (is_array($param)) return '('.implode(',',array_map(function($v) use (&$db) {
+					return "'".$db->escapeString($v)."'";
+				},$param)).')';
+				if (is_object($param) && $param->type=='base64') {
+					return "'".$db->escapeString($param->value)."'";
+				}
+				if ($param===null) return 'NULL';
+				return "'".$db->escapeString($param)."'";
 			}
-			if ($param===null) return 'NULL';
-			return "'".$db->escapeString($param)."'";
 		}, $sql);
 		//echo "\n$sql\n";
 		try {	$result=$db->query($sql); } catch(\Exception $e) { $result=null; }
@@ -750,11 +776,11 @@ class SQLite implements DatabaseInterface {
 	}
 
 	public function isBinaryType($field) {
-		return (substr($field->type,0,4)=='blob');
+		return (substr($field->type,0,4)=='data');
 	}
 
-	public function base64Encode($string) {
-		return base64_encode($string);
+	public function isGeometryType($field) {
+		return false;
 	}
 
 	public function getDefaultCharset() {
@@ -850,7 +876,7 @@ class PHP_CRUD_API {
 	protected function applyInputTenancy($callback,$action,$database,$table,&$input,$keys) {
 		if (is_callable($callback,true)) foreach ($keys as $key=>$field) {
 			$v = $callback($action,$database,$table,$key);
-			if ($v!==null) {
+			if ($v!==null && (isset($input->$key) || $action=='create')) {
 				if (is_array($v)) {
 					if (!count($v)) {
 						$input->$key = null;
@@ -997,6 +1023,7 @@ class PHP_CRUD_API {
 			case 'ni': $comparator = 'NOT IN'; $value = explode(',',$value); break;
 			case 'is': $comparator = 'IS'; $value = null; break;
 			case 'no': $comparator = 'IS NOT'; $value = null; break;
+			default: $comparator = '=';
 		}
 		return array($field, $comparator, $value);
 	}
@@ -1034,10 +1061,11 @@ class PHP_CRUD_API {
 	protected function retrieveObject($key,$fields,$filters,$tables) {
 		if (!$key) return false;
 		$table = $tables[0];
+		$params = array();
 		$sql = 'SELECT ';
-		$sql .= '"'.implode('","',array_keys($fields[$table])).'"';
-		$sql .= ' FROM "!"';
-		$params = array($table);
+		$this->convertOutputs($sql,$params,$fields[$table]);
+		$sql .= ' FROM !';
+		$params[] = $table;
 		if (!isset($filters[$table])) $filters[$table] = array();
 		if (!isset($filters[$table]['or'])) $filters[$table]['or'] = array();
 		$filters[$table]['or'][] = array($key[1],'=',$key[0]);
@@ -1045,11 +1073,6 @@ class PHP_CRUD_API {
 		$object = null;
 		if ($result = $this->db->query($sql,$params)) {
 			$object = $this->db->fetchAssoc($result);
-			foreach ($fields[$table] as $field) {
-				if ($this->db->isBinaryType($field) && $object[$field->name]) {
-					$object[$field->name] = $this->db->base64Encode($object[$field->name]);
-				}
-			}
 			$this->db->close($result);
 		}
 		return $object;
@@ -1058,11 +1081,11 @@ class PHP_CRUD_API {
 	protected function createObject($input,$tables) {
 		if (!$input) return false;
 		$input = (array)$input;
-		$keys = implode('","',str_split(str_repeat('!', count($input))));
+		$keys = implode(',',str_split(str_repeat('!', count($input))));
 		$values = implode(',',str_split(str_repeat('?', count($input))));
 		$params = array_merge(array_keys($input),array_values($input));
 		array_unshift($params, $tables[0]);
-		$result = $this->db->query('INSERT INTO "!" ("'.$keys.'") VALUES ('.$values.')',$params);
+		$result = $this->db->query('INSERT INTO ! ('.$keys.') VALUES ('.$values.')',$params);
 		if (!$result) return null;
 		return $this->db->insertId($result);
 	}
@@ -1071,12 +1094,12 @@ class PHP_CRUD_API {
 		if (!$input) return false;
 		$input = (array)$input;
 		$table = $tables[0];
-		$sql = 'UPDATE "!" SET ';
+		$sql = 'UPDATE ! SET ';
 		$params = array($table);
 		foreach (array_keys($input) as $i=>$k) {
 			if ($i) $sql .= ',';
 			$v = $input[$k];
-			$sql .= '"!"=?';
+			$sql .= '!=?';
 			$params[] = $k;
 			$params[] = $v;
 		}
@@ -1091,7 +1114,7 @@ class PHP_CRUD_API {
 
 	protected function deleteObject($key,$filters,$tables) {
 		$table = $tables[0];
-		$sql = 'DELETE FROM "!"';
+		$sql = 'DELETE FROM !';
 		$params = array($table);
 		if (!isset($filters[$table])) $filters[$table] = array();
 		if (!isset($filters[$table]['or'])) $filters[$table]['or'] = array();
@@ -1221,12 +1244,30 @@ class PHP_CRUD_API {
 		return $input;
 	}
 
-	protected function convertBinary(&$input,$keys) {
-		foreach ($keys as $key=>$field) {
+	protected function convertInputs(&$input,$fields) {
+		foreach ($fields as $key=>$field) {
 			if (isset($input->$key) && $input->$key && $this->db->isBinaryType($field)) {
-				$data = $input->$key;
-				$data = str_pad(strtr($data, '-_', '+/'), strlen($data) % 4, '=', STR_PAD_RIGHT);
-				$input->$key = (object)array('type'=>'base64','data'=>$data);
+				$value = $input->$key;
+				$value = str_pad(strtr($value, '-_', '+/'), ceil(strlen($value) / 4) * 4, '=', STR_PAD_RIGHT);
+				$input->$key = (object)array('type'=>'base64','value'=>$value);
+			}
+			if (isset($input->$key) && $input->$key && $this->db->isGeometryType($field)) {
+				$input->$key = (object)array('type'=>'wkt','value'=>$input->$key);
+			}
+		}
+	}
+
+	protected function convertOutputs(&$sql, &$params, $fields) {
+		$sql .= implode(',',str_split(str_repeat('!',count($fields))));
+		foreach ($fields as $key=>$field) {
+			if ($this->db->isBinaryType($field)) {
+				$params[] = (object)array('type'=>'base64','key'=>$key);
+			}
+			else if ($this->db->isGeometryType($field)) {
+				$params[] = (object)array('type'=>'wkt','key'=>$key);
+			}
+			else {
+				$params[] = $key;
 			}
 		}
 	}
@@ -1273,7 +1314,7 @@ class PHP_CRUD_API {
 			if ($input_sanitizer) $this->applyInputSanitizer($input_sanitizer,$action,$database,$tables[0],$input,$fields[$tables[0]]);
 			if ($input_validator) $this->applyInputValidator($input_validator,$action,$database,$tables[0],$input,$fields[$tables[0]],$context);
 
-			$this->convertBinary($input,$fields[$tables[0]]);
+			$this->convertInputs($input,$fields[$tables[0]]);
 		}
 
 		return compact('action','database','tables','key','callback','page','filters','fields','order','transform','input','collect','select');
@@ -1286,9 +1327,8 @@ class PHP_CRUD_API {
 			$sql .= ' WHERE (';
 			foreach ($filters['or'] as $i=>$filter) {
 				$sql .= $i==0?'':' OR ';
-				$sql .= '"!" ! ?';
+				$sql .= '! '.$filter[1].' ?';
 				$params[] = $filter[0];
-				$params[] = $filter[1];
 				$params[] = $filter[2];
 			}
 			$sql .= ')';
@@ -1296,9 +1336,8 @@ class PHP_CRUD_API {
 		if (isset($filters['and'])) {
 			foreach ($filters['and'] as $i=>$filter) {
 				$sql .= $first?' WHERE ':' AND ';
-				$sql .= '"!" ! ?';
+				$sql .= '! '.$filter[1].' ?';
 				$params[] = $filter[0];
-				$params[] = $filter[1];
 				$params[] = $filter[2];
 				$first = false;
 			}
@@ -1314,7 +1353,7 @@ class PHP_CRUD_API {
 		echo '"'.$table.'":{';
 		if (is_array($order) && is_array($page)) {
 			$params = array();
-			$sql = 'SELECT COUNT(*) FROM "!"';
+			$sql = 'SELECT COUNT(*) FROM !';
 			$params[] = $table;
 			if (isset($filters[$table])) {
 					$this->addWhereFromFilters($filters[$table],$sql,$params);
@@ -1327,28 +1366,22 @@ class PHP_CRUD_API {
 		}
 		$params = array();
 		$sql = 'SELECT ';
-		$sql .= '"'.implode('","',array_keys($fields[$table])).'"';
-		$sql .= ' FROM "!"';
+		$this->convertOutputs($sql,$params,$fields[$table]);
+		$sql .= ' FROM !';
 		$params[] = $table;
 		if (isset($filters[$table])) {
 				$this->addWhereFromFilters($filters[$table],$sql,$params);
 		}
 		if (is_array($order)) {
-			$sql .= ' ORDER BY "!" !';
+			$sql .= ' ORDER BY ! '.$order[1];
 			$params[] = $order[0];
-			$params[] = $order[1];
 		}
 		if (is_array($order) && is_array($page)) {
 			$sql = $this->db->addLimitToSql($sql,$page[1],$page[0]);
 		}
 		if ($result = $this->db->query($sql,$params)) {
 			echo '"columns":';
-			$keys = array();
-			$base64 = array();
-			foreach ($fields[$table] as $field) {
-				$base64[] = $this->db->isBinaryType($field);
-				$keys[] = $field->name;
-			}
+			$keys = array_keys($fields[$table]);
 			echo json_encode($keys);
 			$keys = array_flip($keys);
 			echo ',"records":[';
@@ -1359,11 +1392,6 @@ class PHP_CRUD_API {
 				if (isset($collect[$table])) {
 					foreach (array_keys($collect[$table]) as $field) {
 						$collect[$table][$field][] = $row[$keys[$field]];
-					}
-				}
-				foreach ($base64 as $k=>$v) {
-					if ($v && $row[$k]) {
-						$row[$k] = $this->db->base64Encode($row[$k]);
 					}
 				}
 				echo json_encode($row);
@@ -1380,8 +1408,8 @@ class PHP_CRUD_API {
 			echo '"'.$table.'":{';
 			$params = array();
 			$sql = 'SELECT ';
-			$sql .= '"'.implode('","',array_keys($fields[$table])).'"';
-			$sql .= ' FROM "!"';
+			$this->convertOutputs($sql,$params,$fields[$table]);
+			$sql .= ' FROM !';
 			$params[] = $table;
 			if (isset($select[$table])) {
 				echo '"relations":{';
@@ -1405,12 +1433,7 @@ class PHP_CRUD_API {
 			if ($result = $this->db->query($sql,$params)) {
 				if (isset($select[$table])) echo ',';
 				echo '"columns":';
-				$keys = array();
-				$base64 = array();
-				foreach ($fields[$table] as $field) {
-					$base64[] = $this->db->isBinaryType($field);
-					$keys[] = $field->name;
-				}
+				$keys = array_keys($fields[$table]);
 				echo json_encode($keys);
 				$keys = array_flip($keys);
 				echo ',"records":[';
@@ -1421,11 +1444,6 @@ class PHP_CRUD_API {
 					if (isset($collect[$table])) {
 						foreach (array_keys($collect[$table]) as $field) {
 							$collect[$table][$field][]=$row[$keys[$field]];
-						}
-					}
-					foreach ($base64 as $k=>$v) {
-						if ($v && $row[$k]) {
-							$row[$k] = $this->db->base64Encode($row[$k]);
 						}
 					}
 					echo json_encode($row);

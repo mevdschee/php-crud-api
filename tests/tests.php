@@ -396,8 +396,8 @@ class PHP_CRUD_API_Test extends PHPUnit_Framework_TestCase
 	public function testHidingPasswordColumn()
 	{
 		$test = new API($this);
-		$test->get('/users?columns=id,username&filter=id,eq,1&transform=1');
-		$test->expect('{"users":[{"id":"1","username":"user1"}]}');
+		$test->get('/users?filter=id,eq,1&transform=1');
+		$test->expect('{"users":[{"id":"1","username":"user1","location":null}]}');
 	}
 
 	public function testValidatorErrorMessage()
@@ -447,15 +447,31 @@ class PHP_CRUD_API_Test extends PHPUnit_Framework_TestCase
 	public function testMissingIntermediateTable()
 	{
 		$test = new API($this);
-		$test->get('/users?columns=users.username,posts.*,tags.*&include=posts,tags');
-		$test->expect('{"users":{"columns":["id","username"],"records":[["1","user1"]]},"posts":{"relations":{"user_id":"users.id"},"columns":["id","user_id","category_id","content"],"records":[["1","1","1","blog started"],["2","1","2","\u20ac Hello world, \u039a\u03b1\u03bb\u03b7\u03bc\u1f73\u03c1\u03b1 \u03ba\u1f79\u03c3\u03bc\u03b5, \u30b3\u30f3\u30cb\u30c1\u30cf"],["5","1","1","#1"],["6","1","1","#2"],["7","1","1","#3"],["8","1","1","#4"],["9","1","1","#5"],["10","1","1","#6"],["11","1","1","#7"],["12","1","1","#8"],["14","1","1","#10"]]},"post_tags":{"relations":{"post_id":"posts.id"},"columns":["post_id","tag_id"],"records":[["1","1"],["1","2"],["2","1"],["2","2"]]},"tags":{"relations":{"id":"post_tags.tag_id"},"columns":["id","name"],"records":[["1","funny"],["2","important"]]}}');
+		$test->get('/users?include=posts,tags');
+		$test->expect('{"users":{"columns":["id","username","location"],"records":[["1","user1",null]]},"posts":{"relations":{"user_id":"users.id"},"columns":["id","user_id","category_id","content"],"records":[["1","1","1","blog started"],["2","1","2","\u20ac Hello world, \u039a\u03b1\u03bb\u03b7\u03bc\u1f73\u03c1\u03b1 \u03ba\u1f79\u03c3\u03bc\u03b5, \u30b3\u30f3\u30cb\u30c1\u30cf"],["5","1","1","#1"],["6","1","1","#2"],["7","1","1","#3"],["8","1","1","#4"],["9","1","1","#5"],["10","1","1","#6"],["11","1","1","#7"],["12","1","1","#8"],["14","1","1","#10"]]},"post_tags":{"relations":{"post_id":"posts.id"},"columns":["id","post_id","tag_id"],"records":[["1","1","1"],["2","1","2"],["3","2","1"],["4","2","2"]]},"tags":{"relations":{"id":"post_tags.tag_id"},"columns":["id","name"],"records":[["1","funny"],["2","important"]]}}');
 	}
 
-	public function testEditUser()
+	public function testEditUserPassword()
 	{
 		$test = new API($this);
 		$test->put('/users/1','{"password":"testtest"}');
 		$test->expect('1');
+	}
+
+	public function testEditUserLocation()
+	{
+		$test = new API($this);
+		$test->put('/users/1','{"location":"POINT(30 20)"}');
+		$test->expect('1');
+		$test->get('/users/1?columns=id,location');
+		$test->expect('{"id":"1","location":"POINT(30 20)"}');
+	}
+
+	public function testListUserLocations()
+	{
+		$test = new API($this);
+		$test->get('/users?columns=id,location');
+		$test->expect('{"users":{"columns":["id","location"],"records":[["1","POINT(30 20)"]]}}');
 	}
 
 	public function testEditUserWithId()

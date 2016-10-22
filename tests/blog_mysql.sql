@@ -84,13 +84,13 @@ CREATE TABLE `users` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `username` varchar(255) COLLATE utf8_general_ci NOT NULL,
   `password` varchar(255) COLLATE utf8_general_ci NOT NULL,
-  `location` point NOT NULL,
+  `location` point NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
 
 INSERT INTO `users` (`id`, `username`, `password`, `location`) VALUES
-(1,	'user1',	'pass1', ST_GeomFromText('POINT (30 20)')),
-(2,	'user2',	'pass2', ST_GeomFromText('POINT (70 20)'));
+(1,	'user1',	'pass1', null),
+(2,	'user2',	'pass2', null);
 
 DROP TABLE IF EXISTS `countries`;
 CREATE TABLE `countries` (

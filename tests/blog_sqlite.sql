@@ -4,7 +4,7 @@ DROP TABLE IF EXISTS "categories";
 CREATE TABLE "categories" (
   "id" integer NOT NULL PRIMARY KEY AUTOINCREMENT,
   "name" text(255) NOT NULL,
-  "icon" blob NULL
+  "icon" data NULL
 );
 
 INSERT INTO "categories" ("id", "name", "icon") VALUES (1,	'announcement',	NULL);
@@ -71,10 +71,21 @@ DROP TABLE IF EXISTS "users";
 CREATE TABLE `users` (
   `id` integer NOT NULL PRIMARY KEY AUTOINCREMENT,
   `username` text(255) NOT NULL,
-  `password` text(255) NOT NULL
+  `password` text(255) NOT NULL,
+  `location` text(255) NULL
 );
 
-INSERT INTO "users" ("id", "username", "password") VALUES (1,	'user1',	'pass1');
-INSERT INTO "users" ("id", "username", "password") VALUES (2,	'user2',	'pass2');
+INSERT INTO "users" ("id", "username", "password", "location") VALUES (1,	'user1',	'pass1',	NULL);
+INSERT INTO "users" ("id", "username", "password", "location") VALUES (2,	'user2',	'pass2',	NULL);
+
+DROP TABLE IF EXISTS `countries`;
+CREATE TABLE `countries` (
+  `id` integer NOT NULL PRIMARY KEY AUTOINCREMENT,
+  `name` text(255) NOT NULL,
+  `shape` text(255) NOT NULL
+);
+
+INSERT INTO `countries` (`id`, `name`, `shape`) VALUES (1,	'Left',	'POLYGON ((30 10, 40 40, 20 40, 10 20, 30 10))');
+INSERT INTO `countries` (`id`, `name`, `shape`) VALUES (2,	'Right',	'POLYGON ((70 10, 80 40, 60 40, 50 20, 70 10))');
 
 --

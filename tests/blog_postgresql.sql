@@ -25,6 +25,7 @@ DROP TABLE IF EXISTS post_tags CASCADE;
 DROP TABLE IF EXISTS posts CASCADE;
 DROP TABLE IF EXISTS tags CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
+DROP TABLE IF EXISTS countries CASCADE;
 
 --
 -- Name: categories; Type: TABLE; Schema: public; Owner: postgres; Tablespace:
@@ -88,9 +89,19 @@ CREATE TABLE tags (
 CREATE TABLE users (
     id serial NOT NULL,
     username character varying(255) NOT NULL,
-    password character varying(255) NOT NULL
+    password character varying(255) NOT NULL,
+    location geometry NULL
 );
 
+--
+-- Name: countries; Type: TABLE; Schema: public; Owner: postgres; Tablespace:
+--
+
+CREATE TABLE countries (
+    id serial NOT NULL,
+    name character varying(255) NOT NULL,
+    shape geometry NOT NULL
+);
 
 --
 -- Data for Name: categories; Type: TABLE DATA; Schema: public; Owner: postgres
@@ -140,9 +151,17 @@ INSERT INTO "tags" ("name") VALUES
 -- Data for Name: users; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-INSERT INTO "users" ("username", "password") VALUES
-('user1',	'pass1'),
-('user2',	'pass2');
+INSERT INTO "users" ("username", "password", "location") VALUES
+('user1',	'pass1',	NULL),
+('user2',	'pass2',	NULL);
+
+--
+-- Data for Name: countries; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+INSERT INTO "countries" ("name", "shape") VALUES
+('Left',	ST_GeomFromText('POLYGON ((30 10, 40 40, 20 40, 10 20, 30 10))')),
+('Right',	ST_GeomFromText('POLYGON ((70 10, 80 40, 60 40, 50 20, 70 10))'));
 
 --
 -- Name: categories_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres; Tablespace:
