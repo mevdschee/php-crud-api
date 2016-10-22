@@ -132,7 +132,23 @@ CREATE TABLE [users](
 	[id] [int] IDENTITY,
 	[username] [nvarchar](max) NOT NULL,
 	[password] [nvarchar](max) NOT NULL,
+	[location] [geometry] NULL,
  CONSTRAINT [PK_users] PRIMARY KEY CLUSTERED
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [countries](
+	[id] [int] IDENTITY,
+	[name] [nvarchar](max) NOT NULL,
+	[shape] [geometry](max) NOT NULL,
+ CONSTRAINT [PK_countries] PRIMARY KEY CLUSTERED
 (
 	[id] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
@@ -189,9 +205,17 @@ SET IDENTITY_INSERT [tags] OFF
 GO
 SET IDENTITY_INSERT [users] ON
 GO
-INSERT [users] ([id], [username], [password]) VALUES (1, N'user1', N'pass1')
+INSERT [users] ([id], [username], [password], [location]) VALUES (1, N'user1', N'pass1', NULL)
 GO
-INSERT [users] ([id], [username], [password]) VALUES (2, N'user2', N'pass2')
+INSERT [users] ([id], [username], [password], [location]) VALUES (2, N'user2', N'pass2', NULL)
+GO
+SET IDENTITY_INSERT [users] OFF
+GO
+SET IDENTITY_INSERT [users] ON
+GO
+INSERT [countries] ([id], [name], [shape]) VALUES (1, N'Left', N'POLYGON ((30 10, 40 40, 20 40, 10 20, 30 10))')
+GO
+INSERT [countries] ([id], [name], [shape]) VALUES (2, N'Right', N'POLYGON ((70 10, 80 40, 60 40, 50 20, 70 10))')
 GO
 SET IDENTITY_INSERT [users] OFF
 GO
