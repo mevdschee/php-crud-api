@@ -23,6 +23,11 @@ BEGIN
 ALTER TABLE [comments] DROP CONSTRAINT [FK_comments_posts]
 END
 GO
+IF (OBJECT_ID('countries', 'U') IS NOT NULL)
+BEGIN
+DROP TABLE [countries]
+END
+GO
 IF (OBJECT_ID('users', 'U') IS NOT NULL)
 BEGIN
 DROP TABLE [users]
@@ -147,7 +152,7 @@ GO
 CREATE TABLE [countries](
 	[id] [int] IDENTITY,
 	[name] [nvarchar](max) NOT NULL,
-	[shape] [geometry](max) NOT NULL,
+	[shape] [geometry] NOT NULL,
  CONSTRAINT [PK_countries] PRIMARY KEY CLUSTERED
 (
 	[id] ASC
@@ -211,13 +216,13 @@ INSERT [users] ([id], [username], [password], [location]) VALUES (2, N'user2', N
 GO
 SET IDENTITY_INSERT [users] OFF
 GO
-SET IDENTITY_INSERT [users] ON
+SET IDENTITY_INSERT [countries] ON
 GO
 INSERT [countries] ([id], [name], [shape]) VALUES (1, N'Left', N'POLYGON ((30 10, 40 40, 20 40, 10 20, 30 10))')
 GO
 INSERT [countries] ([id], [name], [shape]) VALUES (2, N'Right', N'POLYGON ((70 10, 80 40, 60 40, 50 20, 70 10))')
 GO
-SET IDENTITY_INSERT [users] OFF
+SET IDENTITY_INSERT [countries] OFF
 GO
 ALTER TABLE [comments]  WITH CHECK ADD  CONSTRAINT [FK_comments_posts] FOREIGN KEY([post_id])
 REFERENCES [posts] ([id])

@@ -509,25 +509,33 @@ class SQLServer implements DatabaseInterface {
 			$i++;
 			$param = $params[$i];
 			if ($matches[0]=='!') {
-				return preg_replace('/[^a-zA-Z0-9\-_=<> ]/','',$param);
-			}
-			// This is workaround because SQLSRV cannot accept NULL in a param
-			if ($matches[0]=='?' && is_null($param)) {
-				return 'NULL';
-			}
-			if (is_array($param)) {
-				$args = array_merge($args,$param);
-				return '('.implode(',',str_split(str_repeat('?',count($param)))).')';
-			}
-			if (is_object($param)) {
-				switch($param->type) {
-					case 'base64':
-						$args[] = bin2hex(base64_decode($param->value));
-						return 'CONVERT(VARBINARY(MAX),?,2)';
+				$key = preg_replace('/[^a-zA-Z0-9\-_=<> ]/','',is_object($param)?$param->key:$param);
+				if (is_object($param) && $param->type=='base64') {
+					return "CAST(N'' AS XML).value('xs:base64Binary(xs:hexBinary(sql:column(\"$key\")))', 'VARCHAR(MAX)')";
 				}
+				if (is_object($param) && $param->type=='wkt') {
+					return "\"$key\".STAsText() as \"$key\"";
+				}
+				return '"'.$key.'"';
+			} else {
+				// This is workaround because SQLSRV cannot accept NULL in a param
+				if ($matches[0]=='?' && is_null($param)) {
+					return 'NULL';
+				}
+				if (is_array($param)) {
+					$args = array_merge($args,$param);
+					return '('.implode(',',str_split(str_repeat('?',count($param)))).')';
+				}
+				if (is_object($param)) {
+					switch($param->type) {
+						case 'base64':
+							$args[] = bin2hex(base64_decode($param->value));
+							return 'CONVERT(VARBINARY(MAX),?,2)';
+					}
+				}
+				$args[] = $param;
+				return '?';
 			}
-			$args[] = $param;
-			return '?';
 		}, $sql);
 		//var_dump($params);
 		//echo "\n$sql\n";
