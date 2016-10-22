@@ -599,7 +599,7 @@ class SQLServer implements DatabaseInterface {
 	}
 
 	public function isGeometryType($field) {
-		return false;
+		return ($field->type==-151);
 	}
 
 	public function getDefaultCharset() {

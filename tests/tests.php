@@ -464,14 +464,22 @@ class PHP_CRUD_API_Test extends PHPUnit_Framework_TestCase
 		$test->put('/users/1','{"location":"POINT(30 20)"}');
 		$test->expect('1');
 		$test->get('/users/1?columns=id,location');
-		$test->expect('{"id":"1","location":"POINT(30 20)"}');
+		if (PHP_CRUD_API_Config::$dbengine=='SQLServer') {
+			$test->expect('{"id":"1","location":"POINT (30 20)"}');
+		} else {
+			$test->expect('{"id":"1","location":"POINT(30 20)"}');
+		}
 	}
 
 	public function testListUserLocations()
 	{
 		$test = new API($this);
 		$test->get('/users?columns=id,location');
-		$test->expect('{"users":{"columns":["id","location"],"records":[["1","POINT(30 20)"]]}}');
+		if (PHP_CRUD_API_Config::$dbengine=='SQLServer') {
+			$test->expect('{"users":{"columns":["id","location"],"records":[["1","POINT (30 20)"]]}}');
+		} else {
+			$test->expect('{"users":{"columns":["id","location"],"records":[["1","POINT(30 20)"]]}}');
+		}
 	}
 
 	public function testEditUserWithId()
