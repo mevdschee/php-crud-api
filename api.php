@@ -167,6 +167,38 @@ class MySQL implements DatabaseInterface {
 		return addcslashes($string,'%_');
 	}
 
+	public function convertFilter($field, $comparator, $value) {
+		switch (strtolower($comparator)) {
+			// normal
+			case 'cs': return array('! LIKE ?',$field,'%'.$this->likeEscape($value).'%');
+			case 'sw': return array('! LIKE ?',$field,$this->likeEscape($value).'%');
+			case 'ew': return array('! LIKE ?',$field,'%'.$this->likeEscape($value));
+			case 'eq': return array('! = ?',$field,$value);
+			case 'ne': return array('! <> ?',$field,$value);
+			case 'lt': return array('! < ?',$field,$value);
+			case 'le': return array('! <= ?',$field,$value);
+			case 'ge': return array('! >= ?',$field,$value);
+			case 'gt': return array('! > ?',$field,$value);
+			case 'in': return array('! IN ?',$field,explode(',',$value));
+			case 'ni': return array('! NOT IN ?',$field,explode(',',$value));
+			case 'is': return array('! IS NULL',$field);
+			case 'no': return array('! IS NOT NULL',$field);
+			// spatial
+			case 'sco': return array('ST_Contains(!,ST_GeomFromText(?))',$field,$value);
+			case 'scr': return array('ST_Crosses(!,ST_GeomFromText(?))',$field,$value);
+			case 'sdi': return array('ST_Disjoint(!,ST_GeomFromText(?))',$field,$value);
+			case 'seq': return array('ST_Equals(!,ST_GeomFromText(?))',$field,$value);
+			case 'sin': return array('ST_Intersects(!,ST_GeomFromText(?))',$field,$value);
+			case 'sov': return array('ST_Overlaps(!,ST_GeomFromText(?))',$field,$value);
+			case 'sto': return array('ST_Touches(!,ST_GeomFromText(?))',$field,$value);
+			case 'swi': return array('ST_Within(!,ST_GeomFromText(?))',$field,$value);
+			case 'sic': return array('ST_IsClosed(!)',$field);
+			case 'sis': return array('ST_IsSimple(!)',$field);
+			case 'siv': return array('ST_IsValid(!)',$field);
+		}
+		return false;
+	}
+
 	public function isBinaryType($field) {
 		//echo "$field->name: $field->type ($field->flags)\n";
 		return (($field->flags & 128) && ($field->type>=249) && ($field->type<=252));
@@ -376,6 +408,38 @@ class PostgreSQL implements DatabaseInterface {
 
 	public function likeEscape($string) {
 		return addcslashes($string,'%_');
+	}
+
+	public function convertFilter($field, $comparator, $value) {
+		switch (strtolower($comparator)) {
+			// normal
+			case 'cs': return array('! LIKE ?',$field,'%'.$this->likeEscape($value).'%');
+			case 'sw': return array('! LIKE ?',$field,$this->likeEscape($value).'%');
+			case 'ew': return array('! LIKE ?',$field,'%'.$this->likeEscape($value));
+			case 'eq': return array('! = ?',$field,$value);
+			case 'ne': return array('! <> ?',$field,$value);
+			case 'lt': return array('! < ?',$field,$value);
+			case 'le': return array('! <= ?',$field,$value);
+			case 'ge': return array('! >= ?',$field,$value);
+			case 'gt': return array('! > ?',$field,$value);
+			case 'in': return array('! IN ?',$field,explode(',',$value));
+			case 'ni': return array('! NOT IN ?',$field,explode(',',$value));
+			case 'is': return array('! IS NULL',$field);
+			case 'no': return array('! IS NOT NULL',$field);
+			// spatial
+			case 'sco': return array('ST_Contains(!,ST_GeomFromText(?))',$field,$value);
+			case 'scr': return array('ST_Crosses(!,ST_GeomFromText(?))',$field,$value);
+			case 'sdi': return array('ST_Disjoint(!,ST_GeomFromText(?))',$field,$value);
+			case 'seq': return array('ST_Equals(!,ST_GeomFromText(?))',$field,$value);
+			case 'sin': return array('ST_Intersects(!,ST_GeomFromText(?))',$field,$value);
+			case 'sov': return array('ST_Overlaps(!,ST_GeomFromText(?))',$field,$value);
+			case 'sto': return array('ST_Touches(!,ST_GeomFromText(?))',$field,$value);
+			case 'swi': return array('ST_Within(!,ST_GeomFromText(?))',$field,$value);
+			case 'sic': return array('ST_IsClosed(!)',$field);
+			case 'sis': return array('ST_IsSimple(!)',$field);
+			case 'siv': return array('ST_IsValid(!)',$field);
+		}
+		return false;
 	}
 
 	public function isBinaryType($field) {
@@ -594,6 +658,38 @@ class SQLServer implements DatabaseInterface {
 		return str_replace(array('%','_'),array('[%]','[_]'),$string);
 	}
 
+	public function convertFilter($field, $comparator, $value) {
+		switch (strtolower($comparator)) {
+			// normal
+			case 'cs': return array('! LIKE ?',$field,'%'.$this->likeEscape($value).'%');
+			case 'sw': return array('! LIKE ?',$field,$this->likeEscape($value).'%');
+			case 'ew': return array('! LIKE ?',$field,'%'.$this->likeEscape($value));
+			case 'eq': return array('! = ?',$field,$value);
+			case 'ne': return array('! <> ?',$field,$value);
+			case 'lt': return array('! < ?',$field,$value);
+			case 'le': return array('! <= ?',$field,$value);
+			case 'ge': return array('! >= ?',$field,$value);
+			case 'gt': return array('! > ?',$field,$value);
+			case 'in': return array('! IN ?',$field,explode(',',$value));
+			case 'ni': return array('! NOT IN ?',$field,explode(',',$value));
+			case 'is': return array('! IS NULL',$field);
+			case 'no': return array('! IS NOT NULL',$field);
+			// spatial
+			case 'sco': return array('!.STContains(geometry::STGeomFromText(?,0))',$field,$value);
+			case 'scr': return array('!.STCrosses(geometry::STGeomFromText(?,0))',$field,$value);
+			case 'sdi': return array('!.STDisjoint(geometry::STGeomFromText(?,0))',$field,$value);
+			case 'seq': return array('!.STEquals(geometry::STGeomFromText(?,0))',$field,$value);
+			case 'sin': return array('!.STIntersects(geometry::STGeomFromText(?,0))',$field,$value);
+			case 'sov': return array('!.STOverlaps(geometry::STGeomFromText(?,0))',$field,$value);
+			case 'sto': return array('!.STTouches(geometry::STGeomFromText(?,0))',$field,$value);
+			case 'swi': return array('!.STWithin(geometry::STGeomFromText(?,0))',$field,$value);
+			case 'sic': return array('!.STIsClosed()',$field);
+			case 'sis': return array('!.STIsSimple()',$field);
+			case 'siv': return array('!.STIsValid()',$field);
+		}
+		return false;
+	}
+
 	public function isBinaryType($field) {
 		return ($field->type>=-4 && $field->type<=-2);
 	}
@@ -784,6 +880,25 @@ class SQLite implements DatabaseInterface {
 		return addcslashes($string,'%_');
 	}
 
+	public function convertFilter($field, $comparator, $value) {
+		switch (strtolower($comparator)) {
+			case 'cs': return array('! LIKE ?',$field,'%'.$this->likeEscape($value).'%');
+			case 'sw': return array('! LIKE ?',$field,$this->likeEscape($value).'%');
+			case 'ew': return array('! LIKE ?',$field,'%'.$this->likeEscape($value));
+			case 'eq': return array('! = ?',$field,$value);
+			case 'ne': return array('! <> ?',$field,$value);
+			case 'lt': return array('! < ?',$field,$value);
+			case 'le': return array('! <= ?',$field,$value);
+			case 'ge': return array('! >= ?',$field,$value);
+			case 'gt': return array('! > ?',$field,$value);
+			case 'in': return array('! IN ?',$field,explode(',',$value));
+			case 'ni': return array('! NOT IN ?',$field,explode(',',$value));
+			case 'is': return array('! IS NULL',$field);
+			case 'no': return array('! IS NOT NULL',$field);
+		}
+		return false;
+	}
+
 	public function isBinaryType($field) {
 		return (substr($field->type,0,4)=='data');
 	}
@@ -866,7 +981,8 @@ class PHP_CRUD_API {
 				if ($v!==null) {
 					if (!isset($filters[$table])) $filters[$table] = array();
 					if (!isset($filters[$table]['and'])) $filters[$table]['and'] = array();
-					$filters[$table]['and'][] = array($field->name,is_array($v)?'IN':'=',$v);
+					if (is_array($v)) $filters[$table]['and'][] = $this->db->convertFilter($field->name,'in',implode(',',$v));
+					else $filters[$table]['and'][] = $this->db->convertFilter($field->name,'eq',$v);
 				}
 			}
 		}
@@ -1017,35 +1133,17 @@ class PHP_CRUD_API {
 		return $order;
 	}
 
-	protected function convertFilter($field, $comparator, $value) {
-		switch (strtolower($comparator)) {
-			case 'cs': $comparator = 'LIKE'; $value = '%'.$this->db->likeEscape($value).'%'; break;
-			case 'sw': $comparator = 'LIKE'; $value = $this->db->likeEscape($value).'%'; break;
-			case 'ew': $comparator = 'LIKE'; $value = '%'.$this->db->likeEscape($value); break;
-			case 'eq': $comparator = '='; break;
-			case 'ne': $comparator = '<>'; break;
-			case 'lt': $comparator = '<'; break;
-			case 'le': $comparator = '<='; break;
-			case 'ge': $comparator = '>='; break;
-			case 'gt': $comparator = '>'; break;
-			case 'in': $comparator = 'IN'; $value = explode(',',$value); break;
-			case 'ni': $comparator = 'NOT IN'; $value = explode(',',$value); break;
-			case 'is': $comparator = 'IS'; $value = null; break;
-			case 'no': $comparator = 'IS NOT'; $value = null; break;
-			default: $comparator = '=';
-		}
-		return array($field, $comparator, $value);
-	}
-
-	protected function convertFilters($filters) {
+	public function convertFilters($filters) {
 		$result = array();
 		if ($filters) {
 			for ($i=0;$i<count($filters);$i++) {
-				$filter = explode(',',$filters[$i],3);
-				if (count($filter)==3) {
-					$result[] = $this->convertFilter($filter[0],$filter[1],$filter[2]);
-				} elseif (count($filter)==2) {
-					$result[] = $this->convertFilter($filter[0],$filter[1],null);
+				$parts = explode(',',$filters[$i],3);
+				if (count($parts)>=2) {
+					$field = $parts[0];
+					$comparator = $parts[1];
+					$value = isset($parts[2])?$parts[2]:null;
+					$filter = $this->db->convertFilter($field,$comparator,$value);
+					if ($filter) $result[] = $filter;
 				}
 			}
 		}
@@ -1077,7 +1175,7 @@ class PHP_CRUD_API {
 		$params[] = $table;
 		if (!isset($filters[$table])) $filters[$table] = array();
 		if (!isset($filters[$table]['or'])) $filters[$table]['or'] = array();
-		$filters[$table]['or'][] = array($key[1],'=',$key[0]);
+		$filters[$table]['or'][] = $this->db->convertFilter($key[1],'eq',$key[0]);
 		$this->addWhereFromFilters($filters[$table],$sql,$params);
 		$object = null;
 		if ($result = $this->db->query($sql,$params)) {
@@ -1114,7 +1212,7 @@ class PHP_CRUD_API {
 		}
 		if (!isset($filters[$table])) $filters[$table] = array();
 		if (!isset($filters[$table]['or'])) $filters[$table]['or'] = array();
-		$filters[$table]['or'][] = array($key[1],'=',$key[0]);
+		$filters[$table]['or'][] = $this->db->convertFilter($key[1],'eq',$key[0]);
 		$this->addWhereFromFilters($filters[$table],$sql,$params);
 		$result = $this->db->query($sql,$params);
 		if (!$result) return null;
@@ -1127,7 +1225,7 @@ class PHP_CRUD_API {
 		$params = array($table);
 		if (!isset($filters[$table])) $filters[$table] = array();
 		if (!isset($filters[$table]['or'])) $filters[$table]['or'] = array();
-		$filters[$table]['or'][] = array($key[1],'=',$key[0]);
+		$filters[$table]['or'][] = $this->db->convertFilter($key[1],'eq',$key[0]);
 		$this->addWhereFromFilters($filters[$table],$sql,$params);
 		$result = $this->db->query($sql,$params);
 		if (!$result) return null;
@@ -1336,18 +1434,18 @@ class PHP_CRUD_API {
 			$sql .= ' WHERE (';
 			foreach ($filters['or'] as $i=>$filter) {
 				$sql .= $i==0?'':' OR ';
-				$sql .= '! '.$filter[1].' ?';
-				$params[] = $filter[0];
-				$params[] = $filter[2];
+				$sql .= $filter[0];
+				$params[] = $filter[1];
+				if (isset($filter[2])) $params[] = $filter[2];
 			}
 			$sql .= ')';
 		}
 		if (isset($filters['and'])) {
 			foreach ($filters['and'] as $i=>$filter) {
 				$sql .= $first?' WHERE ':' AND ';
-				$sql .= '! '.$filter[1].' ?';
-				$params[] = $filter[0];
-				$params[] = $filter[2];
+				$sql .= $filter[0];
+				$params[] = $filter[1];
+				if (isset($filter[2])) $params[] = $filter[2];
 				$first = false;
 			}
 		}
@@ -1428,7 +1526,7 @@ class PHP_CRUD_API {
 					if ($values) {
 						if (!isset($filters[$table])) $filters[$table] = array();
 						if (!isset($filters[$table]['or'])) $filters[$table]['or'] = array();
-						$filters[$table]['or'][] = array($field,'IN',$values);
+						$filters[$table]['or'][] = $this->db->convertFilter($field,'in',implode(',',$values));
 					}
 					if ($first_row) $first_row = false;
 					else echo ',';

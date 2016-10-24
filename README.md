@@ -157,6 +157,17 @@ Search is implemented with the "filter" parameter. You need to specify the colum
   - ni: not in (number is not in comma separated list of values)
   - is: is null (field contains "NULL" value)
   - no: not null (field does not contain "NULL" value)
+  - sco: spatial contains (geometry contains another)
+  - scr: spatial crosses (geometry crosses another)
+  - sdi: spatial disjoint (geometry is disjoint from another)
+  - seq: spatial equal (geometry is equal to another)
+  - sin: spatial intersects (geometry intersects another)
+  - sov: spatial overlaps (geometry overlaps another)
+  - sto: spatial touches (geometry touches another)
+  - swi: spatial within (geometry is within another)
+  - sic: spatial is closed (geometry is closed and simple)
+  - sis: spatial is simple (geometry is simple)
+  - siv: spatial is valid (geometry is valid)
 
 ```
 GET http://localhost/api.php/categories?filter=name,eq,Internet
