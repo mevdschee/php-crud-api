@@ -590,7 +590,7 @@ GET http://localhost/api.php/countries?columns=name&filter[]=shape,sco,POINT(30 
 Output:
 
 ```
-{"countries":{"columns":["name"],"records":[["The Netherlands"]]}}
+{"countries":{"columns":["name","shape"],"records":[["Italy","POLYGON((30 10,40 40,20 40,10 20,30 10))"]]}}
 ```
 
 When sending a record that contains a geometry (spatial) field you will also have to send a WKT string.
@@ -702,6 +702,22 @@ NB: You MUST use an empty database as a desctructive database fixture ('blog_sql
 ## Pretty URL
 
 You may "rewrite" the URL to remove the "api.php" from the URL.
+
+### PostGIS
+
+Install PostGIS with the following command:
+
+```
+sudo apt install postgis
+```
+
+Now enable the PostGIS extension for your database:
+
+```
+sudo -u postgres psql phpcrudapi -c "CREATE EXTENSION postgis;"
+```
+
+In the above string "phpcrudapi" is the name of your database.
 
 ### Apache
 
