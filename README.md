@@ -699,13 +699,9 @@ $
 
 NB: You MUST use an empty database as a desctructive database fixture ('blog_sqlite.sql') is loaded.
 
-## Pretty URL
+## Installing PostGIS on Ubuntu Linux
 
-You may "rewrite" the URL to remove the "api.php" from the URL.
-
-### PostGIS
-
-Install PostGIS with the following command:
+Install PostGIS on Ubuntu Linux with the following command:
 
 ```
 sudo apt install postgis
@@ -718,6 +714,10 @@ sudo -u postgres psql phpcrudapi -c "CREATE EXTENSION postgis;"
 ```
 
 In the above string "phpcrudapi" is the name of your database.
+
+## Pretty URL
+
+You may "rewrite" the URL to remove the "api.php" from the URL.
 
 ### Apache
 
