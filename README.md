@@ -600,7 +600,7 @@ PUT http://localhost/api.php/users/1
 {"location":"POINT(30 20)"}
 ```
 
-In the above example you see how a WKT string is sent.
+In the above example you see how a [WKT string](https://en.wikipedia.org/wiki/Well-known_text) is sent.
 
 
 ## Sending NULL
