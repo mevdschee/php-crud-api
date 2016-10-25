@@ -29,7 +29,7 @@ This is a single file application! Upload "api.php" somewhere and enjoy!
   - Complex writes (transactions) are not supported
   - Complex queries calling functions (like "concat" or "sum") are not supported
   - Batch operations for insert, update and delete are not supported
-  - Binary fields and spatial filters are not supported in SQLite
+  - Binary and spatial/GIS functionality is not supported in SQLite
 
 ## Features
 
