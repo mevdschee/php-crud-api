@@ -15,6 +15,7 @@ Related projects:
 
   - PHP 5.3 or higher with MySQLi, libpq, SQLSRV or sqlite3 enabled
   - PHP on Windows when connecting to SQL Server 2012
+  - PostGIS for spatial features in PostgreSQL
 
 ## Installation
 
@@ -47,6 +48,7 @@ This is a single file application! Upload "api.php" somewhere and enjoy!
   - Relation detection and filtering on foreign keys
   - Relation "transforms" for PHP and JavaScript
   - Binary fields supported with base64 encoding
+  - Spatial (GIS) fields and filters supported using WKT
   - Generate API documentation using Swagger tools
   - Authentication via JWT token or username/password (via [PHP-API-AUTH](https://github.com/mevdschee/php-api-auth))
 
@@ -157,6 +159,9 @@ Search is implemented with the "filter" parameter. You need to specify the colum
   - ni: not in (number is not in comma separated list of values)
   - is: is null (field contains "NULL" value)
   - no: not null (field does not contain "NULL" value)
+  
+There is also support for spatial filters:
+  
   - sco: spatial contains (geometry contains another)
   - scr: spatial crosses (geometry crosses another)
   - sdi: spatial disjoint (geometry is disjoint from another)
