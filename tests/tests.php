@@ -565,9 +565,11 @@ class PHP_CRUD_API_Test extends PHPUnit_Framework_TestCase
 
 	public function testSpatialFilterWithin()
 	{
-		$test = new API($this);
-		$test->get('/users?columns=id,username&filter=location,swi,POINT(30 20)');
-		$test->expect('{"users":{"columns":["id","username"],"records":[["1","user1"]]}}');
+		if (PHP_CRUD_API_Config::$dbengine!='SQLite') {
+			$test = new API($this);
+			$test->get('/users?columns=id,username&filter=location,swi,POINT(30 20)');
+			$test->expect('{"users":{"columns":["id","username"],"records":[["1","user1"]]}}');
+		}
 	}
 
 }

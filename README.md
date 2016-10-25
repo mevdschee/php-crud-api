@@ -151,21 +151,20 @@ Search is implemented with the "filter" parameter. You need to specify the colum
   - sw: start with (string starts with value)
   - ew: end with (string end with value)
   - eq: equal (string or number matches exactly)
-  - ne: not equal (string or number doen not match)
   - lt: lower than (number is lower than value)
   - le: lower or equal (number is lower than or equal to value)
   - ge: greater or equal (number is higher than or equal to value)
   - gt: greater than (number is higher than value)
   - in: in (number is in comma separated list of values)
-  - ni: not in (number is not in comma separated list of values)
   - is: is null (field contains "NULL" value)
-  - no: not null (field does not contain "NULL" value)
-  
+
+You can negate all filters by prepending a 'n' character, so that 'eq' becomes 'neq'.
+
 ```
 GET http://localhost/api.php/categories?filter=name,eq,Internet
 GET http://localhost/api.php/categories?filter=name,sw,Inter
 GET http://localhost/api.php/categories?filter=id,le,1
-GET http://localhost/api.php/categories?filter=id,lt,2
+GET http://localhost/api.php/categories?filter=id,ngt,2
 ```
 
 Output:
@@ -580,6 +579,8 @@ There is also support for spatial filters:
   - sic: spatial is closed (geometry is closed and simple)
   - sis: spatial is simple (geometry is simple)
   - siv: spatial is valid (geometry is valid)
+
+You can negate these filters as well by prepending a 'n' character, so that 'sco' becomes 'nsco'.
 
 Example:
 
