@@ -590,7 +590,7 @@ GET http://localhost/api.php/countries?columns=name&filter[]=shape,sco,POINT(30 
 Output:
 
 ```
-{"countries":{"columns":["name"],"records":[["Left"]]}}
+{"countries":{"columns":["name"],"records":[["The Netherlands"]]}}
 ```
 
 When sending a record that contains a geometry (spatial) field you will also have to send a WKT string.
