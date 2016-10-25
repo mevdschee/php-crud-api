@@ -48,7 +48,7 @@ This is a single file application! Upload "api.php" somewhere and enjoy!
   - Relation detection and filtering on foreign keys
   - Relation "transforms" for PHP and JavaScript
   - Binary fields supported with base64 encoding
-  - Spatial (GIS) fields and filters supported using WKT
+  - Spatial/GIS fields and filters supported with WKT
   - Generate API documentation using Swagger tools
   - Authentication via JWT token or username/password (via [PHP-API-AUTH](https://github.com/mevdschee/php-api-auth))
 
