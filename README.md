@@ -584,7 +584,7 @@ There is also support for spatial filters:
 Example:
 
 ```
-GET http://localhost/api.php/countries?columns=name&filter[]=shape,sco,POINT(30 20)
+GET http://localhost/api.php/countries?columns=name,shape&filter[]=shape,sco,POINT(30 20)
 ```
 
 Output:
