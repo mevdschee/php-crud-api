@@ -161,20 +161,6 @@ Search is implemented with the "filter" parameter. You need to specify the colum
   - is: is null (field contains "NULL" value)
   - no: not null (field does not contain "NULL" value)
   
-There is also support for spatial filters:
-  
-  - sco: spatial contains (geometry contains another)
-  - scr: spatial crosses (geometry crosses another)
-  - sdi: spatial disjoint (geometry is disjoint from another)
-  - seq: spatial equal (geometry is equal to another)
-  - sin: spatial intersects (geometry intersects another)
-  - sov: spatial overlaps (geometry overlaps another)
-  - sto: spatial touches (geometry touches another)
-  - swi: spatial within (geometry is within another)
-  - sic: spatial is closed (geometry is closed and simple)
-  - sis: spatial is simple (geometry is simple)
-  - siv: spatial is valid (geometry is valid)
-
 ```
 GET http://localhost/api.php/categories?filter=name,eq,Internet
 GET http://localhost/api.php/categories?filter=name,sw,Inter
@@ -578,6 +564,44 @@ icon=ZGF0YQ
 ```
 
 In the above example you see how binary data is sent. Both "base64url" and standard "base64" are allowed (see rfc4648).
+
+## Spatial/GIS support
+
+There is also support for spatial filters:
+  
+  - sco: spatial contains (geometry contains another)
+  - scr: spatial crosses (geometry crosses another)
+  - sdi: spatial disjoint (geometry is disjoint from another)
+  - seq: spatial equal (geometry is equal to another)
+  - sin: spatial intersects (geometry intersects another)
+  - sov: spatial overlaps (geometry overlaps another)
+  - sto: spatial touches (geometry touches another)
+  - swi: spatial within (geometry is within another)
+  - sic: spatial is closed (geometry is closed and simple)
+  - sis: spatial is simple (geometry is simple)
+  - siv: spatial is valid (geometry is valid)
+
+Example:
+
+```
+GET http://localhost/api.php/countries?columns=name&filter[]=shape,sco,POINT(30 20)
+```
+
+Output:
+
+```
+{"countries":{"columns":["name"],"records":[["Left"]]}}
+```
+
+When sending a record that contains a geometry (spatial) field you will also have to send a WKT string.
+
+```
+PUT http://localhost/api.php/users/1
+{"location":"POINT(30 20)"}
+```
+
+In the above example you see how a WKT string is sent.
+
 
 ## Sending NULL
 
