@@ -675,17 +675,17 @@ class SQLServer implements DatabaseInterface {
 			case 'is': return array('! IS NULL',$field);
 			case 'no': return array('! IS NOT NULL',$field);
 			// spatial
-			case 'sco': return array('!.STContains(geometry::STGeomFromText(?,0))',$field,$value);
-			case 'scr': return array('!.STCrosses(geometry::STGeomFromText(?,0))',$field,$value);
-			case 'sdi': return array('!.STDisjoint(geometry::STGeomFromText(?,0))',$field,$value);
-			case 'seq': return array('!.STEquals(geometry::STGeomFromText(?,0))',$field,$value);
-			case 'sin': return array('!.STIntersects(geometry::STGeomFromText(?,0))',$field,$value);
-			case 'sov': return array('!.STOverlaps(geometry::STGeomFromText(?,0))',$field,$value);
-			case 'sto': return array('!.STTouches(geometry::STGeomFromText(?,0))',$field,$value);
-			case 'swi': return array('!.STWithin(geometry::STGeomFromText(?,0))',$field,$value);
-			case 'sic': return array('!.STIsClosed()',$field);
-			case 'sis': return array('!.STIsSimple()',$field);
-			case 'siv': return array('!.STIsValid()',$field);
+			case 'sco': return array('!.STContains(geometry::STGeomFromText(?,0))=1',$field,$value);
+			case 'scr': return array('!.STCrosses(geometry::STGeomFromText(?,0))=1',$field,$value);
+			case 'sdi': return array('!.STDisjoint(geometry::STGeomFromText(?,0))=1',$field,$value);
+			case 'seq': return array('!.STEquals(geometry::STGeomFromText(?,0))=1',$field,$value);
+			case 'sin': return array('!.STIntersects(geometry::STGeomFromText(?,0))=1',$field,$value);
+			case 'sov': return array('!.STOverlaps(geometry::STGeomFromText(?,0))=1',$field,$value);
+			case 'sto': return array('!.STTouches(geometry::STGeomFromText(?,0))=1',$field,$value);
+			case 'swi': return array('!.STWithin(geometry::STGeomFromText(?,0))=1',$field,$value);
+			case 'sic': return array('!.STIsClosed()=1',$field);
+			case 'sis': return array('!.STIsSimple()=1',$field);
+			case 'siv': return array('!.STIsValid()=1',$field);
 		}
 		return false;
 	}
