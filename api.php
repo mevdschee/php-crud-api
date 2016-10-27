@@ -1080,6 +1080,8 @@ class PHP_CRUD_API {
 					case 'le': return array('! <= ?',$field,$value);
 					case 'ge': return array('! >= ?',$field,$value);
 					case 'gt': return array('! > ?',$field,$value);
+					case 'bt': $v = explode(',',$value); if (count($v)<2) return false;
+					           return array('! BETWEEN ? AND ?',$field,$v[0],$v[1]);
 					case 'in': return array('! IN ?',$field,explode(',',$value));
 					case 'is': return array('! IS NULL',$field);
 				}
@@ -1101,9 +1103,9 @@ class PHP_CRUD_API {
 		} else {
 			if (strlen($comparator)==2) {
 				switch ($comparator) {
-					case 'ne': return array('! <> ?',$field,$value); // deprecated
-					case 'ni': return array('! NOT IN ?',$field,explode(',',$value)); // deprecated
-					case 'no': return array('! IS NOT NULL',$field); // deprecated
+					case 'ne': return $this->convertFilter($field, 'neq', $value); // deprecated
+					case 'ni': return $this->convertFilter($field, 'nin', $value); // deprecated
+					case 'no': return $this->convertFilter($field, 'nis', $value); // deprecated
 				}
 			} elseif (strlen($comparator)==3) {
 				switch ($comparator) {
@@ -1115,6 +1117,8 @@ class PHP_CRUD_API {
 					case 'nle': return array('! > ?',$field,$value);
 					case 'nge': return array('! < ?',$field,$value);
 					case 'ngt': return array('! <= ?',$field,$value);
+					case 'nbt': $v = explode(',',$value); if (count($v)<2) return false;
+					            return array('! NOT BETWEEN ? AND ?',$field,$v[0],$v[1]);
 					case 'nin': return array('! NOT IN ?',$field,explode(',',$value));
 					case 'nis': return array('! IS NOT NULL',$field);
 				}
@@ -1439,8 +1443,9 @@ class PHP_CRUD_API {
 			foreach ($filters['or'] as $i=>$filter) {
 				$sql .= $i==0?'':' OR ';
 				$sql .= $filter[0];
-				$params[] = $filter[1];
-				if (isset($filter[2])) $params[] = $filter[2];
+				for ($i=1;$i<count($filter);$i++) {
+					$params[] = $filter[$i];
+				}
 			}
 			$sql .= ')';
 		}
@@ -1448,8 +1453,9 @@ class PHP_CRUD_API {
 			foreach ($filters['and'] as $i=>$filter) {
 				$sql .= $first?' WHERE ':' AND ';
 				$sql .= $filter[0];
-				$params[] = $filter[1];
-				if (isset($filter[2])) $params[] = $filter[2];
+				for ($i=1;$i<count($filter);$i++) {
+					$params[] = $filter[$i];
+				}
 				$first = false;
 			}
 		}

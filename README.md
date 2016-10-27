@@ -155,6 +155,7 @@ Search is implemented with the "filter" parameter. You need to specify the colum
   - le: lower or equal (number is lower than or equal to value)
   - ge: greater or equal (number is higher than or equal to value)
   - gt: greater than (number is higher than value)
+  - bt: between (number is between two comma separated values)
   - in: in (number is in comma separated list of values)
   - is: is null (field contains "NULL" value)
 
@@ -165,6 +166,7 @@ GET http://localhost/api.php/categories?filter=name,eq,Internet
 GET http://localhost/api.php/categories?filter=name,sw,Inter
 GET http://localhost/api.php/categories?filter=id,le,1
 GET http://localhost/api.php/categories?filter=id,ngt,2
+GET http://localhost/api.php/categories?filter=id,bt,1,1
 ```
 
 Output:

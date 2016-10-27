@@ -32,7 +32,7 @@ class API
 				// callbacks
 				'table_authorizer'=>function($action,$database,$table) { return true; },
 				'column_authorizer'=>function($action,$database,$table,$column) { return !($column=='password'&&$action=='list'); },
-				'record_filter'=>function($action,$database,$table) { return ($table=='posts')?array('id,ne,13'):false; },
+				'record_filter'=>function($action,$database,$table) { return ($table=='posts')?array('id,neq,13'):false; },
 				'tenancy_function'=>function($action,$database,$table,$column) { return ($table=='users'&&$column=='id')?1:null; },
 				'input_sanitizer'=>function($action,$database,$table,$column,$type,$value) { return $value===null?null:strip_tags($value); },
 				'input_validator'=>function($action,$database,$table,$column,$type,$value,$context) { return ($column=='category_id' && !is_numeric($value))?'must be numeric':true; },
@@ -517,15 +517,29 @@ class PHP_CRUD_API_Test extends PHPUnit_Framework_TestCase
 	public function testFilterCategoryOnNotNullIcon()
 	{
 		$test = new API($this);
-		$test->get('/categories?filter[]=icon,no,null&transform=1');
+		$test->get('/categories?filter[]=icon,nis,null&transform=1');
 		$test->expect('{"categories":[]}');
 	}
 
 	public function testFilterPostsNotIn()
 	{
 		$test = new API($this);
-		$test->get('/posts?filter[]=id,ni,1,2,3,4,7,8,9,10,11,12,13,14&transform=1');
+		$test->get('/posts?filter[]=id,nin,1,2,3,4,7,8,9,10,11,12,13,14&transform=1');
 		$test->expect('{"posts":[{"id":"5","user_id":"1","category_id":"1","content":"#1"},{"id":"6","user_id":"1","category_id":"1","content":"#2"}]}');
+	}
+
+	public function testFilterPostsBetween()
+	{
+		$test = new API($this);
+		$test->get('/posts?filter[]=id,bt,5,6&transform=1');
+		$test->expect('{"posts":[{"id":"5","user_id":"1","category_id":"1","content":"#1"},{"id":"6","user_id":"1","category_id":"1","content":"#2"}]}');
+	}
+
+	public function testFilterPostsNotBetween()
+	{
+		$test = new API($this);
+		$test->get('/posts?filter[]=id,nbt,2,13&transform=1');
+		$test->expect('{"posts":[{"id":"1","user_id":"1","category_id":"1","content":"blog started"},{"id":"14","user_id":"1","category_id":"1","content":"#10"}]}');
 	}
 
 	public function testColumnsWithTable()
