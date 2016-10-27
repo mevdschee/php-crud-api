@@ -1087,17 +1087,17 @@ class PHP_CRUD_API {
 				}
 			} else {
 				switch ($comparator) {
-					case 'sco': return array('ST_Contains(!,ST_GeomFromText(?))=1',$field,$value);
-					case 'scr': return array('ST_Crosses(!,ST_GeomFromText(?))=1',$field,$value);
-					case 'sdi': return array('ST_Disjoint(!,ST_GeomFromText(?))=1',$field,$value);
-					case 'seq': return array('ST_Equals(!,ST_GeomFromText(?))=1',$field,$value);
-					case 'sin': return array('ST_Intersects(!,ST_GeomFromText(?))=1',$field,$value);
-					case 'sov': return array('ST_Overlaps(!,ST_GeomFromText(?))=1',$field,$value);
-					case 'sto': return array('ST_Touches(!,ST_GeomFromText(?))=1',$field,$value);
-					case 'swi': return array('ST_Within(!,ST_GeomFromText(?))=1',$field,$value);
-					case 'sic': return array('ST_IsClosed(!)=1',$field);
-					case 'sis': return array('ST_IsSimple(!)=1',$field);
-					case 'siv': return array('ST_IsValid(!)=1',$field);
+					case 'sco': return array('ST_Contains(!,ST_GeomFromText(?))=TRUE',$field,$value);
+					case 'scr': return array('ST_Crosses(!,ST_GeomFromText(?))=TRUE',$field,$value);
+					case 'sdi': return array('ST_Disjoint(!,ST_GeomFromText(?))=TRUE',$field,$value);
+					case 'seq': return array('ST_Equals(!,ST_GeomFromText(?))=TRUE',$field,$value);
+					case 'sin': return array('ST_Intersects(!,ST_GeomFromText(?))=TRUE',$field,$value);
+					case 'sov': return array('ST_Overlaps(!,ST_GeomFromText(?))=TRUE',$field,$value);
+					case 'sto': return array('ST_Touches(!,ST_GeomFromText(?))=TRUE',$field,$value);
+					case 'swi': return array('ST_Within(!,ST_GeomFromText(?))=TRUE',$field,$value);
+					case 'sic': return array('ST_IsClosed(!)=TRUE',$field);
+					case 'sis': return array('ST_IsSimple(!)=TRUE',$field);
+					case 'siv': return array('ST_IsValid(!)=TRUE',$field);
 				}
 			}
 		} else {
@@ -1124,17 +1124,17 @@ class PHP_CRUD_API {
 				}
 			} else {
 				switch ($comparator) {
-					case 'nsco': return array('ST_Contains(!,ST_GeomFromText(?))=0',$field,$value);
-					case 'nscr': return array('ST_Crosses(!,ST_GeomFromText(?))=0',$field,$value);
-					case 'nsdi': return array('ST_Disjoint(!,ST_GeomFromText(?))=0',$field,$value);
-					case 'nseq': return array('ST_Equals(!,ST_GeomFromText(?))=0',$field,$value);
-					case 'nsin': return array('ST_Intersects(!,ST_GeomFromText(?))=0',$field,$value);
-					case 'nsov': return array('ST_Overlaps(!,ST_GeomFromText(?))=0',$field,$value);
-					case 'nsto': return array('ST_Touches(!,ST_GeomFromText(?))=0',$field,$value);
-					case 'nswi': return array('ST_Within(!,ST_GeomFromText(?))=0',$field,$value);
-					case 'nsic': return array('ST_IsClosed(!)=0',$field);
-					case 'nsis': return array('ST_IsSimple(!)=0',$field);
-					case 'nsiv': return array('ST_IsValid(!)=0',$field);
+					case 'nsco': return array('ST_Contains(!,ST_GeomFromText(?))=FALSE',$field,$value);
+					case 'nscr': return array('ST_Crosses(!,ST_GeomFromText(?))=FALSE',$field,$value);
+					case 'nsdi': return array('ST_Disjoint(!,ST_GeomFromText(?))=FALSE',$field,$value);
+					case 'nseq': return array('ST_Equals(!,ST_GeomFromText(?))=FALSE',$field,$value);
+					case 'nsin': return array('ST_Intersects(!,ST_GeomFromText(?))=FALSE',$field,$value);
+					case 'nsov': return array('ST_Overlaps(!,ST_GeomFromText(?))=FALSE',$field,$value);
+					case 'nsto': return array('ST_Touches(!,ST_GeomFromText(?))=FALSE',$field,$value);
+					case 'nswi': return array('ST_Within(!,ST_GeomFromText(?))=FALSE',$field,$value);
+					case 'nsic': return array('ST_IsClosed(!)=FALSE',$field);
+					case 'nsis': return array('ST_IsSimple(!)=FALSE',$field);
+					case 'nsiv': return array('ST_IsValid(!)=FALSE',$field);
 				}
 			}
 		}
