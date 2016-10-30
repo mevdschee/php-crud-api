@@ -600,7 +600,7 @@ class PHP_CRUD_API_Test extends PHPUnit_Framework_TestCase
 		if (PHP_CRUD_API_Config::$dbengine=='SQLite') $test->expect('[15,16]');
 		if (PHP_CRUD_API_Config::$dbengine=='PostgreSQL') $test->expect('[17,18]');
 		if (PHP_CRUD_API_Config::$dbengine=='MySQL') $test->expect('[18,19]');
-		if (PHP_CRUD_API_Config::$dbengine=='SQLServer') $test->expect('[17,18]');
+		if (PHP_CRUD_API_Config::$dbengine=='SQLServer') $test->expect('[18,19]');
 	}
 
 
