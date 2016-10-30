@@ -1205,6 +1205,27 @@ class PHP_CRUD_API {
 		return $this->db->insertId($result);
 	}
 
+	protected function createObjects($inputs,$tables) {
+		if (!$inputs) return false;
+		$ids = array();
+		$this->db->query('BEGIN',array());
+		foreach ($inputs as $input) {
+			$input = (array)$input;
+			$keys = implode(',',str_split(str_repeat('!', count($input))));
+			$values = implode(',',str_split(str_repeat('?', count($input))));
+			$params = array_merge(array_keys($input),array_values($input));
+			array_unshift($params, $tables[0]);
+			$result = $this->db->query('INSERT INTO ! ('.$keys.') VALUES ('.$values.')',$params);
+			if (!$result) {
+				$this->db->query('ROLLBACK',array());
+				return null;
+			}
+			$ids[] = $this->db->insertId($result);
+		}
+		$this->db->query('COMMIT',array());
+		return $ids;
+	}
+
 	protected function updateObject($key,$input,$filters,$tables) {
 		if (!$input) return false;
 		$input = (array)$input;
@@ -1284,7 +1305,7 @@ class PHP_CRUD_API {
 		$input = (object)array();
 		$data = trim(file_get_contents($post));
 		if (strlen($data)>0) {
-			if ($data[0]=='{') {
+			if ($data[0]=='{' || $data[0]=='[') {
 				$input = json_decode($data);
 			} else {
 				parse_str($data, $input);
@@ -1297,7 +1318,7 @@ class PHP_CRUD_API {
 				$input = (object)$input;
 			}
 		}
-		return $input;
+		return is_array($input)?$input:array($input);
 	}
 
 	protected function addRelationColumns($columns,$select) {
@@ -1422,17 +1443,21 @@ class PHP_CRUD_API {
 
 		if ($post) {
 			// input
-			$context = $this->retrieveInput($post);
-			$input = $this->filterInputByFields($context,$fields[$tables[0]]);
+			$contexts = $this->retrieveInput($post);
+			$inputs = array();
+			foreach ($contexts as $context) {
+				$input = $this->filterInputByFields($context,$fields[$tables[0]]);
 
-			if ($tenancy_function) $this->applyInputTenancy($tenancy_function,$action,$database,$tables[0],$input,$fields[$tables[0]]);
-			if ($input_sanitizer) $this->applyInputSanitizer($input_sanitizer,$action,$database,$tables[0],$input,$fields[$tables[0]]);
-			if ($input_validator) $this->applyInputValidator($input_validator,$action,$database,$tables[0],$input,$fields[$tables[0]],$context);
+				if ($tenancy_function) $this->applyInputTenancy($tenancy_function,$action,$database,$tables[0],$input,$fields[$tables[0]]);
+				if ($input_sanitizer) $this->applyInputSanitizer($input_sanitizer,$action,$database,$tables[0],$input,$fields[$tables[0]]);
+				if ($input_validator) $this->applyInputValidator($input_validator,$action,$database,$tables[0],$input,$fields[$tables[0]],$context);
 
-			$this->convertInputs($input,$fields[$tables[0]]);
+				$this->convertInputs($input,$fields[$tables[0]]);
+				$inputs[] = $input;
+			}
 		}
 
-		return compact('action','database','tables','key','callback','page','filters','fields','order','transform','input','collect','select');
+		return compact('action','database','tables','key','callback','page','filters','fields','order','transform','inputs','collect','select');
 	}
 
 	protected function addWhereFromFilters($filters,&$sql,&$params) {
@@ -1584,17 +1609,18 @@ class PHP_CRUD_API {
 
 	protected function createCommand($parameters) {
 		extract($parameters);
-		if (!$input) $this->exitWith404('input');
+		if (!$inputs || !$inputs[0]) $this->exitWith404('input');
 		$this->startOutput($callback);
-		echo json_encode($this->createObject($input,$tables));
+		if (count($inputs)==1) echo json_encode($this->createObject($inputs[0],$tables));
+		else echo json_encode($this->createObjects($inputs,$tables));
 		$this->endOutput($callback);
 	}
 
 	protected function updateCommand($parameters) {
 		extract($parameters);
-		if (!$input) $this->exitWith404('subject');
+		if (!$inputs) $this->exitWith404('subject');
 		$this->startOutput($callback);
-		echo json_encode($this->updateObject($key,$input,$filters,$tables));
+		echo json_encode($this->updateObject($key,$inputs[0],$filters,$tables));
 		$this->endOutput($callback);
 	}
 

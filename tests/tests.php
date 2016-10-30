@@ -586,4 +586,22 @@ class PHP_CRUD_API_Test extends PHPUnit_Framework_TestCase
 		}
 	}
 
+	public function testAddPostsWithNonExistingCategory()
+	{ 
+		$test = new API($this);
+		$test->post('/posts','[{"user_id":"1","category_id":"14","content":"tests"},{"user_id":"1","category_id":"15","content":"tests"}]');
+		$test->expect('null');
+	}
+
+	public function testAddPosts()
+	{
+		$test = new API($this);
+		$test->post('/posts','[{"user_id":"1","category_id":"1","content":"tests"},{"user_id":"1","category_id":"1","content":"tests"}]');
+		if (PHP_CRUD_API_Config::$dbengine=='SQLite') $test->expect('[15,16]');
+		if (PHP_CRUD_API_Config::$dbengine=='PostgreSQL') $test->expect('[17,18]');
+		if (PHP_CRUD_API_Config::$dbengine=='MySQL') $test->expect('[18,19]');
+		if (PHP_CRUD_API_Config::$dbengine=='SQLServer') $test->expect('[17,18]');
+	}
+
+
 }
