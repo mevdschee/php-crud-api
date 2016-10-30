@@ -7,7 +7,7 @@ Single file PHP script that adds a REST API to a MySQL InnoDB database. PostgreS
 
 Related projects:
 
-  - [PHP-API-AUTH](https://github.com/mevdschee/php-api-auth): Authentication add-on supporting JWT + username/password.
+  - [PHP-API-AUTH](https://github.com/mevdschee/php-api-auth): Authentication add-on supporting JWT or username/password.
   - [PHP-SP-API](https://github.com/mevdschee/php-sp-api): Single file PHP script that adds a REST API to a SQL database.
   - [PHP-CRUD-UI](https://github.com/mevdschee/php-crud-ui): Single file PHP script that adds a UI to a PHP-CRUD-API project.
 
@@ -639,13 +639,13 @@ There are PHPUnit tests in the file 'tests.php'. You need to configure your test
 ```
 $ wget https://phar.phpunit.de/phpunit.phar
 $ php phpunit.phar tests/tests.php
-PHPUnit 5.1.3 by Sebastian Bergmann and contributors.
+PHPUnit 5.3.2 by Sebastian Bergmann and contributors.
 
-.....................................                             37 / 37 (100%)
+..................................................                50 / 50 (100%)
 
-Time: 433 ms, Memory: 11.00Mb
+Time: 495 ms, Memory: 10.00Mb
 
-OK (37 tests, 61 assertions)
+OK (50 tests, 75 assertions)
 $
 ```
 
@@ -657,11 +657,11 @@ NB: You MUST use an empty database as a desctructive database fixture ('blog_mys
 C:\php-crud-api>"C:\PHP\php.exe" phpunit.phar tests\tests.php
 PHPUnit 5.2.10 by Sebastian Bergmann and contributors.
 
-.....................................                            37 / 37 (100%)
+..................................................                50 / 50 (100%)
 
-Time: 1.07 seconds, Memory: 6.50Mb
+Time: 1.47 seconds, Memory: 6.75Mb
 
-OK (37 tests, 59 assertions)
+OK (50 tests, 73 assertions)
 
 C:\php-crud-api>
 ```
@@ -673,13 +673,13 @@ NB: You MUST use an empty database as a desctructive database fixture ('blog_sql
 ```
 $ wget https://phar.phpunit.de/phpunit.phar
 $ php phpunit.phar tests/tests.php
-PHPUnit 5.1.3 by Sebastian Bergmann and contributors.
+PHPUnit 5.3.2 by Sebastian Bergmann and contributors.
 
-.....................................                             37 / 37 (100%)
+..................................................                50 / 50 (100%)
 
-Time: 856 ms, Memory: 11.25Mb
+Time: 1.09 seconds, Memory: 8.00Mb
 
-OK (37 tests, 61 assertions)
+OK (50 tests, 75 assertions)
 $
 ```
 
@@ -690,13 +690,13 @@ NB: You MUST use an empty database as a desctructive database fixture ('blog_pos
 ```
 $ wget https://phar.phpunit.de/phpunit.phar
 $ php phpunit.phar tests/tests.php
-PHPUnit 5.1.3 by Sebastian Bergmann and contributors.
+PHPUnit 5.3.2 by Sebastian Bergmann and contributors.
 
-.............................................                     45 / 45 (100%)
+..................................................                50 / 50 (100%)
 
-Time: 1.84 seconds, Memory: 11.25Mb
+Time: 1.96 seconds, Memory: 8.00Mb
 
-OK (45 tests, 69 assertions)
+OK (50 tests, 74 assertions)
 $
 ```
 
