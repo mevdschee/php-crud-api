@@ -28,7 +28,6 @@ This is a single file application! Upload "api.php" somewhere and enjoy!
   - Complex filters (with both "and" & "or") are not supported
   - Complex writes (transactions) are not supported
   - Complex queries calling functions (like "concat" or "sum") are not supported
-  - Batch operations for insert, update and delete are not supported
   - Binary and spatial/GIS functionality is not supported in SQLite
 
 ## Features
@@ -38,6 +37,7 @@ This is a single file application! Upload "api.php" somewhere and enjoy!
   - Streaming data, low memory footprint
   - Supports POST variables as input
   - Supports a JSON object as input
+  - Supports a JSON array as input (batch insert)
   - Condensed JSON ouput: first row contains field names
   - Sanitize and validate input using callbacks
   - Permission system for databases, tables, columns and records
@@ -256,7 +256,7 @@ Output:
 
 Note that the fields that are not specified in the request get the default value as specified in the database.
 
-### Create (with JSON)
+### Create (with JSON object)
 
 Alternatively you can send a JSON object in the body. The call returns the "last insert id".
 
@@ -272,6 +272,23 @@ Output:
 ```
 
 Note that the fields that are not specified in the request get the default value as specified in the database.
+
+### Create (with JSON array)
+
+Alternatively you can send a JSON array containing multiple JSON objects in the body. The call returns an array of "last insert id" values. 
+
+```
+POST http://localhost/api.php/categories
+[{"name":"Internet"},{"name":"Programming"},{"name":"Web development"}]
+```
+
+Output:
+
+```
+[1,2,3]
+```
+
+This call uses a transaction and will either insert all or no records. If no records are inserted it will return 'null'.
 
 ### Read
 
