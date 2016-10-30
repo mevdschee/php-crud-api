@@ -4,7 +4,7 @@
 interface DatabaseInterface {
 	public function getSql($name);
 	public function connect($hostname,$username,$password,$database,$port,$socket,$charset);
-	public function query($sql,$params);
+	public function query($sql,$params=array());
 	public function fetchAssoc($result);
 	public function fetchRow($result);
 	public function insertId($result);
@@ -16,6 +16,9 @@ interface DatabaseInterface {
 	public function isBinaryType($field);
 	public function isGeometryType($field);
 	public function getDefaultCharset();
+	public function beginTransaction();
+	public function commitTransaction();
+	public function rollbackTransaction();
 }
 
 class MySQL implements DatabaseInterface {
@@ -103,7 +106,7 @@ class MySQL implements DatabaseInterface {
 		$this->db = $db;
 	}
 
-	public function query($sql,$params) {
+	public function query($sql,$params=array()) {
 		$db = $this->db;
 		$sql = preg_replace_callback('/\!|\?/', function ($matches) use (&$db,&$params) {
 			$param = array_shift($params);
@@ -182,6 +185,18 @@ class MySQL implements DatabaseInterface {
 
 	public function getDefaultCharset() {
 		return 'utf8';
+	}
+
+	public function beginTransaction() {
+		return mysqli_begin_transaction($this->db);
+	}
+
+	public function commitTransaction() {
+		return mysqli_commit($this->db);
+	}
+
+	public function rollbackTransaction() {
+		return mysqli_rollback($this->db);
 	}
 
 }
@@ -307,7 +322,7 @@ class PostgreSQL implements DatabaseInterface {
 		$this->db = $db;
 	}
 
-	public function query($sql,$params) {
+	public function query($sql,$params=array()) {
 		$db = $this->db;
 		$sql = preg_replace_callback('/\!|\?/', function ($matches) use (&$db,&$params) {
 			$param = array_shift($params);
@@ -398,6 +413,17 @@ class PostgreSQL implements DatabaseInterface {
 		return 'UTF8';
 	}
 
+	public function beginTransaction() {
+		return $this->query('BEGIN');
+	}
+
+	public function commitTransaction() {
+		return $this->query('COMMIT');
+	}
+
+	public function rollbackTransaction() {
+		return $this->query('ROLLBACK');
+	}
 }
 
 class SQLServer implements DatabaseInterface {
@@ -509,7 +535,7 @@ class SQLServer implements DatabaseInterface {
 		$this->db = $db;
 	}
 
-	public function query($sql,$params) {
+	public function query($sql,$params=array()) {
 		$args = array();
 		$db = $this->db;
 		$sql = preg_replace_callback('/\!|\?/', function ($matches) use (&$db,&$params,&$args) {
@@ -553,10 +579,7 @@ class SQLServer implements DatabaseInterface {
 		if (strtoupper(substr($sql,0,6))=='INSERT') {
 			$sql .= ';SELECT SCOPE_IDENTITY()';
 		}
-		if ($sql=='BEGIN') sqlsrv_begin_transaction($db);
-		elseif ($sql=='COMMIT') sqlsrv_commit($db);
-		elseif ($sql=='ROLLBACK') sqlsrv_rollback($db);
-		else return sqlsrv_query($db,$sql,$args)?:null;
+		return sqlsrv_query($db,$sql,$args)?:null;
 	}
 
 	public function fetchAssoc($result) {
@@ -649,6 +672,18 @@ class SQLServer implements DatabaseInterface {
 
 	public function getDefaultCharset() {
 		return 'UTF-8';
+	}
+
+	public function beginTransaction() {
+		return sqlsrv_begin_transaction($this->db);
+	}
+
+	public function commitTransaction() {
+		return sqlsrv_commit($this->db);
+	}
+
+	public function rollbackTransaction() {
+		return sqlsrv_rollback($this->db);
 	}
 }
 
@@ -843,6 +878,18 @@ class SQLite implements DatabaseInterface {
 
 	public function getDefaultCharset() {
 		return 'utf8';
+	}
+
+	public function beginTransaction() {
+		return $this->query('BEGIN');
+	}
+
+	public function commitTransaction() {
+		return $this->query('COMMIT');
+	}
+
+	public function rollbackTransaction() {
+		return $this->query('ROLLBACK');
 	}
 
 }
@@ -1211,7 +1258,7 @@ class PHP_CRUD_API {
 	protected function createObjects($inputs,$tables) {
 		if (!$inputs) return false;
 		$ids = array();
-		$this->db->query('BEGIN',array());
+		$this->db->beginTransaction();
 		foreach ($inputs as $input) {
 			$input = (array)$input;
 			$keys = implode(',',str_split(str_repeat('!', count($input))));
@@ -1220,12 +1267,12 @@ class PHP_CRUD_API {
 			array_unshift($params, $tables[0]);
 			$result = $this->db->query('INSERT INTO ! ('.$keys.') VALUES ('.$values.')',$params);
 			if (!$result) {
-				$this->db->query('ROLLBACK',array());
+				$this->db->rollbackTransaction();
 				return null;
 			}
 			$ids[] = $this->db->insertId($result);
 		}
-		$this->db->query('COMMIT',array());
+		$this->db->commitTransaction();
 		return $ids;
 	}
 
