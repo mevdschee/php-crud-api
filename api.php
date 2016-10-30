@@ -553,7 +553,10 @@ class SQLServer implements DatabaseInterface {
 		if (strtoupper(substr($sql,0,6))=='INSERT') {
 			$sql .= ';SELECT SCOPE_IDENTITY()';
 		}
-		return sqlsrv_query($db,$sql,$args)?:null;
+		if ($sql=='BEGIN') sqlsrv_begin_transaction($db);
+		elseif ($sql=='COMMIT') sqlsrv_commit($db);
+		elseif ($sql=='ROLLBACK') sqlsrv_rollback($db);
+		else return sqlsrv_query($db,$sql,$args)?:null;
 	}
 
 	public function fetchAssoc($result) {
