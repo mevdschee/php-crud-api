@@ -95,7 +95,7 @@ $api = new PHP_CRUD_API(array(
 	'method'=>$_SERVER['REQUEST_METHOD'],
 	'request'=>$_SERVER['PATH_INFO'],
 	'get'=>$_GET,
-	'post'=>'php://input',
+	'post'=>file_get_contents('php://input'),
 ));
 $api->executeCommand();
 ```
