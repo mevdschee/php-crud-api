@@ -38,6 +38,7 @@ This is a single file application! Upload "api.php" somewhere and enjoy!
   - Supports POST variables as input
   - Supports a JSON object as input
   - Supports a JSON array as input (batch insert)
+  - Supports file upload from web forms (multipart/form-data)
   - Condensed JSON ouput: first row contains field names
   - Sanitize and validate input using callbacks
   - Permission system for databases, tables, columns and records
@@ -582,6 +583,29 @@ icon=ZGF0YQ
 ```
 
 In the above example you see how binary data is sent. Both "base64url" and standard "base64" are allowed (see rfc4648).
+
+## File uploads
+
+You can also upload a file using a web form (multipart/form-data) like this:
+
+```
+    <form method="post" action="http://localhost/api.php/icons" enctype="multipart/form-data">
+        Select image to upload:
+        <input type="file" name="icon">
+        <input type="submit">
+    </form>
+```
+
+Then this is handled as if you would have sent:
+
+```
+POST http://localhost/api.php/icons
+{"icon_name":"1px.gif","icon_type":"image\/gif","icon":"R0lGODlhAQABAAAAACH5BAEAAAAALAAAAAABAAEAAAI=","icon_error":0,"icon_size":32}
+```
+
+As you can see the "xxx_name", "xxx_type", "xxx_error" and "xxx_size" meta fields are added (where "xxx" is the name of the file field).
+
+NB: You cannot edit a file using this method, because browsers do not support the "PUT" method in these forms.
 
 ## Spatial/GIS support
 

@@ -1351,9 +1351,8 @@ class PHP_CRUD_API {
 		return array($tableset,$collect,$select);
 	}
 
-	protected function retrieveInput($post) {
+	protected function retrieveInputs($data) {
 		$input = (object)array();
-		$data = trim(file_get_contents($post));
 		if (strlen($data)>0) {
 			if ($data[0]=='{' || $data[0]=='[') {
 				$input = json_decode($data);
@@ -1491,9 +1490,9 @@ class PHP_CRUD_API {
 		if ($tenancy_function) $this->applyTenancyFunction($tenancy_function,$action,$database,$fields,$filters);
 		if ($column_authorizer) $this->applyColumnAuthorizer($column_authorizer,$action,$database,$fields);
 
-		if ($post) {
+		if (strlen($post)) {
 			// input
-			$contexts = $this->retrieveInput($post);
+			$contexts = $this->retrieveInputs($post);
 			$inputs = array();
 			foreach ($contexts as $context) {
 				$input = $this->filterInputByFields($context,$fields[$tables[0]]);
@@ -1697,6 +1696,22 @@ class PHP_CRUD_API {
 		$this->endOutput($callback);
 	}
 
+	protected function retrievePostData() {
+		if ($_FILES) {
+			$files = array();
+			foreach ($_FILES as $name => $file) {
+				foreach ($file as $key => $value) {
+					switch ($key) {
+						case 'tmp_name': $files[$name] = base64_encode(file_get_contents($value)); break;
+						default: $files[$name.'_'.$key] = $value;
+					}
+				}
+			}
+			return http_build_query(array_merge($files,$_POST));
+		}
+		return file_get_contents('php://input');
+	}
+
 	public function __construct($config) {
 		extract($config);
 
@@ -1742,7 +1757,7 @@ class PHP_CRUD_API {
 			$get = $_GET;
 		}
 		if (!$post) {
-			$post = 'php://input';
+			$post = $this->retrievePostData();
 		}
 
 		// connect

@@ -21,8 +21,6 @@ class API
 		$query = isset($url['query'])?$url['query']:'';
 		parse_str($query,$get);
 
-		$data = 'data://text/plain;base64,'.base64_encode($data);
-
 		$this->api = new PHP_CRUD_API(array(
 				'dbengine'=>PHP_CRUD_API_Config::$dbengine,
 				'hostname'=>PHP_CRUD_API_Config::$hostname,
