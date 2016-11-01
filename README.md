@@ -534,7 +534,7 @@ for a specific CRUD action.
 By defining a 'record_filter' function you can apply a forced filter, for instance to implement roles in a database system.
 The rule "you cannot view unpublished blog posts unless you have the admin role" can be implemented with this filter.
 
-```return ($table=='posts' && $_SESSION['role']!='admin')?array('published,no,null'):false;```
+```return ($table=='posts' && $_SESSION['role']!='admin')?array('published,nis,null'):false;```
 
 ## Multi-tenancy
 
