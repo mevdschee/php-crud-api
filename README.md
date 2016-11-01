@@ -589,18 +589,18 @@ In the above example you see how binary data is sent. Both "base64url" and stand
 You can also upload a file using a web form (multipart/form-data) like this:
 
 ```
-    <form method="post" action="http://localhost/api.php/icons" enctype="multipart/form-data">
-        Select image to upload:
-        <input type="file" name="icon">
-        <input type="submit">
-    </form>
+<form method="post" action="http://localhost/api.php/categories" enctype="multipart/form-data">
+  Select image to upload:
+  <input type="file" name="icon">
+  <input type="submit">
+</form>
 ```
 
 Then this is handled as if you would have sent:
 
 ```
-POST http://localhost/api.php/icons
-{"icon_name":"1px.gif","icon_type":"image\/gif","icon":"R0lGODlhAQABAAAAACH5BAEAAAAALAAAAAABAAEAAAI=","icon_error":0,"icon_size":32}
+POST http://localhost/api.php/categories
+{"icon_name":"not.gif","icon_type":"image\/gif","icon":"ZGF0YQ==","icon_error":0,"icon_size":4}
 ```
 
 As you can see the "xxx_name", "xxx_type", "xxx_error" and "xxx_size" meta fields are added (where "xxx" is the name of the file field).
