@@ -1609,8 +1609,8 @@ class PHP_CRUD_API {
 					$values = $collect[$path[0]][$path[1]];
 					if ($values) {
 						if (!isset($filters[$table])) $filters[$table] = array();
-						if (!isset($filters[$table]['or'])) $filters[$table]['or'] = array();
-						$filters[$table]['or'][] = $this->convertFilter($field,'in',implode(',',$values));
+						if (!isset($filters[$table]['and'])) $filters[$table]['and'] = array();
+						$filters[$table]['and'][] = $this->convertFilter($field,'in',implode(',',$values));
 					}
 					if ($first_row) $first_row = false;
 					else echo ',';
