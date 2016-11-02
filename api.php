@@ -1232,8 +1232,8 @@ class PHP_CRUD_API {
 		$sql .= ' FROM !';
 		$params[] = $table;
 		if (!isset($filters[$table])) $filters[$table] = array();
-		if (!isset($filters[$table]['or'])) $filters[$table]['or'] = array();
-		$filters[$table]['or'][] = $this->convertFilter($key[1],'eq',$key[0]);
+		if (!isset($filters[$table]['and'])) $filters[$table]['and'] = array();
+		$filters[$table]['and'][] = $this->convertFilter($key[1],'eq',$key[0]);
 		$this->addWhereFromFilters($filters[$table],$sql,$params);
 		$object = null;
 		if ($result = $this->db->query($sql,$params)) {
@@ -1290,8 +1290,8 @@ class PHP_CRUD_API {
 			$params[] = $v;
 		}
 		if (!isset($filters[$table])) $filters[$table] = array();
-		if (!isset($filters[$table]['or'])) $filters[$table]['or'] = array();
-		$filters[$table]['or'][] = $this->convertFilter($key[1],'eq',$key[0]);
+		if (!isset($filters[$table]['and'])) $filters[$table]['and'] = array();
+		$filters[$table]['and'][] = $this->convertFilter($key[1],'eq',$key[0]);
 		$this->addWhereFromFilters($filters[$table],$sql,$params);
 		$result = $this->db->query($sql,$params);
 		if (!$result) return null;
@@ -1303,8 +1303,8 @@ class PHP_CRUD_API {
 		$sql = 'DELETE FROM !';
 		$params = array($table);
 		if (!isset($filters[$table])) $filters[$table] = array();
-		if (!isset($filters[$table]['or'])) $filters[$table]['or'] = array();
-		$filters[$table]['or'][] = $this->convertFilter($key[1],'eq',$key[0]);
+		if (!isset($filters[$table]['and'])) $filters[$table]['and'] = array();
+		$filters[$table]['and'][] = $this->convertFilter($key[1],'eq',$key[0]);
 		$this->addWhereFromFilters($filters[$table],$sql,$params);
 		$result = $this->db->query($sql,$params);
 		if (!$result) return null;
