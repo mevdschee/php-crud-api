@@ -569,6 +569,20 @@ class PHP_CRUD_API_Test extends PHPUnit_Framework_TestCase
 		$test->expect('{"posts":[{"category_id":"1","categories":[{"id":"1","name":"announcement"}]}]}');
 	}
 
+	public function testFilterOnRelationAnd()
+	{
+		$test = new API($this);
+		$test->get('/categories?include=posts&filter[]=id,ge,1&filter[]=id,le,1&filter[]=id,le,2&filter[]=posts.id,lt,8&filter[]=posts.id,gt,4');
+		$test->expect('{"categories":{"columns":["id","name","icon"],"records":[["1","announcement",null]]},"posts":{"relations":{"category_id":"categories.id"},"columns":["id","user_id","category_id","content"],"records":[["5","1","1","#1"],["6","1","1","#2"],["7","1","1","#3"]]}}');
+	}
+
+	public function testFilterOnRelationOr()
+	{
+		$test = new API($this);
+		$test->get('/categories?include=posts&filter[]=id,ge,1&filter[]=id,le,1&filter[]=posts.id,eq,5&filter[]=posts.id,eq,6&filter[]=posts.id,eq,7&satisfy=all,posts.any');
+		$test->expect('{"categories":{"columns":["id","name","icon"],"records":[["1","announcement",null]]},"posts":{"relations":{"category_id":"categories.id"},"columns":["id","user_id","category_id","content"],"records":[["5","1","1","#1"],["6","1","1","#2"],["7","1","1","#3"]]}}');
+	}
+
 	public function testColumnsOnWrongInclude()
 	{
 		$test = new API($this);

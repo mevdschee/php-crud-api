@@ -946,12 +946,7 @@ class PHP_CRUD_API {
 
 	protected function applyRecordFilter($callback,$action,$database,$tables,&$filters) {
 		if (is_callable($callback,true)) foreach ($tables as $i=>$table) {
-			$f = $this->convertFilters($callback($action,$database,$table));
-			if ($f) {
-				if (!isset($filters[$table])) $filters[$table] = array();
-				if (!isset($filters[$table]['and'])) $filters[$table]['and'] = array();
-				$filters[$table]['and'] = array_merge($filters[$table]['and'],$f);
-			}
+			$this->addFilters($filters,$table,array($table=>'and'),$callback($action,$database,$table));
 		}
 	}
 
@@ -960,10 +955,8 @@ class PHP_CRUD_API {
 			foreach ($keys as $field) {
 				$v = $callback($action,$database,$table,$field->name);
 				if ($v!==null) {
-					if (!isset($filters[$table])) $filters[$table] = array();
-					if (!isset($filters[$table]['and'])) $filters[$table]['and'] = array();
-					if (is_array($v)) $filters[$table]['and'][] = $this->convertFilter($field->name,'in',implode(',',$v));
-					else $filters[$table]['and'][] = $this->convertFilter($field->name,'eq',$v);
+					if (is_array($v)) $this->addFilter($filters,$table,'and',$field->name,'in',implode(',',$v));
+					else $this->addFilter($filters,$table,'and',$field->name,'eq',$v);
 				}
 			}
 		}
@@ -1191,28 +1184,44 @@ class PHP_CRUD_API {
 		return false;
 	}
 
-	public function convertFilters($filters) {
-		$result = array();
-		if ($filters) {
-			for ($i=0;$i<count($filters);$i++) {
-				$parts = explode(',',$filters[$i],3);
+	public function addFilter(&$filters,$table,$and,$field,$comparator,$value) {
+		if (!isset($filters[$table])) $filters[$table] = array();
+		if (!isset($filters[$table][$and])) $filters[$table][$and] = array();
+		$filter = $this->convertFilter($field,$comparator,$value);
+		if ($filter) $filters[$table][$and][] = $filter;
+	}
+
+	public function addFilters(&$filters,$table,$satisfy,$filterStrings) {
+		if ($filterStrings) {
+			for ($i=0;$i<count($filterStrings);$i++) {
+				$parts = explode(',',$filterStrings[$i],3);
 				if (count($parts)>=2) {
-					$field = $parts[0];
+					if (strpos($parts[0],'.')) list($t,$f) = explode('.',$parts[0],2);
+					else list($t,$f) = array($table,$parts[0]);
 					$comparator = $parts[1];
 					$value = isset($parts[2])?$parts[2]:null;
-					$filter = $this->convertFilter($field,$comparator,$value);
-					if ($filter) $result[] = $filter;
+					$and = isset($satisfy[$t])?$satisfy[$t]:'and';
+					$this->addFilter($filters,$t,$and,$f,$comparator,$value);
 				}
 			}
 		}
-		return $result;
 	}
 
-	protected function processFiltersParameter($tables,$satisfy,$filters) {
-		$result = $this->convertFilters($filters);
-		if (!$result) return array();
-		$and = ($satisfy && strtolower($satisfy)=='any')?'or':'and';
-		return array($tables[0]=>array($and=>$result));
+	protected function processSatisfyParameter($tables,$satisfyString) {
+		$satisfy = array();
+		foreach (explode(',',$satisfyString) as $str) {
+			if (strpos($str,'.')) list($t,$s) = explode('.',$str,2);
+			else list($t,$s) = array($tables[0],$str);
+			$and = ($s && strtolower($s)=='any')?'or':'and';
+			$satisfy[$t] = $and;
+		}
+		return $satisfy;
+	}
+
+	protected function processFiltersParameter($tables,$satisfy,$filterStrings) {
+		$filters = array();
+		$this->addFilters($filters,$tables[0],$satisfy,$filterStrings);
+		return $filters;
 	}
 
 	protected function processPageParameter($page) {
@@ -1231,9 +1240,7 @@ class PHP_CRUD_API {
 		$this->convertOutputs($sql,$params,$fields[$table]);
 		$sql .= ' FROM !';
 		$params[] = $table;
-		if (!isset($filters[$table])) $filters[$table] = array();
-		if (!isset($filters[$table]['and'])) $filters[$table]['and'] = array();
-		$filters[$table]['and'][] = $this->convertFilter($key[1],'eq',$key[0]);
+		$this->addFilter($filters,$table,'and',$key[1],'eq',$key[0]);
 		$this->addWhereFromFilters($filters[$table],$sql,$params);
 		$object = null;
 		if ($result = $this->db->query($sql,$params)) {
@@ -1289,9 +1296,7 @@ class PHP_CRUD_API {
 			$params[] = $k;
 			$params[] = $v;
 		}
-		if (!isset($filters[$table])) $filters[$table] = array();
-		if (!isset($filters[$table]['and'])) $filters[$table]['and'] = array();
-		$filters[$table]['and'][] = $this->convertFilter($key[1],'eq',$key[0]);
+		$this->addFilter($filters,$table,'and',$key[1],'eq',$key[0]);
 		$this->addWhereFromFilters($filters[$table],$sql,$params);
 		$result = $this->db->query($sql,$params);
 		if (!$result) return null;
@@ -1302,9 +1307,7 @@ class PHP_CRUD_API {
 		$table = $tables[0];
 		$sql = 'DELETE FROM !';
 		$params = array($table);
-		if (!isset($filters[$table])) $filters[$table] = array();
-		if (!isset($filters[$table]['and'])) $filters[$table]['and'] = array();
-		$filters[$table]['and'][] = $this->convertFilter($key[1],'eq',$key[0]);
+		$this->addFilter($filters,$table,'and',$key[1],'eq',$key[0]);
 		$this->addWhereFromFilters($filters[$table],$sql,$params);
 		$result = $this->db->query($sql,$params);
 		if (!$result) return null;
@@ -1467,13 +1470,14 @@ class PHP_CRUD_API {
 		$callback  = $this->parseGetParameter($get, 'callback', 'a-zA-Z0-9\-_');
 		$page      = $this->parseGetParameter($get, 'page', '0-9,');
 		$filters   = $this->parseGetParameterArray($get, 'filter', false);
-		$satisfy   = $this->parseGetParameter($get, 'satisfy', 'a-zA-Z');
+		$satisfy   = $this->parseGetParameter($get, 'satisfy', 'a-zA-Z0-9\-_,.');
 		$columns   = $this->parseGetParameter($get, 'columns', 'a-zA-Z0-9\-_,.*');
 		$order     = $this->parseGetParameter($get, 'order', 'a-zA-Z0-9\-_,');
 		$transform = $this->parseGetParameter($get, 'transform', 't1');
 
 		$tables    = $this->processTableAndIncludeParameters($database,$table,$include,$action);
 		$key       = $this->processKeyParameter($key,$tables,$database);
+		$satisfy   = $this->processSatisfyParameter($tables,$satisfy);
 		$filters   = $this->processFiltersParameter($tables,$satisfy,$filters);
 		$page      = $this->processPageParameter($page);
 		$order     = $this->processOrderParameter($order);
@@ -1608,9 +1612,7 @@ class PHP_CRUD_API {
 				foreach ($select[$table] as $field => $path) {
 					$values = $collect[$path[0]][$path[1]];
 					if ($values) {
-						if (!isset($filters[$table])) $filters[$table] = array();
-						if (!isset($filters[$table]['and'])) $filters[$table]['and'] = array();
-						$filters[$table]['and'][] = $this->convertFilter($field,'in',implode(',',$values));
+						$this->addFilter($filters,$table,'and',$field,'in',implode(',',$values));
 					}
 					if ($first_row) $first_row = false;
 					else echo ',';

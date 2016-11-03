@@ -168,6 +168,7 @@ GET http://localhost/api.php/categories?filter=name,sw,Inter
 GET http://localhost/api.php/categories?filter=id,le,1
 GET http://localhost/api.php/categories?filter=id,ngt,2
 GET http://localhost/api.php/categories?filter=id,bt,1,1
+GET http://localhost/api.php/categories?filter=categories.id,eq,1
 ```
 
 Output:
@@ -176,6 +177,8 @@ Output:
 {"categories":{"columns":["id","name"],"records":[["1","Internet"]]}}
 ```
 
+NB: You may specify table name before the field name, seperated with a dot.
+
 ### List + Filter + Satisfy
 
 Multiple filters can be applied by using "filter[]" instead of "filter" as a parameter name. Then the parameter "satisfy" is used to indicate whether "all" (default) or "any" filter should be satisfied to lead to a match:
@@ -183,6 +186,7 @@ Multiple filters can be applied by using "filter[]" instead of "filter" as a par
 ```
 GET http://localhost/api.php/categories?filter[]=id,eq,1&filter[]=id,eq,3&satisfy=any
 GET http://localhost/api.php/categories?filter[]=id,ge,1&filter[]=id,le,3&satisfy=all
+GET http://localhost/api.php/categories?filter[]=id,ge,1&filter[]=id,le,3&satisfy=categories.all
 GET http://localhost/api.php/categories?filter[]=id,ge,1&filter[]=id,le,3
 ```
 
@@ -191,6 +195,8 @@ Output:
 ```
 {"categories":{"columns":["id","name"],"records":[["1","Internet"],["3","Web development"]]}}
 ```
+
+NB: You may specify "satisfy=categories.all,posts.any" if you want to mix "and" and "or" for different tables.
 
 ### List + Column selection
 
