@@ -104,4 +104,15 @@ INSERT INTO `countries` (`id`, `name`, `shape`) VALUES
 (1,	'Left',	ST_GeomFromText('POLYGON ((30 10, 40 40, 20 40, 10 20, 30 10))')),
 (2,	'Right',	ST_GeomFromText('POLYGON ((70 10, 80 40, 60 40, 50 20, 70 10))'));
 
+DROP TABLE IF EXISTS `events`;
+CREATE TABLE `events` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) NOT NULL,
+  `datetime` datetime NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+INSERT INTO `events` (`id`, `name`, `datetime`) VALUES
+(1,	'Launch', '2016-01-01T13:01:01Z');
+
 -- 2015-02-14 17:55:38
