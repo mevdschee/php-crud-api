@@ -26,7 +26,8 @@ GO
 IF (OBJECT_ID('events', 'U') IS NOT NULL)
 BEGIN
 DROP TABLE [events]
-ENDGO
+END
+GO
 IF (OBJECT_ID('countries', 'U') IS NOT NULL)
 BEGIN
 DROP TABLE [countries]
