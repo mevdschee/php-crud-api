@@ -26,6 +26,7 @@ DROP TABLE IF EXISTS posts CASCADE;
 DROP TABLE IF EXISTS tags CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
 DROP TABLE IF EXISTS countries CASCADE;
+DROP TABLE IF EXISTS events CASCADE;
 
 --
 -- Name: categories; Type: TABLE; Schema: public; Owner: postgres; Tablespace:
@@ -104,6 +105,16 @@ CREATE TABLE countries (
 );
 
 --
+-- Name: events; Type: TABLE; Schema: public; Owner: postgres; Tablespace:
+--
+
+CREATE TABLE events (
+    id serial NOT NULL,
+    name character varying(255) NOT NULL,
+    datetime timestamp NOT NULL
+);
+
+--
 -- Data for Name: categories; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
@@ -164,6 +175,13 @@ INSERT INTO "countries" ("name", "shape") VALUES
 ('Right',	ST_GeomFromText('POLYGON ((70 10, 80 40, 60 40, 50 20, 70 10))'));
 
 --
+-- Data for Name: events; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+INSERT INTO "events" ("name", "datetime") VALUES
+('Launch',	'2016-01-01 13:01:01');
+
+--
 -- Name: categories_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres; Tablespace:
 --
 
@@ -217,6 +235,21 @@ ALTER TABLE ONLY tags
 
 ALTER TABLE ONLY users
     ADD CONSTRAINT users_pkey PRIMARY KEY (id);
+
+--
+-- Name: countries_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres; Tablespace:
+--
+
+ALTER TABLE ONLY countries
+    ADD CONSTRAINT countries_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: events_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres; Tablespace:
+--
+
+ALTER TABLE ONLY events
+    ADD CONSTRAINT events_pkey PRIMARY KEY (id);
 
 
 --

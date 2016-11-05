@@ -628,8 +628,7 @@ class PHP_CRUD_API_Test extends PHPUnit_Framework_TestCase
 	{
 		$test = new API($this);
 		$test->get('/events?columns=datetime');
-		$test->expect('{"posts":{"columns":["content"],"records":[["tests"],["tests"]]}}');
+		$test->expect('{"events":{"columns":["datetime"],"records":[["2016-01-01 13:01:01"]]}}');
 	}
-
 
 }

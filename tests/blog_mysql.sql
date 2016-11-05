@@ -113,6 +113,6 @@ CREATE TABLE `events` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 INSERT INTO `events` (`id`, `name`, `datetime`) VALUES
-(1,	'Launch', '2016-01-01T13:01:01Z');
+(1,	'Launch', '2016-01-01 13:01:01');
 
 -- 2015-02-14 17:55:38

@@ -23,6 +23,10 @@ BEGIN
 ALTER TABLE [comments] DROP CONSTRAINT [FK_comments_posts]
 END
 GO
+IF (OBJECT_ID('events', 'U') IS NOT NULL)
+BEGIN
+DROP TABLE [events]
+ENDGO
 IF (OBJECT_ID('countries', 'U') IS NOT NULL)
 BEGIN
 DROP TABLE [countries]
@@ -160,6 +164,21 @@ CREATE TABLE [countries](
 ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
 
 GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [events](
+	[id] [int] IDENTITY,
+	[name] [nvarchar](max) NOT NULL,
+	[datetime] [datetime] NOT NULL,
+ CONSTRAINT [PK_events] PRIMARY KEY CLUSTERED
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+
+GO
 SET IDENTITY_INSERT [categories] ON
 GO
 INSERT [categories] ([id], [name], [icon]) VALUES (1, N'announcement', NULL)
@@ -223,6 +242,12 @@ GO
 INSERT [countries] ([id], [name], [shape]) VALUES (2, N'Right', N'POLYGON ((70 10, 80 40, 60 40, 50 20, 70 10))')
 GO
 SET IDENTITY_INSERT [countries] OFF
+GO
+SET IDENTITY_INSERT [events] ON
+GO
+INSERT [events] ([id], [name], [datetime]) VALUES (1, N'Launch', N'2016-01-01 13:01:01')
+GO
+SET IDENTITY_INSERT [events] OFF
 GO
 ALTER TABLE [comments]  WITH CHECK ADD  CONSTRAINT [FK_comments_posts] FOREIGN KEY([post_id])
 REFERENCES [posts] ([id])

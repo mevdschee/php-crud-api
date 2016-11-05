@@ -88,4 +88,13 @@ CREATE TABLE `countries` (
 INSERT INTO `countries` (`id`, `name`, `shape`) VALUES (1,	'Left',	'POLYGON ((30 10, 40 40, 20 40, 10 20, 30 10))');
 INSERT INTO `countries` (`id`, `name`, `shape`) VALUES (2,	'Right',	'POLYGON ((70 10, 80 40, 60 40, 50 20, 70 10))');
 
+DROP TABLE IF EXISTS `events`;
+CREATE TABLE `events` (
+  `id` integer NOT NULL PRIMARY KEY AUTOINCREMENT,
+  `name` text(255) NOT NULL,
+  `datetime` datetime NOT NULL
+);
+
+INSERT INTO `events` (`id`, `name`, `datetime`) VALUES (1,	'Launch',	'2016-01-01 13:01:01');
+
 --
