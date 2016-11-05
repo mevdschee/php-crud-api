@@ -3,7 +3,7 @@
 
 # PHP-CRUD-API
 
-Single file PHP script that adds a REST API to a MySQL InnoDB database. PostgreSQL 9 and MS SQL Server 2012 are fully supported. There is even limited support for SQLite 3.
+Single file PHP script that adds a REST API to a MySQL 5.6 InnoDB database. PostgreSQL 9 and MS SQL Server 2012 are fully supported. There is even limited support for SQLite 3.
 
 Related projects:
 
