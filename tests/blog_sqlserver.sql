@@ -63,6 +63,11 @@ BEGIN
 DROP TABLE [categories]
 END
 GO
+IF (OBJECT_ID('tag_usage', 'V') IS NOT NULL)
+BEGIN
+DROP VIEW [tag_usage]
+END
+GO
 CREATE TABLE [categories](
 	[id] [int] IDENTITY,
 	[name] [nvarchar](max) NOT NULL,
@@ -172,12 +177,21 @@ GO
 CREATE TABLE [events](
 	[id] [int] IDENTITY,
 	[name] [nvarchar](max) NOT NULL,
-	[datetime] [datetime] NOT NULL,
+	[datetime] [datetime2](3) NOT NULL,
  CONSTRAINT [PK_events] PRIMARY KEY CLUSTERED
 (
 	[id] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE VIEW [tag_usage]
+AS
+SELECT top 100 PERCENT name, COUNT(name) AS [count] FROM tags, post_tags WHERE tags.id = post_tags.tag_id GROUP BY name ORDER BY [count] DESC, name
 
 GO
 SET IDENTITY_INSERT [categories] ON
