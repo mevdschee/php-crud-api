@@ -776,7 +776,7 @@ class SQLite implements DatabaseInterface {
 			$this->query('INSERT into "sys/version" ("version") VALUES (?)',array($version));
 			// update tables data
 			$this->query('DELETE FROM "sys/tables"');
-			$result = $this->query('SELECT * FROM sqlite_master WHERE type = "table" and name not like "sys/%" and name<>"sqlite_sequence"');
+			$result = $this->query('SELECT * FROM sqlite_master WHERE (type = "table" or type = "view") and name not like "sys/%" and name<>"sqlite_sequence"');
 			$tables = array();
 			while ($row = $this->fetchAssoc($result)) {
 				$tables[] = $row['name'];
