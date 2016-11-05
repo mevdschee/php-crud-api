@@ -172,7 +172,7 @@ GO
 CREATE TABLE [events](
 	[id] [int] IDENTITY,
 	[name] [nvarchar](max) NOT NULL,
-	[datetime] [datetime] NOT NULL,
+	[datetime] [datetime2](0) NOT NULL,
  CONSTRAINT [PK_events] PRIMARY KEY CLUSTERED
 (
 	[id] ASC
