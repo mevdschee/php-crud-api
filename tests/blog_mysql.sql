@@ -1,4 +1,4 @@
--- Adminer 4.1.0 MySQL dump
+-- Adminer 4.2.4 MySQL dump
 
 SET NAMES utf8;
 SET time_zone = '+00:00';
@@ -108,11 +108,14 @@ DROP TABLE IF EXISTS `events`;
 CREATE TABLE `events` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(255) NOT NULL,
-  `datetime` datetime NOT NULL,
+  `datetime` datetime(3) NOT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 INSERT INTO `events` (`id`, `name`, `datetime`) VALUES
-(1,	'Launch', '2016-01-01 13:01:01');
+(1,	'Launch', '2016-01-01 13:01:01.111');
 
--- 2015-02-14 17:55:38
+DROP VIEW IF EXISTS `tag_usage`;
+CREATE VIEW `tag_usage` AS select `name`, count(`name`) AS `count` from `tags`, `post_tags` where `tags`.`id` = `post_tags`.`tag_id` group by `name` order by `count` desc, `name`;
+
+-- 2016-11-05 13:11:47

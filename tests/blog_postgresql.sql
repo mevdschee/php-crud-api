@@ -27,7 +27,7 @@ DROP TABLE IF EXISTS tags CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
 DROP TABLE IF EXISTS countries CASCADE;
 DROP TABLE IF EXISTS events CASCADE;
-
+DROP VIEW IF EXISTS tag_usage;
 --
 -- Name: categories; Type: TABLE; Schema: public; Owner: postgres; Tablespace:
 --
@@ -115,6 +115,12 @@ CREATE TABLE events (
 );
 
 --
+-- Name: tag_usage; Type: VIEW; Schema: public; Owner: postgres; Tablespace:
+--
+
+CREATE VIEW "tag_usage" AS select "name", count("name") AS "count" from "tags", "post_tags" where "tags"."id" = "post_tags"."tag_id" group by "name" order by "count" desc, "name";
+
+--
 -- Data for Name: categories; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
@@ -179,7 +185,7 @@ INSERT INTO "countries" ("name", "shape") VALUES
 --
 
 INSERT INTO "events" ("name", "datetime") VALUES
-('Launch',	'2016-01-01 13:01:01');
+('Launch',	'2016-01-01 13:01:01.111');
 
 --
 -- Name: categories_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres; Tablespace:

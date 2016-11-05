@@ -95,6 +95,9 @@ CREATE TABLE `events` (
   `datetime` datetime NOT NULL
 );
 
-INSERT INTO `events` (`id`, `name`, `datetime`) VALUES (1,	'Launch',	'2016-01-01 13:01:01');
+INSERT INTO `events` (`id`, `name`, `datetime`) VALUES (1,	'Launch',	'2016-01-01 13:01:01.111');
+
+DROP VIEW IF EXISTS `tag_usage`;
+CREATE VIEW `tag_usage` AS select `name`, count(`name`) AS `count` from `tags`, `post_tags` where `tags`.`id` = `post_tags`.`tag_id` group by `name` order by `count` desc, `name`;
 
 --
