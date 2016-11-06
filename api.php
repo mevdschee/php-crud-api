@@ -2175,7 +2175,7 @@ class PHP_CRUD_API {
 // 	'authenticator'=>function($user,$pass){ $_SESSION['user']=($user=='admin' && $pass=='admin'); }
 // ));
 // $auth->executeCommand();
-// if (empty($_SESSION['user'])) {
+// if (empty($_SESSION['user']) || $_GET['csrf']!=sha1(session_id())) {
 //	header('HTTP/1.0 401 Unauthorized');
 //	exit(0);
 // }
