@@ -88,6 +88,7 @@ $api = new PHP_CRUD_API(array(
 	'input_sanitizer'=>function($cmd,$db,$tab,$col,$typ,$val) { return $val; },
 	'input_validator'=>function($cmd,$db,$tab,$col,$typ,$val,$ctx) { return true; },
 // configurable options
+    'allow_origin'=>'*',
 	'auto_include'=>true,
     'extensions'=>true,
 // dependencies (added for unit testing):

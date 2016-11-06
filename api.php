@@ -1716,6 +1716,7 @@ class PHP_CRUD_API {
 		$input_validator = isset($input_validator)?$input_validator:null;
 		$extensions = isset($extensions)?$extensions:null;
 		$auto_include = isset($auto_include)?$auto_include:null;
+		$allow_origin = isset($allow_origin)?$allow_origin:null;
 
 		$db = isset($db)?$db:null;
 		$method = isset($method)?$method:null;
@@ -1761,9 +1762,12 @@ class PHP_CRUD_API {
 		if ($auto_include===null) {
 			$auto_include = true;
 		}
+		if ($allow_origin===null) {
+			$allow_origin = '*';
+		}
 
 		$this->db = $db;
-		$this->settings = compact('method', 'request', 'get', 'post', 'database', 'table_authorizer', 'record_filter', 'column_authorizer', 'tenancy_function', 'input_sanitizer', 'input_validator', 'extensions', 'auto_include');
+		$this->settings = compact('method', 'request', 'get', 'post', 'database', 'table_authorizer', 'record_filter', 'column_authorizer', 'tenancy_function', 'input_sanitizer', 'input_validator', 'extensions', 'auto_include', 'allow_origin');
 	}
 
 	public static function php_crud_api_transform(&$tables) {
@@ -2112,7 +2116,7 @@ class PHP_CRUD_API {
 
 	public function executeCommand() {
 		if (isset($_SERVER['REQUEST_METHOD'])) {
-			header('Access-Control-Allow-Origin: *');
+			header('Access-Control-Allow-Origin: '.$this->settings['allow_origin']);
 		}
 		if (!$this->settings['request']) {
 			$this->swagger($this->settings);
