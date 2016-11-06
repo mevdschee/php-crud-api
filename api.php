@@ -2137,7 +2137,7 @@ class PHP_CRUD_API {
 // $auth = new PHP_API_AUTH(array(
 // 	'secret'=>'someVeryLongPassPhraseChangeMe',
 // ));
-// $auth->executeCommand();
+// if ($auth->executeCommand()) exit(0);
 // if (empty($_SESSION['user']) || $_GET['csrf']!=$_SESSION['csrf']) {
 //	header('HTTP/1.0 401 Unauthorized');
 //	exit(0);
@@ -2148,7 +2148,7 @@ class PHP_CRUD_API {
 // $auth = new PHP_API_AUTH(array(
 // 	'authenticator'=>function($user,$pass){ $_SESSION['user']=($user=='admin' && $pass=='admin'); }
 // ));
-// $auth->executeCommand();
+// if ($auth->executeCommand()) exit(0);
 // if (empty($_SESSION['user']) || $_GET['csrf']!=$_SESSION['csrf']) {
 //	header('HTTP/1.0 401 Unauthorized');
 //	exit(0);
