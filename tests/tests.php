@@ -443,13 +443,6 @@ class PHP_CRUD_API_Test extends PHPUnit_Framework_TestCase
 		$test->expect('null');
 	}
 
-	public function testForJsonpCallbackOnList()
-	{
-		$test = new API($this);
-		$test->get('/posts?filter[]=id,eq,1&callback=test_jsonp_fn&transform=1');
-		$test->expect('test_jsonp_fn({"posts":[{"id":"1","user_id":"1","category_id":"1","content":"blog started"}]});');
-	}
-
 	public function testMissingIntermediateTable()
 	{
 		$test = new API($this);
