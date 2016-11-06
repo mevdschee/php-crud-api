@@ -1061,22 +1061,9 @@ class PHP_CRUD_API {
 		}
 	}
 
-	protected function startOutput($callback) {
-		if ($callback) {
-			if (isset($_SERVER['REQUEST_METHOD'])) {
-				header('Content-Type: application/javascript; charset=utf-8');
-			}
-			echo $callback.'(';
-		} else {
-			if (isset($_SERVER['REQUEST_METHOD'])) {
-				header('Content-Type: application/json; charset=utf-8');
-			}
-		}
-	}
-
-	protected function endOutput($callback) {
-		if ($callback) {
-			echo ');';
+	protected function startOutput() {
+		if (isset($_SERVER['REQUEST_METHOD'])) {
+			header('Content-Type: application/json; charset=utf-8');
 		}
 	}
 
@@ -1467,7 +1454,6 @@ class PHP_CRUD_API {
 		$key       = $this->parseRequestParameter($request, 'a-zA-Z0-9\-_'); // auto-increment or uuid
 		$action    = $this->mapMethodToAction($method,$key);
 		$include   = $this->parseGetParameter($get, 'include', 'a-zA-Z0-9\-_,');
-		$callback  = $this->parseGetParameter($get, 'callback', 'a-zA-Z0-9\-_');
 		$page      = $this->parseGetParameter($get, 'page', '0-9,');
 		$filters   = $this->parseGetParameterArray($get, 'filter', false);
 		$satisfy   = $this->parseGetParameter($get, 'satisfy', 'a-zA-Z0-9\-_,.');
@@ -1510,7 +1496,7 @@ class PHP_CRUD_API {
 			}
 		}
 
-		return compact('action','database','tables','key','callback','page','filters','fields','order','transform','inputs','collect','select');
+		return compact('action','database','tables','key','page','filters','fields','order','transform','inputs','collect','select');
 	}
 
 	protected function addWhereFromFilters($filters,&$sql,&$params) {
@@ -1653,38 +1639,34 @@ class PHP_CRUD_API {
 		extract($parameters);
 		$object = $this->retrieveObject($key,$fields,$filters,$tables);
 		if (!$object) $this->exitWith404('object');
-		$this->startOutput($callback);
+		$this->startOutput();
 		echo json_encode($object);
-		$this->endOutput($callback);
 	}
 
 	protected function createCommand($parameters) {
 		extract($parameters);
 		if (!$inputs || !$inputs[0]) $this->exitWith404('input');
-		$this->startOutput($callback);
+		$this->startOutput();
 		if (count($inputs)==1) echo json_encode($this->createObject($inputs[0],$tables));
 		else echo json_encode($this->createObjects($inputs,$tables));
-		$this->endOutput($callback);
 	}
 
 	protected function updateCommand($parameters) {
 		extract($parameters);
 		if (!$inputs) $this->exitWith404('subject');
-		$this->startOutput($callback);
+		$this->startOutput();
 		echo json_encode($this->updateObject($key,$inputs[0],$filters,$tables));
-		$this->endOutput($callback);
 	}
 
 	protected function deleteCommand($parameters) {
 		extract($parameters);
-		$this->startOutput($callback);
+		$this->startOutput();
 		echo json_encode($this->deleteObject($key,$filters,$tables));
-		$this->endOutput($callback);
 	}
 
 	protected function listCommand($parameters) {
 		extract($parameters);
-		$this->startOutput($callback);
+		$this->startOutput();
 		if ($transform) {
 			ob_start();
 		}
@@ -1695,7 +1677,6 @@ class PHP_CRUD_API {
 			$data = json_decode($content,true);
 			echo json_encode(self::php_crud_api_transform($data));
 		}
-		$this->endOutput($callback);
 	}
 
 	protected function retrievePostData() {
@@ -1968,13 +1949,6 @@ class PHP_CRUD_API {
 						echo '"required":false,';
 						echo '"type":"string",';
 						echo '"enum":["any"]';
-						echo '},';
-						echo '{';
-						echo '"name":"callback",';
-						echo '"in":"query",';
-						echo '"description":"JSONP callback function name",';
-						echo '"required":false,';
-						echo '"type":"string"';
 						echo '}';
 						echo '],';
 						echo '"responses":{';
