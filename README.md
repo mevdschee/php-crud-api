@@ -43,7 +43,7 @@ This is a single file application! Upload "api.php" somewhere and enjoy!
   - Sanitize and validate input using callbacks
   - Permission system for databases, tables, columns and records
   - Multi-tenant database layouts are supported
-  - Both JSONP and CORS support for cross-domain requests
+  - CORS support for cross-domain requests
   - Combined requests with support for multiple table names
   - Search support on multiple criteria
   - Pagination, sorting and column selection
