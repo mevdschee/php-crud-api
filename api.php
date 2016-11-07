@@ -2119,13 +2119,11 @@ class PHP_CRUD_API {
 	}
 
 	protected function allowOrigin($origin,$allowOrigins) {
-		$allowedOrigins = explode(',',$allowOrigins);
-		if ($allowedOrigins[0]=='*') {
+		if ($allowOrigins=='*') {
 			header('Access-Control-Allow-Origin: *');
 		} else {
-			if ($origin) foreach ($allowedOrigins as $allowedOrigin) {
-				$allowedOrigin = str_replace('\*','.*',preg_quote(strtolower(trim($allowedOrigin))));
-				if (preg_match('/^'.$allowedOrigin.'$/',$origin)) { 
+			if ($origin) foreach (explode(',',$allowOrigins) as $o) {
+				if (preg_match('/^'.str_replace('\*','.*',preg_quote(strtolower(trim($o)))).'$/',$origin)) { 
 					header('Access-Control-Allow-Origin: '.$origin);
 					break;
 				}
