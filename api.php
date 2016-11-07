@@ -1723,7 +1723,8 @@ class PHP_CRUD_API {
 		$request = isset($request)?$request:null;
 		$get = isset($get)?$get:null;
 		$post = isset($post)?$post:null;
-
+		$origin = isset($origin)?$origin:null;
+		
 		// defaults
 		if (!$dbengine) {
 			$dbengine = 'MySQL';
@@ -1742,6 +1743,9 @@ class PHP_CRUD_API {
 		}
 		if (!$post) {
 			$post = $this->retrievePostData();
+		}
+		if (!$origin) {
+			$origin = isset($_SERVER['HTTP_ORIGIN'])?$_SERVER['HTTP_ORIGIN']:'';
 		}
 
 		// connect
@@ -1767,7 +1771,7 @@ class PHP_CRUD_API {
 		}
 
 		$this->db = $db;
-		$this->settings = compact('method', 'request', 'get', 'post', 'database', 'table_authorizer', 'record_filter', 'column_authorizer', 'tenancy_function', 'input_sanitizer', 'input_validator', 'extensions', 'auto_include', 'allow_origin');
+		$this->settings = compact('method', 'request', 'get', 'post', 'origin', 'database', 'table_authorizer', 'record_filter', 'column_authorizer', 'tenancy_function', 'input_sanitizer', 'input_validator', 'extensions', 'auto_include', 'allow_origin');
 	}
 
 	public static function php_crud_api_transform(&$tables) {
@@ -2114,19 +2118,24 @@ class PHP_CRUD_API {
 			echo '}';
 	}
 
-	public function executeCommand() {
-		if (isset($_SERVER['REQUEST_METHOD'])) {
-			$origins = explode(',',$this->settings['allow_origin']);
-			if (count($origins)==1) {
-				header('Access-Control-Allow-Origin: '.$origins[0]);
-			} else {
-				$origins = array_map('strtolower', $origins);
-				$origins = array_map('trim', $origins);
-				$origin = strtolower($_SERVER['HTTP_ORIGIN']);
-				if (in_array($origin,$origins)) { 
-					header('Access-Control-Allow-Origin: '.$_SERVER['HTTP_ORIGIN']);
+	protected function allowOrigin($origin,$allowOrigins) {
+		$allowedOrigins = explode(',',$allowOrigins);
+		if ($allowedOrigins[0]=='*') {
+			header('Access-Control-Allow-Origin: *');
+		} else {
+			if ($origin) foreach ($allowedOrigins as $allowedOrigin) {
+				$allowedOrigin = str_replace('\*','.*',preg_quote(strtolower(trim($allowedOrigin))));
+				if (preg_match('/^'.$allowedOrigin.'$/',$origin)) { 
+					header('Access-Control-Allow-Origin: '.$origin);
+					break;
 				}
 			}
+		}
+	}
+
+	public function executeCommand() {
+		if (isset($_SERVER['REQUEST_METHOD'])) {
+			$this->allowOrigin($this->settings['origin'],$this->settings['allow_origin']);
 		}
 		if (!$this->settings['request']) {
 			$this->swagger($this->settings);
