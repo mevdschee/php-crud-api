@@ -43,7 +43,7 @@ This is a single file application! Upload "api.php" somewhere and enjoy!
   - Sanitize and validate input using callbacks
   - Permission system for databases, tables, columns and records
   - Multi-tenant database layouts are supported
-  - CORS support for cross-domain requests
+  - Multi-domain CORS support for cross-domain requests
   - Combined requests with support for multiple table names
   - Search support on multiple criteria
   - Pagination, sorting and column selection
@@ -669,6 +669,18 @@ When sending JSON data, then sending a NULL value for a nullable database field 
 PUT http://localhost/api.php/categories/2
 {"name":"Internet","icon":null}
 ```
+
+## Multi-domain CORS
+
+By specifying 'allow_origin' in the configuration you can control the 'Access-Control-Allow-Origin' response header that is being sent.
+
+If you set 'allow_origin' to '*' the 'Access-Control-Allow-Origin' response header will be set to '*'.
+In all other cases the 'Access-Control-Allow-Origin' response header is set to the value of the request header 'Origin' when a match is found.
+ 
+You may also specify 'allow_origin' to 'https://*.yourdomain.com' matching any host that starts with 'https://' and ends on '.yourdomain.com'.
+
+Multiple hosts may be specified using a comma, allowing you to set 'allow_origin' to 'https://yourdomain.com, https://*.yourdomain.com'.
+
 
 ## Errors
 
