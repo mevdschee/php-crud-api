@@ -97,6 +97,7 @@ $api = new PHP_CRUD_API(array(
 	'request'=>$_SERVER['PATH_INFO'],
 	'get'=>$_GET,
 	'post'=>file_get_contents('php://input'),
+	'origin'=>$_SERVER['HTTP_ORIGIN'],
 ));
 $api->executeCommand();
 ```
