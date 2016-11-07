@@ -2116,7 +2116,17 @@ class PHP_CRUD_API {
 
 	public function executeCommand() {
 		if (isset($_SERVER['REQUEST_METHOD'])) {
-			header('Access-Control-Allow-Origin: '.$this->settings['allow_origin']);
+			$origins = explode(',',$this->settings['allow_origin']);
+			if (count($origins)==1) {
+				header('Access-Control-Allow-Origin: '.$origins[0]);
+			} else {
+				$origins = array_map('strtolower', $origins);
+				$origins = array_map('trim', $origins);
+				$origin = strtolower($_SERVER['HTTP_ORIGIN']);
+				if (in_array($origin,$origins)) { 
+					header('Access-Control-Allow-Origin: '.$origin);
+				}
+			}
 		}
 		if (!$this->settings['request']) {
 			$this->swagger($this->settings);
