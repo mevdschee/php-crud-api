@@ -2,12 +2,16 @@
 <head>
 <script src="../lib/php_crud_api_transform.js"></script>
 <script>
-function callback(jsonObject) {
-  jsonObject = php_crud_api_transform(jsonObject);
-  document.getElementById('output').innerHTML = JSON.stringify(jsonObject, undefined, 4);
-}
+var xhttp = new XMLHttpRequest();
+xhttp.onreadystatechange = function() {
+  if (this.readyState == 4 && this.status == 200) {
+    jsonObject = php_crud_api_transform(JSON.parse(this.responseText));
+    document.getElementById('output').innerHTML = JSON.stringify(jsonObject, undefined, 4);
+  }
+};
+xhttp.open("GET", "http://localhost:8000/blog.php/posts?include=categories,tags,comments&filter=id,eq,1", true);
+xhttp.send();
 </script>
-<script src="http://localhost/api.php/posts?include=categories,tags,comments&filter=id,eq,1&callback=callback" defer="defer"></script>
 </head>
 <body>
 <pre id="output"></pre>
