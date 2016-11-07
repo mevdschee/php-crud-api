@@ -9,7 +9,7 @@ xhttp.onreadystatechange = function() {
     document.getElementById('output').innerHTML = JSON.stringify(jsonObject, undefined, 4);
   }
 };
-xhttp.open("GET", "http://localhost:8000/blog.php/posts?include=categories,tags,comments&filter=id,eq,1", true);
+xhttp.open("GET", "http://localhost/api.php/posts?include=categories,tags,comments&filter=id,eq,1", true);
 xhttp.send();
 </script>
 </head>
