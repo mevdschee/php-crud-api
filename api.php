@@ -2124,7 +2124,7 @@ class PHP_CRUD_API {
 				$origins = array_map('trim', $origins);
 				$origin = strtolower($_SERVER['HTTP_ORIGIN']);
 				if (in_array($origin,$origins)) { 
-					header('Access-Control-Allow-Origin: '.$origin);
+					header('Access-Control-Allow-Origin: '.$_SERVER['HTTP_ORIGIN']);
 				}
 			}
 		}
