@@ -378,8 +378,6 @@ class PHP_CRUD_API_Test extends PHPUnit_Framework_TestCase
 
 	public function testListCategoriesWithBinaryContent()
 	{
-		$binary = base64_encode("€ \0abc\0\n\r\b\0");
-		$base64url = rtrim(strtr($binary, '+/', '-_'), '=');
 		$test = new API($this);
 		$test->get('/categories');
 		$test->expect('{"categories":{"columns":["id","name","icon"],"records":[["1","announcement",null],["2","article","4oKsIABhYmMACg1cYgA="]]}}');
