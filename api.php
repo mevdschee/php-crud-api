@@ -1259,7 +1259,7 @@ class PHP_CRUD_API {
 				$this->db->rollbackTransaction();
 				return null;
 			}
-			$ids[] = $this->db->insertId($result);
+			$ids[] = $result;
 		}
 		$this->db->commitTransaction();
 		return $ids;
