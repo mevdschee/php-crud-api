@@ -1238,6 +1238,20 @@ class PHP_CRUD_API {
 		return $object;
 	}
 
+	protected function retrieveObjects($key,$fields,$filters,$tables) {
+		$keyField = $key[1];
+		$keys = explode(',',$key[0]);
+		$rows = array();
+		foreach ($keys as $key) {
+			$result = $this->retrieveObject(array($key,$keyField),$fields,$filters,$tables);
+			if ($result===null) {
+				return null;
+			}
+			$rows[] = $result;
+		}
+		return $rows;
+	}
+
 	protected function createObject($input,$tables) {
 		if (!$input) return false;
 		$input = (array)$input;
@@ -1673,7 +1687,8 @@ class PHP_CRUD_API {
 
 	protected function readCommand($parameters) {
 		extract($parameters);
-		$object = $this->retrieveObject($key,$fields,$filters,$tables);
+		if ($multi) $object = $this->retrieveObjects($key,$fields,$filters,$tables);
+		else $object = $this->retrieveObject($key,$fields,$filters,$tables);
 		if (!$object) $this->exitWith404('object');
 		$this->startOutput();
 		echo json_encode($object);

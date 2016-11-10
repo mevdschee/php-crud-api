@@ -216,6 +216,13 @@ class PHP_CRUD_API_Test extends PHPUnit_Framework_TestCase
 		$test->expect('{"id":"2","user_id":"1","category_id":"2","content":"It works!"}');
 	}
 
+	public function testReadPosts()
+	{
+		$test = new API($this);
+		$test->get('/posts/1,2');
+		$test->expect('[{"id":"1","user_id":"1","category_id":"1","content":"blog started"},{"id":"2","user_id":"1","category_id":"2","content":"It works!"}]');
+	}
+
 	public function testReadPostColumns()
 	{
 		$test = new API($this);

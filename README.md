@@ -313,6 +313,20 @@ Output:
 {"id":"1","name":"Internet"}
 ```
 
+### Read (multiple)
+
+If you want to read multiple objects you can use:
+
+```
+GET http://localhost/api.php/categories/1,2
+```
+
+Output:
+
+```
+[{"id":"1","name":"Internet"},{"id":"2","name":"Programming"}]
+```
+
 ### Update
 
 Editing a record is done with the PUT method. The call returns the rows affected.
