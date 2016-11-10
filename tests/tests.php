@@ -644,7 +644,7 @@ class PHP_CRUD_API_Test extends PHPUnit_Framework_TestCase
 		$test->get('/tags?transform=1');
 		$test->expect('{"tags":[{"id":"1","name":"funny"},{"id":"2","name":"important"}]}');
 		$test->put('/tags/1,2','[{"name":"funny"},{"name":"important"}]');
-		if (PHP_CRUD_API_Config::$dbengine!='MySQL') {
+		if (PHP_CRUD_API_Config::$dbengine=='MySQL') {
 			$test->expect('[0,0]');
 		} else {
 			$test->expect('[1,1]');
