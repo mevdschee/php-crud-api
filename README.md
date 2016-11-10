@@ -353,7 +353,7 @@ Alternatively you can send a JSON array containing multiple JSON objects in the 
 
 ```
 PUT http://localhost/api.php/categories/1,2
-[{"name":"Internet"},{""name":"Programming"}]
+[{"name":"Internet"},{"name":"Programming"}]
 ```
 
 Output:
