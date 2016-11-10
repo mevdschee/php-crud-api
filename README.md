@@ -297,7 +297,7 @@ Output:
 [1,2,3]
 ```
 
-This call uses a transaction and will either insert all or no records. If no records are inserted it will return 'null'.
+This call uses a transaction and will either insert all or no records. If the transaction failed it will return 'null'.
 
 ### Read
 
@@ -363,7 +363,7 @@ Output:
 [1,1]
 ```
 
-This call uses a transaction and will either update all or no records. If no records are updated it will return 'null'.
+This call uses a transaction and will either update all or no records. If the transaction failed it will return 'null'.
 
 ### Delete
 
