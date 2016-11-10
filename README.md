@@ -319,7 +319,7 @@ Editing a record is done with the PUT method. The call returns the rows affected
 
 ```
 PUT http://localhost/api.php/categories/2
-id=1&name=Internet+networking
+name=Internet+networking
 ```
 
 Output:
@@ -336,7 +336,7 @@ Alternatively you can send a JSON object in the body. The call returns the rows 
 
 ```
 PUT http://localhost/api.php/categories/2
-{"id":"1","name":"Internet networking"}
+{"name":"Internet networking"}
 ```
 
 Output:
@@ -346,6 +346,24 @@ Output:
 ```
 
 Note that only fields that are specified in the request will be updated.
+
+### Update (with JSON array)
+
+Alternatively you can send a JSON array containing multiple JSON objects in the body. Each of the records must contain the primary key field.
+The call returns an array of the rows affected.
+
+```
+PUT http://localhost/api.php/categories
+[{"id":"1","name":"Internet"},{"id":"2","name":"Programming"}]
+```
+
+Output:
+
+```
+[1,1]
+```
+
+This call uses a transaction and will either update all or no records. If no records are updated it will return 'null'.
 
 ### Delete
 

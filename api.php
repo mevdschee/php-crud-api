@@ -1078,8 +1078,8 @@ class PHP_CRUD_API {
 		return $fields;
 	}
 
-	protected function processKeyParameter($key,$tables,$database) {
-		if (!$key) return false;
+	protected function processKeyParameter($action,$key,$tables,$database) {
+		if ($action == 'list') return false;
 		$fields = $this->findPrimaryKeys($tables[0],$database);
 		if (count($fields)!=1) $this->exitWith404('1pk');
 		return array($key,$fields[0]);
@@ -1276,8 +1276,8 @@ class PHP_CRUD_API {
 		$table = $tables[0];
 		$sql = 'UPDATE ! SET ';
 		$params = array($table);
-		foreach (array_keys($input) as $i=>$k) {
-			if ($i) $sql .= ',';
+		foreach (array_keys($input) as $j=>$k) {
+			if ($j) $sql .= ',';
 			$v = $input[$k];
 			$sql .= '!=?';
 			$params[] = $k;
@@ -1288,6 +1288,46 @@ class PHP_CRUD_API {
 		$result = $this->db->query($sql,$params);
 		if (!$result) return null;
 		return $this->db->affectedRows($result);
+	}
+
+	protected function updateObjects($key,$inputs,$filters,$tables) {
+		if (!$inputs) return false;
+		$keyField = $key[1];
+		$keys = array();
+		foreach ($inputs as $i=>$input) {
+			if (isset($input->$keyField)) {
+				$keys[$i] = $input->$keyField;
+				unset($inputs[$i]->$keyField);
+			} else {
+				$this->exitWith404('subject');
+			}
+		}
+		$rows = array();
+		$this->db->beginTransaction();
+		foreach ($inputs as $i=>$input) {
+			$input = (array)$input;
+			$table = $tables[0];
+			$sql = 'UPDATE ! SET ';
+			$params = array($table);
+			foreach (array_keys($input) as $j=>$k) {
+				if ($j) $sql .= ',';
+				$v = $input[$k];
+				$sql .= '!=?';
+				$params[] = $k;
+				$params[] = $v;
+			}
+			$newFilters = $filters;
+			$this->addFilter($newFilters,$table,'and',$keyField,'eq',$keys[$i]);
+			$this->addWhereFromFilters($newFilters[$table],$sql,$params);
+			$result = $this->db->query($sql,$params);
+			if (!$result) {
+				$this->db->rollbackTransaction();
+				return null;
+			}
+			$rows[] = $this->db->affectedRows($result);
+		}
+		$this->db->commitTransaction();
+		return $rows;
 	}
 
 	protected function deleteObject($key,$filters,$tables) {
@@ -1462,7 +1502,7 @@ class PHP_CRUD_API {
 		$transform = $this->parseGetParameter($get, 'transform', 't1');
 
 		$tables    = $this->processTableAndIncludeParameters($database,$table,$include,$action);
-		$key       = $this->processKeyParameter($key,$tables,$database);
+		$key       = $this->processKeyParameter($action,$key,$tables,$database);
 		$satisfy   = $this->processSatisfyParameter($tables,$satisfy);
 		$filters   = $this->processFiltersParameter($tables,$satisfy,$filters);
 		$page      = $this->processPageParameter($page);
@@ -1482,6 +1522,7 @@ class PHP_CRUD_API {
 
 		if (strlen($post)) {
 			// input
+			$multi = $post[0]=='[';
 			$contexts = $this->retrieveInputs($post);
 			$inputs = array();
 			foreach ($contexts as $context) {
@@ -1496,7 +1537,7 @@ class PHP_CRUD_API {
 			}
 		}
 
-		return compact('action','database','tables','key','page','filters','fields','order','transform','inputs','collect','select');
+		return compact('action','database','tables','key','page','filters','fields','order','transform','multi','inputs','collect','select');
 	}
 
 	protected function addWhereFromFilters($filters,&$sql,&$params) {
@@ -1647,15 +1688,16 @@ class PHP_CRUD_API {
 		extract($parameters);
 		if (!$inputs || !$inputs[0]) $this->exitWith404('input');
 		$this->startOutput();
-		if (count($inputs)==1) echo json_encode($this->createObject($inputs[0],$tables));
-		else echo json_encode($this->createObjects($inputs,$tables));
+		if ($multi) echo json_encode($this->createObjects($inputs,$tables));
+		else echo json_encode($this->createObject($inputs[0],$tables));
 	}
 
 	protected function updateCommand($parameters) {
 		extract($parameters);
-		if (!$inputs) $this->exitWith404('subject');
+		if (!$inputs || !$inputs[0]) $this->exitWith404('subject');
 		$this->startOutput();
-		echo json_encode($this->updateObject($key,$inputs[0],$filters,$tables));
+		if ($multi) echo json_encode($this->updateObjects($key,$inputs,$filters,$tables));
+		else echo json_encode($this->updateObject($key,$inputs[0],$filters,$tables));
 	}
 
 	protected function deleteCommand($parameters) {

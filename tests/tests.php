@@ -637,4 +637,31 @@ class PHP_CRUD_API_Test extends PHPUnit_Framework_TestCase
 		$test->get('/tag_usage');
 		$test->expect('{"tag_usage":{"columns":["name","count"],"records":[["funny","2"],["important","2"]]}}');
 	}
+
+	public function testUpdateMultipleTags()
+	{
+		$test = new API($this);
+		$test->get('/tags?transform=1');
+		$test->expect('{"tags":[{"id":"1","name":"funny"},{"id":"2","name":"important"}]}');
+		$test->put('/tags','[{"id":"1","name":"funny"},{"id":"2","name":"important"}]');
+		$test->expect('[0,0]');
+	}
+
+	public function testUpdateMultipleTagsWithoutId()
+	{
+		$test = new API($this);
+		$test->put('/tags','[{"id":"1","name":"funny!!!"},{"name":"important"}]');
+		$test->expect(false,'Not found (subject)');
+		$test->get('/tags?transform=1');
+		$test->expect('{"tags":[{"id":"1","name":"funny"},{"id":"2","name":"important"}]}');
+	}
+
+	public function testUpdateMultipleTagsWithoutFields()
+	{
+		$test = new API($this);
+		$test->put('/tags','[{"id":"1","name":"funny!!!"},{"id":"2"}]');
+		$test->expect('null');
+		$test->get('/tags?transform=1');
+		$test->expect('{"tags":[{"id":"1","name":"funny"},{"id":"2","name":"important"}]}');
+	}
 }
