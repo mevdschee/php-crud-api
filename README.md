@@ -349,12 +349,11 @@ Note that only fields that are specified in the request will be updated.
 
 ### Update (with JSON array)
 
-Alternatively you can send a JSON array containing multiple JSON objects in the body. Each of the records must contain the primary key field.
-The call returns an array of the rows affected.
+Alternatively you can send a JSON array containing multiple JSON objects in the body. The call returns an array of the rows affected.
 
 ```
-PUT http://localhost/api.php/categories
-[{"id":"1","name":"Internet"},{"id":"2","name":"Programming"}]
+PUT http://localhost/api.php/categories/1,2
+[{"name":"Internet"},{""name":"Programming"}]
 ```
 
 Output:
@@ -362,6 +361,8 @@ Output:
 ```
 [1,1]
 ```
+
+The number of primary key values in the URL should match the number of elements in the JSON array.
 
 This call uses a transaction and will either update all or no records. If the transaction fails it will return 'null'.
 
@@ -378,6 +379,22 @@ Output:
 ```
 1
 ```
+
+### Delete (multiple)
+
+The DELETE verb can also be used to delete multiple records. The call returns the rows affected for each primary key value specified in the URL.
+
+```
+DELETE http://localhost/api.php/categories/1,2
+```
+
+Output:
+
+```
+[1,1]
+```
+
+This call uses a transaction and will either delete all or no records. If the transaction fails it will return 'null'.
 
 ## Relations
 

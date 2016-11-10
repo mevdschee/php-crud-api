@@ -1078,8 +1078,8 @@ class PHP_CRUD_API {
 		return $fields;
 	}
 
-	protected function processKeyParameter($action,$key,$tables,$database) {
-		if ($action == 'list') return false;
+	protected function processKeyParameter($key,$tables,$database) {
+		if (!$key) return false;
 		$fields = $this->findPrimaryKeys($tables[0],$database);
 		if (count($fields)!=1) $this->exitWith404('1pk');
 		return array($key,$fields[0]);
@@ -1254,13 +1254,8 @@ class PHP_CRUD_API {
 		$ids = array();
 		$this->db->beginTransaction();
 		foreach ($inputs as $input) {
-			$input = (array)$input;
-			$keys = implode(',',str_split(str_repeat('!', count($input))));
-			$values = implode(',',str_split(str_repeat('?', count($input))));
-			$params = array_merge(array_keys($input),array_values($input));
-			array_unshift($params, $tables[0]);
-			$result = $this->db->query('INSERT INTO ! ('.$keys.') VALUES ('.$values.')',$params);
-			if (!$result) {
+			$result = $this->createObject($input,$tables);
+			if ($result===null) {
 				$this->db->rollbackTransaction();
 				return null;
 			}
@@ -1293,38 +1288,19 @@ class PHP_CRUD_API {
 	protected function updateObjects($key,$inputs,$filters,$tables) {
 		if (!$inputs) return false;
 		$keyField = $key[1];
-		$keys = array();
-		foreach ($inputs as $i=>$input) {
-			if (isset($input->$keyField)) {
-				$keys[$i] = $input->$keyField;
-				unset($inputs[$i]->$keyField);
-			} else {
-				$this->exitWith404('subject');
-			}
+		$keys = explode(',',$key[0]);
+		if (count($inputs)!=count($keys)) {
+			$this->exitWith404('subject');
 		}
 		$rows = array();
 		$this->db->beginTransaction();
 		foreach ($inputs as $i=>$input) {
-			$input = (array)$input;
-			$table = $tables[0];
-			$sql = 'UPDATE ! SET ';
-			$params = array($table);
-			foreach (array_keys($input) as $j=>$k) {
-				if ($j) $sql .= ',';
-				$v = $input[$k];
-				$sql .= '!=?';
-				$params[] = $k;
-				$params[] = $v;
-			}
-			$newFilters = $filters;
-			$this->addFilter($newFilters,$table,'and',$keyField,'eq',$keys[$i]);
-			$this->addWhereFromFilters($newFilters[$table],$sql,$params);
-			$result = $this->db->query($sql,$params);
-			if (!$result) {
+			$result = $this->updateObject(array($keys[$i],$keyField),$input,$filters,$tables);
+			if ($result===null) {
 				$this->db->rollbackTransaction();
 				return null;
 			}
-			$rows[] = $this->db->affectedRows($result);
+			$rows[] = $result;
 		}
 		$this->db->commitTransaction();
 		return $rows;
@@ -1339,6 +1315,23 @@ class PHP_CRUD_API {
 		$result = $this->db->query($sql,$params);
 		if (!$result) return null;
 		return $this->db->affectedRows($result);
+	}
+
+	protected function deleteObjects($key,$filters,$tables) {
+		$keyField = $key[1];
+		$keys = explode(',',$key[0]);
+		$rows = array();
+		$this->db->beginTransaction();
+		foreach ($keys as $key) {
+			$result = $this->deleteObject(array($key,$keyField),$filters,$tables);
+			if ($result===null) {
+				$this->db->rollbackTransaction();
+				return null;
+			}
+			$rows[] = $result;
+		}
+		$this->db->commitTransaction();
+		return $rows;
 	}
 
 	protected function findRelations($tables,$database,$auto_include) {
@@ -1491,7 +1484,7 @@ class PHP_CRUD_API {
 		extract($settings);
 
 		$table     = $this->parseRequestParameter($request, 'a-zA-Z0-9\-_');
-		$key       = $this->parseRequestParameter($request, 'a-zA-Z0-9\-_'); // auto-increment or uuid
+		$key       = $this->parseRequestParameter($request, 'a-zA-Z0-9\-_,'); // auto-increment or uuid
 		$action    = $this->mapMethodToAction($method,$key);
 		$include   = $this->parseGetParameter($get, 'include', 'a-zA-Z0-9\-_,');
 		$page      = $this->parseGetParameter($get, 'page', '0-9,');
@@ -1502,7 +1495,7 @@ class PHP_CRUD_API {
 		$transform = $this->parseGetParameter($get, 'transform', 't1');
 
 		$tables    = $this->processTableAndIncludeParameters($database,$table,$include,$action);
-		$key       = $this->processKeyParameter($action,$key,$tables,$database);
+		$key       = $this->processKeyParameter($key,$tables,$database);
 		$satisfy   = $this->processSatisfyParameter($tables,$satisfy);
 		$filters   = $this->processFiltersParameter($tables,$satisfy,$filters);
 		$page      = $this->processPageParameter($page);
@@ -1520,6 +1513,7 @@ class PHP_CRUD_API {
 		if ($tenancy_function) $this->applyTenancyFunction($tenancy_function,$action,$database,$fields,$filters);
 		if ($column_authorizer) $this->applyColumnAuthorizer($column_authorizer,$action,$database,$fields);
 
+		$multi = strpos($key[0],',')!==false;
 		if (strlen($post)) {
 			// input
 			$multi = $post[0]=='[';
@@ -1703,7 +1697,8 @@ class PHP_CRUD_API {
 	protected function deleteCommand($parameters) {
 		extract($parameters);
 		$this->startOutput();
-		echo json_encode($this->deleteObject($key,$filters,$tables));
+		if ($multi) echo json_encode($this->deleteObjects($key,$filters,$tables));
+		else echo json_encode($this->deleteObject($key,$filters,$tables));
 	}
 
 	protected function listCommand($parameters) {

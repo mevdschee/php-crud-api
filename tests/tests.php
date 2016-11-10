@@ -643,14 +643,14 @@ class PHP_CRUD_API_Test extends PHPUnit_Framework_TestCase
 		$test = new API($this);
 		$test->get('/tags?transform=1');
 		$test->expect('{"tags":[{"id":"1","name":"funny"},{"id":"2","name":"important"}]}');
-		$test->put('/tags','[{"id":"1","name":"funny"},{"id":"2","name":"important"}]');
+		$test->put('/tags/1,2','[{"name":"funny"},{"name":"important"}]');
 		$test->expect('[0,0]');
 	}
 
-	public function testUpdateMultipleTagsWithoutId()
+	public function testUpdateMultipleTagsTooManyIds()
 	{
 		$test = new API($this);
-		$test->put('/tags','[{"id":"1","name":"funny!!!"},{"name":"important"}]');
+		$test->put('/tags/1,2,3','[{"name":"funny!!!"},{"name":"important"}]');
 		$test->expect(false,'Not found (subject)');
 		$test->get('/tags?transform=1');
 		$test->expect('{"tags":[{"id":"1","name":"funny"},{"id":"2","name":"important"}]}');
@@ -659,8 +659,19 @@ class PHP_CRUD_API_Test extends PHPUnit_Framework_TestCase
 	public function testUpdateMultipleTagsWithoutFields()
 	{
 		$test = new API($this);
-		$test->put('/tags','[{"id":"1","name":"funny!!!"},{"id":"2"}]');
+		$test->put('/tags/1,2','[{"name":"funny!!!"},{}]');
 		$test->expect('null');
+		$test->get('/tags?transform=1');
+		$test->expect('{"tags":[{"id":"1","name":"funny"},{"id":"2","name":"important"}]}');
+	}
+
+	public function testDeleteMultipleTags()
+	{
+		$test = new API($this);
+		$test->post('/tags','[{"name":"extra"},{"name":"more"}]');
+		$test->expect('[3,4]');
+		$test->delete('/tags/3,4');
+		$test->expect('[1,1]');
 		$test->get('/tags?transform=1');
 		$test->expect('{"tags":[{"id":"1","name":"funny"},{"id":"2","name":"important"}]}');
 	}
