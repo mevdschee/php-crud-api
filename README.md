@@ -362,7 +362,7 @@ Output:
 [1,1]
 ```
 
-The number of primary key values in the URL should match the number of elements in the JSON array.
+The number of primary key values in the URL should match the number of elements in the JSON array (and be in the same order).
 
 This call uses a transaction and will either update all or no records. If the transaction fails it will return 'null'.
 
