@@ -93,8 +93,9 @@ class MySQL implements DatabaseInterface {
 	}
 
 	public function connect($hostname,$username,$password,$database,$port,$socket,$charset) {
-		$db = mysqli_connect($hostname,$username,$password,$database,$port,$socket);
-		if (mysqli_connect_errno()) {
+		$db = mysqli_init();
+		$success = mysqli_real_connect($db,$hostname,$username,$password,$database,$port,$socket,MYSQLI_CLIENT_FOUND_ROWS);
+		if (!$success) {
 			throw new \Exception('Connect failed. '.mysqli_connect_error());
 		}
 		if (!mysqli_set_charset($db,$charset)) {
