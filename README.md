@@ -330,7 +330,7 @@ Output:
 
 Note that only fields that are specified in the request will be updated.
 
-### Update (with JSON)
+### Update (with JSON object)
 
 Alternatively you can send a JSON object in the body. The call returns the rows affected.
 
