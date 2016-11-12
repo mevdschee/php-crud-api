@@ -167,6 +167,14 @@ class MySQL implements DatabaseInterface {
 		return "$sql LIMIT $limit OFFSET $offset";
 	}
 
+	public function addOrderByDifferenceToSql($sql,$field,$direction) {
+		if ($this->isGeometryType($field)) {
+			return "$sql ORDER BY ST_Distance(!, ?) $direction";
+		} else {
+			return "$sql ORDER BY ABS(! - ?) $direction";
+		}
+	}
+
 	public function likeEscape($string) {
 		return addcslashes($string,'%_');
 	}
@@ -1738,7 +1746,7 @@ class PHP_CRUD_API {
 			foreach ($_FILES as $name => $file) {
 				foreach ($file as $key => $value) {
 					switch ($key) {
-						case 'tmp_name': $files[$name] = base64_encode(file_get_contents($value)); break;
+						case 'tmp_name': $files[$name] = $value?base64_encode(file_get_contents($value)):''; break;
 						default: $files[$name.'_'.$key] = $value;
 					}
 				}
