@@ -23,6 +23,11 @@ BEGIN
 ALTER TABLE [comments] DROP CONSTRAINT [FK_comments_posts]
 END
 GO
+IF (OBJECT_ID('products', 'U') IS NOT NULL)
+BEGIN
+DROP TABLE [products]
+END
+GO
 IF (OBJECT_ID('events', 'U') IS NOT NULL)
 BEGIN
 DROP TABLE [events]
@@ -194,6 +199,21 @@ AS
 SELECT top 100 PERCENT name, COUNT(name) AS [count] FROM tags, post_tags WHERE tags.id = post_tags.tag_id GROUP BY name ORDER BY [count] DESC, name
 
 GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [products](
+	[id] [int] IDENTITY,
+	[name] [nvarchar](max) NOT NULL,
+	[price] [decimal](10,2) NOT NULL,
+ CONSTRAINT [PK_products] PRIMARY KEY CLUSTERED
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+
+GO
 SET IDENTITY_INSERT [categories] ON
 GO
 INSERT [categories] ([id], [name], [icon]) VALUES (1, N'announcement', NULL)
@@ -263,6 +283,12 @@ GO
 INSERT [events] ([id], [name], [datetime]) VALUES (1, N'Launch', N'2016-01-01 13:01:01.111')
 GO
 SET IDENTITY_INSERT [events] OFF
+GO
+SET IDENTITY_INSERT [products] ON
+GO
+INSERT [products] ([id], [name], [price]) VALUES (1, N'Calculator', N'23.01')
+GO
+SET IDENTITY_INSERT [products] OFF
 GO
 ALTER TABLE [comments]  WITH CHECK ADD  CONSTRAINT [FK_comments_posts] FOREIGN KEY([post_id])
 REFERENCES [posts] ([id])

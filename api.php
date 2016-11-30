@@ -5,8 +5,8 @@ interface DatabaseInterface {
 	public function getSql($name);
 	public function connect($hostname,$username,$password,$database,$port,$socket,$charset);
 	public function query($sql,$params=array());
-	public function fetchAssoc($result);
-	public function fetchRow($result);
+	public function fetchAssoc($result,$fields=false);
+	public function fetchRow($result,$fields=false);
 	public function insertId($result);
 	public function affectedRows($result);
 	public function close($result);
@@ -104,6 +104,9 @@ class MySQL implements DatabaseInterface {
 		if (!mysqli_query($db,'SET SESSION sql_mode = \'ANSI_QUOTES\';')) {
 			throw new \Exception('Error setting ANSI quotes. '.mysqli_error($db));
 		}
+		if (!mysqli_options($db,MYSQLI_OPT_INT_AND_FLOAT_NATIVE,true)) {
+			throw new \Exception('Error setting int and float native. '.mysqli_error($db));
+		}
 		$this->db = $db;
 	}
 
@@ -138,11 +141,11 @@ class MySQL implements DatabaseInterface {
 		return mysqli_query($db,$sql);
 	}
 
-	public function fetchAssoc($result) {
+	public function fetchAssoc($result,$fields=false) {
 		return mysqli_fetch_assoc($result);
 	}
 
-	public function fetchRow($result) {
+	public function fetchRow($result,$fields=false) {
 		return mysqli_fetch_row($result);
 	}
 
@@ -365,12 +368,29 @@ class PostgreSQL implements DatabaseInterface {
 		return @pg_query($db,$sql);
 	}
 
-	public function fetchAssoc($result) {
-		return pg_fetch_assoc($result);
+	protected function convertFloatAndInt($result,&$values, $fields) {
+		array_walk($values, function(&$v,$i) use ($result,$fields){
+			$t = $fields[$i]->type;
+			if (is_string($v) && in_array($t,array('int2','int4','int8','float4','float8'))) {
+				$v+=0;
+			}
+		});
 	}
 
-	public function fetchRow($result) {
-		return pg_fetch_row($result);
+	public function fetchAssoc($result,$fields=false) {
+		$values = pg_fetch_assoc($result);
+		if ($values && $fields) {
+			$this->convertFloatAndInt($result,$values,$fields);
+		}
+		return $values;
+	}
+
+	public function fetchRow($result,$fields=false) {
+		$values = pg_fetch_row($result);
+		if ($values && $fields) {
+			$this->convertFloatAndInt($result,$values,array_values($fields));
+		}
+		return $values;
 	}
 
 	public function insertId($result) {
@@ -591,16 +611,12 @@ class SQLServer implements DatabaseInterface {
 		return sqlsrv_query($db,$sql,$args)?:null;
 	}
 
-	public function fetchAssoc($result) {
-		$values = sqlsrv_fetch_array($result, SQLSRV_FETCH_ASSOC);
-		if ($values) $values = array_map(function($v){ return is_null($v)?null:(string)$v; },$values);
-		return $values;
+	public function fetchAssoc($result,$fields=false) {
+		return sqlsrv_fetch_array($result, SQLSRV_FETCH_ASSOC);
 	}
 
-	public function fetchRow($result) {
-		$values = sqlsrv_fetch_array($result, SQLSRV_FETCH_NUMERIC);
-		if ($values) $values = array_map(function($v){ return is_null($v)?null:(string)$v; },$values);
-		return $values;
+	public function fetchRow($result,$fields=false) {
+		return sqlsrv_fetch_array($result, SQLSRV_FETCH_NUMERIC);
 	}
 
 	public function insertId($result) {
@@ -832,16 +848,12 @@ class SQLite implements DatabaseInterface {
 		return $result;
 	}
 
-	public function fetchAssoc($result) {
-		$values = $result->fetchArray(SQLITE3_ASSOC);
-		if ($values) $values = array_map(function($v){ return is_null($v)?null:(string)$v; },$values);
-		return $values;
+	public function fetchAssoc($result,$fields=false) {
+		return $result->fetchArray(SQLITE3_ASSOC);
 	}
 
-	public function fetchRow($result) {
-		$values = $result->fetchArray(SQLITE3_NUM);
-		if ($values) $values = array_map(function($v){ return is_null($v)?null:(string)$v; },$values);
-		return $values;
+	public function fetchRow($result,$fields=false) {
+		return $result->fetchArray(SQLITE3_NUM);
 	}
 
 	public function insertId($result) {
@@ -1240,7 +1252,7 @@ class PHP_CRUD_API {
 		$this->addWhereFromFilters($filters[$table],$sql,$params);
 		$object = null;
 		if ($result = $this->db->query($sql,$params)) {
-			$object = $this->db->fetchAssoc($result);
+			$object = $this->db->fetchAssoc($result,$fields[$table]);
 			$this->db->close($result);
 		}
 		return $object;
@@ -1625,7 +1637,7 @@ class PHP_CRUD_API {
 			$keys = array_flip($keys);
 			echo ',"records":[';
 			$first_row = true;
-			while ($row = $this->db->fetchRow($result)) {
+			while ($row = $this->db->fetchRow($result,$fields[$table])) {
 				if ($first_row) $first_row = false;
 				else echo ',';
 				if (isset($collect[$table])) {
@@ -1675,7 +1687,7 @@ class PHP_CRUD_API {
 				$keys = array_flip($keys);
 				echo ',"records":[';
 				$first_row = true;
-				while ($row = $this->db->fetchRow($result)) {
+				while ($row = $this->db->fetchRow($result,$fields[$table])) {
 					if ($first_row) $first_row = false;
 					else echo ',';
 					if (isset($collect[$table])) {

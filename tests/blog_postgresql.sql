@@ -28,6 +28,8 @@ DROP TABLE IF EXISTS users CASCADE;
 DROP TABLE IF EXISTS countries CASCADE;
 DROP TABLE IF EXISTS events CASCADE;
 DROP VIEW IF EXISTS tag_usage;
+DROP TABLE IF EXISTS products CASCADE;
+
 --
 -- Name: categories; Type: TABLE; Schema: public; Owner: postgres; Tablespace:
 --
@@ -121,6 +123,16 @@ CREATE TABLE events (
 CREATE VIEW "tag_usage" AS select "name", count("name") AS "count" from "tags", "post_tags" where "tags"."id" = "post_tags"."tag_id" group by "name" order by "count" desc, "name";
 
 --
+-- Name: products; Type: TABLE; Schema: public; Owner: postgres; Tablespace:
+--
+
+CREATE TABLE products (
+    id serial NOT NULL,
+    name character varying(255) NOT NULL,
+    price decimal(10,2) NOT NULL
+);
+
+--
 -- Data for Name: categories; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
@@ -186,6 +198,13 @@ INSERT INTO "countries" ("name", "shape") VALUES
 
 INSERT INTO "events" ("name", "datetime") VALUES
 ('Launch',	'2016-01-01 13:01:01.111');
+
+--
+-- Data for Name: events; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+INSERT INTO "products" ("name", "price") VALUES
+('Calculator',	'23.01');
 
 --
 -- Name: categories_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres; Tablespace:
@@ -256,6 +275,14 @@ ALTER TABLE ONLY countries
 
 ALTER TABLE ONLY events
     ADD CONSTRAINT events_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: products_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres; Tablespace:
+--
+
+ALTER TABLE ONLY products
+    ADD CONSTRAINT products_pkey PRIMARY KEY (id);
 
 
 --

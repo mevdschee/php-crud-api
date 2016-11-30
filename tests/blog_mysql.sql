@@ -118,4 +118,15 @@ INSERT INTO `events` (`id`, `name`, `datetime`) VALUES
 DROP VIEW IF EXISTS `tag_usage`;
 CREATE VIEW `tag_usage` AS select `name`, count(`name`) AS `count` from `tags`, `post_tags` where `tags`.`id` = `post_tags`.`tag_id` group by `name` order by `count` desc, `name`;
 
+DROP TABLE IF EXISTS `products`;
+CREATE TABLE `products` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) NOT NULL,
+  `price` decimal(10,2) NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+INSERT INTO `products` (`id`, `name`, `price`) VALUES
+(1,	'Calculator', '23.01');
+
 -- 2016-11-05 13:11:47
