@@ -127,7 +127,7 @@ GET http://localhost/api.php/categories
 Output:
 
 ```
-{"categories":{"columns":["id","name"],"records":[["1","Internet"],["3","Web development"]]}}
+{"categories":{"columns":["id","name"],"records":[[1,"Internet"],[3,"Web development"]]}}
 ```
 
 ### List + Transform
@@ -141,7 +141,7 @@ GET http://localhost/api.php/categories?transform=1
 Output:
 
 ```
-{"categories":[{"id":"1","name":"Internet"},{"id":"3","name":"Web development"}]}
+{"categories":[{"id":1,"name":"Internet"},{"id":3,"name":"Web development"}]}
 ```
 
 NB: This transform is CPU and memory intensive and can also be executed client-side (see: [lib](https://github.com/mevdschee/php-crud-api/tree/master/lib)).
@@ -176,7 +176,7 @@ GET http://localhost/api.php/categories?filter=categories.id,eq,1
 Output:
 
 ```
-{"categories":{"columns":["id","name"],"records":[["1","Internet"]]}}
+{"categories":{"columns":["id","name"],"records":[[1,"Internet"]]}}
 ```
 
 NB: You may specify table name before the field name, seperated with a dot.
@@ -195,7 +195,7 @@ GET http://localhost/api.php/categories?filter[]=id,ge,1&filter[]=id,le,3
 Output:
 
 ```
-{"categories":{"columns":["id","name"],"records":[["1","Internet"],["3","Web development"]]}}
+{"categories":{"columns":["id","name"],"records":[[1,"Internet"],[3,"Web development"]]}}
 ```
 
 NB: You may specify "satisfy=categories.all,posts.any" if you want to mix "and" and "or" for different tables.
@@ -228,7 +228,7 @@ GET http://localhost/api.php/categories?order=name,desc
 Output:
 
 ```
-{"categories":{"columns":["id","name"],"records":[["3","Web development"],["1","Internet"]]}}
+{"categories":{"columns":["id","name"],"records":[[3,"Web development"],[1,"Internet"]]}}
 ```
 
 ### List + Order + Pagination
@@ -243,7 +243,7 @@ GET http://localhost/api.php/categories?order=id&page=1,50
 Output:
 
 ```
-{"categories":{"columns":["id","name"],"records":[["1","Internet"],["3","Web development"]],"results":2}}
+{"categories":{"columns":["id","name"],"records":[[1,"Internet"],[3,"Web development"]],"results":2}}
 ```
 
 NB: Pages that are not ordered cannot be paginated.
@@ -271,7 +271,7 @@ Alternatively you can send a JSON object in the body. The call returns the "last
 
 ```
 POST http://localhost/api.php/categories
-{"id":"1","name":"Internet"}
+{"id":1,"name":"Internet"}
 ```
 
 Output:
@@ -310,7 +310,7 @@ GET http://localhost/api.php/categories/1
 Output:
 
 ```
-{"id":"1","name":"Internet"}
+{"id":1,"name":"Internet"}
 ```
 
 ### Read (multiple)
@@ -324,7 +324,7 @@ GET http://localhost/api.php/categories/1,2
 Output:
 
 ```
-[{"id":"1","name":"Internet"},{"id":"2","name":"Programming"}]
+[{"id":1,"name":"Internet"},{"id":2,"name":"Programming"}]
 ```
 
 ### Update
@@ -433,9 +433,9 @@ Output:
         ],
         "records": [
             [
-                "1",
-                "1",
-                "1",
+                1,
+                1,
+                1,
                 "blog started"
             ]
         ]
@@ -451,14 +451,14 @@ Output:
         ],
         "records": [
             [
-                "1",
-                "1",
-                "1"
+                1,
+                1,
+                1
             ],
             [
-                "2",
-                "1",
-                "2"
+                2,
+                1,
+                2
             ]
         ]
     },
@@ -472,7 +472,7 @@ Output:
         ],
         "records": [
             [
-                "1",
+                1,
                 "anouncement"
             ]
         ]
@@ -487,11 +487,11 @@ Output:
         ],
         "records": [
             [
-                "1",
+                1,
                 "funny"
             ],
             [
-                "2",
+                2,
                 "important"
             ]
         ]
@@ -507,13 +507,13 @@ Output:
         ],
         "records": [
             [
-                "1",
-                "1",
+                1,
+                1,
                 "great"
             ],
             [
-                "2",
-                "1",
+                2,
+                1,
                 "fantastic"
             ]
         ]
@@ -527,26 +527,26 @@ You can call the ```php_crud_api_tranform()``` function to structure the data hi
 {
     "posts": [
         {
-            "id": "1",
+            "id": 1,
             "post_tags": [
                 {
-                    "id": "1",
-                    "post_id": "1",
-                    "tag_id": "1",
+                    "id": 1,
+                    "post_id": 1,
+                    "tag_id": 1,
                     "tags": [
                         {
-                            "id": "1",
+                            "id": 1,
                             "name": "funny"
                         }
                     ]
                 },
                 {
-                    "id": "2",
-                    "post_id": "1",
-                    "tag_id": "2",
+                    "id": 2,
+                    "post_id": 1,
+                    "tag_id": 2,
                     "tags": [
                         {
-                            "id": "2",
+                            "id": 2,
                             "name": "important"
                         }
                     ]
@@ -554,21 +554,21 @@ You can call the ```php_crud_api_tranform()``` function to structure the data hi
             ],
             "comments": [
                 {
-                    "id": "1",
-                    "post_id": "1",
+                    "id": 1,
+                    "post_id": 1,
                     "message": "great"
                 },
                 {
-                    "id": "2",
-                    "post_id": "1",
+                    "id": 2,
+                    "post_id": 1,
                     "message": "fantastic"
                 }
             ],
-            "user_id": "1",
-            "category_id": "1",
+            "user_id": 1,
+            "category_id": 1,
             "categories": [
                 {
-                    "id": "1",
+                    "id": 1,
                     "name": "anouncement"
                 }
             ],
@@ -629,7 +629,7 @@ GET http://localhost/api.php/categories/2
 Output:
 
 ```
-{"id":"2","name":"funny","icon":"ZGF0YQ=="}
+{"id":2,"name":"funny","icon":"ZGF0YQ=="}
 ```
 
 When sending a record that contains a binary field you will also have to send base64 encoded data.
