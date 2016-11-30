@@ -879,6 +879,18 @@ RewriteRule ^(.*)$ api.php/$1 [L,QSA]
 
 The ".htaccess" file needs to go in the same folder as "api.php".
 
+### Nginx
+
+For Nginx you may want to add something like this:
+
+```
+location /api {
+    rewrite ^/api(.*)$ /api.php$1 last;
+}
+```
+
+This should be added to your Nginx config, before or after the `location ~ [^/]\.php(/|$)` section.
+
 ## Debugging
 
 If you have trouble getting the file to work you may want to check the two environment variables used. Uncomment the following line:
