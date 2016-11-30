@@ -731,6 +731,11 @@ You may also specify `allow_origin` to `https://*.yourdomain.com` matching any h
 
 Multiple hosts may be specified using a comma, allowing you to set `allow_origin` to `https://yourdomain.com, https://*.yourdomain.com`.
 
+## 64 bit integers in JavaScript
+
+JavaScript does not support 64 bit integers. All numbers are stored as 64 bit floating point values. The mantisse of a 64 bit floating point
+number is only 53 bit and that is why all integer numbers bigger than 53 bit may cause problems in JavaScript.
+
 ## Errors
 
 The following types of 404 'Not found' errors may be reported:
