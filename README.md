@@ -28,7 +28,7 @@ This is a single file application! Upload "api.php" somewhere and enjoy!
   - Complex filters (with both "and" & "or") are not supported
   - Complex writes (transactions) are not supported
   - Complex queries calling functions (like "concat" or "sum") are not supported
-  - SQLite does not support Binary and spatial/GIS functionality
+  - SQLite does not support binary and spatial/GIS functionality
 
 ## Features
 
