@@ -94,6 +94,10 @@ class MySQL implements DatabaseInterface {
 
 	public function connect($hostname,$username,$password,$database,$port,$socket,$charset) {
 		$db = mysqli_init();
+		$option = constant('MYSQLI_OPT_INT_AND_FLOAT_NATIVE');
+		if ($option!==null && !mysqli_options($db,$option,true)) {
+			throw new \Exception('Error setting int and float native. '.mysqli_error($db));
+		}
 		$success = mysqli_real_connect($db,$hostname,$username,$password,$database,$port,$socket,MYSQLI_CLIENT_FOUND_ROWS);
 		if (!$success) {
 			throw new \Exception('Connect failed. '.mysqli_connect_error());
@@ -103,9 +107,6 @@ class MySQL implements DatabaseInterface {
 		}
 		if (!mysqli_query($db,'SET SESSION sql_mode = \'ANSI_QUOTES\';')) {
 			throw new \Exception('Error setting ANSI quotes. '.mysqli_error($db));
-		}
-		if (!mysqli_options($db,MYSQLI_OPT_INT_AND_FLOAT_NATIVE,true)) {
-			throw new \Exception('Error setting int and float native. '.mysqli_error($db));
 		}
 		$this->db = $db;
 	}
