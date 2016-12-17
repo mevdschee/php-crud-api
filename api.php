@@ -141,12 +141,29 @@ class MySQL implements DatabaseInterface {
 		return mysqli_query($db,$sql);
 	}
 
-	public function fetchAssoc($result,$fields=false) {
-		return mysqli_fetch_assoc($result);
-	}
+        protected function convertFloatAndInt($result,&$values, $fields) {
+                array_walk($values, function(&$v,$i) use ($result,$fields){
+                        $t = $fields[$i]->type;
+                        if (is_string($v) && in_array($t,array(1,2,3,4,5,6,8,9))) {
+                                $v+=0;
+                        }
+                });
+        }
+
+        public function fetchAssoc($result,$fields=false) {
+                $values = mysqli_fetch_assoc($result);
+		if ($values && $fields && !defined('MYSQLI_OPT_INT_AND_FLOAT_NATIVE')) {
+                        $this->convertFloatAndInt($result,$values,$fields);
+                }
+                return $values;
+        }
 
 	public function fetchRow($result,$fields=false) {
-		return mysqli_fetch_row($result);
+		$values = mysqli_fetch_row($result);
+		if ($values && $fields && !defined('MYSQLI_OPT_INT_AND_FLOAT_NATIVE')) {
+                        $this->convertFloatAndInt($result,$values,array_values($fields));
+                }
+                return $values;
 	}
 
 	public function insertId($result) {
@@ -200,15 +217,18 @@ class MySQL implements DatabaseInterface {
 	}
 
 	public function beginTransaction() {
-		return mysqli_begin_transaction($this->db);
+		mysqli_query($this->db,'BEGIN');
+		//return mysqli_begin_transaction($this->db);
 	}
 
 	public function commitTransaction() {
-		return mysqli_commit($this->db);
+		mysqli_query($this->db,'COMMIT');
+		//return mysqli_commit($this->db);
 	}
 
 	public function rollbackTransaction() {
-		return mysqli_rollback($this->db);
+		mysqli_query($this->db,'ROLLBACK');
+		//return mysqli_rollback($this->db);
 	}
 
 }
