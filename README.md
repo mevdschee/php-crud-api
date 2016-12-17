@@ -13,7 +13,7 @@ Related projects:
 
 ## Requirements
 
-  - PHP 5.3 or higher with MySQLi, libpq, SQLSRV or sqlite3 enabled
+  - PHP 5.5 or higher with MySQLi, libpq, SQLSRV or sqlite3 enabled
   - PHP on Windows when connecting to SQL Server 2012
   - PostGIS for spatial features in PostgreSQL
 
