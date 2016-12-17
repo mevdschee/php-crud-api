@@ -94,9 +94,8 @@ class MySQL implements DatabaseInterface {
 
 	public function connect($hostname,$username,$password,$database,$port,$socket,$charset) {
 		$db = mysqli_init();
-		$option = constant('MYSQLI_OPT_INT_AND_FLOAT_NATIVE');
-		if ($option!==null && !mysqli_options($db,$option,true)) {
-			throw new \Exception('Error setting int and float native. '.mysqli_error($db));
+		if (defined('MYSQLI_OPT_INT_AND_FLOAT_NATIVE')) {
+			mysqli_options($db,MYSQLI_OPT_INT_AND_FLOAT_NATIVE,true);
 		}
 		$success = mysqli_real_connect($db,$hostname,$username,$password,$database,$port,$socket,MYSQLI_CLIENT_FOUND_ROWS);
 		if (!$success) {
