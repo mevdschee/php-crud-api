@@ -13,7 +13,7 @@ Related projects:
 
 ## Requirements
 
-  - PHP 5.5 or higher with MySQLi, libpq, SQLSRV or sqlite3 enabled
+  - PHP 5.3 or higher with MySQLi, libpq, SQLSRV or sqlite3 enabled (PHP 7 recommended)
   - PHP on Windows when connecting to SQL Server 2012
   - PostGIS for spatial features in PostgreSQL
 
@@ -747,6 +747,18 @@ The following types of 404 'Not found' errors may be reported:
   - 1pk (primary key not found or composite)
 
 ## Tests
+
+I am testing mainly on Ubuntu and I have the following test setups:
+
+  - Ubuntu 12.04 Server with PHP 5.3 and MySQL 5.6 (ondrej PPA)
+  - Ubuntu 14.04 Server with PHP 5.5 and MySQL 5.6
+  - Windows 2012 R2 with PHP 5.6 and SQL Server 2012
+  - Ubuntu 16.04 Desktop with PHP 7.0 and MariaDB 10.0
+  
+
+This should cover most environments, but please notify me of failing tests and report your environment.
+
+### MySQL on Linux
 
 There are PHPUnit tests in the file 'tests.php'. You need to configure your test database connection in this file. After that run:
 
