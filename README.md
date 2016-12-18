@@ -828,13 +828,49 @@ $
 
 NB: You MUST use an empty database as a desctructive database fixture ('blog_sqlite.sql') is loaded.
 
+## Installing MySQL on Ubuntu Linux
+
+### Ubuntu 12.04
+
+```
+apt-get -y remove mysql-server
+apt-get -y autoremove
+apt-get -y install software-properties-common
+add-apt-repository -y ppa:ondrej/mysql-5.6
+apt-get update
+apt-get -y install mysql-server
+```
+
 ## Installing PostGIS on Ubuntu Linux
+
+### Ubuntu 12.04
+
+Install PostGIS on Ubuntu Linux with the following commands:
+
+```
+sudo apt-get install python-software-properties
+sudo apt-add-repository ppa:ubuntugis/ppa
+sudo apt-get update
+sudo apt-get install postgresql-9.1-postgis-2.0
+```
+
+### Ubuntu 14.04
 
 Install PostGIS on Ubuntu Linux with the following command:
 
 ```
-sudo apt install postgis
+sudo apt-get install postgresql-9.3-postgis-2.1
 ```
+
+### Ubuntu 16.04
+
+Install PostGIS on Ubuntu Linux with the following command:
+
+```
+sudo apt-get install postgresql-9.5-postgis-2.2
+```
+
+### Finally (for all distros)
 
 Now enable the PostGIS extension for your database:
 
