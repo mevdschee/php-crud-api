@@ -141,29 +141,29 @@ class MySQL implements DatabaseInterface {
 		return mysqli_query($db,$sql);
 	}
 
-        protected function convertFloatAndInt($result,&$values, $fields) {
-                array_walk($values, function(&$v,$i) use ($result,$fields){
-                        $t = $fields[$i]->type;
-                        if (is_string($v) && in_array($t,array(1,2,3,4,5,6,8,9))) {
-                                $v+=0;
-                        }
-                });
-        }
+	protected function convertFloatAndInt($result,&$values, $fields) {
+		array_walk($values, function(&$v,$i) use ($result,$fields){
+			$t = $fields[$i]->type;
+			if (is_string($v) && in_array($t,array(1,2,3,4,5,6,8,9))) {
+				$v+=0;
+			}
+		});
+	}
 
-        public function fetchAssoc($result,$fields=false) {
-                $values = mysqli_fetch_assoc($result);
+	public function fetchAssoc($result,$fields=false) {
+		$values = mysqli_fetch_assoc($result);
 		if ($values && $fields && !defined('MYSQLI_OPT_INT_AND_FLOAT_NATIVE')) {
-                        $this->convertFloatAndInt($result,$values,$fields);
-                }
-                return $values;
-        }
+			$this->convertFloatAndInt($result,$values,$fields);
+		}
+		return $values;
+	}
 
 	public function fetchRow($result,$fields=false) {
 		$values = mysqli_fetch_row($result);
 		if ($values && $fields && !defined('MYSQLI_OPT_INT_AND_FLOAT_NATIVE')) {
-                        $this->convertFloatAndInt($result,$values,array_values($fields));
-                }
-                return $values;
+			$this->convertFloatAndInt($result,$values,array_values($fields));
+		}
+		return $values;
 	}
 
 	public function insertId($result) {
@@ -1152,7 +1152,7 @@ class PHP_CRUD_API {
 					case 'ge': return array('! >= ?',$field,$value);
 					case 'gt': return array('! > ?',$field,$value);
 					case 'bt': $v = explode(',',$value); if (count($v)<2) return false;
-					           return array('! BETWEEN ? AND ?',$field,$v[0],$v[1]);
+						   return array('! BETWEEN ? AND ?',$field,$v[0],$v[1]);
 					case 'in': return array('! IN ?',$field,explode(',',$value));
 					case 'is': return array('! IS NULL',$field);
 				}
@@ -1189,7 +1189,7 @@ class PHP_CRUD_API {
 					case 'nge': return array('! < ?',$field,$value);
 					case 'ngt': return array('! <= ?',$field,$value);
 					case 'nbt': $v = explode(',',$value); if (count($v)<2) return false;
-					            return array('! NOT BETWEEN ? AND ?',$field,$v[0],$v[1]);
+						    return array('! NOT BETWEEN ? AND ?',$field,$v[0],$v[1]);
 					case 'nin': return array('! NOT IN ?',$field,explode(',',$value));
 					case 'nis': return array('! IS NOT NULL',$field);
 				}
