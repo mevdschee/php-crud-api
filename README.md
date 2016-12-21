@@ -29,6 +29,7 @@ This is a single file application! Upload "api.php" somewhere and enjoy!
   - Complex writes (transactions) are not supported
   - Complex queries calling functions (like "concat" or "sum") are not supported
   - SQLite does not support binary and spatial/GIS functionality
+  - MySQL BIT field type is not supported (use TINYINT)
 
 ## Features
 
