@@ -782,7 +782,7 @@ NB: You MUST use an empty database as a desctructive database fixture ('blog_mys
 
 ```
 C:\php-crud-api>"C:\PHP\php.exe" phpunit.phar tests\tests.php
-PHPUnit 5.2.10 by Sebastian Bergmann and contributors.
+PHPUnit 5.3.2 by Sebastian Bergmann and contributors.
 
 ..................................................                50 / 50 (100%)
 
