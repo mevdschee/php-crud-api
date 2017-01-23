@@ -187,14 +187,6 @@ class MySQL implements DatabaseInterface {
 		return "$sql LIMIT $limit OFFSET $offset";
 	}
 
-	public function addOrderByDifferenceToSql($sql,$field,$direction) {
-		if ($this->isGeometryType($field)) {
-			return "$sql ORDER BY ST_Distance(!, ?) $direction";
-		} else {
-			return "$sql ORDER BY ABS(! - ?) $direction";
-		}
-	}
-
 	public function likeEscape($string) {
 		return addcslashes($string,'%_');
 	}
@@ -1126,13 +1118,18 @@ class PHP_CRUD_API {
 		return array($key,$fields[0]);
 	}
 
-	protected function processOrderParameter($order) {
-		if (!$order) return false;
-		$order = explode(',',$order,2);
-		if (count($order)<2) $order[1]='ASC';
-		if (!strlen($order[0])) return false;
-		$order[1] = strtoupper($order[1])=='DESC'?'DESC':'ASC';
-		return $order;
+	protected function processOrderingsParameter($orderings) {
+		if (!$orderings) return false;
+		foreach ($orderings as &$order) {
+			$order = explode(',',$order,2);
+			if (count($order)<2) $order[1]='ASC';
+			if (!strlen($order[0])) return false;
+			$direction = strtoupper($order[1]);
+			if (in_array($direction,array('ASC','DESC'))) {
+				$order[1] = $direction;
+			}
+		}
+		return $orderings;
 	}
 
 	protected function convertFilter($field, $comparator, $value) {
@@ -1546,7 +1543,7 @@ class PHP_CRUD_API {
 		$filters   = $this->parseGetParameterArray($get, 'filter', false);
 		$satisfy   = $this->parseGetParameter($get, 'satisfy', 'a-zA-Z0-9\-_,.');
 		$columns   = $this->parseGetParameter($get, 'columns', 'a-zA-Z0-9\-_,.*');
-		$order     = $this->parseGetParameter($get, 'order', 'a-zA-Z0-9\-_,');
+		$orderings = $this->parseGetParameterArray($get, 'order', 'a-zA-Z0-9\-_,');
 		$transform = $this->parseGetParameter($get, 'transform', 't1');
 
 		$tables    = $this->processTableAndIncludeParameters($database,$table,$include,$action);
@@ -1554,7 +1551,7 @@ class PHP_CRUD_API {
 		$satisfy   = $this->processSatisfyParameter($tables,$satisfy);
 		$filters   = $this->processFiltersParameter($tables,$satisfy,$filters);
 		$page      = $this->processPageParameter($page);
-		$order     = $this->processOrderParameter($order);
+		$orderings = $this->processOrderingsParameter($orderings);
 
 		// reflection
 		list($tables,$collect,$select) = $this->findRelations($tables,$database,$auto_include);
@@ -1586,7 +1583,7 @@ class PHP_CRUD_API {
 			}
 		}
 
-		return compact('action','database','tables','key','page','filters','fields','order','transform','multi','inputs','collect','select');
+		return compact('action','database','tables','key','page','filters','fields','orderings','transform','multi','inputs','collect','select');
 	}
 
 	protected function addWhereFromFilters($filters,&$sql,&$params) {
@@ -1615,6 +1612,14 @@ class PHP_CRUD_API {
 		}
 	}
 
+	protected function addOrderByFromOrderings($orderings,&$sql,&$params) {
+		foreach ($orderings as $i=>$ordering) {
+			$sql .= $i==0?' ORDER BY ':', ';
+			$sql .= '! '.$ordering[1];
+			$params[] = $ordering[0];
+		}
+	}
+
 	protected function listCommandInternal($parameters) {
 		extract($parameters);
 		echo '{';
@@ -1622,7 +1627,7 @@ class PHP_CRUD_API {
 		// first table
 		$count = false;
 		echo '"'.$table.'":{';
-		if (is_array($order) && is_array($page)) {
+		if (is_array($orderings) && is_array($page)) {
 			$params = array();
 			$sql = 'SELECT COUNT(*) FROM !';
 			$params[] = $table;
@@ -1641,13 +1646,12 @@ class PHP_CRUD_API {
 		$sql .= ' FROM !';
 		$params[] = $table;
 		if (isset($filters[$table])) {
-				$this->addWhereFromFilters($filters[$table],$sql,$params);
+			$this->addWhereFromFilters($filters[$table],$sql,$params);
 		}
-		if (is_array($order)) {
-			$sql .= ' ORDER BY ! '.$order[1];
-			$params[] = $order[0];
+		if (is_array($orderings)) {
+			$this->addOrderByFromOrderings($orderings,$sql,$params);
 		}
-		if (is_array($order) && is_array($page)) {
+		if (is_array($orderings) && is_array($page)) {
 			$sql = $this->db->addLimitToSql($sql,$page[1],$page[0]);
 		}
 		if ($result = $this->db->query($sql,$params)) {

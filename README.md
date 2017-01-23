@@ -224,6 +224,7 @@ With the "order" parameter you can sort. By default the sort is in ascending ord
 
 ```
 GET http://localhost/api.php/categories?order=name,desc
+GET http://localhost/api.php/posts?order[]=icon,desc&order[]=name
 ```
 
 Output:
@@ -231,6 +232,8 @@ Output:
 ```
 {"categories":{"columns":["id","name"],"records":[[3,"Web development"],[1,"Internet"]]}}
 ```
+
+NB: You may sort on multiple fields by using "order[]" instead of "order" as a parameter name.
 
 ### List + Order + Pagination
 

@@ -324,11 +324,25 @@ class PHP_CRUD_API_Test extends PHPUnit_Framework_TestCase
 	{
 		$test = new API($this);
 		for ($i=1;$i<=10;$i++) {
-		  $test->post('/posts','{"user_id":1,"category_id":1,"content":"#'.$i.'"}');
-		  $test->expect(4+$i);
+			$test->post('/posts','{"user_id":1,"category_id":1,"content":"#'.$i.'"}');
+			$test->expect(4+$i);
 		}
 		$test->get('/posts?page=2,2&order=id');
 		$test->expect('{"posts":{"columns":["id","user_id","category_id","content"],"records":[[5,1,1,"#1"],[6,1,1,"#2"]],"results":11}}');
+	}
+
+	public function testListWithPaginateInMultipleOrder()
+	{
+		$test = new API($this);
+		$test->get('/posts?page=1,2&order[]=category_id,asc&order[]=id,desc');
+		$test->expect('{"posts":{"columns":["id","user_id","category_id","content"],"records":[[14,1,1,"#10"],[12,1,1,"#8"]],"results":11}}');
+	}
+
+	public function testListWithPaginateInDescendingOrder()
+	{
+		$test = new API($this);
+		$test->get('/posts?page=2,2&order=id,desc');
+		$test->expect('{"posts":{"columns":["id","user_id","category_id","content"],"records":[[11,1,1,"#7"],[10,1,1,"#6"]],"results":11}}');
 	}
 
 	public function testListWithPaginateLastPage()
