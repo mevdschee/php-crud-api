@@ -14,6 +14,7 @@ Related projects:
 ## Requirements
 
   - PHP 5.3 or higher with MySQLi, libpq, SQLSRV or sqlite3 enabled (PHP 7 recommended)
+  - MySQL tables should use InnoDB or XtraDB storage engine 
   - PHP on Windows when connecting to SQL Server 2012
   - PostGIS 2.0 or higher for spatial features in PostgreSQL 9.1 or higher
 
