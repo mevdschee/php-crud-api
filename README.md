@@ -28,6 +28,7 @@ This is a single file application! Upload "api.php" somewhere and enjoy!
   - Complex filters (with both "and" & "or") are not supported
   - Complex writes (transactions) are not supported
   - Complex queries calling functions (like "concat" or "sum") are not supported
+  - MySQL storage engine must be either InnoDB or XtraDB
   - SQLite does not support binary and spatial/GIS functionality
   - MySQL BIT field type is not supported (use TINYINT)
 
