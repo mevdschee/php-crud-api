@@ -13,6 +13,7 @@ interface DatabaseInterface {
 	public function fetchFields($table);
 	public function addLimitToSql($sql,$limit,$offset);
 	public function likeEscape($string);
+	public function isNumericType($field);
 	public function isBinaryType($field);
 	public function isGeometryType($field);
 	public function getDefaultCharset();
@@ -137,14 +138,14 @@ class MySQL implements DatabaseInterface {
 				return "'".mysqli_real_escape_string($db,$param)."'";
 			}
 		}, $sql);
-		//if (!strpos($sql,'INFORMATION_SCHEMA'))	echo "\n$sql\n";
+		//if (!strpos($sql,'INFORMATION_SCHEMA')) echo "\n$sql\n";
+		//if (!strpos($sql,'INFORMATION_SCHEMA')) file_put_contents('log.txt',"\n$sql\n",FILE_APPEND);
 		return mysqli_query($db,$sql);
 	}
 
-	protected function convertFloatAndInt($result,&$values, $fields) {
+	protected function convertFloatAndInt($result,&$values,&$fields) {
 		array_walk($values, function(&$v,$i) use ($result,$fields){
-			$t = $fields[$i]->type;
-			if (is_string($v) && in_array($t,array(1,2,3,4,5,6,8,9))) {
+			if (is_string($v) && $this->isNumericType($fields[$i])) {
 				$v+=0;
 			}
 		});
@@ -193,6 +194,10 @@ class MySQL implements DatabaseInterface {
 
 	public function convertFilter($field, $comparator, $value) {
 		return false;
+	}
+
+	public function isNumericType($field) {
+		return in_array($field->type,array(1,2,3,4,5,6,8,9));
 	}
 
 	public function isBinaryType($field) {
@@ -380,10 +385,9 @@ class PostgreSQL implements DatabaseInterface {
 		return @pg_query($db,$sql);
 	}
 
-	protected function convertFloatAndInt($result,&$values, $fields) {
+	protected function convertFloatAndInt($result,&$values,&$fields) {
 		array_walk($values, function(&$v,$i) use ($result,$fields){
-			$t = $fields[$i]->type;
-			if (is_string($v) && in_array($t,array('int2','int4','int8','float4','float8'))) {
+			if (is_string($v) && $this->isNumericType($fields[$i])) {
 				$v+=0;
 			}
 		});
@@ -440,6 +444,10 @@ class PostgreSQL implements DatabaseInterface {
 
 	public function convertFilter($field, $comparator, $value) {
 		return false;
+	}
+
+	public function isNumericType($field) {
+		return in_array($field->type, array('int2', 'int4', 'int8', 'float4', 'float8'));
 	}
 
 	public function isBinaryType($field) {
@@ -699,6 +707,10 @@ class SQLServer implements DatabaseInterface {
 		return false;
 	}
 
+	public function isNumericType($field) {
+		return in_array($field->type,array(-6,-5,4,5,2,6,7));
+	}
+
 	public function isBinaryType($field) {
 		return ($field->type>=-4 && $field->type<=-2);
 	}
@@ -901,6 +913,10 @@ class SQLite implements DatabaseInterface {
 		return false;
 	}
 
+	public function isNumericType($field) {
+		return in_array($field->type,array('integer','real'));
+	}
+
 	public function isBinaryType($field) {
 		return (substr($field->type,0,4)=='data');
 	}
@@ -939,6 +955,7 @@ class PHP_CRUD_API {
 			case 'PUT': return 'update';
 			case 'POST': return 'create';
 			case 'DELETE': return 'delete';
+			case 'PATCH': return 'increment';
 			default: $this->exitWith404('method');
 		}
 		return false;
@@ -1386,6 +1403,54 @@ class PHP_CRUD_API {
 		return $rows;
 	}
 
+	protected function incrementObject($key,$input,$filters,$tables,$fields) {
+		if (!$input) return false;
+		$input = (array)$input;
+		$table = $tables[0];
+		$sql = 'UPDATE ! SET ';
+		$params = array($table);
+		foreach (array_keys($input) as $j=>$k) {
+			if ($j) $sql .= ',';
+			$v = $input[$k];
+			if ($this->db->isNumericType($fields[$table][$k])) {
+				$sql .= '!=!+?';
+				$params[] = $k;
+				$params[] = $k;
+				$params[] = $v;
+			} else {
+				$sql .= '!=!';
+				$params[] = $k;
+				$params[] = $k;
+			}
+		}
+		$this->addFilter($filters,$table,'and',$key[1],'eq',$key[0]);
+		$this->addWhereFromFilters($filters[$table],$sql,$params);
+		$result = $this->db->query($sql,$params);
+		if (!$result) return null;
+		return $this->db->affectedRows($result);
+	}
+
+	protected function incrementObjects($key,$inputs,$filters,$tables,$fields) {
+		if (!$inputs) return false;
+		$keyField = $key[1];
+		$keys = explode(',',$key[0]);
+		if (count($inputs)!=count($keys)) {
+			$this->exitWith404('subject');
+		}
+		$rows = array();
+		$this->db->beginTransaction();
+		foreach ($inputs as $i=>$input) {
+			$result = $this->incrementObject(array($keys[$i],$keyField),$input,$filters,$tables,$fields);
+			if ($result===null) {
+				$this->db->rollbackTransaction();
+				return null;
+			}
+			$rows[] = $result;
+		}
+		$this->db->commitTransaction();
+		return $rows;
+	}
+
 	protected function findRelations($tables,$database,$auto_include) {
 		$tableset = array();
 		$collect = array();
@@ -1759,6 +1824,14 @@ class PHP_CRUD_API {
 		$this->startOutput();
 		if ($multi) echo json_encode($this->deleteObjects($key,$filters,$tables));
 		else echo json_encode($this->deleteObject($key,$filters,$tables));
+	}
+
+	protected function incrementCommand($parameters) {
+		extract($parameters);
+		if (!$inputs || !$inputs[0]) $this->exitWith404('subject');
+		$this->startOutput();
+		if ($multi) echo json_encode($this->incrementObjects($key,$inputs,$filters,$tables,$fields));
+		else echo json_encode($this->incrementObject($key,$inputs[0],$filters,$tables,$fields));
 	}
 
 	protected function listCommand($parameters) {
@@ -2242,6 +2315,7 @@ class PHP_CRUD_API {
 				case 'create': $this->createCommand($parameters); break;
 				case 'update': $this->updateCommand($parameters); break;
 				case 'delete': $this->deleteCommand($parameters); break;
+				case 'increment': $this->incrementCommand($parameters); break;
 				case 'headers': $this->headersCommand($parameters); break;
 			}
 		}
