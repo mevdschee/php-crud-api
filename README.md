@@ -632,7 +632,7 @@ character to seperate the database from the table name. The databases 'mysql', '
 
 Incrementing a numeric field of a record is done with the PATCH method (non-numeric fields are ignored).
 Decrementing can be done using a negative increment value. The call returns the rows affected. 
-To add 2 to the field 'visitors' in the 'events' table for record with primary key '1', execute:
+To add '2' to the field 'visitors' in the 'events' table for record with primary key '1', execute:
 
 ```
 PATCH http://localhost/api.php/events/1
