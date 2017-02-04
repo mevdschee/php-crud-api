@@ -631,7 +631,7 @@ character to seperate the database from the table name. The databases 'mysql', '
 ## Atomic increment (for counters)
 
 Incrementing a numeric field of a record is done with the PATCH method (non-numeric fields are ignored).
-Decrementing can be done using a negative increment value. The call returns the rows affected. 
+Decrementing can be done using a negative increment value.
 To add '2' to the field 'visitors' in the 'events' table for record with primary key '1', execute:
 
 ```
@@ -645,7 +645,7 @@ Output:
 1
 ```
 
-Note that multiple fields can be incremented and batch operations are supported (see: update/PUT).
+The call returns the rows affected. Note that multiple fields can be incremented and batch operations are supported (see: update/PUT).
 
 ## Binary data
 
