@@ -68,6 +68,11 @@ class API
 		return $this->action('OPTIONS',$url);
 	}
 
+	public function patch($url,$data)
+	{
+		return $this->action('PATCH',$url,$data);
+	}
+
 	public function expectAny()
 	{
 		ob_start();
@@ -650,6 +655,96 @@ class PHP_CRUD_API_Test extends PHPUnit_Framework_TestCase
 		$test = new API($this);
 		$test->get('/events?columns=datetime');
 		$test->expect('{"events":{"columns":["datetime"],"records":[["2016-01-01 13:01:01.111"]]}}');
+	}
+
+	public function testIncrementEventVisitors()
+	{
+		$test = new API($this);
+		$test->patch('/events/1','{"visitors":11}');
+		$test->expect('1');
+		$test->get('/events/1');
+		$test->expect('{"id":1,"name":"Launch","datetime":"2016-01-01 13:01:01.111","visitors":11}');
+	}
+
+	public function testIncrementEventVisitorsWithZero()
+	{
+		$test = new API($this);
+		$test->patch('/events/1','{"visitors":0}');
+		$test->expect('1');
+		$test->get('/events/1');
+		$test->expect('{"id":1,"name":"Launch","datetime":"2016-01-01 13:01:01.111","visitors":11}');
+	}
+
+	public function testDecrementEventVisitors()
+	{
+		$test = new API($this);
+		$test->patch('/events/1','{"visitors":-5}');
+		$test->expect('1');
+		$test->get('/events/1');
+		$test->expect('{"id":1,"name":"Launch","datetime":"2016-01-01 13:01:01.111","visitors":6}');
+	}
+
+	public function testIncrementEventDateTime()
+	{
+		$test = new API($this);
+		$test->patch('/events/1','{"datetime":"1:00"}');
+		$test->expect('1');
+		$test->get('/events/1');
+		$test->expect('{"id":1,"name":"Launch","datetime":"2016-01-01 13:02:01.111","visitors":6}');
+	}
+
+	public function testIncrementEventDateTimeNumeric()
+	{
+		$test = new API($this);
+		$test->patch('/events/1','{"datetime":120}');
+		$test->expect('1');
+		$test->get('/events/1');
+		$test->expect('{"id":1,"name":"Launch","datetime":"2016-01-01 13:04:01.111","visitors":6}');
+	}
+
+	public function testIncrementEventDateTimeWithZero()
+	{
+		$test = new API($this);
+		$test->patch('/events/1','{"datetime":0}');
+		$test->expect('1');
+		$test->get('/events/1');
+		$test->expect('{"id":1,"name":"Launch","datetime":"2016-01-01 13:04:01.111","visitors":6}');
+	}
+
+	public function testDecrementEventDateTime()
+	{
+		$test = new API($this);
+		$test->patch('/events/1','{"datetime":"-1 0:03:01.001"}');
+		$test->expect('1');
+		$test->get('/events/1');
+		$test->expect('{"id":1,"name":"Launch","datetime":"2015-12-31 12:01:00.110","visitors":6}');
+	}
+
+	public function testIncrementEventName()
+	{
+		$test = new API($this);
+		$test->patch('/events/1','{"name":"? "}');
+		$test->expect('1');
+		$test->get('/events/1');
+		$test->expect('{}');
+	}
+
+	public function testIncrementEventNameWithFalsy()
+	{
+		$test = new API($this);
+		$test->patch('/events/1','{"name":false}');
+		$test->expect('1');
+		$test->get('/events/1');
+		$test->expect('{}');
+	}
+
+	public function testIncrementEventNameWithNumber()
+	{
+		$test = new API($this);
+		$test->patch('/events/1','{"name":43}');
+		$test->expect('1');
+		$test->get('/events/1');
+		$test->expect('{}');
 	}
 
 	public function testListTagUsage()
