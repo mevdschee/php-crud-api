@@ -630,13 +630,13 @@ character to seperate the database from the table name. The databases 'mysql', '
 
 ## Atomic increment
 
-Incrementing a numeric field of a record is done with the PATCH method. 
-Decrementing can be done using a negative increment value. 
-The call returns the rows affected.
+Incrementing a numeric field of a record is done with the PATCH method (non-numeric fields are ignored).
+Decrementing can be done using a negative increment value. The call returns the rows affected. 
+To add 2 to the field 'visitors' in the 'events' table for record with primary key '1', execute:
 
 ```
 PATCH http://localhost/api.php/events/1
-visitors=1
+{"visitors":2}
 ```
 
 Output:
@@ -645,7 +645,7 @@ Output:
 1
 ```
 
-Note that non-numeric fields will not be affected.
+Note that multiple fields can be incremented and batch operations are supported (see: update/PUT).
 
 ## Binary data
 
