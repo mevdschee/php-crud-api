@@ -1999,6 +1999,7 @@ class PHP_CRUD_API {
 						array('name'=>'read','method'=>'get'),
 						array('name'=>'update','method'=>'put'),
 						array('name'=>'delete','method'=>'delete'),
+						array('name'=>'increment','method'=>'patch'),
 					),
 				);
 				$tables[] = $table;
