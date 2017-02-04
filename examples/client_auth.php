@@ -1,7 +1,10 @@
 <?php
 require "../lib/php_crud_api_transform.php";
 
+$cookiejar = tempnam(sys_get_temp_dir(), 'cookiejar-');
+
 function call($method, $url, $data = false) {
+	global $cookiejar;
 	$ch = curl_init();
 	curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
 	curl_setopt($ch, CURLOPT_URL, $url);
@@ -14,8 +17,8 @@ function call($method, $url, $data = false) {
 	}
 	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
-	curl_setopt($ch, CURLOPT_COOKIEJAR, '/tmp/cookies.txt');
-	curl_setopt($ch, CURLOPT_COOKIEFILE, '/tmp/cookies.txt');
+	curl_setopt($ch, CURLOPT_COOKIEJAR, $cookiejar);
+	curl_setopt($ch, CURLOPT_COOKIEFILE, $cookiejar);
 
 	return curl_exec($ch);
 }
