@@ -112,7 +112,8 @@ CREATE TABLE countries (
 CREATE TABLE events (
     id serial NOT NULL,
     name character varying(255) NOT NULL,
-    datetime timestamp NOT NULL
+    datetime timestamp NOT NULL,
+    visitors integer NOT NULL
 );
 
 --
@@ -195,8 +196,8 @@ INSERT INTO "countries" ("name", "shape") VALUES
 -- Data for Name: events; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-INSERT INTO "events" ("name", "datetime") VALUES
-('Launch',	'2016-01-01 13:01:01.111');
+INSERT INTO "events" ("name", "datetime", "visitors") VALUES
+('Launch',	'2016-01-01 13:01:01.111',	0);
 
 --
 -- Data for Name: events; Type: TABLE DATA; Schema: public; Owner: postgres

@@ -183,6 +183,7 @@ CREATE TABLE [events](
 	[id] [int] IDENTITY,
 	[name] [nvarchar](max) NOT NULL,
 	[datetime] [datetime2](3) NOT NULL,
+	[visitors] [int] NOT NULL,
  CONSTRAINT [PK_events] PRIMARY KEY CLUSTERED
 (
 	[id] ASC
@@ -280,7 +281,7 @@ SET IDENTITY_INSERT [countries] OFF
 GO
 SET IDENTITY_INSERT [events] ON
 GO
-INSERT [events] ([id], [name], [datetime]) VALUES (1, N'Launch', N'2016-01-01 13:01:01.111')
+INSERT [events] ([id], [name], [datetime], [visitors]) VALUES (1, N'Launch', N'2016-01-01 13:01:01.111', 0)
 GO
 SET IDENTITY_INSERT [events] OFF
 GO
