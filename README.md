@@ -51,7 +51,7 @@ This is a single file application! Upload "api.php" somewhere and enjoy!
   - Pagination, sorting and column selection
   - Relation detection and filtering on foreign keys
   - Relation "transforms" for PHP and JavaScript
-  - Atomic increment and decrement support via PATCH
+  - Atomic increment support via PATCH (for counters)
   - Binary fields supported with base64 encoding
   - Spatial/GIS fields and filters supported with WKT
   - Generate API documentation using Swagger tools
@@ -628,7 +628,7 @@ The code also supports multi-database API's. These have URLs where the first seg
 This can be enabled by NOT specifying a database in the configuration. Also the permissions in the configuration should contain a dot
 character to seperate the database from the table name. The databases 'mysql', 'information_schema' and 'sys' are automatically blocked.
 
-## Atomic increment
+## Atomic increment (for counters)
 
 Incrementing a numeric field of a record is done with the PATCH method (non-numeric fields are ignored).
 Decrementing can be done using a negative increment value. The call returns the rows affected. 
