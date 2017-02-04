@@ -335,7 +335,7 @@ Output:
 
 ### Update
 
-Editing a record is done with the PUT method. The call returns the rows affected.
+Editing a record is done with the PUT method. The call returns the number of rows affected.
 
 ```
 PUT http://localhost/api.php/categories/2
@@ -352,7 +352,7 @@ Note that only fields that are specified in the request will be updated.
 
 ### Update (with JSON object)
 
-Alternatively you can send a JSON object in the body. The call returns the rows affected.
+Alternatively you can send a JSON object in the body. The call returns the number of rows affected.
 
 ```
 PUT http://localhost/api.php/categories/2
@@ -388,7 +388,7 @@ This call uses a transaction and will either update all or no records. If the tr
 
 ### Delete
 
-The DELETE verb is used to delete a record. The call returns the rows affected.
+The DELETE verb is used to delete a record. The call returns the number of rows affected.
 
 ```
 DELETE http://localhost/api.php/categories/2
@@ -402,7 +402,7 @@ Output:
 
 ### Delete (multiple)
 
-The DELETE verb can also be used to delete multiple records. The call returns the rows affected for each primary key value specified in the URL.
+The DELETE verb can also be used to delete multiple records. The call returns the number of rows affected for each primary key value specified in the URL.
 
 ```
 DELETE http://localhost/api.php/categories/1,2
@@ -645,7 +645,7 @@ Output:
 1
 ```
 
-The call returns the rows affected. Note that multiple fields can be incremented and batch operations are supported (see: update/PUT).
+The call returns the number of rows affected. Note that multiple fields can be incremented and batch operations are supported (see: update/PUT).
 
 ## Binary data
 
