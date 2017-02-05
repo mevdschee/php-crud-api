@@ -162,7 +162,8 @@ class MySQL implements DatabaseInterface {
 	public function fetchRow($result,$fields=false) {
 		$values = mysqli_fetch_row($result);
 		if ($values && $fields && !defined('MYSQLI_OPT_INT_AND_FLOAT_NATIVE')) {
-			$this->convertFloatAndInt($result,$values,array_values($fields));
+			$fields = array_values($fields);
+			$this->convertFloatAndInt($result,$values,$fields);
 		}
 		return $values;
 	}
@@ -404,7 +405,8 @@ class PostgreSQL implements DatabaseInterface {
 	public function fetchRow($result,$fields=false) {
 		$values = pg_fetch_row($result);
 		if ($values && $fields) {
-			$this->convertFloatAndInt($result,$values,array_values($fields));
+			$fields = array_values($fields);
+			$this->convertFloatAndInt($result,$values,$fields);
 		}
 		return $values;
 	}
