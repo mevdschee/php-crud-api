@@ -953,7 +953,7 @@ class PHP_CRUD_API {
 	protected function mapMethodToAction($method,$key) {
 		switch ($method) {
 			case 'OPTIONS': return 'headers';
-			case 'GET': return $key?'read':'list';
+			case 'GET': return ($key===false)?'list':'read';
 			case 'PUT': return 'update';
 			case 'POST': return 'create';
 			case 'DELETE': return 'delete';
@@ -964,7 +964,7 @@ class PHP_CRUD_API {
 	}
 
 	protected function parseRequestParameter(&$request,$characters) {
-		if (!$request) return false;
+		if ($request==='') return false;
 		$pos = strpos($request,'/');
 		$value = $pos?substr($request,0,$pos):$request;
 		$request = $pos?substr($request,$pos+1):'';
@@ -1131,7 +1131,7 @@ class PHP_CRUD_API {
 	}
 
 	protected function processKeyParameter($key,$tables,$database) {
-		if (!$key) return false;
+		if ($key===false) return false;
 		$fields = $this->findPrimaryKeys($tables[0],$database);
 		if (count($fields)!=1) $this->exitWith404('1pk');
 		return array($key,$fields[0]);
