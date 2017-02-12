@@ -705,7 +705,7 @@ class SQLServer implements DatabaseInterface {
 				case 'nsis': return array('!.STIsSimple()=0',$field);
 				case 'nsiv': return array('!.STIsValid()=0',$field);
 			}
-		} 
+		}
 		return false;
 	}
 
@@ -1154,7 +1154,7 @@ class PHP_CRUD_API {
 	protected function convertFilter($field, $comparator, $value) {
 		$result = $this->db->convertFilter($field,$comparator,$value);
 		if ($result) return $result;
-		// default behavior 					
+		// default behavior
 		$comparator = strtolower($comparator);
 		if ($comparator[0]!='n') {
 			if (strlen($comparator)==2) {
@@ -1167,8 +1167,10 @@ class PHP_CRUD_API {
 					case 'le': return array('! <= ?',$field,$value);
 					case 'ge': return array('! >= ?',$field,$value);
 					case 'gt': return array('! > ?',$field,$value);
-					case 'bt': $v = explode(',',$value); if (count($v)<2) return false;
-						   return array('! BETWEEN ? AND ?',$field,$v[0],$v[1]);
+					case 'bt':
+						$v = explode(',',$value);
+						if (count($v)<2) return false;
+						return array('! BETWEEN ? AND ?',$field,$v[0],$v[1]);
 					case 'in': return array('! IN ?',$field,explode(',',$value));
 					case 'is': return array('! IS NULL',$field);
 				}
@@ -1204,8 +1206,10 @@ class PHP_CRUD_API {
 					case 'nle': return array('! > ?',$field,$value);
 					case 'nge': return array('! < ?',$field,$value);
 					case 'ngt': return array('! <= ?',$field,$value);
-					case 'nbt': $v = explode(',',$value); if (count($v)<2) return false;
-						    return array('! NOT BETWEEN ? AND ?',$field,$v[0],$v[1]);
+					case 'nbt':
+						$v = explode(',',$value);
+						if (count($v)<2) return false;
+						return array('! NOT BETWEEN ? AND ?',$field,$v[0],$v[1]);
 					case 'nin': return array('! NOT IN ?',$field,explode(',',$value));
 					case 'nis': return array('! IS NOT NULL',$field);
 				}
@@ -1518,7 +1522,7 @@ class PHP_CRUD_API {
 				foreach ($keys as $key=>$other) {
 					$columns.=",$table.$key,".implode('.',$other);
 				}
-		  }
+			}
 		}
 		return $columns;
 	}
@@ -1896,7 +1900,7 @@ class PHP_CRUD_API {
 		$get = isset($get)?$get:null;
 		$post = isset($post)?$post:null;
 		$origin = isset($origin)?$origin:null;
-		
+
 		// defaults
 		if (!$dbengine) {
 			$dbengine = 'MySQL';
@@ -1923,7 +1927,7 @@ class PHP_CRUD_API {
 		// connect
 		$request = trim($request,'/');
 		if (!$database) {
-			$database  = $this->parseRequestParameter($request, 'a-zA-Z0-9\-_');
+			$database = $this->parseRequestParameter($request, 'a-zA-Z0-9\-_');
 		}
 		if (!$db) {
 			$db = new $dbengine();
@@ -2013,7 +2017,7 @@ class PHP_CRUD_API {
 			$table_list = array($table['name']);
 			$table_fields = $this->findFields($table_list,false,$database);
 			$table_names = array_map(function($v){ return $v['name'];},$tables);
-			
+
 			if ($extensions) {
 				$result = $this->db->query($this->db->getSql('reflect_belongs_to'),array($table_list[0],$table_names,$database,$database));
 				while ($row = $this->db->fetchRow($result)) {
@@ -2028,7 +2032,7 @@ class PHP_CRUD_API {
 					$table_fields[$table['name']][$primaryKey]->primaryKey = true;
 				}
 			}
-			
+
 			foreach (array('root_actions','id_actions') as $path) {
 				foreach ($table[$path] as $i=>$action) {
 					$table_list = array($table['name']);
