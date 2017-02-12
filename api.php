@@ -1103,7 +1103,7 @@ class PHP_CRUD_API {
 	protected function headersCommand($parameters) {
 		$headers = array();
 		$headers[]='Access-Control-Allow-Headers: Content-Type';
-		$headers[]='Access-Control-Allow-Methods: OPTIONS, GET, PUT, POST, DELETE';
+		$headers[]='Access-Control-Allow-Methods: OPTIONS, GET, PUT, POST, DELETE, PATCH';
 		$headers[]='Access-Control-Allow-Credentials: true';
 		$headers[]='Access-Control-Max-Age: 1728000';
 		if (isset($_SERVER['REQUEST_METHOD'])) {
