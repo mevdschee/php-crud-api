@@ -16,11 +16,11 @@ function call($method, $url, $data = false) {
 	return curl_exec($ch);
 }
 
-$response = call('GET','http://localhost/api.php/posts?include=categories,tags,comments&filter=id,eq,1');
-$jsonObject = json_decode($response,true);
+$response = call('GET', 'http://localhost/api.php/posts?include=categories,tags,comments&filter=id,eq,1');
+$jsonObject = json_decode($response, true);
 
 $jsonObject = php_crud_api_transform($jsonObject);
-$output = json_encode($jsonObject,JSON_PRETTY_PRINT);
+$output = json_encode($jsonObject, JSON_PRETTY_PRINT);
 ?>
 <html>
 <head>
@@ -29,3 +29,4 @@ $output = json_encode($jsonObject,JSON_PRETTY_PRINT);
 <pre><?php echo $output ?></pre>
 </body>
 </html>
+
