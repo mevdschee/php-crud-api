@@ -1173,7 +1173,6 @@ class PHP_CRUD_API {
 						return array('! BETWEEN ? AND ?',$field,$v[0],$v[1]);
 					case 'in': return array('! IN ?',$field,explode(',',$value));
 					case 'is': return array('! IS NULL',$field);
-					case 'ne': return array('! <> ?',$field,$value);
 				}
 			} else {
 				switch ($comparator) {
