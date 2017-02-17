@@ -23,7 +23,7 @@ AppComponent =
         };
         var url = "../api.php";
         http.post(url,JSON.stringify({username:"admin",password:"admin"})).subscribe(res => {
-          url += "/posts?csrf="+res._body;
+          url += "/posts?csrf="+JSON.parse(res._body);
           http.post(url,JSON.stringify({user_id:1,category_id:1,content:"from angular2"})).subscribe();
           http.get(url).map(res => php_crud_api_transform(res.json())).subscribe(res => this.posts = res.posts);
         });

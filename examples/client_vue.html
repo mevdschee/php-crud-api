@@ -1,0 +1,251 @@
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  <title>Vue.js CRUD application</title>
+  <meta name="description" content="">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.1.10/vue.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/vue-router/2.2.1/vue-router.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.15.3/axios.js"></script>
+  <script src="../lib/php_crud_api_transform.js"></script>
+  <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css">
+  <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap-theme.min.css">
+<style>
+.logo {
+  width: 50px;
+  float: left;
+  margin-right: 15px;
+}
+
+.form-group {
+  max-width: 500px;
+}
+
+.actions {
+  padding: 10px 0;
+}
+
+.glyphicon-euro {
+  font-size: 12px;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <header class="page-header">
+    <div class="branding">
+      <img src="https://vuejs.org/images/logo.png" alt="Logo" title="Home page" class="logo"/>
+      <h1>Vue.js CRUD application</h1>
+    </div>
+  </header>
+  <main id="app">
+    <router-view></router-view>
+  </main>
+</div>
+
+<template id="post-list">
+  <div>
+    <div class="actions">
+      <router-link class="btn btn-default" v-bind:to="{path: '/add-post'}">
+        <span class="glyphicon glyphicon-plus"></span>
+        Add post
+      </router-link>
+    </div>
+    <div class="filters row">
+      <div class="form-group col-sm-3">
+        <label for="search-element">Filter</label>
+        <input v-model="searchKey" class="form-control" id="search-element" requred/>
+      </div>
+    </div>
+    <table class="table">
+      <thead>
+      <tr>
+        <th>Content</th>
+        <th class="col-sm-2">Actions</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr v-if="posts===null">
+        <td colspan="4">Loading...</td>
+      </tr>
+      <tr v-else v-for="post in filteredposts">
+        <td>
+          <router-link v-bind:to="{name: 'post', params: {post_id: post.id}}">{{ post.content }}</router-link>
+        </td>
+        <td>
+          <router-link class="btn btn-warning btn-xs" v-bind:to="{name: 'post-edit', params: {post_id: post.id}}">Edit</router-link>
+          <router-link class="btn btn-danger btn-xs" v-bind:to="{name: 'post-delete', params: {post_id: post.id}}">Delete</router-link>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+</template>
+
+<template id="add-post">
+  <div>
+    <h2>Add new post</h2>
+    <form v-on:submit="createpost">
+      <div class="form-group">
+        <label for="add-content">Content</label>
+        <textarea class="form-control" id="add-content" rows="10" v-model="post.content"></textarea>
+      </div>
+      <button type="submit" class="btn btn-primary">Create</button>
+      <router-link class="btn btn-default" v-bind:to="'/'">Cancel</router-link>
+    </form>
+  </div>
+</template>
+
+<template id="post">
+  <div>
+    <b>Content: </b>
+    <div>{{ post.content }}</div>
+    <br/>
+    <span class="glyphicon glyphicon-arrow-left" aria-hidden="true"></span>
+    <router-link v-bind:to="'/'">Back to post list</router-link>
+  </div>
+</template>
+
+<template id="post-edit">
+  <div>
+    <h2>Edit post</h2>
+    <form v-on:submit="updatepost">
+      <div class="form-group">
+        <label for="edit-content">Content</label>
+        <textarea class="form-control" id="edit-content" rows="3" v-model="post.content"></textarea>
+      </div>
+      <button type="submit" class="btn btn-primary">Save</button>
+      <router-link class="btn btn-default" v-bind:to="'/'">Cancel</router-link>
+    </form>
+  </div>
+</template>
+
+<template id="post-delete">
+  <div>
+    <h2>Delete post {{ post.id }}</h2>
+    <form v-on:submit="deletepost">
+      <p>The action cannot be undone.</p>
+      <button type="submit" class="btn btn-danger">Delete</button>
+      <router-link class="btn btn-default" v-bind:to="'/'">Cancel</router-link>
+    </form>
+  </div>
+</template>
+
+<script>
+var posts = null;
+
+var api = axios.create({
+  baseURL: '../api.php'
+});
+
+function findpost (postId) {
+  return posts[findpostKey(postId)];
+};
+
+function findpostKey (postId) {
+  for (var key = 0; key < posts.length; key++) {
+    if (posts[key].id == postId) {
+      return key;
+    }
+  }
+};
+
+var List = Vue.extend({
+  template: '#post-list',
+  data: function () {
+    return {posts: posts, searchKey: ''};
+  },
+  created: function () {
+    var self = this;
+    api.get('/posts').then(function (response) {
+      posts = self.posts = php_crud_api_transform(response.data).posts;
+    }).catch(function (error) {
+      console.log(error);
+    });
+  },
+  computed: {
+    filteredposts: function () {
+      return this.posts.filter(function (post) {
+        return this.searchKey=='' || post.content.indexOf(this.searchKey) !== -1;
+      },this);
+    }
+  }
+});
+
+var post = Vue.extend({
+  template: '#post',
+  data: function () {
+    return {post: findpost(this.$route.params.post_id)};
+  }
+});
+
+var postEdit = Vue.extend({
+  template: '#post-edit',
+  data: function () {
+    return {post: findpost(this.$route.params.post_id)};
+  },
+  methods: {
+    updatepost: function () {
+      var post = this.post;
+      api.put('/posts/'+post.id,post).then(function (response) {
+        console.log(response.data);
+      }).catch(function (error) {
+        console.log(error);
+      });
+      router.push('/');
+    }
+  }
+});
+
+var postDelete = Vue.extend({
+  template: '#post-delete',
+  data: function () {
+    return {post: findpost(this.$route.params.post_id)};
+  },
+  methods: {
+    deletepost: function () {
+      var post = this.post;
+      api.delete('/posts/'+post.id).then(function (response) {
+        console.log(response.data);
+      }).catch(function (error) {
+        console.log(error);
+      });
+      router.push('/');
+    }
+  }
+});
+
+var Addpost = Vue.extend({
+  template: '#add-post',
+  data: function () {
+    return {post: {content: '', user_id: 1, category_id: 1}}
+  },
+  methods: {
+    createpost: function() {
+      var post = this.post;
+      api.post('/posts',post).then(function (response) {
+        post.id = response.data;
+      }).catch(function (error) {
+        console.log(error);
+      });
+      router.push('/');
+    }
+  }
+});
+
+var router = new VueRouter({routes:[
+  { path: '/', component: List},
+  { path: '/post/:post_id', component: post, name: 'post'},
+  { path: '/add-post', component: Addpost},
+  { path: '/post/:post_id/edit', component: postEdit, name: 'post-edit'},
+  { path: '/post/:post_id/delete', component: postDelete, name: 'post-delete'}
+]});
+app = new Vue({
+  router:router
+}).$mount('#app')
+</script>
+
+</body>
+</html>

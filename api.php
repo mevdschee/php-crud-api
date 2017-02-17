@@ -1102,7 +1102,7 @@ class PHP_CRUD_API {
 
 	protected function headersCommand($parameters) {
 		$headers = array();
-		$headers[]='Access-Control-Allow-Headers: Content-Type';
+		$headers[]='Access-Control-Allow-Headers: Content-Type, X-XSRF-Token';
 		$headers[]='Access-Control-Allow-Methods: OPTIONS, GET, PUT, POST, DELETE, PATCH';
 		$headers[]='Access-Control-Allow-Credentials: true';
 		$headers[]='Access-Control-Max-Age: 1728000';
@@ -2367,7 +2367,7 @@ class PHP_CRUD_API {
 // 	'secret'=>'someVeryLongPassPhraseChangeMe',
 // ));
 // if ($auth->executeCommand()) exit(0);
-// if (empty($_SESSION['user']) || $_GET['csrf']!=$_SESSION['csrf']) {
+// if (empty($_SESSION['user']) || !$auth->hasValidCsrfToken()) {
 //	header('HTTP/1.0 401 Unauthorized');
 //	exit(0);
 // }
@@ -2378,7 +2378,7 @@ class PHP_CRUD_API {
 // 	'authenticator'=>function($user,$pass){ $_SESSION['user']=($user=='admin' && $pass=='admin'); }
 // ));
 // if ($auth->executeCommand()) exit(0);
-// if (empty($_SESSION['user']) || $_GET['csrf']!=$_SESSION['csrf']) {
+// if (empty($_SESSION['user']) || !$auth->hasValidCsrfToken()) {
 //	header('HTTP/1.0 401 Unauthorized');
 //	exit(0);
 // }
