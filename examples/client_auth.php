@@ -24,8 +24,8 @@ function call($method, $url, $data = false) {
 }
 
 // in case you are using php-api-auth:
-$csrf = call('POST','http://localhost/blog.php/', 'username=admin&password=admin');
-$response = call('GET','http://localhost/blog.php/posts?include=categories,tags,comments&filter=id,eq,1&csrf='. trim($csrf));
+$csrf = json_decode(call('POST','http://localhost/api.php/', 'username=admin&password=admin'));
+$response = call('GET','http://localhost/api.php/posts?include=categories,tags,comments&filter=id,eq,1&csrf='. $csrf);
 
 unlink($cookiejar);
 
