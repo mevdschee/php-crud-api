@@ -368,7 +368,7 @@ class PHP_CRUD_API_Test extends PHPUnit_Framework_TestCase
 	{
 		$test = new API($this);
 		$test->get('/posts?exclude=id&filter=id,eq,1');
-		$test->expect('"posts":{"columns":["user_id","category_id","content"],"records":[[1,1,"blog started"]]}}');
+		$test->expect('{"posts":{"columns":["user_id","category_id","content"],"records":[[1,1,"blog started"]]}}');
 	}
 
 	public function testListExampleFromReadme()
@@ -389,7 +389,7 @@ class PHP_CRUD_API_Test extends PHPUnit_Framework_TestCase
 	{
 		$test = new API($this);
 		$test->get('/posts?include=categories,tags,comments&exclude=comments.message&filter=id,eq,1&transform=1');
-		$test->expect('{"posts":[{"id":1,"post_tags":[{"id":1,"post_id":1,"tag_id":1,"tags":[{"id":1,"name":"funny"}]},{"id":2,"post_id":1,"tag_id":2,"tags":[{"id":2,"name":"important"}]}],"comments":[{"id":1,"post_id":1,"message":"great"},{"id":2,"post_id":1,"message":"fantastic"}],"user_id":1,"category_id":1,"categories":[{"id":1,"name":"announcement","icon":null}],"content":"blog started"}]}');
+		$test->expect('{"posts":[{"id":1,"post_tags":[{"id":1,"post_id":1,"tag_id":1,"tags":[{"id":1,"name":"funny"}]},{"id":2,"post_id":1,"tag_id":2,"tags":[{"id":2,"name":"important"}]}],"comments":[{"id":1,"post_id":1},{"id":2,"post_id":1}],"user_id":1,"category_id":1,"categories":[{"id":1,"name":"announcement","icon":null}],"content":"blog started"}]}');
 	}
 
 	public function testEditCategoryWithBinaryContent()
@@ -450,7 +450,7 @@ class PHP_CRUD_API_Test extends PHPUnit_Framework_TestCase
 	{
 		$test = new API($this);
 		$test->options('/posts/2');
-		$test->expect('["Access-Control-Allow-Headers: Content-Type","Access-Control-Allow-Methods: OPTIONS, GET, PUT, POST, DELETE, PATCH","Access-Control-Allow-Credentials: true","Access-Control-Max-Age: 1728000"]',false);
+		$test->expect('["Access-Control-Allow-Headers: Content-Type, X-XSRF-Token","Access-Control-Allow-Methods: OPTIONS, GET, PUT, POST, DELETE, PATCH","Access-Control-Allow-Credentials: true","Access-Control-Max-Age: 1728000"]',false);
 	}
 
 	public function testHidingPasswordColumn()
