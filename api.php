@@ -1527,33 +1527,12 @@ class PHP_CRUD_API {
 		return $columns;
 	}
 
-	protected function excludeFields($fields,$exclude) {
-		if ($fields && $exclude) {
-			$columns = explode(',',$exclude);
-			foreach($columns as $column) {
-				$table = "";
-				if (strpos($column,'.')) {
-					$key = explode('.',$column);
-					$table = $key[0];
-					$column = $key[1];
-				} else {
-					if (count($fields)==1) {
-						$table = array_keys($fields)[0];
-					}
-				}
-				if (array_key_exists($table,$fields) and array_key_exists($column,$fields[$table])) {
-					unset($fields[$table][$column]);
-				}
-			}
-		}
-		return $fields;
-	}
-
-	protected function findFields($tables,$columns,$database) {
+	protected function findFields($tables,$columns,$exclude,$database) {
 		$fields = array();
 		foreach ($tables as $i=>$table) {
 			$fields[$table] = $this->findTableFields($table,$database);
 			$fields[$table] = $this->filterFieldsByColumns($fields[$table],$columns,$i==0,$table);
+			$fields[$table] = $this->filterFieldsByExclude($fields[$table],$exclude,$i==0,$table);
 		}
 		return $fields;
 	}
@@ -1575,6 +1554,28 @@ class PHP_CRUD_API {
 					}
 				}
 				if ($delete) unset($fields[$key]);
+			}
+		}
+		return $fields;
+	}
+
+	protected function filterFieldsByExclude($fields,$exclude,$first,$table) {
+		if ($exclude) {
+			$columns = explode(',',$exclude);
+			foreach (array_keys($fields) as $key) {
+				$keep = true;
+				foreach ($columns as $column) {
+					if (strpos($column,'.')) {
+						if ($column=="$table.$key" || $column=="$table.*") {
+							$keep = false;
+						}
+					} elseif ($first) {
+						if ($column==$key || $column=="*") {
+							$keep = false;
+						}
+					}
+				}
+				if (!$keep) unset($fields[$key]);
 			}
 		}
 		return $fields;
@@ -1631,12 +1632,12 @@ class PHP_CRUD_API {
 		$table     = $this->parseRequestParameter($request, 'a-zA-Z0-9\-_');
 		$key       = $this->parseRequestParameter($request, 'a-zA-Z0-9\-_,'); // auto-increment or uuid
 		$action    = $this->mapMethodToAction($method,$key);
-		$exclude   = $this->parseGetParameter($get, 'exclude', 'a-zA-Z0-9\-_,.');
 		$include   = $this->parseGetParameter($get, 'include', 'a-zA-Z0-9\-_,');
 		$page      = $this->parseGetParameter($get, 'page', '0-9,');
 		$filters   = $this->parseGetParameterArray($get, 'filter', false);
 		$satisfy   = $this->parseGetParameter($get, 'satisfy', 'a-zA-Z0-9\-_,.');
 		$columns   = $this->parseGetParameter($get, 'columns', 'a-zA-Z0-9\-_,.*');
+		$exclude   = $this->parseGetParameter($get, 'exclude', 'a-zA-Z0-9\-_,.*');
 		$orderings = $this->parseGetParameterArray($get, 'order', 'a-zA-Z0-9\-_,');
 		$transform = $this->parseGetParameter($get, 'transform', 't1');
 
@@ -1650,8 +1651,7 @@ class PHP_CRUD_API {
 		// reflection
 		list($tables,$collect,$select) = $this->findRelations($tables,$database,$auto_include);
 		$columns = $this->addRelationColumns($columns,$select);
-		$fields = $this->findFields($tables,$columns,$database);
-		$fields = $this->excludeFields($fields,$exclude);
+		$fields = $this->findFields($tables,$columns,$exclude,$database);
 
 		// permissions
 		if ($table_authorizer) $this->applyTableAuthorizer($table_authorizer,$action,$database,$tables);
