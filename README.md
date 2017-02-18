@@ -205,11 +205,13 @@ NB: You may specify "satisfy=categories.all,posts.any" if you want to mix "and" 
 
 ### List + Column selection
 
-By default all columns are selected. With the "columns" parameter you can select specific columns. Multiple columns should be comma separated. An asterisk ("*") may be used as a wildcard to indicate "all columns":
+By default all columns are selected. With the "columns" parameter you can select specific columns. Multiple columns should be comma separated. 
+An asterisk ("*") may be used as a wildcard to indicate "all columns". Similar to "columns" you may use the "exclude" parameter to remove certain columns:
 
 ```
 GET http://localhost/api.php/categories?columns=name
 GET http://localhost/api.php/categories?columns=categories.name
+GET http://localhost/api.php/categories?exclude=categories.id
 ```
 
 Output:
