@@ -1516,7 +1516,7 @@ class PHP_CRUD_API {
 		return is_array($input)?$input:array($input);
 	}
 
-	protected function getRelationColumns($select) {
+	protected function getRelationShipColumns($select) {
 		$keep = array();
 		foreach ($select as $table=>$keys) {
 			foreach ($keys as $key=>$other) {
@@ -1533,7 +1533,7 @@ class PHP_CRUD_API {
 	protected function findFields($tables,$columns,$exclude,$select,$database) {
 		$fields = array();
 		if ($select && ($columns || $exclude)) {
-			$keep = $this->getRelationColumns($select);
+			$keep = $this->getRelationShipColumns($select);
 		} else {
 			$keep = false;
 		}
