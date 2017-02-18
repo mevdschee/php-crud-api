@@ -1527,6 +1527,28 @@ class PHP_CRUD_API {
 		return $columns;
 	}
 
+	protected function excludeFields($fields,$exclude) {
+		if ($fields) {
+			$columns = explode(',',$exclude);
+			foreach($columns as $column) {
+				$table = "";
+				if (strpos($column,'.')) {
+					$key = explode('.',$column);
+					$table = $key[0];
+					$column = $key[1];
+				} else {
+					if (count($fields)==1) {
+						$table = array_keys($fields)[0];
+					}
+				}
+				if (array_key_exists($table,$fields) and array_key_exists($column,$fields[$table])) {
+					unset($fields[$table][$column]);
+				}
+			}
+		}
+		return $fields;
+	}
+
 	protected function findFields($tables,$columns,$database) {
 		$fields = array();
 		foreach ($tables as $i=>$table) {
@@ -1609,6 +1631,7 @@ class PHP_CRUD_API {
 		$table     = $this->parseRequestParameter($request, 'a-zA-Z0-9\-_');
 		$key       = $this->parseRequestParameter($request, 'a-zA-Z0-9\-_,'); // auto-increment or uuid
 		$action    = $this->mapMethodToAction($method,$key);
+		$exclude   = $this->parseGetParameter($get, 'exclude', 'a-zA-Z0-9\-_,.');
 		$include   = $this->parseGetParameter($get, 'include', 'a-zA-Z0-9\-_,');
 		$page      = $this->parseGetParameter($get, 'page', '0-9,');
 		$filters   = $this->parseGetParameterArray($get, 'filter', false);
@@ -1628,6 +1651,7 @@ class PHP_CRUD_API {
 		list($tables,$collect,$select) = $this->findRelations($tables,$database,$auto_include);
 		$columns = $this->addRelationColumns($columns,$select);
 		$fields = $this->findFields($tables,$columns,$database);
+		if (isset($exclude)) $fields = $this->excludeFields($fields,$exclude);
 
 		// permissions
 		if ($table_authorizer) $this->applyTableAuthorizer($table_authorizer,$action,$database,$tables);
@@ -2083,6 +2107,13 @@ class PHP_CRUD_API {
 					echo '"summary":"'.ucfirst($action['name']).'",';
 					if ($action['name']=='list') {
 						echo '"parameters":[';
+						echo '{';
+						echo '"name":"exclude",';
+						echo '"in":"query",';
+						echo '"description":"One or more related entities (comma separated).",';
+						echo '"required":false,';
+						echo '"type":"string"';
+						echo '},';
 						echo '{';
 						echo '"name":"include",';
 						echo '"in":"query",';
