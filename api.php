@@ -1528,7 +1528,7 @@ class PHP_CRUD_API {
 	}
 
 	protected function excludeFields($fields,$exclude) {
-		if ($fields) {
+		if ($fields && $exclude) {
 			$columns = explode(',',$exclude);
 			foreach($columns as $column) {
 				$table = "";
@@ -1651,7 +1651,7 @@ class PHP_CRUD_API {
 		list($tables,$collect,$select) = $this->findRelations($tables,$database,$auto_include);
 		$columns = $this->addRelationColumns($columns,$select);
 		$fields = $this->findFields($tables,$columns,$database);
-		if (isset($exclude)) $fields = $this->excludeFields($fields,$exclude);
+		$fields = $this->excludeFields($fields,$exclude);
 
 		// permissions
 		if ($table_authorizer) $this->applyTableAuthorizer($table_authorizer,$action,$database,$tables);
