@@ -1516,28 +1516,36 @@ class PHP_CRUD_API {
 		return is_array($input)?$input:array($input);
 	}
 
-	protected function addRelationColumns($columns,$select) {
-		if ($columns) {
-			foreach ($select as $table=>$keys) {
-				foreach ($keys as $key=>$other) {
-					$columns.=",$table.$key,".implode('.',$other);
-				}
+	protected function getRelationColumns($select) {
+		$keep = array();
+		foreach ($select as $table=>$keys) {
+			foreach ($keys as $key=>$other) {
+				if (!isset($keep[$table])) $keep[$table] = array();
+				$keep[$table][$key]=true;
+				list($table2,$key2) = $other;
+				if (!isset($keep[$table2])) $keep[$table2] = array();
+				$keep[$table2][$key2]=true;
 			}
 		}
-		return $columns;
+		return $keep;
 	}
 
-	protected function findFields($tables,$columns,$exclude,$database) {
+	protected function findFields($tables,$columns,$exclude,$select,$database) {
 		$fields = array();
+		if ($select && ($columns || $exclude)) {
+			$keep = $this->getRelationColumns($select);
+		} else {
+			$keep = false;
+		}
 		foreach ($tables as $i=>$table) {
 			$fields[$table] = $this->findTableFields($table,$database);
-			$fields[$table] = $this->filterFieldsByColumns($fields[$table],$columns,$i==0,$table);
-			$fields[$table] = $this->filterFieldsByExclude($fields[$table],$exclude,$i==0,$table);
+			$fields[$table] = $this->filterFieldsByColumns($fields[$table],$columns,$keep,$i==0,$table);
+			$fields[$table] = $this->filterFieldsByExclude($fields[$table],$exclude,$keep,$i==0,$table);
 		}
 		return $fields;
 	}
 
-	protected function filterFieldsByColumns($fields,$columns,$first,$table) {
+	protected function filterFieldsByColumns($fields,$columns,$keep,$first,$table) {
 		if ($columns) {
 			$columns = explode(',',$columns);
 			foreach (array_keys($fields) as $key) {
@@ -1553,29 +1561,33 @@ class PHP_CRUD_API {
 						}
 					}
 				}
-				if ($delete) unset($fields[$key]);
+				if ($delete && !isset($keep[$table][$key])) {
+					unset($fields[$key]);
+				}
 			}
 		}
 		return $fields;
 	}
 
-	protected function filterFieldsByExclude($fields,$exclude,$first,$table) {
+	protected function filterFieldsByExclude($fields,$exclude,$keep,$first,$table) {
 		if ($exclude) {
 			$columns = explode(',',$exclude);
 			foreach (array_keys($fields) as $key) {
-				$keep = true;
+				$delete = false;
 				foreach ($columns as $column) {
 					if (strpos($column,'.')) {
 						if ($column=="$table.$key" || $column=="$table.*") {
-							$keep = false;
+							$delete = true;
 						}
 					} elseif ($first) {
 						if ($column==$key || $column=="*") {
-							$keep = false;
+							$delete = true;
 						}
 					}
 				}
-				if (!$keep) unset($fields[$key]);
+				if ($delete && !isset($keep[$table][$key])) {
+					unset($fields[$key]);
+				}
 			}
 		}
 		return $fields;
@@ -1650,8 +1662,7 @@ class PHP_CRUD_API {
 
 		// reflection
 		list($tables,$collect,$select) = $this->findRelations($tables,$database,$auto_include);
-		$columns = $this->addRelationColumns($columns,$select);
-		$fields = $this->findFields($tables,$columns,$exclude,$database);
+		$fields = $this->findFields($tables,$columns,$exclude,$select,$database);
 
 		// permissions
 		if ($table_authorizer) $this->applyTableAuthorizer($table_authorizer,$action,$database,$tables);
@@ -2039,7 +2050,7 @@ class PHP_CRUD_API {
 
 		foreach ($tables as $t=>$table)	{
 			$table_list = array($table['name']);
-			$table_fields = $this->findFields($table_list,false,$database);
+			$table_fields = $this->findFields($table_list,false,false,false,$database);
 			$table_names = array_map(function($v){ return $v['name'];},$tables);
 
 			if ($extensions) {
