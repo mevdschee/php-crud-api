@@ -288,7 +288,7 @@ SET IDENTITY_INSERT [events] OFF
 GO
 SET IDENTITY_INSERT [products] ON
 GO
-INSERT [products] ([id], [name], [price]) VALUES (1, N'Calculator', N'23.01', N'<root type="object"><depth type="boolean">false</depth><model type="string">TRX-120</model><width type="number">100</width><height type="null" /></root>')
+INSERT [products] ([id], [name], [price], [properties]) VALUES (1, N'Calculator', N'23.01', N'<root type="object"><depth type="boolean">false</depth><model type="string">TRX-120</model><width type="number">100</width><height type="null" /></root>')
 GO
 SET IDENTITY_INSERT [products] OFF
 GO
