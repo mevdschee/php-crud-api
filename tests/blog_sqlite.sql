@@ -72,7 +72,7 @@ CREATE TABLE `users` (
   `id` integer NOT NULL PRIMARY KEY AUTOINCREMENT,
   `username` text(255) NOT NULL,
   `password` text(255) NOT NULL,
-  `location` text(255) NULL
+  `location` geometry NULL
 );
 
 INSERT INTO "users" ("id", "username", "password", "location") VALUES (1,	'user1',	'pass1',	NULL);
@@ -82,7 +82,7 @@ DROP TABLE IF EXISTS `countries`;
 CREATE TABLE `countries` (
   `id` integer NOT NULL PRIMARY KEY AUTOINCREMENT,
   `name` text(255) NOT NULL,
-  `shape` text(255) NOT NULL
+  `shape` geometry NOT NULL
 );
 
 INSERT INTO `countries` (`id`, `name`, `shape`) VALUES (1,	'Left',	'POLYGON ((30 10, 40 40, 20 40, 10 20, 30 10))');
@@ -105,9 +105,10 @@ DROP TABLE IF EXISTS `products`;
 CREATE TABLE `products` (
   `id` integer NOT NULL PRIMARY KEY AUTOINCREMENT,
   `name` text(255) NOT NULL,
-  `price` text(12) NOT NULL
+  `price` text(12) NOT NULL,
+  `properties` json NOT NULL
 );
 
-INSERT INTO `products` (`id`, `name`, `price`) VALUES (1,	'Calculator', '23.01');
+INSERT INTO `products` (`id`, `name`, `price`, `properties`) VALUES (1,	'Calculator', '23.01', '{"depth":false,"model":"TRX-120","width":100,"height":null}');
 
 --

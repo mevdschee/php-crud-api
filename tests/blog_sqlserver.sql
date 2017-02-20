@@ -208,6 +208,7 @@ CREATE TABLE [products](
 	[id] [int] IDENTITY,
 	[name] [nvarchar](max) NOT NULL,
 	[price] [decimal](10,2) NOT NULL,
+	[properties] [xml] NOT NULL,
  CONSTRAINT [PK_products] PRIMARY KEY CLUSTERED
 (
 	[id] ASC
@@ -287,7 +288,7 @@ SET IDENTITY_INSERT [events] OFF
 GO
 SET IDENTITY_INSERT [products] ON
 GO
-INSERT [products] ([id], [name], [price]) VALUES (1, N'Calculator', N'23.01')
+INSERT [products] ([id], [name], [price]) VALUES (1, N'Calculator', N'23.01', N'<root type="object"><depth type="boolean">false</depth><model type="string">TRX-120</model><width type="number">100</width><height type="null" /></root>')
 GO
 SET IDENTITY_INSERT [products] OFF
 GO

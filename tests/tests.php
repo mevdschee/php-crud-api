@@ -753,7 +753,21 @@ class PHP_CRUD_API_Test extends PHPUnit_Framework_TestCase
 	public function testListProducts()
 	{
 		$test = new API($this);
-		$test->get('/products?transform=1');
+		$test->get('/products?columns=id,name,price&transform=1');
 		$test->expect('{"products":[{"id":1,"name":"Calculator","price":"23.01"}]}');
+	}
+
+	public function testListProductsProperties()
+	{
+		$test = new API($this);
+		$test->get('/products?columns=id,properties&transform=1');
+		$test->expect('{"products":[{"id":1,"properties":{"depth":false,"model":"TRX-120","width":100,"height":null}}]}');
+	}
+
+	public function testReadProductProperties()
+	{
+		$test = new API($this);
+		$test->get('/products/1?columns=id,properties');
+		$test->expect('{"id":1,"properties":{"depth":false,"model":"TRX-120","width":100,"height":null}}');
 	}
 }

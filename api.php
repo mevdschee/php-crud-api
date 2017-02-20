@@ -5,8 +5,8 @@ interface DatabaseInterface {
 	public function getSql($name);
 	public function connect($hostname,$username,$password,$database,$port,$socket,$charset);
 	public function query($sql,$params=array());
-	public function fetchAssoc($result,$fields=false);
-	public function fetchRow($result,$fields=false);
+	public function fetchAssoc($result);
+	public function fetchRow($result);
 	public function insertId($result);
 	public function affectedRows($result);
 	public function close($result);
@@ -16,6 +16,7 @@ interface DatabaseInterface {
 	public function isNumericType($field);
 	public function isBinaryType($field);
 	public function isGeometryType($field);
+	public function isJsonType($field);
 	public function getDefaultCharset();
 	public function beginTransaction();
 	public function commitTransaction();
@@ -117,8 +118,8 @@ class MySQL implements DatabaseInterface {
 			$param = array_shift($params);
 			if ($matches[0]=='!') {
 				$key = preg_replace('/[^a-zA-Z0-9\-_=<> ]/','',is_object($param)?$param->key:$param);
-				if (is_object($param) && $param->type=='base64') {
-					return "TO_BASE64(\"$key\") as \"$key\"";
+				if (is_object($param) && $param->type=='hex') {
+					return "HEX(\"$key\") as \"$key\"";
 				}
 				if (is_object($param) && $param->type=='wkt') {
 					return "ST_AsText(\"$key\") as \"$key\"";
@@ -128,8 +129,8 @@ class MySQL implements DatabaseInterface {
 				if (is_array($param)) return '('.implode(',',array_map(function($v) use (&$db) {
 					return "'".mysqli_real_escape_string($db,$v)."'";
 				},$param)).')';
-				if (is_object($param) && $param->type=='base64') {
-					return "x'".bin2hex(base64_decode($param->value))."'";
+				if (is_object($param) && $param->type=='hex') {
+					return "x'".$param->value."'";
 				}
 				if (is_object($param) && $param->type=='wkt') {
 					return "ST_GeomFromText('".mysqli_real_escape_string($db,$param->value)."')";
@@ -143,29 +144,12 @@ class MySQL implements DatabaseInterface {
 		return mysqli_query($db,$sql);
 	}
 
-	protected function convertFloatAndInt($result,&$values,&$fields) {
-		array_walk($values, function(&$v,$i) use ($result,$fields){
-			if (is_string($v) && $this->isNumericType($fields[$i])) {
-				$v+=0;
-			}
-		});
+	public function fetchAssoc($result) {
+		return mysqli_fetch_assoc($result);
 	}
 
-	public function fetchAssoc($result,$fields=false) {
-		$values = mysqli_fetch_assoc($result);
-		if ($values && $fields && !defined('MYSQLI_OPT_INT_AND_FLOAT_NATIVE')) {
-			$this->convertFloatAndInt($result,$values,$fields);
-		}
-		return $values;
-	}
-
-	public function fetchRow($result,$fields=false) {
-		$values = mysqli_fetch_row($result);
-		if ($values && $fields && !defined('MYSQLI_OPT_INT_AND_FLOAT_NATIVE')) {
-			$fields = array_values($fields);
-			$this->convertFloatAndInt($result,$values,$fields);
-		}
-		return $values;
+	public function fetchRow($result) {
+		return mysqli_fetch_row($result);
 	}
 
 	public function insertId($result) {
@@ -208,6 +192,10 @@ class MySQL implements DatabaseInterface {
 
 	public function isGeometryType($field) {
 		return ($field->type==255);
+	}
+
+	public function isJsonType($field) {
+		return ($field->type==245);
 	}
 
 	public function getDefaultCharset() {
@@ -358,8 +346,8 @@ class PostgreSQL implements DatabaseInterface {
 			$param = array_shift($params);
 			if ($matches[0]=='!') {
 				$key = preg_replace('/[^a-zA-Z0-9\-_=<> ]/','',is_object($param)?$param->key:$param);
-				if (is_object($param) && $param->type=='base64') {
-					return "encode(\"$key\",'base64') as \"$key\"";
+				if (is_object($param) && $param->type=='hex') {
+					return "encode(\"$key\",'hex') as \"$key\"";
 				}
 				if (is_object($param) && $param->type=='wkt') {
 					return "ST_AsText(\"$key\") as \"$key\"";
@@ -369,8 +357,8 @@ class PostgreSQL implements DatabaseInterface {
 				if (is_array($param)) return '('.implode(',',array_map(function($v) use (&$db) {
 					return "'".pg_escape_string($db,$v)."'";
 				},$param)).')';
-				if (is_object($param) && $param->type=='base64') {
-					return "'\x".bin2hex(base64_decode($param->value))."'";
+				if (is_object($param) && $param->type=='hex') {
+					return "'\x".$param->value."'";
 				}
 				if (is_object($param) && $param->type=='wkt') {
 					return "ST_GeomFromText('".pg_escape_string($db,$param->value)."')";
@@ -386,29 +374,12 @@ class PostgreSQL implements DatabaseInterface {
 		return @pg_query($db,$sql);
 	}
 
-	protected function convertFloatAndInt($result,&$values,&$fields) {
-		array_walk($values, function(&$v,$i) use ($result,$fields){
-			if (is_string($v) && $this->isNumericType($fields[$i])) {
-				$v+=0;
-			}
-		});
+	public function fetchAssoc($result) {
+		return pg_fetch_assoc($result);
 	}
 
-	public function fetchAssoc($result,$fields=false) {
-		$values = pg_fetch_assoc($result);
-		if ($values && $fields) {
-			$this->convertFloatAndInt($result,$values,$fields);
-		}
-		return $values;
-	}
-
-	public function fetchRow($result,$fields=false) {
-		$values = pg_fetch_row($result);
-		if ($values && $fields) {
-			$fields = array_values($fields);
-			$this->convertFloatAndInt($result,$values,$fields);
-		}
-		return $values;
+	public function fetchRow($result) {
+		return pg_fetch_row($result);
 	}
 
 	public function insertId($result) {
@@ -458,6 +429,10 @@ class PostgreSQL implements DatabaseInterface {
 
 	public function isGeometryType($field) {
 		return $field->type == 'geometry';
+	}
+
+	public function isJsonType($field) {
+		return $field->type == 'jsonb';
 	}
 
 	public function getDefaultCharset() {
@@ -595,8 +570,8 @@ class SQLServer implements DatabaseInterface {
 			$param = $params[$i];
 			if ($matches[0]=='!') {
 				$key = preg_replace('/[^a-zA-Z0-9\-_=<> ]/','',is_object($param)?$param->key:$param);
-				if (is_object($param) && $param->type=='base64') {
-					return "CAST(N'' AS XML).value('xs:base64Binary(xs:hexBinary(sql:column(\"$key\")))', 'VARCHAR(MAX)') as \"$key\"";
+				if (is_object($param) && $param->type=='hex') {
+					return "CONVERT(varchar(max), \"$key\", 2) as \"$key\"";
 				}
 				if (is_object($param) && $param->type=='wkt') {
 					return "\"$key\".STAsText() as \"$key\"";
@@ -611,8 +586,8 @@ class SQLServer implements DatabaseInterface {
 					$args = array_merge($args,$param);
 					return '('.implode(',',str_split(str_repeat('?',count($param)))).')';
 				}
-				if (is_object($param) && $param->type=='base64') {
-					$args[] = bin2hex(base64_decode($param->value));
+				if (is_object($param) && $param->type=='hex') {
+					$args[] = $param->value;
 					return 'CONVERT(VARBINARY(MAX),?,2)';
 				}
 				if (is_object($param) && $param->type=='wkt') {
@@ -633,11 +608,11 @@ class SQLServer implements DatabaseInterface {
 		return sqlsrv_query($db,$sql,$args)?:null;
 	}
 
-	public function fetchAssoc($result,$fields=false) {
+	public function fetchAssoc($result) {
 		return sqlsrv_fetch_array($result, SQLSRV_FETCH_ASSOC);
 	}
 
-	public function fetchRow($result,$fields=false) {
+	public function fetchRow($result) {
 		return sqlsrv_fetch_array($result, SQLSRV_FETCH_NUMERIC);
 	}
 
@@ -719,6 +694,10 @@ class SQLServer implements DatabaseInterface {
 
 	public function isGeometryType($field) {
 		return ($field->type==-151);
+	}
+
+	public function isJsonType($field) {
+		return ($field->type==-152);
 	}
 
 	public function getDefaultCharset() {
@@ -862,7 +841,10 @@ class SQLite implements DatabaseInterface {
 				if (is_array($param)) return '('.implode(',',array_map(function($v) use (&$db) {
 					return "'".$db->escapeString($v)."'";
 				},$param)).')';
-				if (is_object($param) && $param->type=='base64') {
+				if (is_object($param) && $param->type=='hex') {
+					return "'".$db->escapeString($param->value)."'";
+				}
+				if (is_object($param) && $param->type=='wkt') {
 					return "'".$db->escapeString($param->value)."'";
 				}
 				if ($param===null) return 'NULL';
@@ -874,11 +856,11 @@ class SQLite implements DatabaseInterface {
 		return $result;
 	}
 
-	public function fetchAssoc($result,$fields=false) {
+	public function fetchAssoc($result) {
 		return $result->fetchArray(SQLITE3_ASSOC);
 	}
 
-	public function fetchRow($result,$fields=false) {
+	public function fetchRow($result) {
 		return $result->fetchArray(SQLITE3_NUM);
 	}
 
@@ -924,7 +906,11 @@ class SQLite implements DatabaseInterface {
 	}
 
 	public function isGeometryType($field) {
-		return false;
+		return in_array($field->type,array('geometry'));;
+	}
+
+	public function isJsonType($field) {
+		return in_array($field->type,array('json','jsonb'));;
 	}
 
 	public function getDefaultCharset() {
@@ -1292,7 +1278,7 @@ class PHP_CRUD_API {
 		$this->addWhereFromFilters($filters[$table],$sql,$params);
 		$object = null;
 		if ($result = $this->db->query($sql,$params)) {
-			$object = $this->db->fetchAssoc($result,$fields[$table]);
+			$object = $this->fetchAssoc($result,$fields[$table]);
 			$this->db->close($result);
 		}
 		return $object;
@@ -1615,10 +1601,13 @@ class PHP_CRUD_API {
 			if (isset($input->$key) && $input->$key && $this->db->isBinaryType($field)) {
 				$value = $input->$key;
 				$value = str_pad(strtr($value, '-_', '+/'), ceil(strlen($value) / 4) * 4, '=', STR_PAD_RIGHT);
-				$input->$key = (object)array('type'=>'base64','value'=>$value);
+				$input->$key = (object)array('type'=>'hex','value'=>bin2hex(base64_decode($value)));
 			}
 			if (isset($input->$key) && $input->$key && $this->db->isGeometryType($field)) {
 				$input->$key = (object)array('type'=>'wkt','value'=>$input->$key);
+			}
+			if (isset($input->$key) && $input->$key && $this->db->isJsonType($field)) {
+				$input->$key = (object)array('type'=>'json','value'=>json_encode($input->$key));
 			}
 		}
 	}
@@ -1627,7 +1616,7 @@ class PHP_CRUD_API {
 		$sql .= implode(',',str_split(str_repeat('!',count($fields))));
 		foreach ($fields as $key=>$field) {
 			if ($this->db->isBinaryType($field)) {
-				$params[] = (object)array('type'=>'base64','key'=>$key);
+				$params[] = (object)array('type'=>'hex','key'=>$key);
 			}
 			else if ($this->db->isGeometryType($field)) {
 				$params[] = (object)array('type'=>'wkt','key'=>$key);
@@ -1636,6 +1625,39 @@ class PHP_CRUD_API {
 				$params[] = $key;
 			}
 		}
+	}
+
+	protected function convertTypes($result,&$values,&$fields) {
+		array_walk($values, function(&$v,$i) use ($result,$fields){
+			if (is_string($v)) {
+				if ($this->db->isNumericType($fields[$i])) {
+					$v+=0;
+				}
+				else if ($this->db->isBinaryType($fields[$i])) {
+					$v=base64_encode(hex2bin($v));
+				}
+				else if ($this->db->isJsonType($fields[$i])) {
+					$v=json_decode($v);
+				}
+			}
+		});
+	}
+
+	protected function fetchAssoc($result,$fields=false) {
+		$values = $this->db->fetchAssoc($result);
+		if ($values && $fields) {
+			$this->convertTypes($result,$values,$fields);
+		}
+		return $values;
+	}
+
+	protected function fetchRow($result,$fields=false) {
+		$values = $this->db->fetchRow($result,$fields);
+		if ($values && $fields) {
+			$fields = array_values($fields);
+			$this->convertTypes($result,$values,$fields);
+		}
+		return $values;
 	}
 
 	protected function getParameters($settings) {
@@ -1742,7 +1764,7 @@ class PHP_CRUD_API {
 			}
 			if ($result = $this->db->query($sql,$params)) {
 				while ($pages = $this->db->fetchRow($result)) {
-					$count = $pages[0];
+					$count = (int)$pages[0];
 				}
 			}
 		}
@@ -1767,7 +1789,7 @@ class PHP_CRUD_API {
 			$keys = array_flip($keys);
 			echo ',"records":[';
 			$first_row = true;
-			while ($row = $this->db->fetchRow($result,$fields[$table])) {
+			while ($row = $this->fetchRow($result,$fields[$table])) {
 				if ($first_row) $first_row = false;
 				else echo ',';
 				if (isset($collect[$table])) {
@@ -1817,7 +1839,7 @@ class PHP_CRUD_API {
 				$keys = array_flip($keys);
 				echo ',"records":[';
 				$first_row = true;
-				while ($row = $this->db->fetchRow($result,$fields[$table])) {
+				while ($row = $this->fetchRow($result,$fields[$table])) {
 					if ($first_row) $first_row = false;
 					else echo ',';
 					if (isset($collect[$table])) {

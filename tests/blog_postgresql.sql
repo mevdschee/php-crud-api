@@ -129,7 +129,8 @@ CREATE VIEW "tag_usage" AS select "name", count("name") AS "count" from "tags", 
 CREATE TABLE products (
     id serial NOT NULL,
     name character varying(255) NOT NULL,
-    price decimal(10,2) NOT NULL
+    price decimal(10,2) NOT NULL,
+    properties jsonb NOT NULL
 );
 
 --
@@ -203,8 +204,8 @@ INSERT INTO "events" ("name", "datetime", "visitors") VALUES
 -- Data for Name: events; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-INSERT INTO "products" ("name", "price") VALUES
-('Calculator',	'23.01');
+INSERT INTO "products" ("name", "price", "properties") VALUES
+('Calculator',	'23.01', '{"depth":false,"model":"TRX-120","width":100,"height":null}');
 
 --
 -- Name: categories_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres; Tablespace:
