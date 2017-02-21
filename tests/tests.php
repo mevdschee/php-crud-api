@@ -32,7 +32,7 @@ class API
 				'column_authorizer'=>function($action,$database,$table,$column) { return !($column=='password'&&$action=='list'); },
 				'record_filter'=>function($action,$database,$table) { return ($table=='posts')?array('id,neq,13'):false; },
 				'tenancy_function'=>function($action,$database,$table,$column) { return ($table=='users'&&$column=='id')?1:null; },
-				'input_sanitizer'=>function($action,$database,$table,$column,$type,$value) { return $value===null?null:strip_tags($value); },
+				'input_sanitizer'=>function($action,$database,$table,$column,$type,$value) { return is_string($value)?strip_tags($value):$value; },
 				'input_validator'=>function($action,$database,$table,$column,$type,$value,$context) { return ($column=='category_id' && !is_numeric($value))?'must be numeric':true; },
 				// for tests
 				'method' =>$method,
@@ -769,5 +769,14 @@ class PHP_CRUD_API_Test extends PHPUnit_Framework_TestCase
 		$test = new API($this);
 		$test->get('/products/1?columns=id,properties');
 		$test->expect('{"id":1,"properties":{"depth":false,"model":"TRX-120","width":100,"height":null}}');
+	}
+
+	public function testWriteProductProperties()
+	{
+		$test = new API($this);
+		$test->put('/products/1','{"properties":{"depth":false,"model":"TRX-120","width":100,"height":123}}');
+		$test->expect('1');
+		$test->get('/products/1?columns=id,properties');
+		$test->expect('{"id":1,"properties":{"depth":false,"model":"TRX-120","width":100,"height":123}}');
 	}
 }
