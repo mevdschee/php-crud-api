@@ -21,6 +21,8 @@ interface DatabaseInterface {
 	public function beginTransaction();
 	public function commitTransaction();
 	public function rollbackTransaction();
+	public function jsonEncode($object);
+	public function jsonDecode($string);
 }
 
 class MySQL implements DatabaseInterface {
@@ -217,6 +219,13 @@ class MySQL implements DatabaseInterface {
 		//return mysqli_rollback($this->db);
 	}
 
+	public function jsonEncode($object) {
+		return json_encode($object);
+	}
+
+	public function jsonDecode($string) {
+		return json_decode($string);
+	}
 }
 
 class PostgreSQL implements DatabaseInterface {
@@ -449,6 +458,14 @@ class PostgreSQL implements DatabaseInterface {
 
 	public function rollbackTransaction() {
 		return $this->query('ROLLBACK');
+	}
+
+	public function jsonEncode($object) {
+		return json_encode($object);
+	}
+
+	public function jsonDecode($string) {
+		return json_decode($string);
 	}
 }
 
@@ -715,6 +732,111 @@ class SQLServer implements DatabaseInterface {
 	public function rollbackTransaction() {
 		return sqlsrv_rollback($this->db);
 	}
+
+	public function jsonEncode($object) {
+		$t = function($v) {
+			switch(gettype($v)) {
+				case 'boolean': return 'boolean';
+				case 'integer': return 'number';
+				case 'double':  return 'number';
+				case 'string':  return 'string';
+				case 'array':   return 'array';
+				case 'object':  return 'object';
+				case 'NULL':	return 'null';
+			}
+		};
+		$a = $object;
+		$c = new SimpleXMLElement('<root/>');
+		$f = function($f,$c,$a,$s=false) use ($t) {
+			$c->addAttribute('type', $t($a));
+			if (is_scalar($a)||is_null($a)) {
+				if(is_bool($a)){ 
+					$c[0] = $a?'true':'false';
+				} else {
+					$c[0] = $a;
+				}
+			} else {
+				foreach($a as $k=>$v) {
+					if ($k=='__type' && is_object($a)) {
+						$c->addAttribute('__type', $v);
+					} else {
+						if(is_object($v)) {
+							$ch=$c->addChild($s?'item':$k);
+							$f($f,$ch,$v);
+						} else if(is_array($v)) {
+							$ch=$c->addChild($s?'item':$k);
+							$f($f,$ch,$v,true);
+						} else if(is_bool($v)) {
+							$ch=$c->addChild($s?'item':$k,$v?'true':'false');
+							$ch->addAttribute('type', $t($v));
+						} else {
+							$ch=$c->addChild($s?'item':$k,$v);
+							$ch->addAttribute('type', $t($v));
+						}
+					}
+				}
+			}
+		};
+		$f($f,$c,$a,$t($a)=='array');
+		return trim($c->asXML());
+	}
+
+	public function jsonDecode($string) {
+		$p = function ($p,$n) {
+			foreach($n->childNodes as $node) {
+				if($node->hasChildNodes()) {
+					$p($p,$node);
+				} else {
+					if($n->hasAttributes() && strlen($n->nodeValue)){
+						$n->setAttribute('value', $node->textContent);
+						$node->nodeValue = '';
+					}
+				}
+			}
+		};
+		$dom = new DOMDocument();
+		$dom->loadXML($string);
+		$p($p,$dom);
+		$xml = simplexml_load_string($dom->saveXML());
+		$a = json_decode(json_encode($xml));
+		$f = function($f,&$a) {
+				foreach($a as $k=>&$v) {
+					if($k==='@attributes') {
+						if (isset($v->__type) && is_object($a)) {
+							$a->__type = $v->__type;
+						}
+						if ($v->type=='null') {
+							$a = null; 
+							return;
+						}
+						if ($v->type=='boolean') {
+							$b = substr(strtolower($v->value[0]),0,1);
+							$a = in_array($b,array('1','t'));
+							return;
+						}
+						if ($v->type=='number') {
+							$a = $v->value+0; 
+							return;
+						}
+						if ($v->type=='string') {
+							$a = $v->value;
+							return;
+						}
+						unset($a->$k);
+					} else {
+						if (is_object($v)) {
+							$f($f,$v);
+						} else if (is_array($v)) {
+							$f($f,$v);
+							$a = $v;
+							return;
+						}
+					}
+				}
+		};
+		$f($f,$a);
+		return $a;
+	}
 }
 
 class SQLite implements DatabaseInterface {
@@ -929,6 +1051,13 @@ class SQLite implements DatabaseInterface {
 		return $this->query('ROLLBACK');
 	}
 
+	public function jsonEncode($object) {
+		return json_encode($object);
+	}
+
+	public function jsonDecode($string) {
+		return json_decode($string);
+	}
 }
 
 class PHP_CRUD_API {
@@ -1607,7 +1736,7 @@ class PHP_CRUD_API {
 				$input->$key = (object)array('type'=>'wkt','value'=>$input->$key);
 			}
 			if (isset($input->$key) && $input->$key && $this->db->isJsonType($field)) {
-				$input->$key = (object)array('type'=>'json','value'=>json_encode($input->$key));
+				$input->$key = $this->db->jsonEncode($input->$key);
 			}
 		}
 	}
@@ -1637,7 +1766,7 @@ class PHP_CRUD_API {
 					$v=base64_encode(hex2bin($v));
 				}
 				else if ($this->db->isJsonType($fields[$i])) {
-					$v=json_decode($v);
+					$v=$this->db->jsonDecode($v);
 				}
 			}
 		});
