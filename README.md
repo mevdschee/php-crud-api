@@ -54,6 +54,7 @@ This is a single file application! Upload "api.php" somewhere and enjoy!
   - Atomic increment support via PATCH (for counters)
   - Binary fields supported with base64 encoding
   - Spatial/GIS fields and filters supported with WKT
+  - Unstructured data support through JSON/JSONB/XML
   - Generate API documentation using Swagger tools
   - Authentication via JWT token or username/password (via [PHP-API-AUTH](https://github.com/mevdschee/php-api-auth))
 
@@ -734,6 +735,10 @@ PUT http://localhost/api.php/users/1
 
 In the above example you see how a [WKT string](https://en.wikipedia.org/wiki/Well-known_text) is sent.
 
+## Unstructured data support
+
+You may store JSON documents in JSON (MySQL), JSONB (PostgreSQL) or XML (SQL Server) field types in the database.
+These documents have no schema. Whitespace in the structure is not maintained.
 
 ## Sending NULL
 
