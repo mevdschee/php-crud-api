@@ -88,7 +88,15 @@ class MySQL implements DatabaseInterface {
 					k2."REFERENCED_TABLE_SCHEMA" = ? AND
 					k1."TABLE_NAME" COLLATE \'utf8_bin\' = k2."TABLE_NAME" COLLATE \'utf8_bin\' AND
 					k1."REFERENCED_TABLE_NAME" COLLATE \'utf8_bin\' = ? AND
-					k2."REFERENCED_TABLE_NAME" COLLATE \'utf8_bin\' IN ?'
+					k2."REFERENCED_TABLE_NAME" COLLATE \'utf8_bin\' IN ?',
+			'reflect_type'=> 'SELECT 
+					"COLUMN_NAME", "COLUMN_TYPE" 
+				FROM 
+					"INFORMATION_SCHEMA"."COLUMNS" 
+				WHERE 
+					"TABLE_SCHEMA" = ? AND 
+					"TABLE_NAME" = ?
+			'
 		);
 	}
 
@@ -2217,6 +2225,11 @@ class PHP_CRUD_API {
 				foreach ($primaryKeys as $primaryKey) {
 					$table_fields[$table['name']][$primaryKey]->primaryKey = true;
 				}
+				$result = $this->db->query($this->db->getSql('reflect_type'),array($database,$table_list[0]));
+				while ($row = $this->db->fetchRow($result)) {
+					$expl = explode('(',$row[1]);
+					$table_fields[$table['name']][$row[0]]->type = $expl[0];					
+				}
 			}
 
 			foreach (array('root_actions','id_actions') as $path) {
@@ -2341,6 +2354,9 @@ class PHP_CRUD_API {
 							if ($k>0) echo ',';
 							echo '"'.$field.'": {';
 							echo '"type": "string"';
+							if (isset($action['fields'][$field]->type)) {
+								echo ',"db-type": '.json_encode($action['fields'][$field]->type);
+							}
 							if (isset($action['fields'][$field]->referenced)) {
 								echo ',"x-referenced": '.json_encode($action['fields'][$field]->referenced);
 							}
