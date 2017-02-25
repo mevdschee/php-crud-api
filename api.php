@@ -89,13 +89,15 @@ class MySQL implements DatabaseInterface {
 					k1."TABLE_NAME" COLLATE \'utf8_bin\' = k2."TABLE_NAME" COLLATE \'utf8_bin\' AND
 					k1."REFERENCED_TABLE_NAME" COLLATE \'utf8_bin\' = ? AND
 					k2."REFERENCED_TABLE_NAME" COLLATE \'utf8_bin\' IN ?',
-			'reflect_type'=> 'SELECT 
-					"COLUMN_NAME", "COLUMN_TYPE" 
+			'reflect_columns'=> 'SELECT
+					"COLUMN_NAME", "COLUMN_DEFAULT", "IS_NULLABLE", "DATA_TYPE", "CHARACTER_MAXIMUM_LENGTH"
 				FROM 
 					"INFORMATION_SCHEMA"."COLUMNS" 
 				WHERE 
 					"TABLE_SCHEMA" = ? AND 
-					"TABLE_NAME" = ?'
+					"TABLE_NAME" = ?
+				ORDER BY
+					"ORDINAL_POSITION"'
 		);
 	}
 
@@ -243,7 +245,7 @@ class PostgreSQL implements DatabaseInterface {
 	public function __construct() {
 		$this->queries = array(
 			'list_tables'=>'select
-					"table_name","table_comment"
+					"table_name",\'\' as "table_comment"
 				from
 					"information_schema"."tables"
 				where
@@ -253,7 +255,7 @@ class PostgreSQL implements DatabaseInterface {
 				from
 					"information_schema"."tables"
 				where
-					"table_name" like ? and
+					"table_name" = ? and
 					"table_catalog" = ?',
 			'reflect_pk'=>'select
 					"column_name"
@@ -316,7 +318,16 @@ class PostgreSQL implements DatabaseInterface {
 					cub2."table_catalog" = ? and
 					cua1."table_name" = cub1."table_name" and
 					cua2."table_name" = ? and
-					cub2."table_name" in ?'
+					cub2."table_name" in ?',
+			'reflect_columns'=> 'select
+					"column_name", "column_default", "is_nullable", "data_type", "character_maximum_length"
+				from 
+					"information_schema"."columns" 
+				where
+					"table_name" like ? and
+					"table_catalog" = ?
+				order by
+					"ordinal_position"'
 		);
 	}
 
@@ -494,7 +505,7 @@ class SQLServer implements DatabaseInterface {
 				FROM
 					"INFORMATION_SCHEMA"."TABLES"
 				WHERE
-					"TABLE_NAME" LIKE ? AND
+					"TABLE_NAME" = ? AND
 					"TABLE_CATALOG" = ?',
 			'reflect_pk'=>'SELECT
 					"COLUMN_NAME"
@@ -557,7 +568,16 @@ class SQLServer implements DatabaseInterface {
 					cub2."TABLE_CATALOG" = ? AND
 					cua1."TABLE_NAME" = cub1."TABLE_NAME" AND
 					cua2."TABLE_NAME" = ? AND
-					cub2."TABLE_NAME" IN ?'
+					cub2."TABLE_NAME" IN ?',
+			'reflect_columns'=> 'SELECT
+					"COLUMN_NAME", "COLUMN_DEFAULT", "IS_NULLABLE", "DATA_TYPE", "CHARACTER_MAXIMUM_LENGTH"
+				FROM 
+					"INFORMATION_SCHEMA"."COLUMNS" 
+				WHERE 
+					"TABLE_NAME" LIKE ? AND
+					"TABLE_CATALOG" = ?
+				ORDER BY
+					"ORDINAL_POSITION"'
 		);
 	}
 
@@ -905,7 +925,15 @@ class SQLite implements DatabaseInterface {
 					? like "%" AND
 					k1."self" = k2."self" AND
 					k1."table" = ? AND
-					k2."table" IN ?'
+					k2."table" IN ?',
+			'reflect_columns'=> 'SELECT
+					"name", "dflt_value", "notnull", "type", 2147483647
+				FROM 
+					"sys/columns"
+				WHERE 
+					"self"=?
+				ORDER BY
+					"cid"'
 		);
 	}
 
@@ -2083,7 +2111,6 @@ class PHP_CRUD_API {
 		$tenancy_function = isset($tenancy_function)?$tenancy_function:null;
 		$input_sanitizer = isset($input_sanitizer)?$input_sanitizer:null;
 		$input_validator = isset($input_validator)?$input_validator:null;
-		$extensions = isset($extensions)?$extensions:null;
 		$auto_include = isset($auto_include)?$auto_include:null;
 		$allow_origin = isset($allow_origin)?$allow_origin:null;
 
@@ -2129,9 +2156,6 @@ class PHP_CRUD_API {
 			}
 			$db->connect($hostname,$username,$password,$database,$port,$socket,$charset);
 		}
-		if ($extensions===null) {
-			$extensions = true;
-		}
 		if ($auto_include===null) {
 			$auto_include = true;
 		}
@@ -2140,7 +2164,7 @@ class PHP_CRUD_API {
 		}
 
 		$this->db = $db;
-		$this->settings = compact('method', 'request', 'get', 'post', 'origin', 'database', 'table_authorizer', 'record_filter', 'column_authorizer', 'tenancy_function', 'input_sanitizer', 'input_validator', 'extensions', 'auto_include', 'allow_origin');
+		$this->settings = compact('method', 'request', 'get', 'post', 'origin', 'database', 'table_authorizer', 'record_filter', 'column_authorizer', 'tenancy_function', 'input_sanitizer', 'input_validator', 'auto_include', 'allow_origin');
 	}
 
 	public static function php_crud_api_transform(&$tables) {
@@ -2211,24 +2235,25 @@ class PHP_CRUD_API {
 			$table_fields = $this->findFields($table_list,false,false,false,$database);
 			$table_names = array_map(function($v){ return $v['name'];},$tables);
 
-			if ($extensions) {
-				$result = $this->db->query($this->db->getSql('reflect_belongs_to'),array($table_list[0],$table_names,$database,$database));
-				while ($row = $this->db->fetchRow($result)) {
-					$table_fields[$table['name']][$row[1]]->references=array($row[2],$row[3]);
-				}
-				$result = $this->db->query($this->db->getSql('reflect_has_many'),array($table_names,$table_list[0],$database,$database));
-				while ($row = $this->db->fetchRow($result)) {
-					$table_fields[$table['name']][$row[3]]->referenced[]=array($row[0],$row[1]);
-				}
-				$primaryKeys = $this->findPrimaryKeys($table_list[0],$database);
-				foreach ($primaryKeys as $primaryKey) {
-					$table_fields[$table['name']][$primaryKey]->primaryKey = true;
-				}
-				$result = $this->db->query($this->db->getSql('reflect_type'),array($database,$table_list[0]));
-				while ($row = $this->db->fetchRow($result)) {
-					$expl = explode('(',$row[1]);
-					$table_fields[$table['name']][$row[0]]->type = $expl[0];					
-				}
+			// extensions
+			$result = $this->db->query($this->db->getSql('reflect_belongs_to'),array($table_list[0],$table_names,$database,$database));
+			while ($row = $this->db->fetchRow($result)) {
+				$table_fields[$table['name']][$row[1]]->references=array($row[2],$row[3]);
+			}
+			$result = $this->db->query($this->db->getSql('reflect_has_many'),array($table_names,$table_list[0],$database,$database));
+			while ($row = $this->db->fetchRow($result)) {
+				$table_fields[$table['name']][$row[3]]->referenced[]=array($row[0],$row[1]);
+			}
+			$primaryKeys = $this->findPrimaryKeys($table_list[0],$database);
+			foreach ($primaryKeys as $primaryKey) {
+				$table_fields[$table['name']][$primaryKey]->primaryKey = true;
+			}
+			$result = $this->db->query($this->db->getSql('reflect_columns'),array($database,$table_list[0]));
+			while ($row = $this->db->fetchRow($result)) {
+				if ($row[1]!==null) $table_fields[$table['name']][$row[0]]->default = $row[1];
+				$table_fields[$table['name']][$row[0]]->required = strtolower($row[2])=='no' && $row[1]===null;
+				$table_fields[$table['name']][$row[0]]->format = $row[3];
+				$table_fields[$table['name']][$row[0]]->maxLength = $row[4];
 			}
 
 			foreach (array('root_actions','id_actions') as $path) {
@@ -2353,8 +2378,13 @@ class PHP_CRUD_API {
 							if ($k>0) echo ',';
 							echo '"'.$field.'": {';
 							echo '"type": "string"';
-							if (isset($action['fields'][$field]->type)) {
-								echo ',"x-dbtype": '.json_encode($action['fields'][$field]->type);
+							echo ',"format": '.json_encode($action['fields'][$field]->format);
+							if (isset($action['fields'][$field]->maxLength)) {
+								echo ',"maxLength": '.json_encode($action['fields'][$field]->maxLength);
+							}
+							echo ',"required": '.json_encode($action['fields'][$field]->required);
+							if (isset($action['fields'][$field]->default)) {
+								echo ',"default": '.json_encode($action['fields'][$field]->default);
 							}
 							if (isset($action['fields'][$field]->referenced)) {
 								echo ',"x-referenced": '.json_encode($action['fields'][$field]->referenced);
@@ -2386,8 +2416,13 @@ class PHP_CRUD_API {
 							if ($k>0) echo ',';
 							echo '"'.$field.'": {';
 							echo '"type": "string"';
-							if (isset($action['fields'][$field]->type)) {
-								echo ',"x-dbtype": '.json_encode($action['fields'][$field]->type);
+							echo ',"format": '.json_encode($action['fields'][$field]->format);
+							if (isset($action['fields'][$field]->maxLength)) {
+								echo ',"maxLength": '.json_encode($action['fields'][$field]->maxLength);
+							}
+							echo ',"required": '.json_encode($action['fields'][$field]->required);
+							if (isset($action['fields'][$field]->default)) {
+								echo ',"default": '.json_encode($action['fields'][$field]->default);
 							}
 							if (isset($action['fields'][$field]->referenced)) {
 								echo ',"x-referenced": '.json_encode($action['fields'][$field]->referenced);
@@ -2445,8 +2480,13 @@ class PHP_CRUD_API {
 							if ($k>0) echo ',';
 							echo '"'.$field.'": {';
 							echo '"type": "string"';
-							if (isset($action['fields'][$field]->type)) {
-								echo ',"x-dbtype": '.json_encode($action['fields'][$field]->type);
+							echo ',"format": '.json_encode($action['fields'][$field]->format);
+							if (isset($action['fields'][$field]->maxLength)) {
+								echo ',"maxLength": '.json_encode($action['fields'][$field]->maxLength);
+							}
+							echo ',"required": '.json_encode($action['fields'][$field]->required);
+							if (isset($action['fields'][$field]->default)) {
+								echo ',"default": '.json_encode($action['fields'][$field]->default);
 							}
 							if (isset($action['fields'][$field]->referenced)) {
 								echo ',"x-referenced": '.json_encode($action['fields'][$field]->referenced);
@@ -2475,8 +2515,13 @@ class PHP_CRUD_API {
 							if ($k>0) echo ',';
 							echo '"'.$field.'": {';
 							echo '"type": "string"';
-							if (isset($action['fields'][$field]->type)) {
-								echo ',"x-dbtype": '.json_encode($action['fields'][$field]->type);
+							echo ',"format": '.json_encode($action['fields'][$field]->format);
+							if (isset($action['fields'][$field]->maxLength)) {
+								echo ',"maxLength": '.json_encode($action['fields'][$field]->maxLength);
+							}
+							echo ',"required": '.json_encode($action['fields'][$field]->required);
+							if (isset($action['fields'][$field]->default)) {
+								echo ',"default": '.json_encode($action['fields'][$field]->default);
 							}
 							if (isset($action['fields'][$field]->referenced)) {
 								echo ',"x-referenced": '.json_encode($action['fields'][$field]->referenced);

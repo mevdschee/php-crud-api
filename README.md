@@ -94,7 +94,6 @@ $api = new PHP_CRUD_API(array(
 // configurable options
 	'allow_origin'=>'*',
 	'auto_include'=>true,
-	'extensions'=>true,
 // dependencies (added for unit testing):
 	'db'=>null,
 	'method'=>$_SERVER['REQUEST_METHOD'],
