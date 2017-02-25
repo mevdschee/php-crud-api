@@ -95,8 +95,7 @@ class MySQL implements DatabaseInterface {
 					"INFORMATION_SCHEMA"."COLUMNS" 
 				WHERE 
 					"TABLE_SCHEMA" = ? AND 
-					"TABLE_NAME" = ?
-			'
+					"TABLE_NAME" = ?'
 		);
 	}
 
@@ -2355,7 +2354,7 @@ class PHP_CRUD_API {
 							echo '"'.$field.'": {';
 							echo '"type": "string"';
 							if (isset($action['fields'][$field]->type)) {
-								echo ',"db-type": '.json_encode($action['fields'][$field]->type);
+								echo ',"x-dbtype": '.json_encode($action['fields'][$field]->type);
 							}
 							if (isset($action['fields'][$field]->referenced)) {
 								echo ',"x-referenced": '.json_encode($action['fields'][$field]->referenced);
@@ -2387,6 +2386,9 @@ class PHP_CRUD_API {
 							if ($k>0) echo ',';
 							echo '"'.$field.'": {';
 							echo '"type": "string"';
+							if (isset($action['fields'][$field]->type)) {
+								echo ',"x-dbtype": '.json_encode($action['fields'][$field]->type);
+							}
 							if (isset($action['fields'][$field]->referenced)) {
 								echo ',"x-referenced": '.json_encode($action['fields'][$field]->referenced);
 							}
@@ -2443,6 +2445,9 @@ class PHP_CRUD_API {
 							if ($k>0) echo ',';
 							echo '"'.$field.'": {';
 							echo '"type": "string"';
+							if (isset($action['fields'][$field]->type)) {
+								echo ',"x-dbtype": '.json_encode($action['fields'][$field]->type);
+							}
 							if (isset($action['fields'][$field]->referenced)) {
 								echo ',"x-referenced": '.json_encode($action['fields'][$field]->referenced);
 							}
@@ -2470,6 +2475,9 @@ class PHP_CRUD_API {
 							if ($k>0) echo ',';
 							echo '"'.$field.'": {';
 							echo '"type": "string"';
+							if (isset($action['fields'][$field]->type)) {
+								echo ',"x-dbtype": '.json_encode($action['fields'][$field]->type);
+							}
 							if (isset($action['fields'][$field]->referenced)) {
 								echo ',"x-referenced": '.json_encode($action['fields'][$field]->referenced);
 							}
