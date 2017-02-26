@@ -939,7 +939,7 @@ class SQLite implements DatabaseInterface {
 					k1."table" = ? AND
 					k2."table" IN ?',
 			'reflect_columns'=> 'SELECT
-					"name", "dflt_value", case when "notnull"==1 then \'NO\' else \'YES\' end as "nullable", "type", 2147483647
+					"name", "dflt_value", case when "notnull"==1 then \'no\' else \'yes\' end as "nullable", "type", 2147483647
 				FROM 
 					"sys/columns"
 				WHERE 
@@ -2262,15 +2262,19 @@ class PHP_CRUD_API {
 			}
 			$result = $this->db->query($this->db->getSql('reflect_columns'),array($table_list[0],$database));
 			while ($row = $this->db->fetchRow($result)) {
-				if ($row[1]!==null) $table_fields[$table['name']][$row[0]]->default = $row[1];
 				$table_fields[$table['name']][$row[0]]->required = strtolower($row[2])=='no' && $row[1]===null;
+				$table_fields[$table['name']][$row[0]]->{'x-nullable'} = strtolower($row[2])=='yes';
 				$table_fields[$table['name']][$row[0]]->{'x-dbtype'} = $row[3];
 				$table_fields[$table['name']][$row[0]]->maxLength = $row[4];
 				if ($this->db->isNumericType($table_fields[$table['name']][$row[0]])) {
-					$table_fields[$table['name']][$row[0]]->type = 'number';
 					if (strpos(strtolower($table_fields[$table['name']][$row[0]]->{'x-dbtype'}),'int')!==false) {
 						$table_fields[$table['name']][$row[0]]->type = 'integer';
+						if ($row[1]!==null) $table_fields[$table['name']][$row[0]]->default = (int)$row[1];
+					} else {
+						$table_fields[$table['name']][$row[0]]->type = 'number';
+						if ($row[1]!==null) $table_fields[$table['name']][$row[0]]->default = (float)$row[1];
 					}
+					
 				} else {
 					if ($this->db->isBinaryType($table_fields[$table['name']][$row[0]])) {
 						$table_fields[$table['name']][$row[0]]->format = 'byte';
@@ -2280,6 +2284,7 @@ class PHP_CRUD_API {
 						$table_fields[$table['name']][$row[0]]->format = 'json';
 					}
 					$table_fields[$table['name']][$row[0]]->type = 'string';
+					if ($row[1]!==null) $table_fields[$table['name']][$row[0]]->default = $row[1];
 				}
 			}
 
@@ -2409,10 +2414,10 @@ class PHP_CRUD_API {
 								echo ',"format": '.json_encode($action['fields'][$field]->format);
 							}
 							echo ',"x-dbtype": '.json_encode($action['fields'][$field]->{'x-dbtype'});
+							echo ',"x-nullable": '.json_encode($action['fields'][$field]->{'x-nullable'});
 							if (isset($action['fields'][$field]->maxLength)) {
 								echo ',"maxLength": '.json_encode($action['fields'][$field]->maxLength);
 							}
-							echo ',"required": '.json_encode($action['fields'][$field]->required);
 							if (isset($action['fields'][$field]->default)) {
 								echo ',"default": '.json_encode($action['fields'][$field]->default);
 							}
@@ -2450,10 +2455,10 @@ class PHP_CRUD_API {
 								echo ',"format": '.json_encode($action['fields'][$field]->format);
 							}
 							echo ',"x-dbtype": '.json_encode($action['fields'][$field]->{'x-dbtype'});
+							echo ',"x-nullable": '.json_encode($action['fields'][$field]->{'x-nullable'});
 							if (isset($action['fields'][$field]->maxLength)) {
 								echo ',"maxLength": '.json_encode($action['fields'][$field]->maxLength);
 							}
-							echo ',"required": '.json_encode($action['fields'][$field]->required);
 							if (isset($action['fields'][$field]->default)) {
 								echo ',"default": '.json_encode($action['fields'][$field]->default);
 							}
@@ -2517,10 +2522,10 @@ class PHP_CRUD_API {
 								echo ',"format": '.json_encode($action['fields'][$field]->format);
 							}
 							echo ',"x-dbtype": '.json_encode($action['fields'][$field]->{'x-dbtype'});
+							echo ',"x-nullable": '.json_encode($action['fields'][$field]->{'x-nullable'});
 							if (isset($action['fields'][$field]->maxLength)) {
 								echo ',"maxLength": '.json_encode($action['fields'][$field]->maxLength);
 							}
-							echo ',"required": '.json_encode($action['fields'][$field]->required);
 							if (isset($action['fields'][$field]->default)) {
 								echo ',"default": '.json_encode($action['fields'][$field]->default);
 							}
@@ -2555,10 +2560,10 @@ class PHP_CRUD_API {
 								echo ',"format": '.json_encode($action['fields'][$field]->format);
 							}
 							echo ',"x-dbtype": '.json_encode($action['fields'][$field]->{'x-dbtype'});
+							echo ',"x-nullable": '.json_encode($action['fields'][$field]->{'x-nullable'});
 							if (isset($action['fields'][$field]->maxLength)) {
 								echo ',"maxLength": '.json_encode($action['fields'][$field]->maxLength);
 							}
-							echo ',"required": '.json_encode($action['fields'][$field]->required);
 							if (isset($action['fields'][$field]->default)) {
 								echo ',"default": '.json_encode($action['fields'][$field]->default);
 							}
