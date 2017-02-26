@@ -939,7 +939,7 @@ class SQLite implements DatabaseInterface {
 					k1."table" = ? AND
 					k2."table" IN ?',
 			'reflect_columns'=> 'SELECT
-					"name", "dflt_value", "notnull", "type", 2147483647
+					"name", "dflt_value", case when "notnull"==1 then \'NO\' else \'YES\' end as "nullable", "type", 2147483647
 				FROM 
 					"sys/columns"
 				WHERE 
@@ -2263,7 +2263,7 @@ class PHP_CRUD_API {
 			$result = $this->db->query($this->db->getSql('reflect_columns'),array($table_list[0],$database));
 			while ($row = $this->db->fetchRow($result)) {
 				if ($row[1]!==null) $table_fields[$table['name']][$row[0]]->default = $row[1];
-				$table_fields[$table['name']][$row[0]]->required = in_array(strtolower($row[2]),array('no','1')) && $row[1]===null;
+				$table_fields[$table['name']][$row[0]]->required = strtolower($row[2])=='no' && $row[1]===null;
 				$table_fields[$table['name']][$row[0]]->{'x-dbtype'} = $row[3];
 				$table_fields[$table['name']][$row[0]]->maxLength = $row[4];
 				if ($this->db->isNumericType($table_fields[$table['name']][$row[0]])) {
