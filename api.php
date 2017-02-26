@@ -2506,7 +2506,7 @@ class PHP_CRUD_API {
 					echo '"required":true,';
 					echo '"type":"string"';
 					echo '}';
-					if ($action['name']=='update') {
+					if ($action['name']=='update' || $action['name']=='increment') {
 						echo ',{';
 						echo '"name":"item",';
 						echo '"in":"body",';
