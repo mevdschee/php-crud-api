@@ -2443,9 +2443,15 @@ class PHP_CRUD_API {
 						echo '"name":"item",';
 						echo '"in":"body",';
 						echo '"description":"Item to create.",';
-						echo '"required":false,';
+						echo '"required":true,';
 						echo '"schema":{';
 						echo '"type": "object",';
+						echo '"required":[';
+						foreach (array_keys($action['fields']) as $k=>$field) {
+							if ($k>0) echo ',';
+							echo json_encode($field);
+						}
+						echo '],'; //required
 						echo '"properties": {';
 						foreach (array_keys($action['fields']) as $k=>$field) {
 							if ($k>0) echo ',';
@@ -2510,9 +2516,15 @@ class PHP_CRUD_API {
 						echo '"name":"item",';
 						echo '"in":"body",';
 						echo '"description":"Properties of item to update.",';
-						echo '"required":false,';
+						echo '"required":true,';
 						echo '"schema":{';
 						echo '"type": "object",';
+						echo '"required":[';
+						foreach (array_keys($action['fields']) as $k=>$field) {
+							if ($k>0) echo ',';
+							echo json_encode($field);
+						}
+						echo '],'; //required
 						echo '"properties": {';
 						foreach (array_keys($action['fields']) as $k=>$field) {
 							if ($k>0) echo ',';
