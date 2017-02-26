@@ -94,8 +94,8 @@ class MySQL implements DatabaseInterface {
 				FROM 
 					"INFORMATION_SCHEMA"."COLUMNS" 
 				WHERE 
-					"TABLE_SCHEMA" = ? AND 
-					"TABLE_NAME" = ?
+					"TABLE_NAME" = ? AND
+					"TABLE_SCHEMA" = ?
 				ORDER BY
 					"ORDINAL_POSITION"'
 		);
@@ -249,6 +249,7 @@ class PostgreSQL implements DatabaseInterface {
 				from
 					"information_schema"."tables"
 				where
+					"table_schema" = \'public\' and
 					"table_catalog" = ?',
 			'reflect_table'=>'select
 					"table_name"
@@ -256,6 +257,7 @@ class PostgreSQL implements DatabaseInterface {
 					"information_schema"."tables"
 				where
 					"table_name" = ? and
+					"table_schema" = \'public\' and
 					"table_catalog" = ?',
 			'reflect_pk'=>'select
 					"column_name"
@@ -266,6 +268,7 @@ class PostgreSQL implements DatabaseInterface {
 					tc."constraint_type" = \'PRIMARY KEY\' and
 					tc."constraint_name" = ku."constraint_name" and
 					ku."table_name" = ? and
+					ku."table_schema" = \'public\' and
 					ku."table_catalog" = ?',
 			'reflect_belongs_to'=>'select
 					cu1."table_name",cu1."column_name",
@@ -279,6 +282,8 @@ class PostgreSQL implements DatabaseInterface {
 					cu2."constraint_name" = rc."unique_constraint_name" and
 					cu1."table_name" = ? and
 					cu2."table_name" in ? and
+					cu1."table_schema" = \'public\' and
+					cu2."table_schema" = \'public\' and
 					cu1."table_catalog" = ? and
 					cu2."table_catalog" = ?',
 			'reflect_has_many'=>'select
@@ -293,6 +298,8 @@ class PostgreSQL implements DatabaseInterface {
 					cu2."constraint_name" = rc."unique_constraint_name" and
 					cu1."table_name" in ? and
 					cu2."table_name" = ? and
+					cu1."table_schema" = \'public\' and
+					cu2."table_schema" = \'public\' and
 					cu1."table_catalog" = ? and
 					cu2."table_catalog" = ?',
 			'reflect_habtm'=>'select
@@ -316,6 +323,10 @@ class PostgreSQL implements DatabaseInterface {
 					cub1."table_catalog" = ? and
 					cua2."table_catalog" = ? and
 					cub2."table_catalog" = ? and
+					cua1."table_schema" = \'public\' and
+					cub1."table_schema" = \'public\' and
+					cua2."table_schema" = \'public\' and
+					cub2."table_schema" = \'public\' and
 					cua1."table_name" = cub1."table_name" and
 					cua2."table_name" = ? and
 					cub2."table_name" in ?',
@@ -324,7 +335,8 @@ class PostgreSQL implements DatabaseInterface {
 				from 
 					"information_schema"."columns" 
 				where
-					"table_name" like ? and
+					"table_name" = ? and
+					"table_schema" = \'public\' and
 					"table_catalog" = ?
 				order by
 					"ordinal_position"'
@@ -2248,7 +2260,7 @@ class PHP_CRUD_API {
 			foreach ($primaryKeys as $primaryKey) {
 				$table_fields[$table['name']][$primaryKey]->primaryKey = true;
 			}
-			$result = $this->db->query($this->db->getSql('reflect_columns'),array($database,$table_list[0]));
+			$result = $this->db->query($this->db->getSql('reflect_columns'),array($table_list[0],$database));
 			while ($row = $this->db->fetchRow($result)) {
 				if ($row[1]!==null) $table_fields[$table['name']][$row[0]]->default = $row[1];
 				$table_fields[$table['name']][$row[0]]->required = strtolower($row[2])=='no' && $row[1]===null;
