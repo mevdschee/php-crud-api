@@ -2252,8 +2252,20 @@ class PHP_CRUD_API {
 			while ($row = $this->db->fetchRow($result)) {
 				if ($row[1]!==null) $table_fields[$table['name']][$row[0]]->default = $row[1];
 				$table_fields[$table['name']][$row[0]]->required = strtolower($row[2])=='no' && $row[1]===null;
-				$table_fields[$table['name']][$row[0]]->format = $row[3];
+				$table_fields[$table['name']][$row[0]]->{'x-dbtype'} = $row[3];
 				$table_fields[$table['name']][$row[0]]->maxLength = $row[4];
+				if ($this->db->isNumericType($table_fields[$table['name']][$row[0]])) {
+					$table_fields[$table['name']][$row[0]]->type = 'number';
+				} else {
+					if ($this->db->isBinaryType($table_fields[$table['name']][$row[0]])) {
+						$table_fields[$table['name']][$row[0]]->format = 'byte';
+					} else if ($this->db->isGeometryType($table_fields[$table['name']][$row[0]])) {
+						$table_fields[$table['name']][$row[0]]->format = 'wkt';
+					} else if ($this->db->isJsonType($table_fields[$table['name']][$row[0]])) {
+						$table_fields[$table['name']][$row[0]]->format = 'json';
+					}
+					$table_fields[$table['name']][$row[0]]->type = 'string';
+				}
 			}
 
 			foreach (array('root_actions','id_actions') as $path) {
@@ -2377,8 +2389,11 @@ class PHP_CRUD_API {
 						foreach (array_keys($action['fields']) as $k=>$field) {
 							if ($k>0) echo ',';
 							echo '"'.$field.'": {';
-							echo '"type": "string"';
-							echo ',"format": '.json_encode($action['fields'][$field]->format);
+							echo '"type": '.json_encode($action['fields'][$field]->type);
+							if (isset($action['fields'][$field]->format)) {
+								echo ',"format": '.json_encode($action['fields'][$field]->format);
+							}
+							echo ',"x-dbtype": '.json_encode($action['fields'][$field]->{'x-dbtype'});
 							if (isset($action['fields'][$field]->maxLength)) {
 								echo ',"maxLength": '.json_encode($action['fields'][$field]->maxLength);
 							}
@@ -2415,8 +2430,11 @@ class PHP_CRUD_API {
 						foreach (array_keys($action['fields']) as $k=>$field) {
 							if ($k>0) echo ',';
 							echo '"'.$field.'": {';
-							echo '"type": "string"';
-							echo ',"format": '.json_encode($action['fields'][$field]->format);
+							echo '"type": '.json_encode($action['fields'][$field]->type);
+							if (isset($action['fields'][$field]->format)) {
+								echo ',"format": '.json_encode($action['fields'][$field]->format);
+							}
+							echo ',"x-dbtype": '.json_encode($action['fields'][$field]->{'x-dbtype'});
 							if (isset($action['fields'][$field]->maxLength)) {
 								echo ',"maxLength": '.json_encode($action['fields'][$field]->maxLength);
 							}
@@ -2479,8 +2497,11 @@ class PHP_CRUD_API {
 						foreach (array_keys($action['fields']) as $k=>$field) {
 							if ($k>0) echo ',';
 							echo '"'.$field.'": {';
-							echo '"type": "string"';
-							echo ',"format": '.json_encode($action['fields'][$field]->format);
+							echo '"type": '.json_encode($action['fields'][$field]->type);
+							if (isset($action['fields'][$field]->format)) {
+								echo ',"format": '.json_encode($action['fields'][$field]->format);
+							}
+							echo ',"x-dbtype": '.json_encode($action['fields'][$field]->{'x-dbtype'});
 							if (isset($action['fields'][$field]->maxLength)) {
 								echo ',"maxLength": '.json_encode($action['fields'][$field]->maxLength);
 							}
@@ -2514,8 +2535,11 @@ class PHP_CRUD_API {
 						foreach (array_keys($action['fields']) as $k=>$field) {
 							if ($k>0) echo ',';
 							echo '"'.$field.'": {';
-							echo '"type": "string"';
-							echo ',"format": '.json_encode($action['fields'][$field]->format);
+							echo '"type": '.json_encode($action['fields'][$field]->type);
+							if (isset($action['fields'][$field]->format)) {
+								echo ',"format": '.json_encode($action['fields'][$field]->format);
+							}
+							echo ',"x-dbtype": '.json_encode($action['fields'][$field]->{'x-dbtype'});
 							if (isset($action['fields'][$field]->maxLength)) {
 								echo ',"maxLength": '.json_encode($action['fields'][$field]->maxLength);
 							}
