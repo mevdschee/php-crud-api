@@ -2268,6 +2268,9 @@ class PHP_CRUD_API {
 				$table_fields[$table['name']][$row[0]]->maxLength = $row[4];
 				if ($this->db->isNumericType($table_fields[$table['name']][$row[0]])) {
 					$table_fields[$table['name']][$row[0]]->type = 'number';
+					if (strpos(strtolower($table_fields[$table['name']][$row[0]]->{'x-dbtype'}),'int')!==false) {
+						$table_fields[$table['name']][$row[0]]->type = 'integer';
+					}
 				} else {
 					if ($this->db->isBinaryType($table_fields[$table['name']][$row[0]])) {
 						$table_fields[$table['name']][$row[0]]->format = 'byte';
