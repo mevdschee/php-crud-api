@@ -2263,7 +2263,7 @@ class PHP_CRUD_API {
 			$result = $this->db->query($this->db->getSql('reflect_columns'),array($table_list[0],$database));
 			while ($row = $this->db->fetchRow($result)) {
 				if ($row[1]!==null) $table_fields[$table['name']][$row[0]]->default = $row[1];
-				$table_fields[$table['name']][$row[0]]->required = strtolower($row[2])=='no' && $row[1]===null;
+				$table_fields[$table['name']][$row[0]]->required = in_array(strtolower($row[2]),array('no','1')) && $row[1]===null;
 				$table_fields[$table['name']][$row[0]]->{'x-dbtype'} = $row[3];
 				$table_fields[$table['name']][$row[0]]->maxLength = $row[4];
 				if ($this->db->isNumericType($table_fields[$table['name']][$row[0]])) {
