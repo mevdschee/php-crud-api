@@ -2265,7 +2265,6 @@ class PHP_CRUD_API {
 				$table_fields[$table['name']][$row[0]]->required = strtolower($row[2])=='no' && $row[1]===null;
 				$table_fields[$table['name']][$row[0]]->{'x-nullable'} = strtolower($row[2])=='yes';
 				$table_fields[$table['name']][$row[0]]->{'x-dbtype'} = $row[3];
-				$table_fields[$table['name']][$row[0]]->maxLength = $row[4];
 				if ($this->db->isNumericType($table_fields[$table['name']][$row[0]])) {
 					if (strpos(strtolower($table_fields[$table['name']][$row[0]]->{'x-dbtype'}),'int')!==false) {
 						$table_fields[$table['name']][$row[0]]->type = 'integer';
@@ -2274,7 +2273,6 @@ class PHP_CRUD_API {
 						$table_fields[$table['name']][$row[0]]->type = 'number';
 						if ($row[1]!==null) $table_fields[$table['name']][$row[0]]->default = (float)$row[1];
 					}
-					
 				} else {
 					if ($this->db->isBinaryType($table_fields[$table['name']][$row[0]])) {
 						$table_fields[$table['name']][$row[0]]->format = 'byte';
@@ -2285,6 +2283,7 @@ class PHP_CRUD_API {
 					}
 					$table_fields[$table['name']][$row[0]]->type = 'string';
 					if ($row[1]!==null) $table_fields[$table['name']][$row[0]]->default = $row[1];
+					if ($row[4]!==null) $table_fields[$table['name']][$row[0]]->maxLength = (int)$row[4];
 				}
 			}
 
