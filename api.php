@@ -471,7 +471,7 @@ class PostgreSQL implements DatabaseInterface {
 	}
 
 	public function isJsonType($field) {
-		return $field->type == 'jsonb';
+        return in_array($field->type,array('json','jsonb'));
 	}
 
 	public function getDefaultCharset() {
@@ -1075,11 +1075,11 @@ class SQLite implements DatabaseInterface {
 	}
 
 	public function isGeometryType($field) {
-		return in_array($field->type,array('geometry'));;
+		return in_array($field->type,array('geometry'));
 	}
 
 	public function isJsonType($field) {
-		return in_array($field->type,array('json','jsonb'));;
+		return in_array($field->type,array('json','jsonb'));
 	}
 
 	public function getDefaultCharset() {
