@@ -773,108 +773,92 @@ class SQLServer implements DatabaseInterface {
 	}
 
 	public function jsonEncode($object) {
+		$a = $object;
+		$d = new DOMDocument();
+		$c = $d->createElement("root");
+		$d->appendChild($c);
 		$t = function($v) {
-			switch(gettype($v)) {
-				case 'boolean': return 'boolean';
+			$type = gettype($v);
+			switch($type) {
 				case 'integer': return 'number';
 				case 'double':  return 'number';
-				case 'string':  return 'string';
-				case 'array':   return 'array';
-				case 'object':  return 'object';
-				case 'NULL':	return 'null';
+				default: return strtolower($type);
 			}
 		};
-		$a = $object;
-		$c = new SimpleXMLElement('<root/>');
-		$f = function($f,$c,$a,$s=false) use ($t) {
-			$c->addAttribute('type', $t($a));
-			if (is_scalar($a)||is_null($a)) {
-				if(is_bool($a)){ 
-					$c[0] = $a?'true':'false';
+		$f = function($f,$c,$a,$s=false) use ($t,$d) {
+			$c->setAttribute('type', $t($a));
+			if ($t($a) != 'array' && $t($a) != 'object') {
+				if ($t($a) == 'boolean') {
+					$c->appendChild($d->createTextNode($a?'true':'false'));
 				} else {
-					$c[0] = $a;
+					$c->appendChild($d->createTextNode($a));
 				}
 			} else {
 				foreach($a as $k=>$v) {
-					if ($k=='__type' && is_object($a)) {
-						$c->addAttribute('__type', $v);
+					if ($k == '__type' && $t($a) == 'object') {
+						$c->setAttribute('__type', $v);
 					} else {
-						if(is_object($v)) {
-							$ch=$c->addChild($s?'item':$k);
-							$f($f,$ch,$v);
-						} else if(is_array($v)) {
-							$ch=$c->addChild($s?'item':$k);
-							$f($f,$ch,$v,true);
-						} else if(is_bool($v)) {
-							$ch=$c->addChild($s?'item':$k,$v?'true':'false');
-							$ch->addAttribute('type', $t($v));
+						if ($t($v) == 'object') {
+							$ch = $c->appendChild($d->createElementNS(null, $s ? 'item' : $k));
+							$f($f, $ch, $v);
+						} else if ($t($v) == 'array') {
+							$ch = $c->appendChild($d->createElementNS(null, $s ? 'item' : $k));
+							$f($f, $ch, $v, true);
 						} else {
-							$ch=$c->addChild($s?'item':$k,$v);
-							$ch->addAttribute('type', $t($v));
+							$va = $d->createElementNS(null, $s ? 'item' : $k);
+							if ($t($v) == 'boolean') {
+								$va->appendChild($d->createTextNode($v?'true':'false'));
+							} else {
+								$va->appendChild($d->createTextNode($v));
+							}
+							$ch = $c->appendChild($va);
+							$ch->setAttribute('type', $t($v));
 						}
 					}
 				}
 			}
 		};
 		$f($f,$c,$a,$t($a)=='array');
-		return trim($c->asXML());
+		return $d->saveXML($d->documentElement);
 	}
 
 	public function jsonDecode($string) {
-		$p = function ($p,$n) {
-			foreach($n->childNodes as $node) {
-				if($node->hasChildNodes()) {
-					$p($p,$node);
-				} else {
-					if($n->hasAttributes() && strlen($n->nodeValue)){
-						$n->setAttribute('value', $node->textContent);
-						$node->nodeValue = '';
-					}
+		$a = dom_import_simplexml(simplexml_load_string($string));
+		$t = function($v) {
+			return $v->getAttribute('type');
+		};
+		$f = function($f,$a) use ($t) {
+			$c = null;
+			if ($t($a)=='null') {
+				$c = null; 
+			} else if ($t($a)=='boolean') {
+				$b = substr(strtolower($a->textContent),0,1);
+				$c = in_array($b,array('1','t'));
+			} else if ($t($a)=='number') {
+				$c = $a->textContent+0; 
+			} else if ($t($a)=='string') {
+				$c = $a->textContent;
+			} else if ($t($a)=='object') {
+				$c = array();
+				if ($a->getAttribute('__type')) {
+					$c['__type'] = $a->getAttribute('__type');
+				}
+				for ($i=0;$i<$a->childNodes->length;$i++) {
+					$v = $a->childNodes[$i];
+					$c[$v->nodeName] = $f($f,$v);
+				}
+				$c = (object)$c;
+			} else if ($t($a)=='array') {
+				$c = array();
+				for ($i=0;$i<$a->childNodes->length;$i++) {
+					$v = $a->childNodes[$i];
+					$c[$i] = $f($f,$v);
 				}
 			}
+			return $c;
 		};
-		$dom = new DOMDocument();
-		$dom->loadXML($string);
-		$p($p,$dom);
-		$xml = simplexml_load_string($dom->saveXML());
-		$a = json_decode(json_encode($xml));
-		$f = function($f,&$a) {
-				foreach($a as $k=>&$v) {
-					if($k==='@attributes') {
-						if (isset($v->__type) && is_object($a)) {
-							$a->__type = $v->__type;
-						}
-						if ($v->type=='null') {
-							$a = null; 
-							return;
-						}
-						if ($v->type=='boolean') {
-							$b = substr(strtolower($v->value[0]),0,1);
-							$a = in_array($b,array('1','t'));
-							return;
-						}
-						if ($v->type=='number') {
-							$a = $v->value+0; 
-							return;
-						}
-						if ($v->type=='string') {
-							$a = $v->value;
-							return;
-						}
-						unset($a->$k);
-					} else {
-						if (is_object($v)) {
-							$f($f,$v);
-						} else if (is_array($v)) {
-							$f($f,$v);
-							$a = $v;
-							return;
-						}
-					}
-				}
-		};
-		$f($f,$a);
-		return $a;
+		$c = $f($f,$a);
+		return $c;
 	}
 }
 
