@@ -2588,20 +2588,20 @@ class PHP_CRUD_API {
 	}
 
 	protected function allowOrigin($origin,$allowOrigins) {
-		if ($origin) foreach (explode(',',$allowOrigins) as $o) {
-			if (preg_match('/^'.str_replace('\*','.*',preg_quote(strtolower(trim($o)))).'$/',$origin)) { 
-				header('Access-Control-Allow-Origin: '.$origin);
-				break;
+		if (isset($_SERVER['REQUEST_METHOD'])) {
+			header('Access-Control-Allow-Credentials: true');
+			foreach (explode(',',$allowOrigins) as $o) {
+				if (preg_match('/^'.str_replace('\*','.*',preg_quote(strtolower(trim($o)))).'$/',$origin)) { 
+					header('Access-Control-Allow-Origin: '.$origin);
+					break;
+				}
 			}
-		} else {
-			header('Access-Control-Allow-Origin: *');
 		}
 	}
 
 	public function executeCommand() {
-		if (isset($_SERVER['REQUEST_METHOD'])) {
+		if ($this->settings['origin']) {
 			$this->allowOrigin($this->settings['origin'],$this->settings['allow_origin']);
-			header('Access-Control-Allow-Credentials: true');
 		}
 		if (!$this->settings['request']) {
 			$this->swagger($this->settings);
