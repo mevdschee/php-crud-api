@@ -1,7 +1,10 @@
 #!/bin/bash
 
+# initialize cookie store
+cp /dev/null cookies.txt
+
 # login and store cookies in 'cookies.txt' AND retrieve the value of the XSRF token
-TOKEN=`curl 'http://localhost/api.php/' --data "username=admin&password=admin" --cookie-jar cookies.txt`
+TOKEN=`curl 'http://localhost/api.php/' --data "username=admin&password=admin" --cookie-jar cookies.txt --silent`
 
 # strip the double quotes from the variable (JSON decode)
 TOKEN=${TOKEN//\"/}
