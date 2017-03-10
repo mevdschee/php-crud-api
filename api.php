@@ -1134,6 +1134,18 @@ class PHP_CRUD_API {
 		return $values;
 	}
 
+	protected function applyAfterCreate($callback,$database,$table,$id) {
+		if (is_callable($callback,true)) {
+			$fields = $this->findPrimaryKeys($table,$database);
+			if (count($fields)!=1) $this->exitWith404('1pk');
+			if ($result = $this->db->query("SELECT * FROM ! WHERE ! = ?",array($table, $fields[0], $id))) {
+				$object = $this->db->fetchAssoc($result);
+				$callback($database,$table,$object);
+				$this->db->close($result);
+			}			
+		}
+	}
+
 	protected function applyTableAuthorizer($callback,$action,$database,&$tables) {
 		if (is_callable($callback,true)) foreach ($tables as $i=>$table) {
 			if (!$callback($action,$database,$table)) {
@@ -1467,7 +1479,10 @@ class PHP_CRUD_API {
 		array_unshift($params, $tables[0]);
 		$result = $this->db->query('INSERT INTO ! ('.$keys.') VALUES ('.$values.')',$params);
 		if (!$result) return null;
-		return $this->db->insertId($result);
+		$insertId = $this->db->insertId($result);
+		extract($this->settings);
+		$this->applyAfterCreate($after_create,$database,$tables[0],$insertId);
+		return $insertId;
 	}
 
 	protected function createObjects($inputs,$tables) {
@@ -2109,6 +2124,7 @@ class PHP_CRUD_API {
 		$input_validator = isset($input_validator)?$input_validator:null;
 		$auto_include = isset($auto_include)?$auto_include:null;
 		$allow_origin = isset($allow_origin)?$allow_origin:null;
+		$after_create = isset($after_create)?$after_create:null;
 
 		$db = isset($db)?$db:null;
 		$method = isset($method)?$method:null;
@@ -2160,7 +2176,7 @@ class PHP_CRUD_API {
 		}
 
 		$this->db = $db;
-		$this->settings = compact('method', 'request', 'get', 'post', 'origin', 'database', 'table_authorizer', 'record_filter', 'column_authorizer', 'tenancy_function', 'input_sanitizer', 'input_validator', 'auto_include', 'allow_origin');
+		$this->settings = compact('method', 'request', 'get', 'post', 'origin', 'database', 'table_authorizer', 'record_filter', 'column_authorizer', 'tenancy_function', 'input_sanitizer', 'input_validator', 'after_create', 'auto_include', 'allow_origin');
 	}
 
 	public static function php_crud_api_transform(&$tables) {
