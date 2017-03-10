@@ -1134,8 +1134,10 @@ class PHP_CRUD_API {
 		return $values;
 	}
 
-	protected function applyAfterWrite($callback,$action,$database,$table,$id,$input) {
+	protected function applyAfterWrite($action,$table,$id,$input) {
+		$callback = $this->settings['after_write'];
 		if (is_callable($callback,true)) {
+			$database = $this->settings['database'];
 			$callback($action,$database,$table,$id,$input);
 		}
 	}
@@ -1474,8 +1476,7 @@ class PHP_CRUD_API {
 		$result = $this->db->query('INSERT INTO ! ('.$keys.') VALUES ('.$values.')',$params);
 		if (!$result) return null;
 		$insertId = $this->db->insertId($result);
-		extract($this->settings);
-		$this->applyAfterWrite($after_write,'create',$database,$tables[0],$insertId,$input);
+		$this->applyAfterWrite('create',$tables[0],$insertId,$input);
 		return $insertId;
 	}
 
@@ -1512,7 +1513,7 @@ class PHP_CRUD_API {
 		$this->addWhereFromFilters($filters[$table],$sql,$params);
 		$result = $this->db->query($sql,$params);
 		if (!$result) return null;
-		$this->applyAfterWrite($after_write,'update',$database,$tables[0],$key[0],$input);
+		$this->applyAfterWrite('update',$tables[0],$key[0],$input);
 		return $this->db->affectedRows($result);
 	}
 
@@ -1545,7 +1546,7 @@ class PHP_CRUD_API {
 		$this->addWhereFromFilters($filters[$table],$sql,$params);
 		$result = $this->db->query($sql,$params);
 		if (!$result) return null;
-		$this->applyAfterWrite($after_write,'delete',$database,$tables[0],$key[0],array());
+		$this->applyAfterWrite('delete',$tables[0],$key[0],array());
 		return $this->db->affectedRows($result);
 	}
 
@@ -1590,7 +1591,7 @@ class PHP_CRUD_API {
 		$this->addWhereFromFilters($filters[$table],$sql,$params);
 		$result = $this->db->query($sql,$params);
 		if (!$result) return null;
-		$this->applyAfterWrite($after_write,'increment',$database,$tables[0],$key[0],$input);
+		$this->applyAfterWrite('increment',$tables[0],$key[0],$input);
 		return $this->db->affectedRows($result);
 	}
 
