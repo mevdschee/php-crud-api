@@ -34,6 +34,7 @@ class API
 				'tenancy_function'=>function($action,$database,$table,$column) { return ($table=='users'&&$column=='id')?1:null; },
 				'input_sanitizer'=>function($action,$database,$table,$column,$type,$value) { return is_string($value)?strip_tags($value):$value; },
 				'input_validator'=>function($action,$database,$table,$column,$type,$value,$context) { return ($column=='category_id' && !is_numeric($value))?'must be numeric':true; },
+				'after' => function ($action,$database,$table,$id,$input,$output) { file_put_contents('log.txt',var_export(array($action,$database,$table,$id,$input,$output),true),FILE_APPEND); },
 				// for tests
 				'method' =>$method,
 				'request' =>$url['path'],

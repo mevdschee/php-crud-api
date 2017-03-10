@@ -1134,11 +1134,15 @@ class PHP_CRUD_API {
 		return $values;
 	}
 
-	protected function applyAfterWrite($action,$table,$id,$input) {
-		$callback = $this->settings['after_write'];
+	protected function applyAfterHandler($parameters,$output) {
+		$callback = $parameters['after'];
 		if (is_callable($callback,true)) {
-			$database = $this->settings['database'];
-			$callback($action,$database,$table,$id,$input);
+			$action = $parameters['action'];
+			$database = $parameters['database'];
+			$table = $parameters['tables'][0];
+			$id = $parameters['key'][0];
+			$input = isset($parameters['inputs'])?$parameters['inputs']:false;
+			$callback($action,$database,$table,$id,$input,$output);
 		}
 	}
 
@@ -1265,6 +1269,7 @@ class PHP_CRUD_API {
 		} else {
 			echo json_encode($headers);
 		}
+		return false;
 	}
 
 	protected function startOutput() {
@@ -1476,7 +1481,6 @@ class PHP_CRUD_API {
 		$result = $this->db->query('INSERT INTO ! ('.$keys.') VALUES ('.$values.')',$params);
 		if (!$result) return null;
 		$insertId = $this->db->insertId($result);
-		$this->applyAfterWrite('create',$tables[0],$insertId,$input);
 		return $insertId;
 	}
 
@@ -1513,7 +1517,6 @@ class PHP_CRUD_API {
 		$this->addWhereFromFilters($filters[$table],$sql,$params);
 		$result = $this->db->query($sql,$params);
 		if (!$result) return null;
-		$this->applyAfterWrite('update',$tables[0],$key[0],$input);
 		return $this->db->affectedRows($result);
 	}
 
@@ -1546,7 +1549,6 @@ class PHP_CRUD_API {
 		$this->addWhereFromFilters($filters[$table],$sql,$params);
 		$result = $this->db->query($sql,$params);
 		if (!$result) return null;
-		$this->applyAfterWrite('delete',$tables[0],$key[0],array());
 		return $this->db->affectedRows($result);
 	}
 
@@ -1591,7 +1593,6 @@ class PHP_CRUD_API {
 		$this->addWhereFromFilters($filters[$table],$sql,$params);
 		$result = $this->db->query($sql,$params);
 		if (!$result) return null;
-		$this->applyAfterWrite('increment',$tables[0],$key[0],$input);
 		return $this->db->affectedRows($result);
 	}
 
@@ -1884,7 +1885,7 @@ class PHP_CRUD_API {
 			}
 		}
 
-		return compact('action','database','tables','key','page','filters','fields','orderings','transform','multi','inputs','collect','select');
+		return compact('action','database','tables','key','page','filters','fields','orderings','transform','multi','inputs','collect','select','after');
 	}
 
 	protected function addWhereFromFilters($filters,&$sql,&$params) {
@@ -2037,37 +2038,34 @@ class PHP_CRUD_API {
 		if (!$object) $this->exitWith404('object');
 		$this->startOutput();
 		echo json_encode($object);
+		return false;
 	}
 
 	protected function createCommand($parameters) {
 		extract($parameters);
 		if (!$inputs || !$inputs[0]) $this->exitWith404('input');
-		$this->startOutput();
-		if ($multi) echo json_encode($this->createObjects($inputs,$tables));
-		else echo json_encode($this->createObject($inputs[0],$tables));
+		if ($multi) return $this->createObjects($inputs,$tables);
+		return $this->createObject($inputs[0],$tables);
 	}
 
 	protected function updateCommand($parameters) {
 		extract($parameters);
 		if (!$inputs || !$inputs[0]) $this->exitWith404('subject');
-		$this->startOutput();
-		if ($multi) echo json_encode($this->updateObjects($key,$inputs,$filters,$tables));
-		else echo json_encode($this->updateObject($key,$inputs[0],$filters,$tables));
+		if ($multi) return $this->updateObjects($key,$inputs,$filters,$tables);
+		return $this->updateObject($key,$inputs[0],$filters,$tables);
 	}
 
 	protected function deleteCommand($parameters) {
 		extract($parameters);
-		$this->startOutput();
-		if ($multi) echo json_encode($this->deleteObjects($key,$filters,$tables));
-		else echo json_encode($this->deleteObject($key,$filters,$tables));
+		if ($multi) return $this->deleteObjects($key,$filters,$tables);
+		return $this->deleteObject($key,$filters,$tables);
 	}
 
 	protected function incrementCommand($parameters) {
 		extract($parameters);
 		if (!$inputs || !$inputs[0]) $this->exitWith404('subject');
-		$this->startOutput();
-		if ($multi) echo json_encode($this->incrementObjects($key,$inputs,$filters,$tables,$fields));
-		else echo json_encode($this->incrementObject($key,$inputs[0],$filters,$tables,$fields));
+		if ($multi) return $this->incrementObjects($key,$inputs,$filters,$tables,$fields);
+		return $this->incrementObject($key,$inputs[0],$filters,$tables,$fields);
 	}
 
 	protected function listCommand($parameters) {
@@ -2083,6 +2081,7 @@ class PHP_CRUD_API {
 			$data = json_decode($content,true);
 			echo json_encode(self::php_crud_api_transform($data));
 		}
+		return false;
 	}
 
 	protected function retrievePostData() {
@@ -2122,7 +2121,7 @@ class PHP_CRUD_API {
 		$input_validator = isset($input_validator)?$input_validator:null;
 		$auto_include = isset($auto_include)?$auto_include:null;
 		$allow_origin = isset($allow_origin)?$allow_origin:null;
-		$after_write = isset($after_write)?$after_write:null;
+		$after = isset($after)?$after:null;
 
 		$db = isset($db)?$db:null;
 		$method = isset($method)?$method:null;
@@ -2174,7 +2173,7 @@ class PHP_CRUD_API {
 		}
 
 		$this->db = $db;
-		$this->settings = compact('method', 'request', 'get', 'post', 'origin', 'database', 'table_authorizer', 'record_filter', 'column_authorizer', 'tenancy_function', 'input_sanitizer', 'input_validator', 'after_write', 'auto_include', 'allow_origin');
+		$this->settings = compact('method', 'request', 'get', 'post', 'origin', 'database', 'table_authorizer', 'record_filter', 'column_authorizer', 'tenancy_function', 'input_sanitizer', 'input_validator', 'after', 'auto_include', 'allow_origin');
 	}
 
 	public static function php_crud_api_transform(&$tables) {
@@ -2627,13 +2626,23 @@ class PHP_CRUD_API {
 		} else {
 			$parameters = $this->getParameters($this->settings);
 			switch($parameters['action']){
-				case 'list': $this->listCommand($parameters); break;
-				case 'read': $this->readCommand($parameters); break;
-				case 'create': $this->createCommand($parameters); break;
-				case 'update': $this->updateCommand($parameters); break;
-				case 'delete': $this->deleteCommand($parameters); break;
-				case 'increment': $this->incrementCommand($parameters); break;
-				case 'headers': $this->headersCommand($parameters); break;
+				case 'list': $output = $this->listCommand($parameters); break;
+				case 'read': $output = $this->readCommand($parameters); break;
+				case 'create': $output = $this->createCommand($parameters); break;
+				case 'update': $output = $this->updateCommand($parameters); break;
+				case 'delete': $output = $this->deleteCommand($parameters); break;
+				case 'increment': $output = $this->incrementCommand($parameters); break;
+				case 'headers': $output = $this->headersCommand($parameters); break;
+				default: $output = false;
+			}
+			if ($output!==false) {
+				$this->startOutput();
+				echo json_encode($output);
+			}
+			if ($parameters['after']) {
+				if ($output!==null) {
+					$this->applyAfterHandler($parameters,$output);
+				}
 			}
 		}
 	}
