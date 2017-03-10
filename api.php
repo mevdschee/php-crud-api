@@ -1134,15 +1134,9 @@ class PHP_CRUD_API {
 		return $values;
 	}
 
-	protected function applyAfterCreate($callback,$database,$table,$id) {
+	protected function applyAfterWrite($callback,$action,$database,$table,$id,$input) {
 		if (is_callable($callback,true)) {
-			$fields = $this->findPrimaryKeys($table,$database);
-			if (count($fields)!=1) $this->exitWith404('1pk');
-			if ($result = $this->db->query("SELECT * FROM ! WHERE ! = ?",array($table, $fields[0], $id))) {
-				$object = $this->db->fetchAssoc($result);
-				$callback($database,$table,$object);
-				$this->db->close($result);
-			}			
+			$callback($action,$database,$table,$id,$input);
 		}
 	}
 
@@ -1481,7 +1475,7 @@ class PHP_CRUD_API {
 		if (!$result) return null;
 		$insertId = $this->db->insertId($result);
 		extract($this->settings);
-		$this->applyAfterCreate($after_create,$database,$tables[0],$insertId);
+		$this->applyAfterWrite($after_write,'create',$database,$tables[0],$insertId,$input);
 		return $insertId;
 	}
 
@@ -1518,6 +1512,7 @@ class PHP_CRUD_API {
 		$this->addWhereFromFilters($filters[$table],$sql,$params);
 		$result = $this->db->query($sql,$params);
 		if (!$result) return null;
+		$this->applyAfterWrite($after_write,'update',$database,$tables[0],$key[0],$input);
 		return $this->db->affectedRows($result);
 	}
 
@@ -1550,6 +1545,7 @@ class PHP_CRUD_API {
 		$this->addWhereFromFilters($filters[$table],$sql,$params);
 		$result = $this->db->query($sql,$params);
 		if (!$result) return null;
+		$this->applyAfterWrite($after_write,'delete',$database,$tables[0],$key[0],array());
 		return $this->db->affectedRows($result);
 	}
 
@@ -1594,6 +1590,7 @@ class PHP_CRUD_API {
 		$this->addWhereFromFilters($filters[$table],$sql,$params);
 		$result = $this->db->query($sql,$params);
 		if (!$result) return null;
+		$this->applyAfterWrite($after_write,'increment',$database,$tables[0],$key[0],$input);
 		return $this->db->affectedRows($result);
 	}
 
@@ -2124,7 +2121,7 @@ class PHP_CRUD_API {
 		$input_validator = isset($input_validator)?$input_validator:null;
 		$auto_include = isset($auto_include)?$auto_include:null;
 		$allow_origin = isset($allow_origin)?$allow_origin:null;
-		$after_create = isset($after_create)?$after_create:null;
+		$after_write = isset($after_write)?$after_write:null;
 
 		$db = isset($db)?$db:null;
 		$method = isset($method)?$method:null;
@@ -2176,7 +2173,7 @@ class PHP_CRUD_API {
 		}
 
 		$this->db = $db;
-		$this->settings = compact('method', 'request', 'get', 'post', 'origin', 'database', 'table_authorizer', 'record_filter', 'column_authorizer', 'tenancy_function', 'input_sanitizer', 'input_validator', 'after_create', 'auto_include', 'allow_origin');
+		$this->settings = compact('method', 'request', 'get', 'post', 'origin', 'database', 'table_authorizer', 'record_filter', 'column_authorizer', 'tenancy_function', 'input_sanitizer', 'input_validator', 'after_write', 'auto_include', 'allow_origin');
 	}
 
 	public static function php_crud_api_transform(&$tables) {
