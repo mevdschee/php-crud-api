@@ -758,7 +758,8 @@ PUT http://localhost/api.php/categories/2
 
 ## Custom actions
 
-After any operation the 'after' function is called that allows you to do some custom actions, note that the output parameter is not filled for 'read' or 'list' operations.
+After any operation the 'after' function is called that allows you to do some custom actions.
+Note that the output parameter is not filled for 'read' or 'list' operations due to the streaming nature of the API.
 
 ## Multi-domain CORS
 
