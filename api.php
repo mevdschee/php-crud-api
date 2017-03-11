@@ -2640,9 +2640,7 @@ class PHP_CRUD_API {
 				echo json_encode($output);
 			}
 			if ($parameters['after']) {
-				if ($output!==null) {
-					$this->applyAfterHandler($parameters,$output);
-				}
+				$this->applyAfterHandler($parameters,$output);
 			}
 		}
 	}
