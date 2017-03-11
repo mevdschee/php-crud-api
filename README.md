@@ -102,6 +102,8 @@ $api = new PHP_CRUD_API(array(
 	'get'=>$_GET,
 	'post'=>file_get_contents('php://input'),
 	'origin'=>$_SERVER['HTTP_ORIGIN'],
+// Use to pass security PHP object from PHP_API_AUTH to PHP_CRUD_API
+	'security'=>null,
 ));
 $api->executeCommand();
 ```

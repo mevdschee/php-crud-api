@@ -2129,6 +2129,7 @@ class PHP_CRUD_API {
 		$get = isset($get)?$get:null;
 		$post = isset($post)?$post:null;
 		$origin = isset($origin)?$origin:null;
+		$security = isset($security)?$security:null;
 
 		// defaults
 		if (!$dbengine) {
@@ -2173,7 +2174,7 @@ class PHP_CRUD_API {
 		}
 
 		$this->db = $db;
-		$this->settings = compact('method', 'request', 'get', 'post', 'origin', 'database', 'table_authorizer', 'record_filter', 'column_authorizer', 'tenancy_function', 'input_sanitizer', 'input_validator', 'after', 'auto_include', 'allow_origin');
+		$this->settings = compact('method', 'request', 'get', 'post', 'origin', 'database', 'table_authorizer', 'record_filter', 'column_authorizer', 'tenancy_function', 'input_sanitizer', 'input_validator', 'after', 'auto_include', 'allow_origin', 'security');
 	}
 
 	public static function php_crud_api_transform(&$tables) {
@@ -2310,6 +2311,9 @@ class PHP_CRUD_API {
 		echo '},';
 		echo '"host":"'.$_SERVER['HTTP_HOST'].'",';
 		echo '"basePath":"'.$_SERVER['SCRIPT_NAME'].'",';
+		if ($settings['security']!==null) {
+			$settings['security']->swagger();
+		}
 		echo '"schemes":["http'.((!empty($_SERVER['HTTPS'])&&$_SERVER['HTTPS']!=='off')?'s':'').'"],';
 		echo '"consumes":["application/json"],';
 		echo '"produces":["application/json"],';
@@ -2601,8 +2605,8 @@ class PHP_CRUD_API {
 				echo '}';
 			}
 		}
-		echo '}';
-			echo '}';
+		echo '}'; //paths
+	echo '}'; // end swagger definition
 	}
 
 	protected function allowOrigin($origin,$allowOrigins) {
@@ -2671,6 +2675,16 @@ class PHP_CRUD_API {
 //	header('HTTP/1.0 401 Unauthorized');
 //	exit(0);
 // }
+//
+// Pass the $auth variable into PHP_CRUD_API as needed to add appropriate security information to
+// Swagger defintion.  See PHP_API_AUTH for more information.
+//
+// $api = new PHP_CRUD_API(array(
+//      ....
+// 	'security'=>$auth,
+// 	....
+// ));
+// $api->executeCommand();
 
 // uncomment the lines below when running in stand-alone mode:
 
