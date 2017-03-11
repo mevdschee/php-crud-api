@@ -91,6 +91,7 @@ $api = new PHP_CRUD_API(array(
 	'tenancy_function'=>function($cmd,$db,$tab,$col) { return null; },
 	'input_sanitizer'=>function($cmd,$db,$tab,$col,$typ,$val) { return $val; },
 	'input_validator'=>function($cmd,$db,$tab,$col,$typ,$val,$ctx) { return true; },
+	'after'=>function($cmd,$db,$tab,$id,$in,$out) { /* do something */ },
 // configurable options
 	'allow_origin'=>'*',
 	'auto_include'=>true,
@@ -756,6 +757,11 @@ When sending JSON data, then sending a NULL value for a nullable database field 
 PUT http://localhost/api.php/categories/2
 {"name":"Internet","icon":null}
 ```
+
+## Custom actions
+
+After any operation the 'after' function is called that allows you to do some custom actions.
+Note that the output parameter is not filled for 'read' or 'list' operations due to the streaming nature of the API.
 
 ## Multi-domain CORS
 
