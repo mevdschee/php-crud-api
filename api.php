@@ -471,7 +471,7 @@ class PostgreSQL implements DatabaseInterface {
 	}
 
 	public function isJsonType($field) {
-        return in_array($field->type,array('json','jsonb'));
+		return in_array($field->type,array('json','jsonb'));
 	}
 
 	public function getDefaultCharset() {
@@ -2442,10 +2442,10 @@ class PHP_CRUD_API {
 						echo '"required":true,';
 						echo '"schema":{';
 						echo '"type": "object",';
-                                                $required_fields = array_keys(array_filter($action['fields'],function($f){ return $f->required; }));
-                                                if (count($required_fields) > 0) {
-                                                        echo '"required":'.json_encode($required_fields).',';
-                                                }
+						$required_fields = array_keys(array_filter($action['fields'],function($f){ return $f->required; }));
+						if (count($required_fields) > 0) {
+							echo '"required":'.json_encode($required_fields).',';
+						}
 						echo '"properties": {';
 						foreach (array_keys($action['fields']) as $k=>$field) {
 							if ($k>0) echo ',';
@@ -2513,10 +2513,10 @@ class PHP_CRUD_API {
 						echo '"required":true,';
 						echo '"schema":{';
 						echo '"type": "object",';
-                                                $required_fields = array_keys(array_filter($action['fields'],function($f){ return $f->required; }));
-                                                if (count($required_fields) > 0) {
-                                                        echo '"required":'.json_encode($required_fields).',';
-                                                }
+						$required_fields = array_keys(array_filter($action['fields'],function($f){ return $f->required; }));
+						if (count($required_fields) > 0) {
+							echo '"required":'.json_encode($required_fields).',';
+						}
 						echo '"properties": {';
 						foreach (array_keys($action['fields']) as $k=>$field) {
 							if ($k>0) echo ',';
