@@ -209,7 +209,7 @@ CREATE TABLE [products](
 	[name] [nvarchar](max) NOT NULL,
 	[price] [decimal](10,2) NOT NULL,
 	[properties] [xml] NOT NULL,
-	[created_at] [datetime2](3) NOT NULL,
+	[created_at] [datetime] NOT NULL,
  CONSTRAINT [PK_products] PRIMARY KEY CLUSTERED
 (
 	[id] ASC
@@ -289,7 +289,7 @@ SET IDENTITY_INSERT [events] OFF
 GO
 SET IDENTITY_INSERT [products] ON
 GO
-INSERT [products] ([id], [name], [price], [properties], [created_at]) VALUES (1, N'Calculator', N'23.01', N'<root type="object"><depth type="boolean">false</depth><model type="string">TRX-120</model><width type="number">100</width><height type="null" /></root>', '1970-01-01 01:01:01.001')
+INSERT [products] ([id], [name], [price], [properties], [created_at]) VALUES (1, N'Calculator', N'23.01', N'<root type="object"><depth type="boolean">false</depth><model type="string">TRX-120</model><width type="number">100</width><height type="null" /></root>', '1970-01-01 01:01:01')
 GO
 SET IDENTITY_INSERT [products] OFF
 GO

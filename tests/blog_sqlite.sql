@@ -110,6 +110,6 @@ CREATE TABLE `products` (
   `created_at` datetime NOT NULL
 );
 
-INSERT INTO `products` (`id`, `name`, `price`, `properties`, `created_at`) VALUES (1,	'Calculator', '23.01', '{"depth":false,"model":"TRX-120","width":100,"height":null}', '1970-01-01 01:01:01.001');
+INSERT INTO `products` (`id`, `name`, `price`, `properties`, `created_at`) VALUES (1,	'Calculator', '23.01', '{"depth":false,"model":"TRX-120","width":100,"height":null}', '1970-01-01 01:01:01');
 
 --

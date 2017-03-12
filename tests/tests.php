@@ -785,9 +785,9 @@ class PHP_CRUD_API_Test extends PHPUnit_Framework_TestCase
 	public function testAddProducts()
 	{
 		$test = new API($this);
-		$test->post('/products','{"name":"Laptop","price":"1299.99"}');
+		$test->post('/products','{"name":"Laptop","price":"1299.99","properties":{}}');
 		$test->expect('2');
 		$test->get('/products/2');
-		$test->expect('{"id":2,"name":"Laptop","price":"1299.99","properties":null,"created_at":"2013-12-11 10:09:08.000"}');
+		$test->expect('{"id":2,"name":"Laptop","price":"1299.99","properties":{},"created_at":"2013-12-11 10:09:08"}');
 	}
 }

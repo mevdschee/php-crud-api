@@ -206,7 +206,7 @@ INSERT INTO "events" ("name", "datetime", "visitors") VALUES
 --
 
 INSERT INTO "products" ("name", "price", "properties", "created_at") VALUES
-('Calculator',	'23.01', '{"depth":false,"model":"TRX-120","width":100,"height":null}', '1970-01-01 01:01:01.001');
+('Calculator',	'23.01', '{"depth":false,"model":"TRX-120","width":100,"height":null}', '1970-01-01 01:01:01');
 
 --
 -- Name: categories_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres; Tablespace:
