@@ -91,7 +91,7 @@ $api = new PHP_CRUD_API(array(
 	'tenancy_function'=>function($cmd,$db,$tab,$col) { return null; },
 	'input_sanitizer'=>function($cmd,$db,$tab,$col,$typ,$val) { return $val; },
 	'input_validator'=>function($cmd,$db,$tab,$col,$typ,$val,$ctx) { return true; },
-	'before'=>function($cmd,$db,$tab,$id,$in) { /* adjust array $in */ },
+	'before'=>function(&$cmd,&$db,&$tab,&$id,&$in) { /* adjust array $in */ },
 	'after'=>function($cmd,$db,$tab,$id,$in,$out) { /* do something */ },
 // configurable options
 	'allow_origin'=>'*',
@@ -761,6 +761,10 @@ PUT http://localhost/api.php/categories/2
 
 Before any operation the 'before' function is called that allows you to do set some automatic fields.
 Note that the 'inputs' parameter is writable and is an array. The array may contain NULL values on invalid JSON.
+
+## Soft delete
+
+The 'before' function allows modification of the request parameters and can (for instance) be used to implement soft delete behavior.
 
 ## Custom actions
 
