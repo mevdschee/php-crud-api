@@ -209,7 +209,7 @@ CREATE TABLE [products](
 	[name] [nvarchar](max) NOT NULL,
 	[price] [decimal](10,2) NOT NULL,
 	[properties] [xml] NOT NULL,
-	[created_at] [datetime] NOT NULL,
+	[created_at] [datetime2](0) NOT NULL,
  CONSTRAINT [PK_products] PRIMARY KEY CLUSTERED
 (
 	[id] ASC
