@@ -34,7 +34,7 @@ class API
 				'tenancy_function'=>function($action,$database,$table,$column) { return ($table=='users'&&$column=='id')?1:null; },
 				'input_sanitizer'=>function($action,$database,$table,$column,$type,$value) { return is_string($value)?strip_tags($value):$value; },
 				'input_validator'=>function($action,$database,$table,$column,$type,$value,$context) { return ($column=='category_id' && !is_numeric($value))?'must be numeric':true; },
-				'before' => function ($action,$database,$table,$id,$inputs) { if ($action=='create') foreach ($inputs as $input) if ($input) $input->created_at = date('Y-m-d H:i:s',1386752948); },
+				'before' => function (&$action,&$database,&$table,&$id,&$inputs) { if ($action=='create') foreach ($inputs as $input) if ($input) $input->created_at = date('Y-m-d H:i:s',1386752948); },
 				'after' => function ($action,$database,$table,$id,$inputs,$output) { file_put_contents('log.txt',var_export(array($action,$database,$table,$id,$inputs,$output),true),FILE_APPEND); },
 				// for tests
 				'method' =>$method,
