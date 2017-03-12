@@ -125,10 +125,11 @@ CREATE TABLE `products` (
   `name` varchar(255) NOT NULL,
   `price` decimal(10,2) NOT NULL,
   `properties` JSON NOT NULL,
+  `created_at` datetime(3) NOT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-INSERT INTO `products` (`id`, `name`, `price`, `properties`) VALUES
-(1,	'Calculator', '23.01', '{"depth":false,"model":"TRX-120","width":100,"height":null}');
+INSERT INTO `products` (`id`, `name`, `price`, `properties`, `created_at`) VALUES
+(1,	'Calculator', '23.01', '{"depth":false,"model":"TRX-120","width":100,"height":null}', '1970-01-01 01:01:01.001');
 
 -- 2016-11-05 13:11:47

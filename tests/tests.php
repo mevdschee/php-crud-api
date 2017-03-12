@@ -34,7 +34,8 @@ class API
 				'tenancy_function'=>function($action,$database,$table,$column) { return ($table=='users'&&$column=='id')?1:null; },
 				'input_sanitizer'=>function($action,$database,$table,$column,$type,$value) { return is_string($value)?strip_tags($value):$value; },
 				'input_validator'=>function($action,$database,$table,$column,$type,$value,$context) { return ($column=='category_id' && !is_numeric($value))?'must be numeric':true; },
-				'after' => function ($action,$database,$table,$id,$input,$output) { file_put_contents('log.txt',var_export(array($action,$database,$table,$id,$input,$output),true),FILE_APPEND); },
+				'before' => function ($action,$database,$table,$id,$inputs) { if ($action=='create') foreach ($inputs as $input) if ($input) $input->created_at = date('Y-m-d H:i:s',1386752948); },
+				'after' => function ($action,$database,$table,$id,$inputs,$output) { file_put_contents('log.txt',var_export(array($action,$database,$table,$id,$inputs,$output),true),FILE_APPEND); },
 				// for tests
 				'method' =>$method,
 				'request' =>$url['path'],
@@ -779,5 +780,14 @@ class PHP_CRUD_API_Test extends PHPUnit_Framework_TestCase
 		$test->expect('1');
 		$test->get('/products/1?columns=id,properties');
 		$test->expect('{"id":1,"properties":{"depth":false,"model":"TRX-120","width":100,"height":123}}');
+	}
+
+	public function testAddProducts()
+	{
+		$test = new API($this);
+		$test->post('/products','{"name":"Laptop","price":"1299.99"}');
+		$test->expect('2');
+		$test->get('/products/2');
+		$test->expect('{"id":2,"name":"Laptop","price":"1299.99","properties":null,"created_at":"2013-12-11 10:09:08.000"}');
 	}
 }

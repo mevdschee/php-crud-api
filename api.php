@@ -1134,6 +1134,17 @@ class PHP_CRUD_API {
 		return $values;
 	}
 
+	protected function applyBeforeHandler($parameters,&$inputs) {
+		$callback = $parameters['before'];
+		if (is_callable($callback,true)) {
+			$action = $parameters['action'];
+			$database = $parameters['database'];
+			$table = $parameters['tables'][0];
+			$id = $parameters['key'][0];
+			$callback($action,$database,$table,$id,$inputs);
+		}
+	}
+
 	protected function applyAfterHandler($parameters,$output) {
 		$callback = $parameters['after'];
 		if (is_callable($callback,true)) {
@@ -1141,7 +1152,7 @@ class PHP_CRUD_API {
 			$database = $parameters['database'];
 			$table = $parameters['tables'][0];
 			$id = $parameters['key'][0];
-			$input = isset($parameters['inputs'])?$parameters['inputs']:false;
+			$input = $parameters['inputs'];
 			$callback($action,$database,$table,$id,$input,$output);
 		}
 	}
@@ -1868,11 +1879,14 @@ class PHP_CRUD_API {
 		if ($column_authorizer) $this->applyColumnAuthorizer($column_authorizer,$action,$database,$fields);
 
 		$multi = strpos($key[0],',')!==false;
+		$inputs = array();
 		if (strlen($post)) {
 			// input
 			$multi = $post[0]=='[';
 			$contexts = $this->retrieveInputs($post);
-			$inputs = array();
+			if ($before) {
+				$this->applyBeforeHandler(compact('action','database','tables','key','before'),$contexts);
+			}
 			foreach ($contexts as $context) {
 				$input = $this->filterInputByFields($context,$fields[$tables[0]]);
 
@@ -1885,7 +1899,7 @@ class PHP_CRUD_API {
 			}
 		}
 
-		return compact('action','database','tables','key','page','filters','fields','orderings','transform','multi','inputs','collect','select','after');
+		return compact('action','database','tables','key','page','filters','fields','orderings','transform','multi','inputs','collect','select','before','after');
 	}
 
 	protected function addWhereFromFilters($filters,&$sql,&$params) {
@@ -2121,6 +2135,7 @@ class PHP_CRUD_API {
 		$input_validator = isset($input_validator)?$input_validator:null;
 		$auto_include = isset($auto_include)?$auto_include:null;
 		$allow_origin = isset($allow_origin)?$allow_origin:null;
+		$before = isset($before)?$before:null;
 		$after = isset($after)?$after:null;
 
 		$db = isset($db)?$db:null;
@@ -2173,7 +2188,7 @@ class PHP_CRUD_API {
 		}
 
 		$this->db = $db;
-		$this->settings = compact('method', 'request', 'get', 'post', 'origin', 'database', 'table_authorizer', 'record_filter', 'column_authorizer', 'tenancy_function', 'input_sanitizer', 'input_validator', 'after', 'auto_include', 'allow_origin');
+		$this->settings = compact('method', 'request', 'get', 'post', 'origin', 'database', 'table_authorizer', 'record_filter', 'column_authorizer', 'tenancy_function', 'input_sanitizer', 'input_validator', 'before', 'after', 'auto_include', 'allow_origin');
 	}
 
 	public static function php_crud_api_transform(&$tables) {
