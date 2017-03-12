@@ -91,7 +91,7 @@ $api = new PHP_CRUD_API(array(
 	'tenancy_function'=>function($cmd,$db,$tab,$col) { return null; },
 	'input_sanitizer'=>function($cmd,$db,$tab,$col,$typ,$val) { return $val; },
 	'input_validator'=>function($cmd,$db,$tab,$col,$typ,$val,$ctx) { return true; },
-	'before'=>function($cmd,$db,$tab,$id,$in) { /* adjust array $in */ },
+	'before'=>function(&$cmd,&$db,&$tab,&$id,&$in) { /* adjust array $in */ },
 	'after'=>function($cmd,$db,$tab,$id,$in,$out) { /* do something */ },
 // configurable options
 	'allow_origin'=>'*',
