@@ -1134,13 +1134,8 @@ class PHP_CRUD_API {
 		return $values;
 	}
 
-	protected function applyBeforeHandler($parameters,&$inputs) {
-		$callback = $parameters['before'];
+	protected function applyBeforeHandler(&$action,&$database,&$table,&$id,&$callback,&$inputs) {
 		if (is_callable($callback,true)) {
-			$action = $parameters['action'];
-			$database = $parameters['database'];
-			$table = $parameters['tables'][0];
-			$id = $parameters['key'][0];
 			$callback($action,$database,$table,$id,$inputs);
 		}
 	}
@@ -1885,7 +1880,7 @@ class PHP_CRUD_API {
 			$multi = $post[0]=='[';
 			$contexts = $this->retrieveInputs($post);
 			if ($before) {
-				$this->applyBeforeHandler(compact('action','database','tables','key','before'),$contexts);
+				$this->applyBeforeHandler($action,$database,$tables[0],$key[0],$before,$contexts);
 			}
 			foreach ($contexts as $context) {
 				$input = $this->filterInputByFields($context,$fields[$tables[0]]);
