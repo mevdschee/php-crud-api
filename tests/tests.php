@@ -677,7 +677,7 @@ class PHP_CRUD_API_Test extends PHPUnit_Framework_TestCase
 	{
 		$test = new API($this);
 		$test->get('/events?columns=datetime');
-		$test->expect('{"events":{"columns":["datetime"],"records":[["2016-01-01 13:01:01.111"]]}}');
+		$test->expect('{"events":{"columns":["datetime"],"records":[["2016-01-01 13:01:01"]]}}');
 	}
 
 	public function testIncrementEventVisitors()
@@ -686,7 +686,7 @@ class PHP_CRUD_API_Test extends PHPUnit_Framework_TestCase
 		$test->patch('/events/1','{"visitors":11}');
 		$test->expect('1');
 		$test->get('/events/1');
-		$test->expect('{"id":1,"name":"Launch","datetime":"2016-01-01 13:01:01.111","visitors":11}');
+		$test->expect('{"id":1,"name":"Launch","datetime":"2016-01-01 13:01:01","visitors":11}');
 	}
 
 	public function testIncrementEventVisitorsWithZero()
@@ -695,7 +695,7 @@ class PHP_CRUD_API_Test extends PHPUnit_Framework_TestCase
 		$test->patch('/events/1','{"visitors":0}');
 		$test->expect('1');
 		$test->get('/events/1');
-		$test->expect('{"id":1,"name":"Launch","datetime":"2016-01-01 13:01:01.111","visitors":11}');
+		$test->expect('{"id":1,"name":"Launch","datetime":"2016-01-01 13:01:01","visitors":11}');
 	}
 
 	public function testDecrementEventVisitors()
@@ -704,7 +704,7 @@ class PHP_CRUD_API_Test extends PHPUnit_Framework_TestCase
 		$test->patch('/events/1','{"visitors":-5}');
 		$test->expect('1');
 		$test->get('/events/1');
-		$test->expect('{"id":1,"name":"Launch","datetime":"2016-01-01 13:01:01.111","visitors":6}');
+		$test->expect('{"id":1,"name":"Launch","datetime":"2016-01-01 13:01:01","visitors":6}');
 	}
 
 	public function testListTagUsage()

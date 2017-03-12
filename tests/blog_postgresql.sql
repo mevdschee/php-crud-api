@@ -199,7 +199,7 @@ INSERT INTO "countries" ("name", "shape") VALUES
 --
 
 INSERT INTO "events" ("name", "datetime", "visitors") VALUES
-('Launch',	'2016-01-01 13:01:01.111',	0);
+('Launch',	'2016-01-01 13:01:01',	0);
 
 --
 -- Data for Name: events; Type: TABLE DATA; Schema: public; Owner: postgres
