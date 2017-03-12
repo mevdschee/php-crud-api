@@ -762,6 +762,10 @@ PUT http://localhost/api.php/categories/2
 Before any operation the 'before' function is called that allows you to do set some automatic fields.
 Note that the 'inputs' parameter is writable and is an array. The array may contain NULL values on invalid JSON.
 
+## Soft delete
+
+The 'before' function allows modification of the request parameters and can (for instance) be used to implement soft delete behavior.
+
 ## Custom actions
 
 After any operation the 'after' function is called that allows you to do some custom actions.
