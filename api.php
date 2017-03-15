@@ -1814,7 +1814,7 @@ class PHP_CRUD_API {
 					$values[$i] = $v + 0;
 				}
 				else if ($this->db->isBinaryType($fields[$i])) {
-					$values[$i] = base64_encode(hex2bin($v));
+					$values[$i] = base64_encode(pack("H*",$v));
 				}
 				else if ($this->db->isJsonType($fields[$i])) {
 					$values[$i] = $this->db->jsonDecode($v);
