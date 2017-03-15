@@ -1873,25 +1873,26 @@ class PHP_CRUD_API {
 		if ($tenancy_function) $this->applyTenancyFunction($tenancy_function,$action,$database,$fields,$filters);
 		if ($column_authorizer) $this->applyColumnAuthorizer($column_authorizer,$action,$database,$fields);
 
+		// input
 		$multi = strpos($key[0],',')!==false;
 		$inputs = array();
+		$contexts = array();
 		if (strlen($post)) {
-			// input
 			$multi = $post[0]=='[';
 			$contexts = $this->retrieveInputs($post);
-			if ($before) {
-				$this->applyBeforeHandler($action,$database,$tables[0],$key[0],$before,$contexts);
-			}
-			foreach ($contexts as $context) {
-				$input = $this->filterInputByFields($context,$fields[$tables[0]]);
+		}
+		if ($before) {
+			$this->applyBeforeHandler($action,$database,$tables[0],$key[0],$before,$contexts);
+		}
+		foreach ($contexts as $context) {
+			$input = $this->filterInputByFields($context,$fields[$tables[0]]);
 
-				if ($tenancy_function) $this->applyInputTenancy($tenancy_function,$action,$database,$tables[0],$input,$fields[$tables[0]]);
-				if ($input_sanitizer) $this->applyInputSanitizer($input_sanitizer,$action,$database,$tables[0],$input,$fields[$tables[0]]);
-				if ($input_validator) $this->applyInputValidator($input_validator,$action,$database,$tables[0],$input,$fields[$tables[0]],$context);
+			if ($tenancy_function) $this->applyInputTenancy($tenancy_function,$action,$database,$tables[0],$input,$fields[$tables[0]]);
+			if ($input_sanitizer) $this->applyInputSanitizer($input_sanitizer,$action,$database,$tables[0],$input,$fields[$tables[0]]);
+			if ($input_validator) $this->applyInputValidator($input_validator,$action,$database,$tables[0],$input,$fields[$tables[0]],$context);
 
-				$this->convertInputs($input,$fields[$tables[0]]);
-				$inputs[] = $input;
-			}
+			$this->convertInputs($input,$fields[$tables[0]]);
+			$inputs[] = $input;
 		}
 
 		return compact('action','database','tables','key','page','filters','fields','orderings','transform','multi','inputs','collect','select','before','after');
