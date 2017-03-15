@@ -1808,19 +1808,19 @@ class PHP_CRUD_API {
 	}
 
 	protected function convertTypes($result,&$values,&$fields) {
-		array_walk($values, function(&$v,$i) use ($result,$fields){
+		foreach ($values as $i=>$v) {
 			if (is_string($v)) {
 				if ($this->db->isNumericType($fields[$i])) {
-					$v+=0;
+					$values[$i] = $v + 0;
 				}
 				else if ($this->db->isBinaryType($fields[$i])) {
-					$v=base64_encode(hex2bin($v));
+					$values[$i] = base64_encode(hex2bin($v));
 				}
 				else if ($this->db->isJsonType($fields[$i])) {
-					$v=$this->db->jsonDecode($v);
+					$values[$i] = $this->db->jsonDecode($v);
 				}
 			}
-		});
+		}
 	}
 
 	protected function fetchAssoc($result,$fields=false) {
