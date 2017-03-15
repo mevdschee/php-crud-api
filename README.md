@@ -770,8 +770,8 @@ The 'before' function allows modification of the request parameters and can (for
 'before'=>function(&$cmd, &$db, &$tab, &$id, &$in) { 
 	if ($cmd == 'delete') {
 		$cmd = 'update'; // change command to update
-		foreach($in as &$o) {
-			$o->deleted = date('Y-m-d H:i:s', time());
+		foreach($in as $k => $o) {
+			$in[$k]->deleted = date('Y-m-d H:i:s', time());
 		}				
 	}
 			
