@@ -1879,9 +1879,6 @@ class PHP_CRUD_API {
 			// input
 			$multi = $post[0]=='[';
 			$contexts = $this->retrieveInputs($post);
-			if ($before) {
-				$this->applyBeforeHandler($action,$database,$tables[0],$key[0],$before,$contexts);
-			}
 			foreach ($contexts as $context) {
 				$input = $this->filterInputByFields($context,$fields[$tables[0]]);
 
@@ -2635,6 +2632,14 @@ class PHP_CRUD_API {
 			$this->swagger($this->settings);
 		} else {
 			$parameters = $this->getParameters($this->settings);
+			if ($parameters['before']) {
+				if (count($parameters['inputs']) == 0) {
+					for($i=1; $i <= count(explode(',', $parameters['key'][0])); $i++) {
+						$parameters['inputs'][] = new stdClass();
+					}
+				}
+				$this->applyBeforeHandler($parameters['action'], $parameters['database'],$parameters['tables'][0],$parameters['key'][0],$parameters['before'],$parameters['inputs']);
+			}
 			switch($parameters['action']){
 				case 'list': $output = $this->listCommand($parameters); break;
 				case 'read': $output = $this->readCommand($parameters); break;
