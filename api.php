@@ -1874,16 +1874,12 @@ class PHP_CRUD_API {
 		if ($column_authorizer) $this->applyColumnAuthorizer($column_authorizer,$action,$database,$fields);
 
 		// input
-		$multi = strpos($key[0],',')!==false;
-		$inputs = array();
-		$contexts = array();
-		if (strlen($post)) {
-			$multi = $post[0]=='[';
-			$contexts = $this->retrieveInputs($post);
-		}
+		$multi = (strpos($key[0],',')!==false) || (strlen($post)?($post[0]=='['):false);
+		$contexts = $this->retrieveInputs($post);
 		if ($before) {
 			$this->applyBeforeHandler($action,$database,$tables[0],$key[0],$before,$contexts);
 		}
+		$inputs = array();
 		foreach ($contexts as $context) {
 			$input = $this->filterInputByFields($context,$fields[$tables[0]]);
 
