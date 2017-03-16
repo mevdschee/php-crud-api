@@ -1134,9 +1134,9 @@ class PHP_CRUD_API {
 		return $values;
 	}
 
-	protected function applyBeforeHandler(&$action,&$database,&$table,&$id,&$callback,&$inputs) {
+	protected function applyBeforeHandler(&$action,&$database,&$table,&$id,&$callback,&$input) {
 		if (is_callable($callback,true)) {
-			$callback($action,$database,$table,$id,$inputs);
+			$callback($action,$database,$table,$id,$input);
 		}
 	}
 
@@ -1862,13 +1862,6 @@ class PHP_CRUD_API {
 		$page      = $this->processPageParameter($page);
 		$orderings = $this->processOrderingsParameter($orderings);
 
-		// input
-		$multi = (strpos($key[0],',')!==false) || (strlen($post)?($post[0]=='['):false);
-		$inputs = $this->retrieveInputs($post);
-		if ($before) {
-			$this->applyBeforeHandler($action,$database,$tables[0],$key[0],$before,$inputs);
-		}
-		
 		// reflection
 		list($tables,$collect,$select) = $this->findRelations($tables,$database,$auto_include);
 		$fields = $this->findFields($tables,$columns,$exclude,$select,$database);
@@ -1880,17 +1873,34 @@ class PHP_CRUD_API {
 		if ($tenancy_function) $this->applyTenancyFunction($tenancy_function,$action,$database,$fields,$filters);
 		if ($column_authorizer) $this->applyColumnAuthorizer($column_authorizer,$action,$database,$fields);
 
+		// input
+		$multi = (strpos($key[0],',')!==false) || (strlen($post)?($post[0]=='['):false);
+		if ($before && $action == 'delete' && $multi) { 
+			$inputs = array();
+			for($i=1; $i <= count(explode(',', $key[0])); $i++) {
+				$inputs[] = (object) array();
+			}
+		} else {
+			$inputs = $this->retrieveInputs($post);
+		}
+		$originalAction = $action;
 		foreach ($inputs as $k=>$context) {
+			//echo $k.' - ';
 			$input = $this->filterInputByFields($context,$fields[$tables[0]]);
 
 			if ($tenancy_function) $this->applyInputTenancy($tenancy_function,$action,$database,$tables[0],$input,$fields[$tables[0]]);
 			if ($input_sanitizer) $this->applyInputSanitizer($input_sanitizer,$action,$database,$tables[0],$input,$fields[$tables[0]]);
 			if ($input_validator) $this->applyInputValidator($input_validator,$action,$database,$tables[0],$input,$fields[$tables[0]],$context);
 
-			$this->convertInputs($input,$fields[$tables[0]]);
+			$this->convertInputs($input,$fields[$tables[0]]);			
+		
+			if ($before) {
+				$action = $originalAction;
+				$this->applyBeforeHandler($action,$database,$tables[0],$ids[$k],$before,$input);
+			}
+
 			$inputs[$k] = $input;
 		}
-
 		return compact('action','database','tables','key','page','filters','fields','orderings','transform','multi','inputs','collect','select','before','after');
 	}
 
