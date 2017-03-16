@@ -1862,13 +1862,6 @@ class PHP_CRUD_API {
 		$page      = $this->processPageParameter($page);
 		$orderings = $this->processOrderingsParameter($orderings);
 
-		// input
-		$multi = (strpos($key[0],',')!==false) || (strlen($post)?($post[0]=='['):false);
-		$inputs = $this->retrieveInputs($post);
-		if ($before) {
-			$this->applyBeforeHandler($action,$database,$tables[0],$key[0],$before,$inputs);
-		}
-		
 		// reflection
 		list($tables,$collect,$select) = $this->findRelations($tables,$database,$auto_include);
 		$fields = $this->findFields($tables,$columns,$exclude,$select,$database);
@@ -1880,6 +1873,13 @@ class PHP_CRUD_API {
 		if ($tenancy_function) $this->applyTenancyFunction($tenancy_function,$action,$database,$fields,$filters);
 		if ($column_authorizer) $this->applyColumnAuthorizer($column_authorizer,$action,$database,$fields);
 
+		// input
+		$multi = (strpos($key[0],',')!==false) || (strlen($post)?($post[0]=='['):false);
+		$inputs = $this->retrieveInputs($post);
+		if ($before) {
+			$this->applyBeforeHandler($action,$database,$tables[0],$key[0],$before,$inputs);
+		}
+		
 		foreach ($inputs as $k=>$context) {
 			$input = $this->filterInputByFields($context,$fields[$tables[0]]);
 
