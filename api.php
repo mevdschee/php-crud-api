@@ -1139,8 +1139,8 @@ class PHP_CRUD_API {
 			$max = max(count($ids),count($inputs));
 			for ($i=0;$i<$max;$i++) {
 				$id = isset($ids[$i])?$ids[$i]:false;
-				$input = isset($inputs[$i])?$inputs[$i]:false;
-				$callback($action,$database,$table,$id,$input);
+				if (!isset($inputs[$i])) $inputs[$i] = false;
+				$callback($action,$database,$table,$id,$inputs[$i]);
 			}
 		}
 	}
