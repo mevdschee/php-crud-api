@@ -794,9 +794,9 @@ class PHP_CRUD_API_Test extends PHPUnit_Framework_TestCase
 	public function testSoftDeleteProduct()
 	{
 		$test = new API($this);
-		$test->delete('/products/2');
-		$test->expect('1');
-		$test->get('/products/2');
-		$test->expect('{"id":2,"name":"Laptop","price":"1299.99","properties":{},"created_at":"2013-12-11 10:09:08","deleted_at":"2013-12-11 11:10:09"}');
+		$test->delete('/products/1,2');
+		$test->expect('[1,1]');
+		$test->get('/products?columns=id,deleted_at');
+		$test->expect('{"products":{"columns":["id","deleted_at"],"records":[[1,"2013-12-11 11:10:09"],[2,"2013-12-11 11:10:09"]]}}');
 	}
 }
