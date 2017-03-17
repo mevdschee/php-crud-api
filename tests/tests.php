@@ -34,7 +34,7 @@ class API
 				'tenancy_function'=>function($action,$database,$table,$column) { return ($table=='users'&&$column=='id')?1:null; },
 				'input_sanitizer'=>function($action,$database,$table,$column,$type,$value) { return is_string($value)?strip_tags($value):$value; },
 				'input_validator'=>function($action,$database,$table,$column,$type,$value,$context) { return ($column=='category_id' && !is_numeric($value))?'must be numeric':true; },
-				'before'=>function(&$action,&$database,&$table,&$id,&$input) { if ($action=='create' && $input!==false) $input->created_at = '2013-12-11 10:09:08'; },
+				'before'=>function(&$action,&$database,&$table,&$id,&$input) { if ($action=='create' && $input!==false) $input->created_at = '2013-12-11 10:09:08'; else if ($action=='delete' && $table=='products') { $action='update'; $input = (object)array('deleted_at' => '2013-12-11 10:09:08'); } },
 				'after'=>function($action,$database,$table,$id,$input,$output) { file_put_contents('log.txt',var_export(array($action,$database,$table,$id,$input,$output),true),FILE_APPEND); },
 				// for tests
 				'method'=>$method,
@@ -789,5 +789,14 @@ class PHP_CRUD_API_Test extends PHPUnit_Framework_TestCase
 		$test->expect('2');
 		$test->get('/products/2');
 		$test->expect('{"id":2,"name":"Laptop","price":"1299.99","properties":{},"created_at":"2013-12-11 10:09:08"}');
+	}
+
+	public function testSoftDeleteProduct()
+	{
+		$test = new API($this);
+		$test->delete('/products/2');
+		$test->expect('2');
+		//$test->get('/products/2');
+		//$test->expect('{"id":2,"name":"Laptop","price":"1299.99","properties":{},"created_at":"2013-12-11 10:09:08"}');
 	}
 }

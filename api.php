@@ -1140,7 +1140,7 @@ class PHP_CRUD_API {
 			for ($i=0;$i<$max;$i++) {
 				if (!isset($ids[$i])) $ids[$i] = false;
 				if (!isset($inputs[$i])) $inputs[$i] = false;
-				$callback($action,$database,$table,$id,$inputs[$i]);
+				$callback($action,$database,$table,$ids[$i],$inputs[$i]);
 			}
 		}
 	}
