@@ -1136,9 +1136,9 @@ class PHP_CRUD_API {
 
 	protected function applyBeforeHandler(&$action,&$database,&$table,&$ids,&$callback,&$inputs) {
 		if (is_callable($callback,true)) {
-			$max = max(count($ids),count($inputs));
+			$max = count($ids)?:count($inputs);
 			for ($i=0;$i<$max;$i++) {
-				$id = isset($ids[$i])?$ids[$i]:false;
+				if (!isset($ids[$i])) $ids[$i] = false;
 				if (!isset($inputs[$i])) $inputs[$i] = false;
 				$callback($action,$database,$table,$id,$inputs[$i]);
 			}
@@ -1518,7 +1518,7 @@ class PHP_CRUD_API {
 	}
 
 	protected function updateObject($key,$input,$filters,$tables) {
-		if (!$input) return false;
+		if (!$input) return null;
 		$input = (array)$input;
 		$table = $tables[0];
 		$sql = 'UPDATE ! SET ';
@@ -1538,10 +1538,10 @@ class PHP_CRUD_API {
 	}
 
 	protected function updateObjects($key,$inputs,$filters,$tables) {
-		if (!$inputs) return false;
+		if (!$inputs) return null;
 		$keyField = $key[1];
 		$keys = $key[0];
-		if (count($inputs)!=count($keys)) {
+		if (count(array_filter($inputs))!=count(array_filter($keys))) {
 			$this->exitWith404('subject');
 		}
 		$rows = array();
@@ -1587,7 +1587,7 @@ class PHP_CRUD_API {
 	}
 
 	protected function incrementObject($key,$input,$filters,$tables,$fields) {
-		if (!$input) return false;
+		if (!$input) return null;
 		$input = (array)$input;
 		$table = $tables[0];
 		$sql = 'UPDATE ! SET ';
@@ -1614,10 +1614,10 @@ class PHP_CRUD_API {
 	}
 
 	protected function incrementObjects($key,$inputs,$filters,$tables,$fields) {
-		if (!$inputs) return false;
+		if (!$inputs) return null;
 		$keyField = $key[1];
 		$keys = $key[0];
-		if (count($inputs)!=count($keys)) {
+		if (count(array_filter($inputs))!=count(array_filter($keys))) {
 			$this->exitWith404('subject');
 		}
 		$rows = array();
