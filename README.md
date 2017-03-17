@@ -770,11 +770,8 @@ The 'before' function allows modification of the request parameters and can (for
 'before'=>function(&$cmd, &$db, &$tab, &$id, &$in) { 
 	if ($cmd == 'delete') {
 		$cmd = 'update'; // change command to update
-		foreach($in as $k => $o) {
-			$in[$k]->deleted = date('Y-m-d H:i:s', time());
-		}				
+		$in->deleted = date('Y-m-d H:i:s', time());
 	}
-			
 },
 'column_authorizer'=>function($cmd, $db ,$tab, $col) { 
 	return ( ! in_array($col, array('deleted')));

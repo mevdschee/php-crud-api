@@ -1134,21 +1134,32 @@ class PHP_CRUD_API {
 		return $values;
 	}
 
-	protected function applyBeforeHandler(&$action,&$database,&$table,&$id,&$callback,&$input) {
+	protected function applyBeforeHandler(&$action,&$database,&$table,&$ids,&$callback,&$inputs) {
 		if (is_callable($callback,true)) {
-			$callback($action,$database,$table,$id,$input);
+			$max = max(count($ids),count($inputs));
+			for ($i=0;$i<$max;$i++) {
+				$id = isset($ids[$i])?$ids[$i]:false;
+				$input = isset($inputs[$i])?$inputs[$i]:false;
+				$callback($action,$database,$table,$id,$input);
+			}
 		}
 	}
 
-	protected function applyAfterHandler($parameters,$output) {
+	protected function applyAfterHandler($parameters,$outputs) {
 		$callback = $parameters['after'];
 		if (is_callable($callback,true)) {
 			$action = $parameters['action'];
 			$database = $parameters['database'];
 			$table = $parameters['tables'][0];
-			$id = $parameters['key'][0];
-			$input = $parameters['inputs'];
-			$callback($action,$database,$table,$id,$input,$output);
+			$ids = $parameters['key'][0];
+			$inputs = $parameters['inputs'];
+			$max = max(count($ids),count($inputs));
+			for ($i=0;$i<$max;$i++) {
+				$id = isset($ids[$i])?$ids[$i]:false;
+				$input = isset($inputs[$i])?$inputs[$i]:false;
+				$output = is_array($outputs)?$outputs[$i]:$outputs;
+				$callback($action,$database,$table,$id,$input,$output);
+			}
 		}
 	}
 
@@ -1299,7 +1310,7 @@ class PHP_CRUD_API {
 		if ($key===false) return false;
 		$fields = $this->findPrimaryKeys($tables[0],$database);
 		if (count($fields)!=1) $this->exitWith404('1pk');
-		return array($key,$fields[0]);
+		return array(explode(',',$key),$fields[0]);
 	}
 
 	protected function processOrderingsParameter($orderings) {
@@ -1453,7 +1464,7 @@ class PHP_CRUD_API {
 		$this->convertOutputs($sql,$params,$fields[$table]);
 		$sql .= ' FROM !';
 		$params[] = $table;
-		$this->addFilter($filters,$table,'and',$key[1],'eq',$key[0]);
+		$this->addFilter($filters,$table,'and',$key[1],'eq',$key[0][0]);
 		$this->addWhereFromFilters($filters[$table],$sql,$params);
 		$object = null;
 		if ($result = $this->db->query($sql,$params)) {
@@ -1465,10 +1476,10 @@ class PHP_CRUD_API {
 
 	protected function retrieveObjects($key,$fields,$filters,$tables) {
 		$keyField = $key[1];
-		$keys = explode(',',$key[0]);
+		$keys = $key[0];
 		$rows = array();
 		foreach ($keys as $key) {
-			$result = $this->retrieveObject(array($key,$keyField),$fields,$filters,$tables);
+			$result = $this->retrieveObject(array(array($key),$keyField),$fields,$filters,$tables);
 			if ($result===null) {
 				return null;
 			}
@@ -1519,7 +1530,7 @@ class PHP_CRUD_API {
 			$params[] = $k;
 			$params[] = $v;
 		}
-		$this->addFilter($filters,$table,'and',$key[1],'eq',$key[0]);
+		$this->addFilter($filters,$table,'and',$key[1],'eq',$key[0][0]);
 		$this->addWhereFromFilters($filters[$table],$sql,$params);
 		$result = $this->db->query($sql,$params);
 		if (!$result) return null;
@@ -1529,14 +1540,14 @@ class PHP_CRUD_API {
 	protected function updateObjects($key,$inputs,$filters,$tables) {
 		if (!$inputs) return false;
 		$keyField = $key[1];
-		$keys = explode(',',$key[0]);
+		$keys = $key[0];
 		if (count($inputs)!=count($keys)) {
 			$this->exitWith404('subject');
 		}
 		$rows = array();
 		$this->db->beginTransaction();
 		foreach ($inputs as $i=>$input) {
-			$result = $this->updateObject(array($keys[$i],$keyField),$input,$filters,$tables);
+			$result = $this->updateObject(array(array($keys[$i]),$keyField),$input,$filters,$tables);
 			if ($result===null) {
 				$this->db->rollbackTransaction();
 				return null;
@@ -1551,7 +1562,7 @@ class PHP_CRUD_API {
 		$table = $tables[0];
 		$sql = 'DELETE FROM !';
 		$params = array($table);
-		$this->addFilter($filters,$table,'and',$key[1],'eq',$key[0]);
+		$this->addFilter($filters,$table,'and',$key[1],'eq',$key[0][0]);
 		$this->addWhereFromFilters($filters[$table],$sql,$params);
 		$result = $this->db->query($sql,$params);
 		if (!$result) return null;
@@ -1560,11 +1571,11 @@ class PHP_CRUD_API {
 
 	protected function deleteObjects($key,$filters,$tables) {
 		$keyField = $key[1];
-		$keys = explode(',',$key[0]);
+		$keys = $key[0];
 		$rows = array();
 		$this->db->beginTransaction();
 		foreach ($keys as $key) {
-			$result = $this->deleteObject(array($key,$keyField),$filters,$tables);
+			$result = $this->deleteObject(array(array($key),$keyField),$filters,$tables);
 			if ($result===null) {
 				$this->db->rollbackTransaction();
 				return null;
@@ -1595,7 +1606,7 @@ class PHP_CRUD_API {
 				$params[] = $k;
 			}
 		}
-		$this->addFilter($filters,$table,'and',$key[1],'eq',$key[0]);
+		$this->addFilter($filters,$table,'and',$key[1],'eq',$key[0][0]);
 		$this->addWhereFromFilters($filters[$table],$sql,$params);
 		$result = $this->db->query($sql,$params);
 		if (!$result) return null;
@@ -1605,14 +1616,14 @@ class PHP_CRUD_API {
 	protected function incrementObjects($key,$inputs,$filters,$tables,$fields) {
 		if (!$inputs) return false;
 		$keyField = $key[1];
-		$keys = explode(',',$key[0]);
+		$keys = $key[0];
 		if (count($inputs)!=count($keys)) {
 			$this->exitWith404('subject');
 		}
 		$rows = array();
 		$this->db->beginTransaction();
 		foreach ($inputs as $i=>$input) {
-			$result = $this->incrementObject(array($keys[$i],$keyField),$input,$filters,$tables,$fields);
+			$result = $this->incrementObject(array(array($keys[$i]),$keyField),$input,$filters,$tables,$fields);
 			if ($result===null) {
 				$this->db->rollbackTransaction();
 				return null;
@@ -1664,20 +1675,19 @@ class PHP_CRUD_API {
 	}
 
 	protected function retrieveInputs($data) {
-		$input = (object)array();
-		if (strlen($data)>0) {
-			if ($data[0]=='{' || $data[0]=='[') {
-				$input = json_decode($data);
-			} else {
-				parse_str($data, $input);
-				foreach ($input as $key => $value) {
-					if (substr($key,-9)=='__is_null') {
-						$input[substr($key,0,-9)] = null;
-						unset($input[$key]);
-					}
+		if (strlen($data)==0) {
+			$input = false;
+		} else if ($data[0]=='{' || $data[0]=='[') {
+			$input = json_decode($data);
+		} else {
+			parse_str($data, $input);
+			foreach ($input as $key => $value) {
+				if (substr($key,-9)=='__is_null') {
+					$input[substr($key,0,-9)] = null;
+					unset($input[$key]);
 				}
-				$input = (object)$input;
 			}
+			$input = (object)$input;
 		}
 		return is_array($input)?$input:array($input);
 	}
@@ -1874,34 +1884,23 @@ class PHP_CRUD_API {
 		if ($column_authorizer) $this->applyColumnAuthorizer($column_authorizer,$action,$database,$fields);
 
 		// input
-		$multi = (strpos($key[0],',')!==false) || (strlen($post)?($post[0]=='['):false);
-		if ($before && $action == 'delete' && $multi) { 
-			$inputs = array();
-			for($i=1; $i <= count(explode(',', $key[0])); $i++) {
-				$inputs[] = (object) array();
-			}
-		} else {
-			$inputs = $this->retrieveInputs($post);
+		$inputs = $this->retrieveInputs($post);
+		if ($before) {
+			$this->applyBeforeHandler($action,$database,$tables[0],$key[0],$before,$inputs);
 		}
-		$originalAction = $action;
+		
 		foreach ($inputs as $k=>$context) {
-			//echo $k.' - ';
 			$input = $this->filterInputByFields($context,$fields[$tables[0]]);
 
 			if ($tenancy_function) $this->applyInputTenancy($tenancy_function,$action,$database,$tables[0],$input,$fields[$tables[0]]);
 			if ($input_sanitizer) $this->applyInputSanitizer($input_sanitizer,$action,$database,$tables[0],$input,$fields[$tables[0]]);
 			if ($input_validator) $this->applyInputValidator($input_validator,$action,$database,$tables[0],$input,$fields[$tables[0]],$context);
 
-			$this->convertInputs($input,$fields[$tables[0]]);			
-		
-			if ($before) {
-				$action = $originalAction;
-				$this->applyBeforeHandler($action,$database,$tables[0],$ids[$k],$before,$input);
-			}
-
+			$this->convertInputs($input,$fields[$tables[0]]);
 			$inputs[$k] = $input;
 		}
-		return compact('action','database','tables','key','page','filters','fields','orderings','transform','multi','inputs','collect','select','before','after');
+
+		return compact('action','database','tables','key','page','filters','fields','orderings','transform','inputs','collect','select','before','after');
 	}
 
 	protected function addWhereFromFilters($filters,&$sql,&$params) {
@@ -2049,7 +2048,7 @@ class PHP_CRUD_API {
 
 	protected function readCommand($parameters) {
 		extract($parameters);
-		if ($multi) $object = $this->retrieveObjects($key,$fields,$filters,$tables);
+		if (count($key[0])>1) $object = $this->retrieveObjects($key,$fields,$filters,$tables);
 		else $object = $this->retrieveObject($key,$fields,$filters,$tables);
 		if (!$object) $this->exitWith404('object');
 		$this->startOutput();
@@ -2060,27 +2059,27 @@ class PHP_CRUD_API {
 	protected function createCommand($parameters) {
 		extract($parameters);
 		if (!$inputs || !$inputs[0]) $this->exitWith404('input');
-		if ($multi) return $this->createObjects($inputs,$tables);
+		if (count($inputs)>1) return $this->createObjects($inputs,$tables);
 		return $this->createObject($inputs[0],$tables);
 	}
 
 	protected function updateCommand($parameters) {
 		extract($parameters);
 		if (!$inputs || !$inputs[0]) $this->exitWith404('subject');
-		if ($multi) return $this->updateObjects($key,$inputs,$filters,$tables);
+		if (count($inputs)>1) return $this->updateObjects($key,$inputs,$filters,$tables);
 		return $this->updateObject($key,$inputs[0],$filters,$tables);
 	}
 
 	protected function deleteCommand($parameters) {
 		extract($parameters);
-		if ($multi) return $this->deleteObjects($key,$filters,$tables);
+		if (count($key[0])>1) return $this->deleteObjects($key,$filters,$tables);
 		return $this->deleteObject($key,$filters,$tables);
 	}
 
 	protected function incrementCommand($parameters) {
 		extract($parameters);
 		if (!$inputs || !$inputs[0]) $this->exitWith404('subject');
-		if ($multi) return $this->incrementObjects($key,$inputs,$filters,$tables,$fields);
+		if (count($inputs)>1) return $this->incrementObjects($key,$inputs,$filters,$tables,$fields);
 		return $this->incrementObject($key,$inputs[0],$filters,$tables,$fields);
 	}
 
