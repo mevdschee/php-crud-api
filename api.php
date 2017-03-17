@@ -2638,8 +2638,7 @@ class PHP_CRUD_API {
 		if ($this->settings['origin']) {
 			$this->allowOrigin($this->settings['origin'],$this->settings['allow_origin']);
 		}
-		$currentScriptFilename = basename(__FILE__);
-		if (!$this->settings['request'] || $this->settings['request'] == $currentScriptFilename) {
+		if (!$this->settings['request']) {
 			$this->swagger($this->settings);
 		} else {
 			$parameters = $this->getParameters($this->settings);
