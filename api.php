@@ -1137,7 +1137,9 @@ class PHP_CRUD_API {
 	protected function applyBeforeHandler(&$action,&$database,&$table,&$ids,&$callback,&$inputs) {
 		if (is_callable($callback,true)) {
 			$max = count($ids)?:count($inputs);
+			$origaction = $action;
 			for ($i=0;$i<$max;$i++) {
+				$action = $origaction;
 				if (!isset($ids[$i])) $ids[$i] = false;
 				if (!isset($inputs[$i])) $inputs[$i] = false;
 				$callback($action,$database,$table,$ids[$i],$inputs[$i]);
@@ -1885,10 +1887,6 @@ class PHP_CRUD_API {
 
 		// input
 		$inputs = $this->retrieveInputs($post);
-		if ($before) {
-			$this->applyBeforeHandler($action,$database,$tables[0],$key[0],$before,$inputs);
-		}
-		
 		foreach ($inputs as $k=>$context) {
 			$input = $this->filterInputByFields($context,$fields[$tables[0]]);
 
@@ -1898,6 +1896,10 @@ class PHP_CRUD_API {
 
 			$this->convertInputs($input,$fields[$tables[0]]);
 			$inputs[$k] = $input;
+		}
+
+		if ($before) {
+			$this->applyBeforeHandler($action,$database,$tables[0],$key[0],$before,$inputs);
 		}
 
 		return compact('action','database','tables','key','page','filters','fields','orderings','transform','inputs','collect','select','before','after');
