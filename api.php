@@ -1137,11 +1137,11 @@ class PHP_CRUD_API {
 	protected function applyBeforeHandler(&$action,&$database,&$table,&$ids,&$callback,&$inputs) {
 		if (is_callable($callback,true)) {
 			$max = count($ids)?:count($inputs);
-			$initials = array('action'=>$action,'database'=>$database,'table'=>$table);
+			$values = array('action'=>$action,'database'=>$database,'table'=>$table);
 			for ($i=0;$i<$max;$i++) {
-				$action = $initials['action'];
-				$database = $initials['database'];
-				$table = $initials['table'];
+				$action = $values['action'];
+				$database = $values['database'];
+				$table = $values['table'];
 				if (!isset($ids[$i])) $ids[$i] = false;
 				if (!isset($inputs[$i])) $inputs[$i] = false;
 				$callback($action,$database,$table,$ids[$i],$inputs[$i]);
