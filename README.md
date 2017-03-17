@@ -760,7 +760,7 @@ PUT http://localhost/api.php/categories/2
 ## Automatic fields
 
 Before any operation the 'before' function is called that allows you to do set some automatic fields.
-Note that the 'inputs' parameter is writable and is an array. The array may contain NULL values on invalid JSON.
+Note that the 'input' parameter is writable and is an object or 'false' when it is missing or invalid.
 
 ## Soft delete
 
