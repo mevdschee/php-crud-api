@@ -16,11 +16,15 @@ function call($method, $url, $data = false) {
 	return curl_exec($ch);
 }
 
-$response = call('GET', 'http://localhost/api.php/posts?include=categories,tags,comments&filter=id,eq,1');
+$response = call('GET', 'http://localhost/api.php/posts');
 $jsonObject = json_decode($response, true);
 
 $jsonObject = php_crud_api_transform($jsonObject);
 $output = json_encode($jsonObject, JSON_PRETTY_PRINT);
+
+$post = array('user_id'=>1,'category_id'=>1,'content'=>'from php');
+call('POST', 'http://localhost/api.php/posts',json_encode($post));
+
 ?>
 <html>
 <head>
