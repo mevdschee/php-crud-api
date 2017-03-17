@@ -2157,6 +2157,7 @@ class PHP_CRUD_API {
 			$request = isset($_SERVER['PATH_INFO'])?$_SERVER['PATH_INFO']:'';
 			if (!$request) {
 				$request = isset($_SERVER['ORIG_PATH_INFO'])?$_SERVER['ORIG_PATH_INFO']:'';
+				$request = $request!=$_SERVER['SCRIPT_NAME']?$request:'';
 			}
 		}
 		if (!$get) {
