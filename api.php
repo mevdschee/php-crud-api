@@ -2260,11 +2260,11 @@ class PHP_CRUD_API {
 			$this->db->close($result);
 		}
 
+		$table_names = array_map(function($v){ return $v['name'];},$tables);
 		foreach ($tables as $t=>$table)	{
 			$table_list = array($table['name']);
 			$table_fields = $this->findFields($table_list,false,false,false,$database);
-			$table_names = array_map(function($v){ return $v['name'];},$tables);
-
+			
 			// extensions
 			$result = $this->db->query($this->db->getSql('reflect_belongs_to'),array($table_list[0],$table_names,$database,$database));
 			while ($row = $this->db->fetchRow($result)) {
