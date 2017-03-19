@@ -17,6 +17,8 @@ interface DatabaseInterface {
 	public function isBinaryType($field);
 	public function isGeometryType($field);
 	public function isJsonType($field);
+	public function isBooleanType($field);
+	public function getBooleanDefaultValue($default_value);
 	public function getDefaultCharset();
 	public function beginTransaction();
 	public function commitTransaction();
@@ -207,6 +209,14 @@ class MySQL implements DatabaseInterface {
 
 	public function isJsonType($field) {
 		return ($field->type==245);
+	}
+
+	public function isBooleanType($field) {
+		return (false);
+	}
+
+	public function getBooleanDefaultValue($default_value) {
+		return ($default_value);
 	}
 
 	public function getDefaultCharset() {
@@ -472,6 +482,14 @@ class PostgreSQL implements DatabaseInterface {
 
 	public function isJsonType($field) {
 		return in_array($field->type,array('json','jsonb'));
+	}
+
+	public function isBooleanType($field) {
+		return (false);
+	}
+
+	public function getBooleanDefaultValue($default_value) {
+		return ($default_value);
 	}
 
 	public function getDefaultCharset() {
@@ -741,7 +759,7 @@ class SQLServer implements DatabaseInterface {
 	}
 
 	public function isNumericType($field) {
-		return in_array($field->type,array(-6,-5,4,5,2,6,7));
+		return in_array($field->type,array(-6,-5,2,3,4,5,6,7));
 	}
 
 	public function isBinaryType($field) {
@@ -754,6 +772,22 @@ class SQLServer implements DatabaseInterface {
 
 	public function isJsonType($field) {
 		return ($field->type==-152);
+	}
+
+	public function isBooleanType($field) {
+		return ($field->type==-7);
+	}
+
+	public function getBooleanDefaultValue($default_value) {
+		// SQLServer likes to surround values with (())
+		$parens = array("(",")");
+		$default_value = (int) str_replace($parens, "", $default_value);
+		if ($default_value == 0) {
+		  $default_value = false;
+		} else {
+		  $default_value = true;
+		}
+		return ($default_value);
 	}
 
 	public function getDefaultCharset() {
@@ -1064,6 +1098,14 @@ class SQLite implements DatabaseInterface {
 
 	public function isJsonType($field) {
 		return in_array($field->type,array('json','jsonb'));
+	}
+
+	public function isBooleanType($field) {
+		return (false);
+	}
+
+	public function getBooleanDefaultValue($default_value) {
+		return ($default_value);
 	}
 
 	public function getDefaultCharset() {
@@ -2260,10 +2302,16 @@ class PHP_CRUD_API {
 			$this->db->close($result);
 		}
 
+		$table_names = array_map(function($v){ return $v['name'];},$tables);
+		$skip_tables = array();
 		foreach ($tables as $t=>$table)	{
 			$table_list = array($table['name']);
 			$table_fields = $this->findFields($table_list,false,false,false,$database);
-			$table_names = array_map(function($v){ return $v['name'];},$tables);
+			if (count($table_fields[$table['name']])==0) {
+				$table_fields[$table['name']] = false;
+				$skip_tables[] = $table['name'];
+				continue;
+			}
 
 			// extensions
 			$result = $this->db->query($this->db->getSql('reflect_belongs_to'),array($table_list[0],$table_names,$database,$database));
@@ -2291,6 +2339,9 @@ class PHP_CRUD_API {
 						$table_fields[$table['name']][$row[0]]->type = 'number';
 						if ($row[1]!==null) $table_fields[$table['name']][$row[0]]->default = (float)$row[1];
 					}
+				} else if ($this->db->isBooleanType($table_fields[$table['name']][$row[0]])) {
+					$table_fields[$table['name']][$row[0]]->type = 'boolean';
+					if ($row[1]!==null) $table_fields[$table['name']][$row[0]]->default = $this->db->getBooleanDefaultValue($row[1]);
 				} else {
 					if ($this->db->isBinaryType($table_fields[$table['name']][$row[0]])) {
 						$table_fields[$table['name']][$row[0]]->format = 'byte';
@@ -2301,7 +2352,7 @@ class PHP_CRUD_API {
 					}
 					$table_fields[$table['name']][$row[0]]->type = 'string';
 					if ($row[1]!==null) $table_fields[$table['name']][$row[0]]->default = $row[1];
-					if ($row[4]!==null) $table_fields[$table['name']][$row[0]]->maxLength = (int)$row[4];
+					if ($row[4]!==null && (int)$row[4]>=0) $table_fields[$table['name']][$row[0]]->maxLength = (int)$row[4];
 				}
 			}
 
@@ -2318,6 +2369,16 @@ class PHP_CRUD_API {
 				$tables[$t][$path] = array_values(array_filter($tables[$t][$path]));
 			}
 			if (!$tables[$t]['root_actions']&&!$tables[$t]['id_actions']) $tables[$t] = false;
+		}
+
+		if (count($skip_tables)>0) {
+			$good_tables = array();
+			foreach ($tables as $i=>$table) {
+				if (!in_array($table['name'],$skip_tables)) {
+					$good_tables[] = $table;
+				}
+			}
+			$tables = $good_tables;
 		}
 		$tables = array_merge(array_filter($tables));
 		//var_dump($tables);die();
