@@ -2432,7 +2432,7 @@ class PHP_CRUD_API {
 							}
 							echo ',"x-dbtype": '.json_encode($action['fields'][$field]->{'x-dbtype'});
 							echo ',"x-nullable": '.json_encode($action['fields'][$field]->{'x-nullable'});
-							if (isset($action['fields'][$field]->maxLength)) {
+							if (isset($action['fields'][$field]->maxLength) && $action['fields'][$field]->maxLength>0) {
 								echo ',"maxLength": '.json_encode($action['fields'][$field]->maxLength);
 							}
 							if (isset($action['fields'][$field]->default)) {
