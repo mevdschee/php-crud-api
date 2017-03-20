@@ -3,3 +3,7 @@
 .settings/
 phpunit.phar
 tests/config.php
+.idea/
+vendor
+composer.lock
+.DS_Store
