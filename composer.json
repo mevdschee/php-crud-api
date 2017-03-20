@@ -1,0 +1,34 @@
+{
+  "name": "mevdschee/php-crud-api",
+  "type": "library",
+  "description": "Single file PHP script that adds a REST API to a SQL database.",
+  "keywords": [
+    "api-server",
+    "restful",
+    "mysql",
+    "geospatial",
+    "sql-server",
+    "postgresql",
+    "php-api",
+    "postgis",
+    "crud",
+    "rest-api",
+    "openapi",
+    "swagger"
+  ],
+  "homepage": "https://github.com/mevdschee/php-crud-api",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Maurits van der Schee",
+      "email": "maurits@vdschee.nl",
+      "homepage": "https://github.com/mevdschee"
+    }
+  ],
+  "require": {
+    "php": ">=5.6.0"
+  },
+  "autoload": {
+    "files": ["api.php"]
+  }
+}
