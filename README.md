@@ -12,12 +12,12 @@ Related projects:
   - [PHP-CRUD-UI](https://github.com/mevdschee/PHP-crud-ui): Single file PHP script that adds a UI to a PHP-CRUD-API project.
   - [VUE-CRUD-UI](https://github.com/nlware/vue-crud-ui): Single file Vue.js script that adds a UI to a PHP-CRUD-API project.
   
-Ports of core:
+Ports of the core of the script to other languages:
 
-  - Java (see: https://github.com/mevdschee/java-crud-api)
-  - Go (see: https://github.com/mevdschee/go-crud-api)
-  - C# .net core (see: https://github.com/mevdschee/core-data-api)
-  - NodeJs (see: https://github.com/mevdschee/js-crud-api)
+  - [Java](https://github.com/mevdschee/java-crud-api)
+  - [Go](https://github.com/mevdschee/go-crud-api)
+  - [C# .net core](https://github.com/mevdschee/core-data-api)
+  - [Node.js](https://github.com/mevdschee/js-crud-api)
 
 ## Requirements
 
