@@ -14,11 +14,11 @@ Related projects:
   
 Ports of the core of the script (only basic REST CRUD, no features) to other languages:
 
-  - [Java](https://github.com/mevdschee/java-crud-api)
-  - [Go](https://github.com/mevdschee/go-crud-api)
-  - [C# .net core](https://github.com/mevdschee/core-data-api)
+  - [Java](https://github.com/mevdschee/java-crud-api/blob/master/src/main/java/com/tqdev/CrudApiHandler.java)
+  - [Go](https://github.com/mevdschee/go-crud-api/blob/master/api.go)
+  - [C# .net core](https://github.com/mevdschee/core-data-api/blob/master/Program.cs)
   - [PHP](https://github.com/mevdschee/php-crud-api/blob/master/extras/core.php)
-  - [Node.js](https://github.com/mevdschee/js-crud-api)
+  - [Node.js](https://github.com/mevdschee/js-crud-api/blob/master/app.js)
 
 ## Requirements
 
@@ -1041,7 +1041,7 @@ If it does not, something is wrong on your hosting environment.
 
 ## Composer Installation
 
-- Include the library in your composer.json file:
+Include the library in your composer.json file:
 
 ```json
 {
@@ -1051,8 +1051,7 @@ If it does not, something is wrong on your hosting environment.
 }
 ```
 
-- Run `composer install`
-- Use the library in your own code:
+Run `composer install` and then to use the library in your own code like this:
 
 ```php
 <?php
