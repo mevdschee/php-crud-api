@@ -6,4 +6,6 @@ tests/config.php
 .idea/
 vendor
 composer.lock
+tests/sqlite.db
 .DS_Store
+log.txt
