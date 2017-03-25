@@ -29,8 +29,6 @@ These implementations are a proof-of-concept and do only support basic REST CRUD
 
 This is a single file application! Upload "api.php" somewhere and enjoy!
 
-Alternatively, you can use [Composer](https://getcomposer.org/). See the _Composer Installation_ section below.
-
 ## Limitations
 
   - Primary keys should either be auto-increment (from 1 to 2^53) or UUID
@@ -1040,7 +1038,7 @@ If it does not, something is wrong on your hosting environment.
 
 ## Composer Installation
 
-Include the library in your composer.json file:
+You can use [Composer](https://getcomposer.org/) to install. Include the library in your composer.json file:
 
 ```json
 {
