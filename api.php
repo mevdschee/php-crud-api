@@ -198,7 +198,7 @@ class MySQL implements DatabaseInterface {
 
 	public function isBinaryType($field) {
 		//echo "$field->name: $field->type ($field->flags)\n";
-		return (($field->flags & 128) && (($field->type>=249 && $field->type<=252) || $field->charsetnr==63));
+		return (($field->flags & 128) && (($field->type>=249 && $field->type<=252) || ($field->type>=253 && $field->type<=254 && $field->charsetnr==63)));
 	}
 
 	public function isGeometryType($field) {
