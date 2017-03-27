@@ -1,3 +1,8 @@
+IF (OBJECT_ID('FK_barcodes_products', 'F') IS NOT NULL)
+BEGIN
+ALTER TABLE [barcodes] DROP CONSTRAINT [FK_barcodes_products]
+END
+GO
 IF (OBJECT_ID('FK_posts_users', 'F') IS NOT NULL)
 BEGIN
 ALTER TABLE [posts] DROP CONSTRAINT [FK_posts_users]
@@ -21,6 +26,11 @@ GO
 IF (OBJECT_ID('FK_comments_posts', 'F') IS NOT NULL)
 BEGIN
 ALTER TABLE [comments] DROP CONSTRAINT [FK_comments_posts]
+END
+GO
+IF (OBJECT_ID('barcodes', 'U') IS NOT NULL)
+BEGIN
+DROP TABLE [barcodes]
 END
 GO
 IF (OBJECT_ID('products', 'U') IS NOT NULL)
@@ -217,6 +227,22 @@ CREATE TABLE [products](
 ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
 
 GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [barcodes](
+	[id] [int] IDENTITY,
+	[product_id] [int] NOT NULL,
+	[hex] [nvarchar](max) NOT NULL,
+	[bin] [varbinary](max) NOT NULL,
+ CONSTRAINT [PK_barcodes] PRIMARY KEY CLUSTERED
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+
+GO
 SET IDENTITY_INSERT [categories] ON
 GO
 INSERT [categories] ([id], [name], [icon]) VALUES (1, N'announcement', NULL)
@@ -293,6 +319,12 @@ INSERT [products] ([id], [name], [price], [properties], [created_at]) VALUES (1,
 GO
 SET IDENTITY_INSERT [products] OFF
 GO
+SET IDENTITY_INSERT [barcodes] ON
+GO
+INSERT [barcodes] ([id], [product_id], [hex], [bin]) VALUES (1, 1, N'00ff01', 0x00ff01)
+GO
+SET IDENTITY_INSERT [barcodes] OFF
+GO
 ALTER TABLE [comments]  WITH CHECK ADD  CONSTRAINT [FK_comments_posts] FOREIGN KEY([post_id])
 REFERENCES [posts] ([id])
 GO
@@ -317,4 +349,9 @@ ALTER TABLE [posts]  WITH CHECK ADD  CONSTRAINT [FK_posts_users] FOREIGN KEY([us
 REFERENCES [users] ([id])
 GO
 ALTER TABLE [posts] CHECK CONSTRAINT [FK_posts_users]
+GO
+ALTER TABLE [barcodes]  WITH CHECK ADD  CONSTRAINT [FK_barcodes_products] FOREIGN KEY([product_id])
+REFERENCES [products] ([id])
+GO
+ALTER TABLE [barcodes] CHECK CONSTRAINT [FK_barcodes_products]
 GO

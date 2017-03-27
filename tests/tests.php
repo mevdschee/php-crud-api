@@ -799,4 +799,11 @@ class PHP_CRUD_API_Test extends PHPUnit_Framework_TestCase
 		$test->get('/products?columns=id,deleted_at');
 		$test->expect('{"products":{"columns":["id","deleted_at"],"records":[[1,"2013-12-11 11:10:09"],[2,"2013-12-11 11:10:09"]]}}');
 	}
+
+	public function testVarBinaryBarcodes()
+	{
+		$test = new API($this);
+		$test->get('/barcodes?transform=1');
+		$test->expect('{"barcodes":[{"id":1,"product_id":1,"hex":"00ff01","bin":"AP8B"}]}');
+	}
 }

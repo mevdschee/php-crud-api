@@ -111,6 +111,16 @@ CREATE TABLE `products` (
   `deleted_at` datetime NULL
 );
 
-INSERT INTO `products` (`id`, `name`, `price`, `properties`, `created_at`) VALUES (1,	'Calculator', '23.01', '{"depth":false,"model":"TRX-120","width":100,"height":null}', '1970-01-01 01:01:01');
+INSERT INTO `products` (`id`, `name`, `price`, `properties`, `created_at`) VALUES (1,	'Calculator',	'23.01',	'{"depth":false,"model":"TRX-120","width":100,"height":null}',	'1970-01-01 01:01:01');
+
+DROP TABLE IF EXISTS `barcodes`;
+CREATE TABLE `barcodes` (
+  `id` integer NOT NULL PRIMARY KEY AUTOINCREMENT,
+  `product_id` integer NOT NULL,
+  `hex` text(255) NOT NULL,
+  `bin` binary(255) NOT NULL
+);
+
+INSERT INTO `barcodes` (`id`, `product_id`, `hex`, `bin`) VALUES (1,	1,	'00ff01',	'AP8B');
 
 --

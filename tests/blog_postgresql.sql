@@ -28,6 +28,7 @@ DROP TABLE IF EXISTS countries CASCADE;
 DROP TABLE IF EXISTS events CASCADE;
 DROP VIEW IF EXISTS tag_usage;
 DROP TABLE IF EXISTS products CASCADE;
+DROP TABLE IF EXISTS barcodes CASCADE;
 
 --
 -- Enables the Postgis extension
@@ -142,6 +143,17 @@ CREATE TABLE products (
 );
 
 --
+-- Name: barcodes; Type: TABLE; Schema: public; Owner: postgres; Tablespace:
+--
+
+CREATE TABLE barcodes (
+    id serial NOT NULL,
+    product_id integer NOT NULL,
+    hex character varying(255) NOT NULL,
+    bin bytea NOT NULL
+);
+
+--
 -- Data for Name: categories; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
@@ -209,11 +221,18 @@ INSERT INTO "events" ("name", "datetime", "visitors") VALUES
 ('Launch',	'2016-01-01 13:01:01',	0);
 
 --
--- Data for Name: events; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: products; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
 INSERT INTO "products" ("name", "price", "properties", "created_at") VALUES
 ('Calculator',	'23.01', '{"depth":false,"model":"TRX-120","width":100,"height":null}', '1970-01-01 01:01:01');
+
+--
+-- Data for Name: barcodes; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+INSERT INTO "barcodes" ("product_id", "hex", "bin") VALUES
+(1,	'00ff01', E'\\x00ff01');
 
 --
 -- Name: categories_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres; Tablespace:
@@ -295,6 +314,14 @@ ALTER TABLE ONLY products
 
 
 --
+-- Name: barcodes_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres; Tablespace:
+--
+
+ALTER TABLE ONLY barcodes
+    ADD CONSTRAINT barcodes_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: comments_post_id_idx; Type: INDEX; Schema: public; Owner: postgres; Tablespace:
 --
 
@@ -327,6 +354,13 @@ CREATE INDEX posts_category_id_idx ON posts USING btree (category_id);
 --
 
 CREATE INDEX posts_user_id_idx ON posts USING btree (user_id);
+
+
+--
+-- Name: barcodes_product_id_idx; Type: INDEX; Schema: public; Owner: postgres; Tablespace:
+--
+
+CREATE INDEX barcodes_product_id_idx ON barcodes USING btree (product_id);
 
 
 --
@@ -367,6 +401,14 @@ ALTER TABLE ONLY posts
 
 ALTER TABLE ONLY posts
     ADD CONSTRAINT posts_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id);
+
+
+--
+-- Name: barcodes_product_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY barcodes
+    ADD CONSTRAINT barcodes_product_id_fkey FOREIGN KEY (product_id) REFERENCES products(id);
 
 
 --

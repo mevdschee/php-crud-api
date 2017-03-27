@@ -133,4 +133,17 @@ CREATE TABLE `products` (
 INSERT INTO `products` (`id`, `name`, `price`, `properties`, `created_at`) VALUES
 (1,	'Calculator', '23.01', '{"depth":false,"model":"TRX-120","width":100,"height":null}', '1970-01-01 01:01:01');
 
+DROP TABLE IF EXISTS `barcodes`;
+CREATE TABLE `barcodes` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `product_id` int(11) NOT NULL,
+  `hex` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `bin` varbinary(255) NOT NULL,
+  PRIMARY KEY (`id`),
+  CONSTRAINT `barcodes_ibfk_1` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+INSERT INTO `barcodes` (`id`, `product_id`, `hex`, `bin`) VALUES
+(1,	1, '00ff01', UNHEX('00ff01'));
+
 -- 2016-11-05 13:11:47
