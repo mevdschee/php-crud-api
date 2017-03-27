@@ -30,6 +30,12 @@ DROP VIEW IF EXISTS tag_usage;
 DROP TABLE IF EXISTS products CASCADE;
 
 --
+-- Enables the Postgis extension
+--
+
+CREATE EXTENSION IF NOT EXISTS postgis;
+
+--
 -- Name: categories; Type: TABLE; Schema: public; Owner: postgres; Tablespace:
 --
 
@@ -131,7 +137,8 @@ CREATE TABLE products (
     name character varying(255) NOT NULL,
     price decimal(10,2) NOT NULL,
     properties jsonb NOT NULL,
-    created_at timestamp NOT NULL
+    created_at timestamp NOT NULL,
+    deleted_at timestamp NULL
 );
 
 --
