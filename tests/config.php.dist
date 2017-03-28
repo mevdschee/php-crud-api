@@ -19,24 +19,24 @@ class PHP_CRUD_API_Config
         /* Uncomment and update for any databases you want to use.
         array(
             'dbengine' => 'PostgreSQL',
-            'hostname' => '',
-            'username' => '',
-            'password' => '',
-            'database' => '',
+            'hostname' => '{{test_hostname}}',
+            'username' => '{{test_username}}',
+            'password' => '{{test_password}}',
+            'database' => '{{test_database}}',
         ),
         array(
             'dbengine' => 'SQLite',
-            'hostname' => '',
-            'username' => '',
-            'password' => '',
-            'database' => '',
+            'hostname' => '{{test_hostname}}',
+            'username' => '{{test_username}}',
+            'password' => '{{test_password}}',
+            'database' => '{{test_database}}',
         ),
         array(
             'dbengine' => 'SQLServer',
-            'hostname' => '',
-            'username' => '',
-            'password' => '',
-            'database' => '',
+            'hostname' => '{{test_hostname}}',
+            'username' => '{{test_username}}',
+            'password' => '{{test_password}}',
+            'database' => '{{test_database}}',
         ),
         */
     );
