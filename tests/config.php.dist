@@ -8,36 +8,36 @@ class PHP_CRUD_API_Config
      *
      * @var array
      */
-    public static $config = [
-        [
+    public static $config = array(
+        array(
             'dbengine' => 'MySQL',              // 'MySQL', 'SQLServer', 'PostgreSQL' or 'SQLite'
             'hostname' => '{{test_hostname}}',  // 'localhost' for MySQL, '(Local)' for SQLServer, empty for SQLite
             'username' => '{{test_username}}',  // May be empty on SQLServer or SQLite
             'password' => '{{test_password}}',  // May be empty on SQLServer or SQLite
             'database' => '{{test_database}}',  // NB: Use an empty database, data will be LOST!
-        ],
+        ),
         /* Uncomment and update for any databases you want to use.
-        [
+        array(
             'dbengine' => 'PostgreSQL',
             'hostname' => '',
             'username' => '',
             'password' => '',
             'database' => '',
-        ],
-        [
+        ),
+        array(
             'dbengine' => 'SQLite',
             'hostname' => '',
             'username' => '',
             'password' => '',
             'database' => '',
-        ],
-        [
+        ),
+        array(
             'dbengine' => 'SQLServer',
             'hostname' => '',
             'username' => '',
             'password' => '',
             'database' => '',
-        ],
+        ),
         */
-    ];
+    );
 }

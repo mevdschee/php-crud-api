@@ -28,12 +28,12 @@ class SqlServerTest extends PHP_CRUD_API_Test
 
         $fixture = __DIR__.'/data/blog_'.strtolower(static::$config['dbengine']).'.sql';
 
-        $connectionInfo = [
+        $connectionInfo = array(
             'UID' => static::$config['username'],
             'PWD' => static::$config['password'],
             'Database' => static::$config['database'],
             'CharacterSet' => 'UTF-8',
-        ];
+        );
 
         $conn = sqlsrv_connect(static::$config['hostname'], $connectionInfo);
 
