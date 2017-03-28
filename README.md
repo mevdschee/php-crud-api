@@ -876,14 +876,16 @@ NB: You MUST use an empty database as a destructive database fixture is loaded.
 ### SQL server on Windows:
 
 ```
-C:\php-crud-api>"C:\PHP\php.exe" phpunit.phar
-PHPUnit 5.3.2 by Sebastian Bergmann and contributors.
+C:\php-crud-api>"c:\Program Files (x86)\PHP\v5.6\p
+hp.exe" phpunit.phar tests\SqlServerTest.php
+PHPUnit 5.2.10 by Sebastian Bergmann and contributors.
 
-..................................................                50 / 50 (100%)
+................................................................ 64 / 76 ( 84%)
+............                                                     76 / 76 (100%)
 
-Time: 1.47 seconds, Memory: 6.75Mb
+Time: 9.53 seconds, Memory: 7.25Mb
 
-OK (50 tests, 73 assertions)
+OK (76 tests, 111 assertions)
 
 C:\php-crud-api>
 ```

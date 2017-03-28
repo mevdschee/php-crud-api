@@ -32,7 +32,7 @@ class SqlServerTest extends PHP_CRUD_API_Test
             'UID' => static::$config['username'],
             'PWD' => static::$config['password'],
             'Database' => static::$config['database'],
-            'CharacterSet' => static::$config['UTF-8'],
+            'CharacterSet' => 'UTF-8',
         ];
 
         $conn = sqlsrv_connect(static::$config['hostname'], $connectionInfo);
