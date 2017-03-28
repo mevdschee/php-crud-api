@@ -16,6 +16,7 @@ class PHP_CRUD_API_Config
             'password' => '{{test_password}}',  // May be empty on SQLServer or SQLite
             'database' => '{{test_database}}',  // NB: Use an empty database, data will be LOST!
         ],
+        /* Uncomment and update for any databases you want to use.
         [
             'dbengine' => 'PostgreSQL',
             'hostname' => '',
@@ -37,5 +38,6 @@ class PHP_CRUD_API_Config
             'password' => '',
             'database' => '',
         ],
+        */
     ];
 }
