@@ -832,29 +832,51 @@ I am testing mainly on Ubuntu and I have the following test setups:
 
 This should cover most environments, but please notify me of failing tests and report your environment.
 
-### MySQL on Linux
+### MySQL, PostgreSQL, and SQLite on Linux
 
-There are PHPUnit tests in the file 'tests.php'. You need to configure your test database connection in this file. After that run:
+The tests are held in the `tests.php` file, but first you should copy the `config.php.dist` file to `config.php` and add your database credentials. You can add credentials for one or all the databases supported.
+
+After configuring the database connections, use PHPUnit to run all the tests:
 
 ```
 $ wget https://phar.phpunit.de/phpunit.phar
-$ php phpunit.phar tests/tests.php
-PHPUnit 5.3.2 by Sebastian Bergmann and contributors.
+$ php phpunit.phar
+PHPUnit 5.7.17 by Sebastian Bergmann and contributors.
 
-..................................................                50 / 50 (100%)
+...............................................................  63 / 304 ( 20%)
+............................................................... 126 / 304 ( 41%)
+..........................SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS 189 / 304 ( 62%)
+SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS........................ 252 / 304 ( 82%)
+....................................................            304 / 304 (100%)
 
-Time: 495 ms, Memory: 10.00Mb
+Time: 11.16 seconds, Memory: 12.00MB
 
-OK (50 tests, 75 assertions)
+OK, but incomplete, skipped, or risky tests!
+Tests: 6004, Assertions: 338, Skipped: 76.
 $
 ```
 
-NB: You MUST use an empty database as a desctructive database fixture ('blog_mysql.sql') is loaded.
+You can also run tests for only one database at a time if you'd like. For example to run MySQL tests, specify the `MysqlTest.php` file:
+
+```
+$ php phpunit.phar tests/MysqlTest.php
+PHPUnit 5.7.17 by Sebastian Bergmann and contributors.
+
+................................................................. 65 / 76 ( 85%)
+...........                                                       76 / 76 (100%)
+
+Time: 3.54 seconds, Memory: 10.00MB
+
+OK (76 tests, 113 assertions)
+$
+```
+
+NB: You MUST use an empty database as a destructive database fixture is loaded.
 
 ### SQL server on Windows:
 
 ```
-C:\php-crud-api>"C:\PHP\php.exe" phpunit.phar tests\tests.php
+C:\php-crud-api>"C:\PHP\php.exe" phpunit.phar
 PHPUnit 5.3.2 by Sebastian Bergmann and contributors.
 
 ..................................................                50 / 50 (100%)
@@ -867,40 +889,6 @@ C:\php-crud-api>
 ```
 
 NB: You MUST use an empty database as a desctructive database fixture ('blog_sqlserver.sql') is loaded.
-
-### PostgreSQL on Linux
-
-```
-$ wget https://phar.phpunit.de/phpunit.phar
-$ php phpunit.phar tests/tests.php
-PHPUnit 5.3.2 by Sebastian Bergmann and contributors.
-
-..................................................                50 / 50 (100%)
-
-Time: 1.09 seconds, Memory: 8.00Mb
-
-OK (50 tests, 75 assertions)
-$
-```
-
-NB: You MUST use an empty database as a desctructive database fixture ('blog_postgresql.sql') is loaded.
-
-### SQLite on Linux
-
-```
-$ wget https://phar.phpunit.de/phpunit.phar
-$ php phpunit.phar tests/tests.php
-PHPUnit 5.3.2 by Sebastian Bergmann and contributors.
-
-..................................................                50 / 50 (100%)
-
-Time: 1.96 seconds, Memory: 8.00Mb
-
-OK (50 tests, 74 assertions)
-$
-```
-
-NB: You MUST use an empty database as a desctructive database fixture ('blog_sqlite.sql') is loaded.
 
 ## Installing MySQL on Ubuntu Linux
 

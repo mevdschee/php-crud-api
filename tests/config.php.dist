@@ -2,9 +2,42 @@
 
 class PHP_CRUD_API_Config
 {
-	public static $dbengine='MySQL';             // 'MySQL', 'SQLServer', 'PostgreSQL' or 'SQLite'
-	public static $hostname='{{test_hostname}}'; // 'localhost' for MySQL, '(Local)' for SQLServer, empty for SQLite
-	public static $username='{{test_username}}'; // May be empty on SQLServer or SQLite
-	public static $password='{{test_password}}'; // May be empty on SQLServer or SQLite
-	public static $database='{{test_database}}'; // NB: Use an empty database, data will be LOST!
+    /**
+     * Configure one or more database connections as associative arrays.
+     * Tests will be run against any database connection specified here.
+     *
+     * @var array
+     */
+    public static $config = [
+        [
+            'dbengine' => 'MySQL',              // 'MySQL', 'SQLServer', 'PostgreSQL' or 'SQLite'
+            'hostname' => '{{test_hostname}}',  // 'localhost' for MySQL, '(Local)' for SQLServer, empty for SQLite
+            'username' => '{{test_username}}',  // May be empty on SQLServer or SQLite
+            'password' => '{{test_password}}',  // May be empty on SQLServer or SQLite
+            'database' => '{{test_database}}',  // NB: Use an empty database, data will be LOST!
+        ],
+        /* Uncomment and update for any databases you want to use.
+        [
+            'dbengine' => 'PostgreSQL',
+            'hostname' => '',
+            'username' => '',
+            'password' => '',
+            'database' => '',
+        ],
+        [
+            'dbengine' => 'SQLite',
+            'hostname' => '',
+            'username' => '',
+            'password' => '',
+            'database' => '',
+        ],
+        [
+            'dbengine' => 'SQLServer',
+            'hostname' => '',
+            'username' => '',
+            'password' => '',
+            'database' => '',
+        ],
+        */
+    ];
 }

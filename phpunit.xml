@@ -1,5 +1,8 @@
 <phpunit>
     <php>
-         <ini name="display_errors" value="true"/>
+        <ini name="display_errors" value="true"/>
     </php>
+    <testsuite name="All Tests">
+        <directory suffix='.php'>./tests/</directory>
+    </testsuite>
 </phpunit>
