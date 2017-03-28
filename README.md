@@ -876,8 +876,7 @@ NB: You MUST use an empty database as a destructive database fixture is loaded.
 ### SQL server on Windows:
 
 ```
-C:\php-crud-api>"c:\Program Files (x86)\PHP\v5.6\p
-hp.exe" phpunit.phar tests\SqlServerTest.php
+C:\php-crud-api>c:\PHP\php.exe phpunit.phar tests\SqlServerTest.php
 PHPUnit 5.2.10 by Sebastian Bergmann and contributors.
 
 ................................................................ 64 / 76 ( 84%)
