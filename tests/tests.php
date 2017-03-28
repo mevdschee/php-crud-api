@@ -119,100 +119,9 @@ abstract class PHP_CRUD_API_Test extends PHPUnit_Framework_TestCase
 {
     public static $config;
 
-    public static function setUpBeforeClass()
-    {
-        if (static::$config['database']=='{{test_database}}') {
-            die("Configure database in 'config.php' before running tests.\n");
-        }
+    public abstract function seedDatabase();
 
-        $dbengine = static::$config['dbengine'];
-        $hostname = static::$config['hostname'];
-        $username = static::$config['username'];
-        $password = static::$config['password'];
-        $database = static::$config['database'];
-
-        $fixture = __DIR__.'/data/blog_'.strtolower($dbengine).'.sql';
-
-        if ($dbengine == 'MySQL') {
-
-            $link = mysqli_connect($hostname, $username, $password, $database);
-            if (mysqli_connect_errno()) {
-                die("Connect failed: ".mysqli_connect_error()."\n");
-            }
-            mysqli_set_charset($link,'utf8');
-
-            $i=0;
-            if (mysqli_multi_query($link, file_get_contents($fixture))) {
-                do { $i++; mysqli_next_result($link); } while (mysqli_more_results($link));
-            }
-            if (mysqli_errno($link)) {
-                die("Loading '$fixture' failed on statemement #$i with error:\n".mysqli_error($link)."\n");
-            }
-
-            mysqli_close($link);
-
-        } elseif ($dbengine == 'SQLServer') {
-
-            $connectionInfo = array();
-            $connectionInfo['UID']=$username;
-            $connectionInfo['PWD']=$password;
-            $connectionInfo['Database']=$database;
-            $connectionInfo['CharacterSet']='UTF-8';
-            $conn = sqlsrv_connect( $hostname, $connectionInfo);
-            if (!$conn) {
-                die("Connect failed: ".print_r( sqlsrv_errors(), true));
-            }
-            $queries = preg_split('/\n\s*GO\s*\n/', file_get_contents($fixture));
-            array_pop($queries);
-            foreach ($queries as $i=>$query) {
-                if (!sqlsrv_query($conn, $query)) {
-                    $i++;
-                    die("Loading '$fixture' failed on statemement #$i with error:\n".print_r( sqlsrv_errors(), true)."\n");
-                }
-            }
-            sqlsrv_close($conn);
-
-        } elseif ($dbengine == 'PostgreSQL') {
-
-            $e = function ($v) { return str_replace(array('\'','\\'),array('\\\'','\\\\'),$v); };
-            $hostname = $e($hostname);
-            $database = $e($database);
-            $username = $e($username);
-            $password = $e($password);
-            $conn_string = "host='$hostname' dbname='$database' user='$username' password='$password' options='--client_encoding=UTF8'";
-            $db = pg_connect($conn_string);
-            if (!$db) {
-                die("Connect failed: ". pg_last_error());
-            }
-            $queries = preg_split('/;\s*\n/', file_get_contents($fixture));
-            array_pop($queries);
-            foreach ($queries as $i=>$query) {
-                if (!pg_query($db, $query.';')) {
-                    $i++;
-                    die("Loading '$fixture' failed on statemement #$i with error:\n".print_r( pg_last_error($db), true)."\n");
-                }
-            }
-            pg_close($db);
-
-        } elseif ($dbengine == 'SQLite') {
-
-            $db = new SQLite3($database);
-            if (!$db) {
-                die("Could not open '$database' SQLite database: ".SQLite3::lastErrorMsg().' ('.SQLite3::lastErrorCode().")\n");
-            }
-            $queries = preg_split('/;\s*\n/', file_get_contents($fixture));
-            array_pop($queries);
-            foreach ($queries as $i=>$query) {
-                if (!$db->query($query.';')) {
-                    $i++;
-                    die("Loading '$fixture' failed on statemement #$i with error:\n".$db->lastErrorCode().': '.$db->lastErrorMsg()."\n");
-                }
-            }
-            $db->close();
-        }
-    }
-
-    public function setConfig($dbengine = '')
+    protected function setConfig($dbengine = '')
     {
         foreach (PHP_CRUD_API_Config::$config as $database) {
             if ($database['dbengine'] == $dbengine) {
@@ -220,11 +129,10 @@ abstract class PHP_CRUD_API_Test extends PHPUnit_Framework_TestCase
                 return true;
             }
         }
-        self::markTestSkipped();
+        self::markTestSkipped("Configuration for {$dbengine} database not found.");
         return false;
     }
 
-    /** @group only */
     public function testListPosts()
     {
         $test = new API($this, static::$config);
