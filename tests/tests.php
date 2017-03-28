@@ -1,7 +1,5 @@
 <?php
-if (!file_exists(__DIR__.'/config.php')) {
-    copy(__DIR__.'/config.php.dist',__DIR__.'/config.php');
-}
+
 require __DIR__.'/config.php';
 require __DIR__.'/../api.php';
 
