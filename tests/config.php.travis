@@ -1,0 +1,39 @@
+<?php
+
+class PHP_CRUD_API_Config
+{
+    /**
+     * Configure one or more database connections as associative arrays.
+     * Tests will be run against any database connection specified here.
+     *
+     * @var array
+     */
+    public static $config = array(
+        /* MySQL is disabled because v5.7 is required for all tests to pass,
+            and Travis only has up to MySQL 5.6 installed by default. This
+            will be runnable once we have a test suite that adapts to the
+            available MySQL version. See: https://github.com/mevdschee/php-crud-api/issues/194
+        array(
+            'dbengine' => 'MySQL',
+            'hostname' => 'localhost',
+            'username' => 'root',
+            'password' => 'travis',
+            'database' => 'testing',
+        ),
+        */
+        array(
+            'dbengine' => 'PostgreSQL',
+            'hostname' => 'localhost',
+            'username' => 'postgres',
+            'password' => '',
+            'database' => 'testing',
+        ),
+        array(
+            'dbengine' => 'SQLite',
+            'hostname' => '',
+            'username' => '',
+            'password' => '',
+            'database' => 'tests/sqlite.db',
+        ),
+    );
+}
