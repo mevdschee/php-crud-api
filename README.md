@@ -833,6 +833,10 @@ I am testing mainly on Ubuntu and I have the following test setups:
 
 This should cover most environments, but please notify me of failing tests and report your environment.
 
+### Travis CI
+
+Unfortunately not all tests are automated yet. Contributions in this area are very welcome!
+
 ### MySQL, PostgreSQL, and SQLite on Linux
 
 The tests are held in the `tests.php` file, but first you should copy the `config.php.dist` file to `config.php` and add your database credentials. You can add credentials for one or all the databases supported.
