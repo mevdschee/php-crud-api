@@ -95,6 +95,7 @@ class PostgresqlTest extends Tests
         if (!($capabilities & self::GIS)) {
             $contents = preg_replace('/(geometry) NOT NULL/i', 'text NOT NULL', $contents);
             $contents = preg_replace('/ST_GeomFromText/i', 'concat', $contents);
+            $contents = preg_replace('/CREATE EXTENSION IF NOT EXISTS postgis;/i', '', $contents);
         }
         if (!($capabilities & self::JSON)) {
             $contents = preg_replace('/JSONB? NOT NULL/i', 'text NOT NULL', $contents);
