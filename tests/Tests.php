@@ -48,14 +48,14 @@ abstract class Tests extends TestBase
     public function testAddPost()
     {
         $test = new Api($this);
-        $test->post('/posts','{"user_id":1,"category_id":1,"content":"test"}');
+        $test->post('/posts', '{"user_id":1,"category_id":1,"content":"test"}');
         $test->expect('3');
     }
 
     public function testEditPost()
     {
         $test = new Api($this);
-        $test->put('/posts/3','{"user_id":1,"category_id":1,"content":"test (edited)"}');
+        $test->put('/posts/3', '{"user_id":1,"category_id":1,"content":"test (edited)"}');
         $test->expect('1');
         $test->get('/posts/3');
         $test->expect('{"id":3,"user_id":1,"category_id":1,"content":"test (edited)"}');
@@ -64,7 +64,7 @@ abstract class Tests extends TestBase
     public function testEditPostColumnsMissingField()
     {
         $test = new Api($this);
-        $test->put('/posts/3?columns=id,content','{"content":"test (edited 2)"}');
+        $test->put('/posts/3?columns=id,content', '{"content":"test (edited 2)"}');
         $test->expect('1');
         $test->get('/posts/3');
         $test->expect('{"id":3,"user_id":1,"category_id":1,"content":"test (edited 2)"}');
@@ -73,7 +73,7 @@ abstract class Tests extends TestBase
     public function testEditPostColumnsExtraField()
     {
         $test = new Api($this);
-        $test->put('/posts/3?columns=id,content','{"user_id":2,"content":"test (edited 3)"}');
+        $test->put('/posts/3?columns=id,content', '{"user_id":2,"content":"test (edited 3)"}');
         $test->expect('1');
         $test->get('/posts/3');
         $test->expect('{"id":3,"user_id":1,"category_id":1,"content":"test (edited 3)"}');
@@ -83,7 +83,7 @@ abstract class Tests extends TestBase
     {
         $utf8 = json_encode('Hello world, Καλημέρα κόσμε, コンニチハ');
         $test = new Api($this);
-        $test->put('/posts/2','{"content":'.$utf8.'}');
+        $test->put('/posts/2', '{"content":'.$utf8.'}');
         $test->expect('1');
         $test->get('/posts/2');
         $test->expect('{"id":2,"user_id":1,"category_id":2,"content":'.$utf8.'}');
@@ -95,7 +95,7 @@ abstract class Tests extends TestBase
         $url_encoded = urlencode($utf8);
         $json_encoded = json_encode($utf8);
         $test = new Api($this);
-        $test->put('/posts/2','content='.$url_encoded);
+        $test->put('/posts/2', 'content='.$url_encoded);
         $test->expect('1');
         $test->get('/posts/2');
         $test->expect('{"id":2,"user_id":1,"category_id":2,"content":'.$json_encoded.'}');
@@ -107,20 +107,20 @@ abstract class Tests extends TestBase
         $test->delete('/posts/3');
         $test->expect('1');
         $test->get('/posts/3');
-        $test->expect(false,'Not found (object)');
+        $test->expect(false, 'Not found (object)');
     }
 
     public function testAddPostWithPost()
     {
         $test = new Api($this);
-        $test->post('/posts','user_id=1&category_id=1&content=test');
+        $test->post('/posts', 'user_id=1&category_id=1&content=test');
         $test->expect('4');
     }
 
     public function testEditPostWithPost()
     {
         $test = new Api($this);
-        $test->put('/posts/4','user_id=1&category_id=1&content=test+(edited)');
+        $test->put('/posts/4', 'user_id=1&category_id=1&content=test+(edited)');
         $test->expect('1');
         $test->get('/posts/4');
         $test->expect('{"id":4,"user_id":1,"category_id":1,"content":"test (edited)"}');
@@ -132,14 +132,14 @@ abstract class Tests extends TestBase
         $test->delete('/posts/4');
         $test->expect('1');
         $test->get('/posts/4');
-        $test->expect(false,'Not found (object)');
+        $test->expect(false, 'Not found (object)');
     }
 
     public function testListWithPaginate()
     {
         $test = new Api($this);
         for ($i=1;$i<=10;$i++) {
-            $test->post('/posts','{"user_id":1,"category_id":1,"content":"#'.$i.'"}');
+            $test->post('/posts', '{"user_id":1,"category_id":1,"content":"#'.$i.'"}');
             $test->expect(4+$i);
         }
         $test->get('/posts?page=2,2&order=id');
@@ -207,7 +207,7 @@ abstract class Tests extends TestBase
         $binary = base64_encode("\0abc\0\n\r\b\0");
         $base64url = rtrim(strtr($binary, '+/', '-_'), '=');
         $test = new Api($this);
-        $test->put('/categories/2','{"icon":"'.$base64url.'"}');
+        $test->put('/categories/2', '{"icon":"'.$base64url.'"}');
         $test->expect('1');
         $test->get('/categories/2');
         $test->expect('{"id":2,"name":"article","icon":"'.$binary.'"}');
@@ -216,7 +216,7 @@ abstract class Tests extends TestBase
     public function testEditCategoryWithNull()
     {
         $test = new Api($this);
-        $test->put('/categories/2','{"icon":null}');
+        $test->put('/categories/2', '{"icon":null}');
         $test->expect('1');
         $test->get('/categories/2');
         $test->expect('{"id":2,"name":"article","icon":null}');
@@ -227,7 +227,7 @@ abstract class Tests extends TestBase
         $binary = base64_encode("€ \0abc\0\n\r\b\0");
         $base64url = rtrim(strtr($binary, '+/', '-_'), '=');
         $test = new Api($this);
-        $test->put('/categories/2','icon='.$base64url);
+        $test->put('/categories/2', 'icon='.$base64url);
         $test->expect('1');
         $test->get('/categories/2');
         $test->expect('{"id":2,"name":"article","icon":"'.$binary.'"}');
@@ -243,7 +243,7 @@ abstract class Tests extends TestBase
     public function testEditCategoryWithNullWithPost()
     {
         $test = new Api($this);
-        $test->put('/categories/2','icon__is_null');
+        $test->put('/categories/2', 'icon__is_null');
         $test->expect('1');
         $test->get('/categories/2');
         $test->expect('{"id":2,"name":"article","icon":null}');
@@ -252,7 +252,7 @@ abstract class Tests extends TestBase
     public function testAddPostFailure()
     {
         $test = new Api($this);
-        $test->post('/posts','{"user_id":"a","category_id":1,"content":"tests"}');
+        $test->post('/posts', '{"user_id":"a","category_id":1,"content":"tests"}');
         $test->expect('null');
     }
 
@@ -260,7 +260,7 @@ abstract class Tests extends TestBase
     {
         $test = new Api($this);
         $test->options('/posts/2');
-        $test->expect('["Access-Control-Allow-Headers: Content-Type, X-XSRF-TOKEN","Access-Control-Allow-Methods: OPTIONS, GET, PUT, POST, DELETE, PATCH","Access-Control-Allow-Credentials: true","Access-Control-Max-Age: 1728000"]',false);
+        $test->expect('["Access-Control-Allow-Headers: Content-Type, X-XSRF-TOKEN","Access-Control-Allow-Methods: OPTIONS, GET, PUT, POST, DELETE, PATCH","Access-Control-Allow-Credentials: true","Access-Control-Max-Age: 1728000"]', false);
     }
 
     public function testHidingPasswordColumn()
@@ -273,14 +273,14 @@ abstract class Tests extends TestBase
     public function testValidatorErrorMessage()
     {
         $test = new Api($this);
-        $test->put('/posts/1','{"category_id":"a"}');
-        $test->expect(false,'{"category_id":"must be numeric"}');
+        $test->put('/posts/1', '{"category_id":"a"}');
+        $test->expect(false, '{"category_id":"must be numeric"}');
     }
 
     public function testSanitizerToStripTags()
     {
         $test = new Api($this);
-        $test->put('/categories/2','{"name":"<script>alert();</script>"}');
+        $test->put('/categories/2', '{"name":"<script>alert();</script>"}');
         $test->expect('1');
         $test->get('/categories/2');
         $test->expect('{"id":2,"name":"alert();","icon":null}');
@@ -289,21 +289,21 @@ abstract class Tests extends TestBase
     public function testErrorOnInvalidJson()
     {
         $test = new Api($this);
-        $test->post('/posts','{"}');
-        $test->expect(false,'Not found (input)');
+        $test->post('/posts', '{"}');
+        $test->expect(false, 'Not found (input)');
     }
 
     public function testErrorOnDuplicatePrimaryKey()
     {
         $test = new Api($this);
-        $test->post('/posts','{"id":1,"user_id":1,"category_id":1,"content":"blog started (duplicate)"}');
+        $test->post('/posts', '{"id":1,"user_id":1,"category_id":1,"content":"blog started (duplicate)"}');
         $test->expect('null');
     }
 
     public function testErrorOnFailingForeignKeyConstraint()
     {
         $test = new Api($this);
-        $test->post('/posts','{"user_id":3,"category_id":1,"content":"fk constraint"}');
+        $test->post('/posts', '{"user_id":3,"category_id":1,"content":"fk constraint"}');
         $test->expect('null');
     }
 
@@ -317,14 +317,14 @@ abstract class Tests extends TestBase
     public function testEditUserPassword()
     {
         $test = new Api($this);
-        $test->put('/users/1','{"password":"testtest"}');
+        $test->put('/users/1', '{"password":"testtest"}');
         $test->expect('1');
     }
 
     public function testEditUserLocation()
     {
         $test = new Api($this);
-        $test->put('/users/1','{"location":"POINT(30 20)"}');
+        $test->put('/users/1', '{"location":"POINT(30 20)"}');
         $test->expect('1');
         $test->get('/users/1?columns=id,location');
         if ($this->getEngineName()=='SQLServer') {
@@ -349,7 +349,7 @@ abstract class Tests extends TestBase
     {
         if ($this->getEngineName()!='SQLServer') {
             $test = new Api($this);
-            $test->put('/users/1','{"id":2,"password":"testtest2"}');
+            $test->put('/users/1', '{"id":2,"password":"testtest2"}');
             $test->expect('1');
             $test->get('/users/1?columns=id,username,password');
             $test->expect('{"id":1,"username":"user1","password":"testtest2"}');
@@ -360,13 +360,13 @@ abstract class Tests extends TestBase
     {
         $test = new Api($this);
         $test->get('/users/2');
-        $test->expect(false,'Not found (object)');
+        $test->expect(false, 'Not found (object)');
     }
 
     public function testEditOtherUser()
     {
         $test = new Api($this);
-        $test->put('/users/2','{"password":"testtest"}');
+        $test->put('/users/2', '{"password":"testtest"}');
         $test->expect('0');
     }
 
@@ -466,7 +466,7 @@ abstract class Tests extends TestBase
     public function testAddPostsWithNonExistingCategory()
     {
         $test = new Api($this);
-        $test->post('/posts','[{"user_id":1,"category_id":1,"content":"tests"},{"user_id":1,"category_id":15,"content":"tests"}]');
+        $test->post('/posts', '[{"user_id":1,"category_id":1,"content":"tests"},{"user_id":1,"category_id":15,"content":"tests"}]');
         $test->expect('null');
         $test->get('/posts?columns=content&filter=content,eq,tests');
         $test->expect('{"posts":{"columns":["content"],"records":[]}}');
@@ -475,7 +475,7 @@ abstract class Tests extends TestBase
     public function testAddPosts()
     {
         $test = new Api($this);
-        $test->post('/posts','[{"user_id":1,"category_id":1,"content":"tests"},{"user_id":1,"category_id":1,"content":"tests"}]');
+        $test->post('/posts', '[{"user_id":1,"category_id":1,"content":"tests"},{"user_id":1,"category_id":1,"content":"tests"}]');
         $test->expectAny();
         $test->get('/posts?columns=content&filter=content,eq,tests');
         $test->expect('{"posts":{"columns":["content"],"records":[["tests"],["tests"]]}}');
@@ -491,7 +491,7 @@ abstract class Tests extends TestBase
     public function testIncrementEventVisitors()
     {
         $test = new Api($this);
-        $test->patch('/events/1','{"visitors":11}');
+        $test->patch('/events/1', '{"visitors":11}');
         $test->expect('1');
         $test->get('/events/1');
         $test->expect('{"id":1,"name":"Launch","datetime":"2016-01-01 13:01:01","visitors":11}');
@@ -500,7 +500,7 @@ abstract class Tests extends TestBase
     public function testIncrementEventVisitorsWithZero()
     {
         $test = new Api($this);
-        $test->patch('/events/1','{"visitors":0}');
+        $test->patch('/events/1', '{"visitors":0}');
         $test->expect('1');
         $test->get('/events/1');
         $test->expect('{"id":1,"name":"Launch","datetime":"2016-01-01 13:01:01","visitors":11}');
@@ -509,7 +509,7 @@ abstract class Tests extends TestBase
     public function testDecrementEventVisitors()
     {
         $test = new Api($this);
-        $test->patch('/events/1','{"visitors":-5}');
+        $test->patch('/events/1', '{"visitors":-5}');
         $test->expect('1');
         $test->get('/events/1');
         $test->expect('{"id":1,"name":"Launch","datetime":"2016-01-01 13:01:01","visitors":6}');
@@ -527,15 +527,15 @@ abstract class Tests extends TestBase
         $test = new Api($this);
         $test->get('/tags?transform=1');
         $test->expect('{"tags":[{"id":1,"name":"funny"},{"id":2,"name":"important"}]}');
-        $test->put('/tags/1,2','[{"name":"funny"},{"name":"important"}]');
+        $test->put('/tags/1,2', '[{"name":"funny"},{"name":"important"}]');
         $test->expect('[1,1]');
     }
 
     public function testUpdateMultipleTagsTooManyIds()
     {
         $test = new Api($this);
-        $test->put('/tags/1,2,3','[{"name":"funny!!!"},{"name":"important"}]');
-        $test->expect(false,'Not found (subject)');
+        $test->put('/tags/1,2,3', '[{"name":"funny!!!"},{"name":"important"}]');
+        $test->expect(false, 'Not found (subject)');
         $test->get('/tags?transform=1');
         $test->expect('{"tags":[{"id":1,"name":"funny"},{"id":2,"name":"important"}]}');
     }
@@ -543,7 +543,7 @@ abstract class Tests extends TestBase
     public function testUpdateMultipleTagsWithoutFields()
     {
         $test = new Api($this);
-        $test->put('/tags/1,2','[{"name":"funny!!!"},{}]');
+        $test->put('/tags/1,2', '[{"name":"funny!!!"},{}]');
         $test->expect('null');
         $test->get('/tags?transform=1');
         $test->expect('{"tags":[{"id":1,"name":"funny"},{"id":2,"name":"important"}]}');
@@ -552,7 +552,7 @@ abstract class Tests extends TestBase
     public function testDeleteMultipleTags()
     {
         $test = new Api($this);
-        $test->post('/tags','[{"name":"extra"},{"name":"more"}]');
+        $test->post('/tags', '[{"name":"extra"},{"name":"more"}]');
         $test->expect('[3,4]');
         $test->delete('/tags/3,4');
         $test->expect('[1,1]');
@@ -593,9 +593,9 @@ abstract class Tests extends TestBase
     {
         $test = new Api($this);
         if (static::$capabilities & self::JSON) {
-            $test->put('/products/1','{"properties":{"depth":false,"model":"TRX-120","width":100,"height":123}}');
+            $test->put('/products/1', '{"properties":{"depth":false,"model":"TRX-120","width":100,"height":123}}');
         } else {
-            $test->put('/products/1','{"properties":"{\"depth\":false,\"model\":\"TRX-120\",\"width\":100,\"height\":123}"}');
+            $test->put('/products/1', '{"properties":"{\"depth\":false,\"model\":\"TRX-120\",\"width\":100,\"height\":123}"}');
         }
         $test->expect('1');
         $test->get('/products/1?columns=id,properties');
@@ -610,9 +610,9 @@ abstract class Tests extends TestBase
     {
         $test = new Api($this);
         if (static::$capabilities & self::JSON) {
-            $test->post('/products','{"name":"Laptop","price":"1299.99","properties":{}}');
+            $test->post('/products', '{"name":"Laptop","price":"1299.99","properties":{}}');
         } else {
-            $test->post('/products','{"name":"Laptop","price":"1299.99","properties":"{}"}');
+            $test->post('/products', '{"name":"Laptop","price":"1299.99","properties":"{}"}');
         }
         $test->expect('2');
         $test->get('/products/2?columns=id,created_at,deleted_at');

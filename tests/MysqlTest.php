@@ -31,7 +31,7 @@ class MysqlTest extends Tests
             die("Connect failed: ".mysqli_connect_error()."\n");
         }
 
-        mysqli_set_charset($db,'utf8');
+        mysqli_set_charset($db, 'utf8');
 
         return $db;
     }
@@ -92,16 +92,19 @@ class MysqlTest extends Tests
         $contents = file_get_contents($fixture);
 
         if (!($capabilities & self::GIS)) {
-            $contents = preg_replace('/(POINT|POLYGON) NOT NULL/i','text NOT NULL',$contents);
-            $contents = preg_replace('/ST_GeomFromText/i','concat',$contents);
+            $contents = preg_replace('/(POINT|POLYGON) NOT NULL/i', 'text NOT NULL', $contents);
+            $contents = preg_replace('/ST_GeomFromText/i', 'concat', $contents);
         }
         if (!($capabilities & self::JSON)) {
-            $contents = preg_replace('/JSON NOT NULL/i','text NOT NULL',$contents);
+            $contents = preg_replace('/JSON NOT NULL/i', 'text NOT NULL', $contents);
         }
 
         $i=0;
         if (mysqli_multi_query($db, $contents)) {
-            do { $i++; mysqli_next_result($db); } while (mysqli_more_results($db));
+            do {
+                $i++;
+                mysqli_next_result($db);
+            } while (mysqli_more_results($db));
         }
 
         if (mysqli_errno($db)) {

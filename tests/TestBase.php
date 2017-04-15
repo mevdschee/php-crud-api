@@ -13,7 +13,7 @@ abstract class TestBase extends \PHPUnit_Framework_TestCase
         $db = static::connect($config);
         static::checkVersion($db);
         $capabilities = static::getCapabilities($db);
-        static::seedDatabase($db,$capabilities);
+        static::seedDatabase($db, $capabilities);
         static::disconnect($db);
         // set params for test
         static::$config = $config;
@@ -26,16 +26,15 @@ abstract class TestBase extends \PHPUnit_Framework_TestCase
     const GIS = 1;
     const JSON = 2;
 
-    public abstract function getEngineName();
+    abstract public function getEngineName();
 
-    public abstract function connect($db);
+    abstract public function connect($db);
 
-    public abstract function disconnect($db);
+    abstract public function disconnect($db);
 
-    public abstract function checkVersion($db);
+    abstract public function checkVersion($db);
 
-    public abstract function getCapabilities($db);
+    abstract public function getCapabilities($db);
 
-    public abstract function seedDatabase($db,$capabilities);
-
+    abstract public function seedDatabase($db, $capabilities);
 }

@@ -49,7 +49,7 @@ class SqliteTest extends Tests
         $major = 3;
         $minor = 0;
         $version = \SQLite3::version();
-        $v = explode('.',$version['versionString']);
+        $v = explode('.', $version['versionString']);
         if ($v[0]<$major || ($v[0]==$major && $v[1]<$minor)) {
             die("Detected SQLite $v[0].$v[1], but only $major.$minor and up are supported\n");
         }
@@ -77,10 +77,10 @@ class SqliteTest extends Tests
         $contents = file_get_contents($fixture);
 
         if (!($capabilities & self::GIS)) {
-            $contents = preg_replace('/GEOMETRY NOT NULL/i','text NOT NULL',$contents);
+            $contents = preg_replace('/GEOMETRY NOT NULL/i', 'text NOT NULL', $contents);
         }
         if (!($capabilities & self::JSON)) {
-            $contents = preg_replace('/JSON NOT NULL/i','text NOT NULL',$contents);
+            $contents = preg_replace('/JSON NOT NULL/i', 'text NOT NULL', $contents);
         }
 
         $queries = preg_split('/;\s*\n/', $contents);

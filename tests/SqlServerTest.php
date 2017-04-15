@@ -30,7 +30,7 @@ class SqlServerTest extends Tests
         $db = sqlsrv_connect($config['hostname'], $connectionInfo);
 
         if (!$db) {
-            die("Connect failed: ".print_r( sqlsrv_errors(), true));
+            die("Connect failed: ".print_r(sqlsrv_errors(), true));
         }
 
         return $db;
@@ -57,7 +57,7 @@ class SqlServerTest extends Tests
         $minor = 0;
         $build = 3000;
         $version = sqlsrv_server_info($db);
-        $v = explode('.',$version['SQLServerVersion']);
+        $v = explode('.', $version['SQLServerVersion']);
         if ($v[0]<$major || ($v[0]==$major && $v[1]<$minor) || ($v[0]==$major && $v[1]==$minor && $v[2]<$build)) {
             die("Detected SQL Server $v[0].$v[1].$v[2], but only $major.$minor.$build and up are supported\n");
         }
@@ -93,7 +93,7 @@ class SqlServerTest extends Tests
         foreach ($queries as $i=>$query) {
             if (!sqlsrv_query($db, $query)) {
                 $i++;
-                die("Loading '$fixture' failed on statemement #$i with error:\n".print_r( sqlsrv_errors(), true)."\n");
+                die("Loading '$fixture' failed on statemement #$i with error:\n".print_r(sqlsrv_errors(), true)."\n");
             }
         }
     }

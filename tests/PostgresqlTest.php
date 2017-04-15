@@ -20,7 +20,9 @@ class PostgresqlTest extends Tests
      */
     public function connect($config)
     {
-        $e = function ($v) { return str_replace(array('\'','\\'),array('\\\'','\\\\'),$v); };
+        $e = function ($v) {
+            return str_replace(array('\'','\\'), array('\\\'','\\\\'), $v);
+        };
         $hostname = $e($config['hostname']);
         $database = $e($config['database']);
         $username = $e($config['username']);
@@ -50,7 +52,7 @@ class PostgresqlTest extends Tests
         $major = 9;
         $minor = 1;
         $version = pg_version();
-        $v = explode('.',$version['server']);
+        $v = explode('.', $version['server']);
         if ($v[0]<$major || ($v[0]==$major && $v[1]<$minor)) {
             die("Detected PostgreSQL $v[0].$v[1], but only $major.$minor and up are supported\n");
         }
@@ -67,15 +69,15 @@ class PostgresqlTest extends Tests
         $major = 9;
         $minor = 4;
         $version = pg_version();
-        $v = explode('.',$version['server']);
+        $v = explode('.', $version['server']);
         if ($v[0]>$major || ($v[0]==$major && $v[1]>=$minor)) {
             $capabilities |= self::JSON;
         }
         $extensions = pg_fetch_all(pg_query($db, "SELECT * FROM pg_extension;"));
         foreach ($extensions as $extension) {
-          if ($extension['extname'] === 'postgis') {
-            $capabilities |= self::GIS;
-          }
+            if ($extension['extname'] === 'postgis') {
+                $capabilities |= self::GIS;
+            }
         }
         return $capabilities;
     }
@@ -85,17 +87,17 @@ class PostgresqlTest extends Tests
      *
      * @return void
      */
-    public function seedDatabase($db,$capabilities)
+    public function seedDatabase($db, $capabilities)
     {
         $fixture = __DIR__.'/data/blog_postgresql.sql';
         $contents = file_get_contents($fixture);
 
         if (!($capabilities & self::GIS)) {
-            $contents = preg_replace('/(geometry) NOT NULL/i','text NOT NULL',$contents);
-            $contents = preg_replace('/ST_GeomFromText/i','concat',$contents);
+            $contents = preg_replace('/(geometry) NOT NULL/i', 'text NOT NULL', $contents);
+            $contents = preg_replace('/ST_GeomFromText/i', 'concat', $contents);
         }
         if (!($capabilities & self::JSON)) {
-            $contents = preg_replace('/JSONB? NOT NULL/i','text NOT NULL',$contents);
+            $contents = preg_replace('/JSONB? NOT NULL/i', 'text NOT NULL', $contents);
         }
 
         $queries = preg_split('/;\s*\n/', $contents);
@@ -104,7 +106,7 @@ class PostgresqlTest extends Tests
         foreach ($queries as $i=>$query) {
             if (!pg_query($db, $query.';')) {
                 $i++;
-                die("Loading '$fixture' failed on statemement #$i with error:\n".print_r( pg_last_error($db), true)."\n");
+                die("Loading '$fixture' failed on statemement #$i with error:\n".print_r(pg_last_error($db), true)."\n");
             }
         }
     }
