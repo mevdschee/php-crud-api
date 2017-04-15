@@ -6,10 +6,11 @@ abstract class TestBase extends PHPUnit_Framework_TestCase
 {
     public static function setUpBeforeClass()
     {
-        if (!Config::$config || !isset(Config::$config[static::NAME])) {
+        $name = static::getEngineName();
+        if (!Config::$config || !isset(Config::$config[$name])) {
             self::markTestSkipped("Configuration in 'Config.php' not found.");
         }
-        $config = Config::$config[static::NAME];
+        $config = Config::$config[$name];
         $db = static::connect($config);
         static::checkVersion($db);
         $capabilities = static::getCapabilities($db);
@@ -25,6 +26,8 @@ abstract class TestBase extends PHPUnit_Framework_TestCase
 
     const GIS = 1;
     const JSON = 2;
+
+    public abstract function getEngineName();
 
     public abstract function connect($db);
 

@@ -4,7 +4,15 @@ require_once(__DIR__ . '/Tests.php');
 
 class SqlServerTest extends Tests
 {
-    const NAME = 'SQLServer';
+    /**
+     * Gets the name of the database engine
+     *
+     * @return string Name of the database engine
+     */
+    public function getEngineName()
+    {
+        return 'SQLServer';
+    }
 
     /**
      * Connects to the Database

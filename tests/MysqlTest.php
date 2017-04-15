@@ -4,7 +4,15 @@ require_once(__DIR__ . '/Tests.php');
 
 class MysqlTest extends Tests
 {
-    const NAME = 'MySQL';
+    /**
+     * Gets the name of the database engine
+     *
+     * @return string Name of the database engine
+     */
+    public function getEngineName()
+    {
+        return 'MySQL';
+    }
 
     /**
      * Connects to the Database

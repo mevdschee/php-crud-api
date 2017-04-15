@@ -4,7 +4,15 @@ require_once(__DIR__ . '/Tests.php');
 
 class PostgresqlTest extends Tests
 {
-    const NAME = 'PostgreSQL';
+    /**
+     * Gets the name of the database engine
+     *
+     * @return string Name of the database engine
+     */
+    public function getEngineName()
+    {
+        return 'PostgreSQL';
+    }
 
     /**
      * Connects to the Database

@@ -26,7 +26,7 @@ class API
     {
         $this->test = $test;
         $this->config = $test::$config;
-        $this->config['dbengine'] = $test::NAME;
+        $this->config['dbengine'] = $test->getEngineName();
     }
 
     private function action($method,$url,$data='')
@@ -440,7 +440,7 @@ abstract class Tests extends TestBase
         $test->put('/users/1','{"location":"POINT(30 20)"}');
         $test->expect('1');
         $test->get('/users/1?columns=id,location');
-        if (static::NAME=='SQLServer') {
+        if ($this->getEngineName()=='SQLServer') {
             $test->expect('{"id":1,"location":"POINT (30 20)"}');
         } else {
             $test->expect('{"id":1,"location":"POINT(30 20)"}');
@@ -451,7 +451,7 @@ abstract class Tests extends TestBase
     {
         $test = new API($this);
         $test->get('/users?columns=id,location');
-        if (static::NAME=='SQLServer') {
+        if ($this->getEngineName()=='SQLServer') {
             $test->expect('{"users":{"columns":["id","location"],"records":[[1,"POINT (30 20)"]]}}');
         } else {
             $test->expect('{"users":{"columns":["id","location"],"records":[[1,"POINT(30 20)"]]}}');
@@ -460,7 +460,7 @@ abstract class Tests extends TestBase
 
     public function testEditUserWithId()
     {
-        if (static::NAME!='SQLServer') {
+        if ($this->getEngineName()!='SQLServer') {
             $test = new API($this);
             $test->put('/users/1','{"id":2,"password":"testtest2"}');
             $test->expect('1');

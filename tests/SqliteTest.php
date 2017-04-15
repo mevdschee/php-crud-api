@@ -4,7 +4,15 @@ require_once(__DIR__ . '/Tests.php');
 
 class SqliteTest extends Tests
 {
-    const NAME = 'SQLite';
+    /**
+     * Gets the name of the database engine
+     *
+     * @return string Name of the database engine
+     */
+    public function getEngineName()
+    {
+        return 'SQLite';
+    }
 
     /**
      * Connects to the Database
