@@ -62,8 +62,11 @@ class MysqlTest extends Tests
     {
         $capabilities = 0;
         $version = mysqli_get_server_version($db);
-        if ($version>50600) {
+        if ($version>=50600) {
             $capabilities |= self::GIS;
+        }
+        if ($version>=50700) {
+            $capabilities |= self::JSON;
         }
         return $capabilities;
     }
@@ -77,8 +80,18 @@ class MysqlTest extends Tests
     {
         $fixture = __DIR__.'/data/blog_mysql.sql';
 
+        $contents = file_get_contents($fixture);
+
+        if (!($capabilities & self::GIS)) {
+            $contents = preg_replace('/(POINT|POLYGON) NOT NULL/i','text NOT NULL',$contents);
+            $contents = preg_replace('/ST_GeomFromText/i','concat',$contents);
+        }
+        if (!($capabilities & self::JSON)) {
+            $contents = preg_replace('/JSON NOT NULL/i','text NOT NULL',$contents);
+        }
+
         $i=0;
-        if (mysqli_multi_query($db, file_get_contents($fixture))) {
+        if (mysqli_multi_query($db, $contents)) {
             do { $i++; mysqli_next_result($db); } while (mysqli_more_results($db));
         }
 

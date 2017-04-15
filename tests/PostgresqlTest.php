@@ -55,6 +55,13 @@ class PostgresqlTest extends Tests
     public function getCapabilities($db)
     {
         $capabilities = 0;
+        $major = 9;
+        $minor = 4;
+        $version = pg_version();
+        $v = explode('.',$version['server']);
+        if ($v[0]>$major || ($v[0]==$major && $v[1]>=$minor)) {
+            $capabilities |= self::JSON;
+        }
         $extensions = pg_fetch_all(pg_query($db, "SELECT * FROM pg_extension;"));
         foreach ($extensions as $extension) {
           if ($extension['extname'] === 'postgis') {
@@ -72,7 +79,17 @@ class PostgresqlTest extends Tests
     public function seedDatabase($db,$capabilities)
     {
         $fixture = __DIR__.'/data/blog_postgresql.sql';
-        $queries = preg_split('/;\s*\n/', file_get_contents($fixture));
+        $contents = file_get_contents($fixture);
+
+        if (!($capabilities & self::GIS)) {
+            $contents = preg_replace('/(geometry) NOT NULL/i','text NOT NULL',$contents);
+            $contents = preg_replace('/ST_GeomFromText/i','concat',$contents);
+        }
+        if (!($capabilities & self::JSON)) {
+            $contents = preg_replace('/JSONB? NOT NULL/i','text NOT NULL',$contents);
+        }
+
+        $queries = preg_split('/;\s*\n/', $contents);
         array_pop($queries);
 
         foreach ($queries as $i=>$query) {

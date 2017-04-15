@@ -61,7 +61,9 @@ class SqlServerTest extends Tests
      */
     public function getCapabilities($db)
     {
-        return self::GIS;
+        $capabilities = 0;
+        $capabilities |= self::GIS;
+        return $capabilities;
     }
 
 
@@ -73,8 +75,9 @@ class SqlServerTest extends Tests
     public function seedDatabase($db, $capabilities)
     {
         $fixture = __DIR__.'/data/blog_sqlserver.sql';
+        $contents = file_get_contents($fixture);
 
-        $queries = preg_split('/\n\s*GO\s*\n/', file_get_contents($fixture));
+        $queries = preg_split('/\n\s*GO\s*\n/', $contents);
         array_pop($queries);
 
         foreach ($queries as $i=>$query) {

@@ -54,7 +54,7 @@ class SqliteTest extends Tests
     public function getCapabilities($db)
     {
         $capabilities = 0;
-        
+        $capabilities |= self::JSON;
         return $capabilities;
     }
 
@@ -66,8 +66,9 @@ class SqliteTest extends Tests
     public function seedDatabase($db, $capabilities)
     {
         $fixture = __DIR__.'/data/blog_sqlite.sql';
+        $contents = file_get_contents($fixture);
 
-        $queries = preg_split('/;\s*\n/', file_get_contents($fixture));
+        $queries = preg_split('/;\s*\n/', $contents);
         array_pop($queries);
 
         foreach ($queries as $i=>$query) {

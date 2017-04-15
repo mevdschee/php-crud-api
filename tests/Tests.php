@@ -568,7 +568,7 @@ abstract class Tests extends TestBase
 
     public function testSpatialFilterWithin()
     {
-        if (static::$config['dbengine']!='SQLite') {
+        if (static::$capabilities & self::GIS) {
             $test = new API($this, static::$config);
             $test->get('/users?columns=id,username&filter=location,swi,POINT(30 20)');
             $test->expect('{"users":{"columns":["id","username"],"records":[[1,"user1"]]}}');
@@ -683,32 +683,52 @@ abstract class Tests extends TestBase
     {
         $test = new API($this, static::$config);
         $test->get('/products?columns=id,properties&transform=1');
-        $test->expect('{"products":[{"id":1,"properties":{"depth":false,"model":"TRX-120","width":100,"height":null}}]}');
+        if (static::$capabilities & self::JSON) {
+            $test->expect('{"products":[{"id":1,"properties":{"depth":false,"model":"TRX-120","width":100,"height":null}}]}');
+        } else {
+            $test->expect('{"products":[{"id":1,"properties":"{\"depth\":false,\"model\":\"TRX-120\",\"width\":100,\"height\":null}"}]}');
+        }
     }
 
     public function testReadProductProperties()
     {
         $test = new API($this, static::$config);
         $test->get('/products/1?columns=id,properties');
-        $test->expect('{"id":1,"properties":{"depth":false,"model":"TRX-120","width":100,"height":null}}');
+        if (static::$capabilities & self::JSON) {
+            $test->expect('{"id":1,"properties":{"depth":false,"model":"TRX-120","width":100,"height":null}}');
+        } else {
+            $test->expect('{"id":1,"properties":"{\"depth\":false,\"model\":\"TRX-120\",\"width\":100,\"height\":null}"}');
+        }
     }
 
     public function testWriteProductProperties()
     {
         $test = new API($this, static::$config);
-        $test->put('/products/1','{"properties":{"depth":false,"model":"TRX-120","width":100,"height":123}}');
+        if (static::$capabilities & self::JSON) {
+            $test->put('/products/1','{"properties":{"depth":false,"model":"TRX-120","width":100,"height":123}}');
+        } else {
+            $test->put('/products/1','{"properties":"{\"depth\":false,\"model\":\"TRX-120\",\"width\":100,\"height\":123}"}');
+        }
         $test->expect('1');
         $test->get('/products/1?columns=id,properties');
-        $test->expect('{"id":1,"properties":{"depth":false,"model":"TRX-120","width":100,"height":123}}');
+        if (static::$capabilities & self::JSON) {
+            $test->expect('{"id":1,"properties":{"depth":false,"model":"TRX-120","width":100,"height":123}}');
+        } else {
+            $test->expect('{"id":1,"properties":"{\"depth\":false,\"model\":\"TRX-120\",\"width\":100,\"height\":123}"}');
+        }
     }
 
     public function testAddProducts()
     {
         $test = new API($this, static::$config);
-        $test->post('/products','{"name":"Laptop","price":"1299.99","properties":{}}');
+        if (static::$capabilities & self::JSON) {
+            $test->post('/products','{"name":"Laptop","price":"1299.99","properties":{}}');
+        } else {
+            $test->post('/products','{"name":"Laptop","price":"1299.99","properties":"{}"}');
+        }
         $test->expect('2');
-        $test->get('/products/2');
-        $test->expect('{"id":2,"name":"Laptop","price":"1299.99","properties":{},"created_at":"2013-12-11 10:09:08","deleted_at":null}');
+        $test->get('/products/2?columns=id,created_at,deleted_at');
+        $test->expect('{"id":2,"created_at":"2013-12-11 10:09:08","deleted_at":null}');
     }
 
     public function testSoftDeleteProducts()
