@@ -93,7 +93,7 @@ class PostgresqlTest extends Tests
         $contents = file_get_contents($fixture);
 
         if (!($capabilities & self::GIS)) {
-            $contents = preg_replace('/(geometry) NOT NULL/i', 'text NOT NULL', $contents);
+            $contents = preg_replace('/(geometry)( NOT)? NULL/i', 'text\2 NULL', $contents);
             $contents = preg_replace('/ST_GeomFromText/i', 'concat', $contents);
             $contents = preg_replace('/CREATE EXTENSION IF NOT EXISTS postgis;/i', '', $contents);
         }

@@ -92,7 +92,7 @@ class MysqlTest extends Tests
         $contents = file_get_contents($fixture);
 
         if (!($capabilities & self::GIS)) {
-            $contents = preg_replace('/(POINT|POLYGON) NOT NULL/i', 'text NOT NULL', $contents);
+            $contents = preg_replace('/(POINT|POLYGON)( NOT)? NULL/i', 'text\2 NULL', $contents);
             $contents = preg_replace('/ST_GeomFromText/i', 'concat', $contents);
         }
         if (!($capabilities & self::JSON)) {
