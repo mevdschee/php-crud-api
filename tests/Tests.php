@@ -1,5 +1,5 @@
 <?php
-namespace PhpCrudApi\Tests;
+namespace Mevdschee\PhpCrudApi\Tests;
 
 abstract class Tests extends TestBase
 {

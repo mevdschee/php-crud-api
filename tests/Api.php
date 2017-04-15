@@ -1,5 +1,5 @@
 <?php
-namespace PhpCrudApi\Tests;
+namespace Mevdschee\PhpCrudApi\Tests;
 
 require_once(__DIR__ . '/../api.php');
 
@@ -13,7 +13,7 @@ class Api
     protected $config;
 
     /**
-     * @var PhpCrudApi\Tests\BaseTest
+     * @var Mevdschee\PhpCrudApi\Tests\BaseTest
      */
     protected $test;
 

@@ -1,5 +1,5 @@
 <?php
-namespace PhpCrudApi\Tests;
+namespace Mevdschee\PhpCrudApi\Tests;
 
 class SqlServerTest extends Tests
 {
