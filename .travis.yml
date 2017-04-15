@@ -22,7 +22,7 @@ before_install:
   - psql -c 'create database testing;' -U postgres
   - psql -U postgres -c "create extension postgis"
   # - mysql -e 'CREATE DATABASE testing;'
-  - cp tests/config.php.travis tests/config.php
+  - cp tests/Config.php.travis tests/Config.php
 
 script:
   - curl https://phar.phpunit.de/phpunit-4.8.phar -L -o phpunit.phar && chmod +x phpunit.phar
