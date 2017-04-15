@@ -77,7 +77,7 @@ class SqlServerTest extends Tests
         array_pop($queries);
 
         foreach ($queries as $i=>$query) {
-            if (!sqlsrv_query($conn, $query)) {
+            if (!sqlsrv_query($db, $query)) {
                 $i++;
                 die("Loading '$fixture' failed on statemement #$i with error:\n".print_r( sqlsrv_errors(), true)."\n");
             }
