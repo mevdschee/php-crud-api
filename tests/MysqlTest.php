@@ -47,7 +47,7 @@ class MysqlTest extends Tests
         $major = 5;
         $minor = 5;
         $version = mysqli_get_server_version($db);
-        $v = array(floor($version/10000),floor($version/100));
+        $v = array(floor($version/10000),floor(($version%10000)/100));
         if ($v[0]<$major || ($v[0]==$major && $v[1]<$minor)) {
             die("Detected MySQL $v[0].$v[1], but only $major.$minor and up are supported\n");
         }
