@@ -1,7 +1,7 @@
 <?php
 
-require __DIR__.'/config.php';
-require __DIR__.'/../api.php';
+require_once(__DIR__ . '/TestBase.php');
+require_once(__DIR__ . '/../api.php');
 
 class API
 {
@@ -113,24 +113,8 @@ class API
     }
 }
 
-abstract class PHP_CRUD_API_Test extends PHPUnit_Framework_TestCase
+abstract class Tests extends TestBase
 {
-    public static $config;
-
-    public abstract function seedDatabase();
-
-    protected function setConfig($dbengine = '')
-    {
-        foreach (PHP_CRUD_API_Config::$config as $database) {
-            if ($database['dbengine'] == $dbengine) {
-                static::$config = $database;
-                return true;
-            }
-        }
-        self::markTestSkipped("Configuration for {$dbengine} database not found.");
-        return false;
-    }
-
     public function testListPosts()
     {
         $test = new API($this, static::$config);

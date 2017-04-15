@@ -1,6 +1,6 @@
 <?php
 
-class PHP_CRUD_API_Config
+class Config
 {
     /**
      * Configure one or more database connections as associative arrays.

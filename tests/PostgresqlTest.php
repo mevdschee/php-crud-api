@@ -1,13 +1,67 @@
 <?php
 
-require_once(__DIR__ . '/tests.php');
+require_once(__DIR__ . '/Tests.php');
 
-class PostgresqlTest extends PHP_CRUD_API_Test
+class PostgresqlTest extends Tests
 {
-    public static function setUpBeforeClass()
+    /**
+     * Connects to the Database
+     *
+     * @return object Database connection
+     */
+    public function connect($config)
     {
-        static::setConfig('PostgreSQL');
-        self::seedDatabase();
+        $e = function ($v) { return str_replace(array('\'','\\'),array('\\\'','\\\\'),$v); };
+        $hostname = $e($config['hostname']);
+        $database = $e($config['database']);
+        $username = $e($config['username']);
+        $password = $e($config['password']);
+        $connectionString = "host='$hostname' dbname='$database' user='$username' password='$password' options='--client_encoding=UTF8'";
+
+        return pg_connect($connectionString);
+    }
+
+    /**
+     * Disconnects from the Database
+     *
+     * @return boolean Success
+     */
+    public function disconnect($db)
+    {
+        return pg_close($db);
+    }
+
+    /**
+     * Checks the version of the Database
+     *
+     * @return void
+     */
+    public function checkVersion($db)
+    {
+        $major = 9;
+        $minor = 1;
+        $version = pg_version();
+        $v = explode('.',$version['server']);
+        if ($v[0]<$major || ($v[0]==$major && $v[1]<$minor)) {
+            die("Detected PostgreSQL $v[0].$v[1], but only $major.$minor and up are supported\n");
+        }
+    }
+
+    /**
+     * Gets the capabilities of the Database
+     *
+     * @return int Capabilites
+     */
+    public function getCapabilities($db)
+    {
+        $capabilities = 0;
+        $extensions = pg_fetch_all(pg_query($db, "SELECT * FROM pg_extension;"));
+        foreach ($extensions as $extension) {
+          if ($extension['extname'] === 'postgis') {
+            $capabilities |= self::GIS;
+          }
+        }
+        return $capabilities;
     }
 
     /**
@@ -15,27 +69,9 @@ class PostgresqlTest extends PHP_CRUD_API_Test
      *
      * @return void
      */
-    public function seedDatabase()
+    public function seedDatabase($db,$capabilities)
     {
-        if (static::$config['database']=='{{test_database}}') {
-            die("Configure database in 'config.php' before running tests.\n");
-        }
-
-        $fixture = __DIR__.'/data/blog_'.strtolower(static::$config['dbengine']).'.sql';
-
-        $e = function ($v) { return str_replace(array('\'','\\'),array('\\\'','\\\\'),$v); };
-        $hostname = $e(static::$config['hostname']);
-        $database = $e(static::$config['database']);
-        $username = $e(static::$config['username']);
-        $password = $e(static::$config['password']);
-        $conn_string = "host='$hostname' dbname='$database' user='$username' password='$password' options='--client_encoding=UTF8'";
-
-        $db = pg_connect($conn_string);
-
-        if (!$db) {
-            die("Connect failed: ". pg_last_error());
-        }
-
+        $fixture = __DIR__.'/data/blog_postgresql.sql';
         $queries = preg_split('/;\s*\n/', file_get_contents($fixture));
         array_pop($queries);
 
@@ -45,7 +81,5 @@ class PostgresqlTest extends PHP_CRUD_API_Test
                 die("Loading '$fixture' failed on statemement #$i with error:\n".print_r( pg_last_error($db), true)."\n");
             }
         }
-
-        pg_close($db);
     }
 }

@@ -1,45 +1,77 @@
 <?php
 
-require_once(__DIR__ . '/tests.php');
+require_once(__DIR__ . '/Tests.php');
 
-class SqlServerTest extends PHP_CRUD_API_Test
+class SqlServerTest extends Tests
 {
-    public static function setUpBeforeClass()
+    /**
+     * Connects to the Database
+     *
+     * @return object Database connection
+     */
+    public function connect($config)
     {
-        self::setConfig('SQLServer');
+        $connectionInfo = array(
+            'UID' => $config['username'],
+            'PWD' => $config['password'],
+            'Database' => $config['database'],
+            'CharacterSet' => 'UTF-8',
+        );
 
-        if (static::$config['database']=='{{test_database}}') {
-            die("Configure database in 'config.php' before running tests.\n");
+        $db = sqlsrv_connect($config['hostname'], $dbectionInfo);
+
+        if (!$db) {
+            die("Connect failed: ".print_r( sqlsrv_errors(), true));
         }
 
-        self::seedDatabase();
+        return $db;
     }
+
+    /**
+     * Disconnects from the Database
+     *
+     * @return boolean Success
+     */
+    public function disconnect($db)
+    {
+        return sqlsrv_close($db);
+    }
+
+    /**
+     * Checks the version of the Database
+     *
+     * @return void
+     */
+    public function checkVersion($db)
+    {
+        $major = 5;
+        $minor = 5;
+        $version = sqlsrv_server_info($db);
+        $v = explode('.',$version['SQLServerVersion']);
+        if ($v[0]<$major || ($v[0]==$major && $v[1]<$minor)) {
+            die("Detected MySQL $v[0].$v[1], but only $major.$minor and up are supported\n");
+        }
+    }
+
+    /**
+     * Gets the capabilities of the Database
+     *
+     * @return int Capabilites
+     */
+    public function getCapabilities($db)
+    {
+        return self::GIS;
+    }
+
 
     /**
      * Seeds the database for this connection
      *
      * @return void
      */
-    public function seedDatabase()
+    public function seedDatabase($db, $capabilities)
     {
-        if (static::$config['database']=='{{test_database}}') {
-            die("Configure database in 'config.php' before running tests.\n");
-        }
-
-        $fixture = __DIR__.'/data/blog_'.strtolower(static::$config['dbengine']).'.sql';
-
-        $connectionInfo = array(
-            'UID' => static::$config['username'],
-            'PWD' => static::$config['password'],
-            'Database' => static::$config['database'],
-            'CharacterSet' => 'UTF-8',
-        );
-
-        $conn = sqlsrv_connect(static::$config['hostname'], $connectionInfo);
-
-        if (!$conn) {
-            die("Connect failed: ".print_r( sqlsrv_errors(), true));
-        }
+        $fixture = __DIR__.'/data/blog_sqlserver.sql';
 
         $queries = preg_split('/\n\s*GO\s*\n/', file_get_contents($fixture));
         array_pop($queries);
@@ -50,7 +82,5 @@ class SqlServerTest extends PHP_CRUD_API_Test
                 die("Loading '$fixture' failed on statemement #$i with error:\n".print_r( sqlsrv_errors(), true)."\n");
             }
         }
-
-        sqlsrv_close($conn);
     }
 }
