@@ -18,7 +18,7 @@ class SqlServerTest extends Tests
             'CharacterSet' => 'UTF-8',
         );
 
-        $db = sqlsrv_connect($config['hostname'], $dbectionInfo);
+        $db = sqlsrv_connect($config['hostname'], $connectionInfo);
 
         if (!$db) {
             die("Connect failed: ".print_r( sqlsrv_errors(), true));
