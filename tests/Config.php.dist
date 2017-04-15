@@ -9,30 +9,26 @@ class Config
      * @var array
      */
     public static $config = array(
-        array(
-            'dbengine' => 'MySQL',              // 'MySQL', 'SQLServer', 'PostgreSQL' or 'SQLite'
+        'MySQL' => array(
             'hostname' => '{{test_hostname}}',  // 'localhost' for MySQL, '(Local)' for SQLServer, empty for SQLite
             'username' => '{{test_username}}',  // May be empty on SQLServer or SQLite
             'password' => '{{test_password}}',  // May be empty on SQLServer or SQLite
             'database' => '{{test_database}}',  // NB: Use an empty database, data will be LOST!
         ),
         /* Uncomment and update for any databases you want to use.
-        array(
-            'dbengine' => 'PostgreSQL',
+        'PostgreSQL' => array(
             'hostname' => '{{test_hostname}}',
             'username' => '{{test_username}}',
             'password' => '{{test_password}}',
             'database' => '{{test_database}}',
         ),
-        array(
-            'dbengine' => 'SQLite',
+        'SQLite' => array(
             'hostname' => '{{test_hostname}}',
             'username' => '{{test_username}}',
             'password' => '{{test_password}}',
             'database' => '{{test_database}}',
         ),
-        array(
-            'dbengine' => 'SQLServer',
+        'SQLServer' => array(
             'hostname' => '{{test_hostname}}',
             'username' => '{{test_username}}',
             'password' => '{{test_password}}',

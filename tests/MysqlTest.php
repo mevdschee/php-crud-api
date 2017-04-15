@@ -4,6 +4,8 @@ require_once(__DIR__ . '/Tests.php');
 
 class MysqlTest extends Tests
 {
+    const NAME = 'MySQL';
+
     /**
      * Connects to the Database
      *

@@ -9,27 +9,19 @@ class Config
      * @var array
      */
     public static $config = array(
-        /* MySQL is disabled because v5.7 is required for all tests to pass,
-            and Travis only has up to MySQL 5.6 installed by default. This
-            will be runnable once we have a test suite that adapts to the
-            available MySQL version. See: https://github.com/mevdschee/php-crud-api/issues/194
-        array(
-            'dbengine' => 'MySQL',
+        'MySQL' => array(
             'hostname' => 'localhost',
             'username' => 'root',
             'password' => 'travis',
             'database' => 'testing',
         ),
-        */
-        array(
-            'dbengine' => 'PostgreSQL',
+        'PostgreSQL' => array(
             'hostname' => 'localhost',
             'username' => 'postgres',
             'password' => '',
             'database' => 'testing',
         ),
-        array(
-            'dbengine' => 'SQLite',
+        'SQLite' => array(
             'hostname' => '',
             'username' => '',
             'password' => '',

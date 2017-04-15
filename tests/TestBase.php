@@ -4,23 +4,12 @@ require_once(__DIR__ . '/Config.php');
 
 abstract class TestBase extends PHPUnit_Framework_TestCase
 {
-    protected function getConfig()
-    {
-        $dbengine = strtolower(substr(get_called_class(),0,-4));
-        foreach (Config::$config as $database) {
-            if (strtolower($database['dbengine']) == $dbengine) {
-                if ($database['database']!='{{test_database}}') {
-                    return $database;
-                }
-            }
-        }
-        self::markTestSkipped("Configuration for '{$dbengine}' in 'Config.php' not found.");
-        return false;
-    }
-
     public static function setUpBeforeClass()
     {
-        $config = self::getConfig();
+        if (!Config::$config || !isset(Config::$config[static::NAME])) {
+            self::markTestSkipped("Configuration in 'Config.php' not found.");
+        }
+        $config = Config::$config[static::NAME];
         $db = static::connect($config);
         static::checkVersion($db);
         $capabilities = static::getCapabilities($db);
@@ -36,6 +25,10 @@ abstract class TestBase extends PHPUnit_Framework_TestCase
 
     const GIS = 1;
     const JSON = 2;
+
+    public abstract function connect($db);
+
+    public abstract function disconnect($db);
 
     public abstract function checkVersion($db);
 

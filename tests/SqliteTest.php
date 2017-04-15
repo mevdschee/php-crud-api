@@ -4,6 +4,8 @@ require_once(__DIR__ . '/Tests.php');
 
 class SqliteTest extends Tests
 {
+    const NAME = 'SQLite';
+
     /**
      * Connects to the Database
      *

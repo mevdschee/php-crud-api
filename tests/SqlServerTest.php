@@ -4,6 +4,8 @@ require_once(__DIR__ . '/Tests.php');
 
 class SqlServerTest extends Tests
 {
+    const NAME = 'SQLServer';
+
     /**
      * Connects to the Database
      *

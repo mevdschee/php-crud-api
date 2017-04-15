@@ -4,6 +4,8 @@ require_once(__DIR__ . '/Tests.php');
 
 class PostgresqlTest extends Tests
 {
+    const NAME = 'PostgreSQL';
+
     /**
      * Connects to the Database
      *
