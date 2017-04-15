@@ -54,7 +54,6 @@ class SqliteTest extends Tests
     public function getCapabilities($db)
     {
         $capabilities = 0;
-        $capabilities |= self::JSON;
         return $capabilities;
     }
 
@@ -67,6 +66,13 @@ class SqliteTest extends Tests
     {
         $fixture = __DIR__.'/data/blog_sqlite.sql';
         $contents = file_get_contents($fixture);
+
+        if (!($capabilities & self::GIS)) {
+            $contents = preg_replace('/GEOMETRY NOT NULL/i','text NOT NULL',$contents);
+        }
+        if (!($capabilities & self::JSON)) {
+            $contents = preg_replace('/JSON NOT NULL/i','text NOT NULL',$contents);
+        }
 
         $queries = preg_split('/;\s*\n/', $contents);
         array_pop($queries);
