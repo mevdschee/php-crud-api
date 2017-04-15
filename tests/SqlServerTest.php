@@ -72,6 +72,7 @@ class SqlServerTest extends Tests
     public function getCapabilities($db)
     {
         $capabilities = 0;
+        $capabilities |= self::JSON;
         $capabilities |= self::GIS;
         return $capabilities;
     }
