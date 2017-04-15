@@ -79,7 +79,6 @@ class MysqlTest extends Tests
     public function seedDatabase($db, $capabilities)
     {
         $fixture = __DIR__.'/data/blog_mysql.sql';
-
         $contents = file_get_contents($fixture);
 
         if (!($capabilities & self::GIS)) {
@@ -99,4 +98,121 @@ class MysqlTest extends Tests
             die("Loading '$fixture' failed on statemement #$i with error:\n".mysqli_error($db)."\n");
         }
     }
+
+    /**
+     * Gets the path to the seed file based on the version of MySQL
+     *
+     * @return string
+     */
+    protected static function getSeedFile()
+    {
+        if (static::$mysql_version >= self::MYSQL_57) {
+            return __DIR__.'/data/blog_'.strtolower(static::$config['dbengine']).'_57.sql';
+        } elseif (static::$mysql_version >= self::MYSQL_56) {
+            return __DIR__.'/data/blog_'.strtolower(static::$config['dbengine']).'_56.sql';
+        }
+        return __DIR__.'/data/blog_'.strtolower(static::$config['dbengine']).'_55.sql';
+    }
+
+    public function testHidingPasswordColumn()
+    {
+        parent::testHidingPasswordColumn();
+    }
+
+    public function testMissingIntermediateTable()
+    {
+        $test = new API($this, static::$config);
+        $test->get('/users?include=posts,tags');
+        $test->expect('{"users":{"columns":["id","username","location"],"records":[[1,"user1",null]]},"posts":{"relations":{"user_id":"users.id"},"columns":["id","user_id","category_id","content"],"records":[[1,1,1,"blog started"],[2,1,2,"It works!"]]},"post_tags":{"relations":{"post_id":"posts.id"},"columns":["id","post_id","tag_id"],"records":[[1,1,1],[2,1,2],[3,2,1],[4,2,2]]},"tags":{"relations":{"id":"post_tags.tag_id"},"columns":["id","name"],"records":[[1,"funny"],[2,"important"]]}}');
+    }
+
+    public function testEditUserPassword()
+    {
+        parent::testEditUserPassword();
+    }
+
+    public function testEditUserLocation()
+    {
+        parent::testEditUserLocation();
+    }
+
+    public function testListUserLocations()
+    {
+        parent::testListUserLocations();
+    }
+
+    public function testEditUserWithId()
+    {
+        parent::testEditUserWithId();
+    }
+
+    public function testReadOtherUser()
+    {
+        parent::testReadOtherUser();
+    }
+
+    public function testEditOtherUser()
+    {
+        parent::testEditOtherUser();
+    }
+
+    public function testSpatialFilterWithin()
+    {
+        if (static::$mysql_version < self::MYSQL_56) {
+            $this->markTestSkipped("MySQL < 5.6 does not support JSON fields.");
+        }
+        parent::testSpatialFilterWithin();
+    }
+
+
+    public function testListProductsProperties()
+    {
+        if (static::$mysql_version < self::MYSQL_57) {
+            $this->markTestSkipped("MySQL < 5.7 does not support JSON fields.");
+        }
+        parent::testListProductsProperties();
+    }
+
+    public function testReadProductProperties()
+    {
+        if (static::$mysql_version < self::MYSQL_57) {
+            $this->markTestSkipped("MySQL < 5.7 does not support JSON fields.");
+        }
+        parent::testReadProductProperties();
+    }
+
+    public function testWriteProductProperties()
+    {
+        if (static::$mysql_version < self::MYSQL_57) {
+            $this->markTestSkipped("MySQL < 5.7 does not support JSON fields.");
+        }
+        parent::testWriteProductProperties();
+    }
+
+    public function testListProducts()
+    {
+        parent::testListProducts();
+    }
+
+    public function testAddProducts()
+    {
+        if (static::$mysql_version < self::MYSQL_57) {
+            $this->markTestSkipped("MySQL < 5.7 does not support JSON fields.");
+        }
+        parent::testAddProducts();
+    }
+
+    public function testSoftDeleteProducts()
+    {
+        if (static::$mysql_version < self::MYSQL_57) {
+            $test = new API($this, static::$config);
+            $test->delete('/products/1');
+            $test->expect('1');
+            $test->get('/products?columns=id,deleted_at');
+            $test->expect('{"products":{"columns":["id","deleted_at"],"records":[[1,"2013-12-11 11:10:09"]]}}');
+        } else {
+            parent::testSoftDeleteProducts();
+        }
+    }
+
 }
