@@ -6,6 +6,9 @@ abstract class TestBase extends \PHPUnit_Framework_TestCase
     public static function setUpBeforeClass()
     {
         $name = static::getEngineName();
+        if (!class_exists('Mevdschee\PhpCrudApi\Tests\Config')) {
+            die("Configuration in 'Config.php' not found.\n");
+        }
         if (!Config::$config || !isset(Config::$config[$name])) {
             self::markTestSkipped("Configuration in 'Config.php' not found.");
         }
