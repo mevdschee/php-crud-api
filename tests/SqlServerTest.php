@@ -50,7 +50,7 @@ class SqlServerTest extends Tests
         $version = sqlsrv_server_info($db);
         $v = explode('.',$version['SQLServerVersion']);
         if ($v[0]<$major || ($v[0]==$major && $v[1]<$minor) || ($v[0]==$major && $v[1]==$minor && $v[2]<$build)) {
-            die("Detected MySQL $v[0].$v[1].$v[2], but only $major.$minor.$build and up are supported\n");
+            die("Detected SQL Server $v[0].$v[1].$v[2], but only $major.$minor.$build and up are supported\n");
         }
     }
 
