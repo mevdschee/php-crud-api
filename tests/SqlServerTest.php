@@ -1,6 +1,5 @@
 <?php
-
-require_once(__DIR__ . '/Tests.php');
+namespace PhpCrudApi\Tests;
 
 class SqlServerTest extends Tests
 {

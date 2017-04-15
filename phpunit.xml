@@ -1,4 +1,4 @@
-<phpunit>
+<phpunit bootstrap="tests/autoload.php">
     <php>
         <ini name="display_errors" value="true"/>
     </php>

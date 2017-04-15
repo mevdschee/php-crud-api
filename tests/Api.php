@@ -1,4 +1,5 @@
 <?php
+namespace PhpCrudApi\Tests;
 
 require_once(__DIR__ . '/../api.php');
 
@@ -12,12 +13,12 @@ class Api
     protected $config;
 
     /**
-     * @var PHP_CRUD_API_Test
+     * @var PhpCrudApi\Tests\BaseTest
      */
     protected $test;
 
     /**
-     * @var PHP_CRUD_API
+     * @var \PHP_CRUD_API
      */
     protected $api;
 
@@ -34,7 +35,7 @@ class Api
         $query = isset($url['query'])?$url['query']:'';
         parse_str($query,$get);
 
-        $this->api = new PHP_CRUD_API(array(
+        $this->api = new \PHP_CRUD_API(array(
             'dbengine'=>$this->config['dbengine'],
             'hostname'=>$this->config['hostname'],
             'username'=>$this->config['username'],

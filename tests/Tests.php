@@ -1,7 +1,5 @@
 <?php
-
-require_once(__DIR__ . '/TestBase.php');
-require_once(__DIR__ . '/Api.php');
+namespace PhpCrudApi\Tests;
 
 abstract class Tests extends TestBase
 {

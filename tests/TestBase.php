@@ -1,8 +1,7 @@
 <?php
+namespace PhpCrudApi\Tests;
 
-require_once(__DIR__ . '/Config.php');
-
-abstract class TestBase extends PHPUnit_Framework_TestCase
+abstract class TestBase extends \PHPUnit_Framework_TestCase
 {
     public static function setUpBeforeClass()
     {

@@ -1,6 +1,5 @@
 <?php
-
-require_once(__DIR__ . '/Tests.php');
+namespace PhpCrudApi\Tests;
 
 class SqliteTest extends Tests
 {
@@ -21,10 +20,10 @@ class SqliteTest extends Tests
      */
     public function connect($config)
     {
-        $db = new SQLite3($config['database']);
+        $db = new \SQLite3($config['database']);
 
         if (!$db) {
-            die("Could not open '$database' SQLite database: ".SQLite3::lastErrorMsg().' ('.SQLite3::lastErrorCode().")\n");
+            die("Could not open '$database' SQLite database: ".\SQLite3::lastErrorMsg().' ('.\SQLite3::lastErrorCode().")\n");
         }
 
         return $db;
@@ -49,7 +48,7 @@ class SqliteTest extends Tests
     {
         $major = 3;
         $minor = 0;
-        $version = SQLite3::version();
+        $version = \SQLite3::version();
         $v = explode('.',$version['versionString']);
         if ($v[0]<$major || ($v[0]==$major && $v[1]<$minor)) {
             die("Detected SQLite $v[0].$v[1], but only $major.$minor and up are supported\n");
