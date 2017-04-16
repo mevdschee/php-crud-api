@@ -839,7 +839,7 @@ Unfortunately not all tests are automated yet. Contributions in this area are ve
 
 ### MySQL, PostgreSQL, and SQLite on Linux
 
-The tests are held in the `tests.php` file, but first you should copy the `config.php.dist` file to `config.php` and add your database credentials. You can add credentials for one or all the databases supported.
+The tests are held in the `Tests.php` file, but first you should copy the `Config.php.dist` file to `Config.php` and add your database credentials. You can add credentials for one or all the databases supported.
 
 After configuring the database connections, use PHPUnit to run all the tests:
 
