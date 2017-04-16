@@ -827,7 +827,7 @@ The following types of 404 'Not found' errors may be reported:
 I am testing mainly on Ubuntu and I have the following test setups:
 
   - Ubuntu 12.04 Server with PHP 5.3 and MySQL 5.5 and PostgreSQL 9.1
-  - Ubuntu 14.04 Server with PHP 5.5 and MySQL 5.6 and PostgreSQL 9.3
+  - Ubuntu 14.04 Server with PHP 5.5 and MySQL 5.5 and PostgreSQL 9.3
   - Ubuntu 16.04 Server with PHP 7.0 and MySQL 5.7 and PostgreSQL 9.5
   - Debian 7 Server with PHP 5.4 and MySQL 5.5 and PostgreSQL 9.1
   - Debian 8 Server with PHP 5.6 and MariaDB 5.5 and PostgreSQL 9.4
