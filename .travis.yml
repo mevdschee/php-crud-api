@@ -5,7 +5,7 @@ language: php
 
 services:
   #- mysql
-  - postgresql
+  #- postgresql
 
 addons:
   postgresql: "9.4"
