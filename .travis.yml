@@ -1,10 +1,10 @@
 dist: trusty
-sudo: true
+sudo: false
 
 language: php
 
 services:
-  - mysql
+  #- mysql
   - postgresql
 
 addons:
