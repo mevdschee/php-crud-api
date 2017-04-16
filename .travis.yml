@@ -3,10 +3,6 @@ sudo: false
 
 language: php
 
-services:
-  #- mysql
-  #- postgresql
-
 addons:
   postgresql: "9.4"
 
