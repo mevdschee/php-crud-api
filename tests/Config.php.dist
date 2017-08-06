@@ -11,29 +11,29 @@ class Config
      */
     public static $config = array(
         'MySQL' => array(
-            'hostname' => '{{test_hostname}}',  // 'localhost' for MySQL, '(Local)' for SQLServer, empty for SQLite
-            'username' => '{{test_username}}',  // May be empty on SQLServer or SQLite
-            'password' => '{{test_password}}',  // May be empty on SQLServer or SQLite
-            'database' => '{{test_database}}',  // NB: Use an empty database, data will be LOST!
+            'hostname' => '{{mysql_hostname}}',  // 'localhost' for MySQL, '(Local)' for SQLServer, empty for SQLite
+            'username' => '{{mysql_username}}',  // May be empty on SQLServer or SQLite
+            'password' => '{{mysql_password}}',  // May be empty on SQLServer or SQLite
+            'database' => '{{mysql_database}}',  // NB: Use an empty database, data will be LOST!
         ),
         /* Uncomment and update for any databases you want to use.
         'PostgreSQL' => array(
-            'hostname' => '{{test_hostname}}',
-            'username' => '{{test_username}}',
-            'password' => '{{test_password}}',
-            'database' => '{{test_database}}',
+            'hostname' => '{{pgsql_hostname}}',
+            'username' => '{{pgsql_username}}',
+            'password' => '{{pgsql_password}}',
+            'database' => '{{pgsql_database}}',
         ),
         'SQLite' => array(
-            'hostname' => '{{test_hostname}}',
-            'username' => '{{test_username}}',
-            'password' => '{{test_password}}',
-            'database' => '{{test_database}}',
+            'hostname' => '{{sqlite_hostname}}',
+            'username' => '{{sqlite_username}}',
+            'password' => '{{sqlite_password}}',
+            'database' => '{{sqlite_database}}',
         ),
         'SQLServer' => array(
-            'hostname' => '{{test_hostname}}',
-            'username' => '{{test_username}}',
-            'password' => '{{test_password}}',
-            'database' => '{{test_database}}',
+            'hostname' => '{{sqlsrv_hostname}}',
+            'username' => '{{sqlsrv_username}}',
+            'password' => '{{sqlsrv_password}}',
+            'database' => '{{sqlsrv_database}}',
         ),
         */
     );
