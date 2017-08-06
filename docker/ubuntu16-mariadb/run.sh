@@ -3,7 +3,7 @@
 # make sure mysql can create socket and lock
 mkdir /var/run/mysqld && chmod 777 /var/run/mysqld
 # run mysql server
-nohup mysqld_safe > /root/mysql.log 2>&1 &
+nohup mysqld > /root/mysql.log 2>&1 &
 # wait for mysql to become available
 while ! mysqladmin ping -hlocalhost >/dev/null 2>&1; do
     sleep 1
