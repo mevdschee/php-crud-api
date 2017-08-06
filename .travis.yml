@@ -16,7 +16,6 @@ php:
 before_install:
   - phpenv config-add travisphp.ini
   - psql -c 'create database testing;' -U postgres
-  - psql -U postgres -c "create extension postgis"
   - mysql -e 'CREATE DATABASE testing;'
   - cp tests/Config.php.travis tests/Config.php
 
