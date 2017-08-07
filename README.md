@@ -829,12 +829,15 @@ I am testing mainly on Ubuntu and I have the following test setups:
   - Ubuntu 12.04 Server with PHP 5.3 and MySQL 5.5 and PostgreSQL 9.1
   - Ubuntu 14.04 Server with PHP 5.5 and MySQL 5.5 and PostgreSQL 9.3
   - Ubuntu 16.04 Server with PHP 7.0 and MySQL 5.7 and PostgreSQL 9.5
+  - Ubuntu 16.04 Server with PHP 7.0 and MariaDB 10.0 and PostgreSQL 9.5
   - Debian 7 Server with PHP 5.4 and MySQL 5.5 and PostgreSQL 9.1
   - Debian 8 Server with PHP 5.6 and MariaDB 5.5 and PostgreSQL 9.4
+  - Debian 9 Server with PHP 7.0 and MariaDB 10.1 and PostgreSQL 9.6
   - CentOS 7 Server with PHP 5.4 and MySQL 5.5 and PostgreSQL 9.2
   - Windows 2012 R2 with PHP 5.6 and SQL Server 2012
 
-This should cover most environments, but please notify me of failing tests and report your environment.
+This should cover most environments, but please notify me of failing tests and report your environment. 
+I will try to cover the above setup in the "docker" folder of the project.
 
 ### Travis CI
 
