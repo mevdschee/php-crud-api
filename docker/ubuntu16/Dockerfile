@@ -7,4 +7,4 @@ ADD install.sh /usr/sbin/docker-install
 RUN docker-install
 
 ADD run.sh /usr/sbin/docker-run
-ENTRYPOINT docker-run
+CMD docker-run
