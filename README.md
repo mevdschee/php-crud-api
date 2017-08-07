@@ -24,7 +24,7 @@ These implementations are a proof-of-concept and do only support basic REST CRUD
 
   - PHP 5.3 or higher with MySQLi, libpq, SQLSRV or sqlite3 enabled (PHP 7 recommended)
   - PHP on Windows when connecting to SQL Server 2012
-  - MySQL 5.6 or higher for spatial features in MySQL
+  - MySQL 5.6 / MariaDB 10.0 or higher for spatial features in MySQL
   - PostGIS 2.0 or higher for spatial features in PostgreSQL 9.1 or higher
 
 ## Installation
@@ -832,7 +832,7 @@ I am testing mainly on Ubuntu and I have the following test setups:
   - Debian 7 Server with PHP 5.4 and MySQL 5.5 and PostgreSQL 9.1
   - Debian 8 Server with PHP 5.6 and MySQL 5.5 / MariaDB 10.0 and PostgreSQL 9.4
   - Debian 9 Server with PHP 7.0 and MySQL 5.5 / MariaDB 10.1 and PostgreSQL 9.6
-  - CentOS 7 Server with PHP 5.4 and MySQL 5.5 and PostgreSQL 9.2
+  - CentOS 7 Server with PHP 5.4 and MariaDB 5.5 and PostgreSQL 9.2
   - Windows 2012 R2 with PHP 5.6 and SQL Server 2012
 
 This should cover most environments, but please notify me of failing tests and report your environment. 
