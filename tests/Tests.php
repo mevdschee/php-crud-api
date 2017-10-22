@@ -634,4 +634,13 @@ abstract class Tests extends TestBase
         $test->get('/barcodes?transform=1');
         $test->expect('{"barcodes":[{"id":1,"product_id":1,"hex":"00ff01","bin":"AP8B"}]}');
     }
+    
+    public function testEditPostWithApostrophe()
+    {
+        $test = new Api($this);
+        $test->put('/posts/1', '[{"id":1,"user_id":1,"category_id":1,"content":"blog start\'d"}]');
+        $test->expect('1');
+        $test->get('/posts/1');
+        $test->expect('{"id":1,"user_id":1,"category_id":1,"content":"blog start\'d"}');
+    }
 }
