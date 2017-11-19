@@ -16,8 +16,9 @@ Related projects:
 There are also ports of this script in:
 [Java](https://github.com/mevdschee/java-crud-api/blob/master/src/main/java/com/tqdev/CrudApiHandler.java),
 [Go](https://github.com/mevdschee/go-crud-api/blob/master/api.go),
-[C# .net core](https://github.com/mevdschee/core-data-api/blob/master/Program.cs) and
-[Node.js](https://github.com/mevdschee/js-crud-api/blob/master/app.js).
+[C# .net core](https://github.com/mevdschee/core-data-api/blob/master/Program.cs),
+[Node.js](https://github.com/mevdschee/js-crud-api/blob/master/app.js) and
+[Python](https://github.com/mevdschee/py-crud-api/blob/master/api.py).
 These implementations are a proof-of-concept and do only support basic REST CRUD functionality.
 
 ## Requirements
