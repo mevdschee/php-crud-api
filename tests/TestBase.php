@@ -1,7 +1,9 @@
 <?php
 namespace Mevdschee\PhpCrudApi\Tests;
 
-abstract class TestBase extends \PHPUnit_Framework_TestCase
+use PHPUnit\Framework\TestCase;
+
+abstract class TestBase extends TestCase
 {
     public static function setUpBeforeClass()
     {
