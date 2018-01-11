@@ -643,4 +643,14 @@ abstract class Tests extends TestBase
         $test->get('/posts/1');
         $test->expect('{"id":1,"user_id":1,"category_id":1,"content":"blog start\'d"}');
     }
+
+    public function testAddPostWithLeadingWhitespaceInJSON()
+    {
+        $test = new Api($this);
+        $test->post('/posts', '      
+                    {"user_id":1,"category_id":1,"content":"test whitespace"}   ');
+        $test->expect('21');
+        $test->get('/posts/21');
+        $test->expect('{"id":21,"user_id":1,"category_id":1,"content":"test whitespace"}');
+    }
 }
