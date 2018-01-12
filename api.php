@@ -1679,6 +1679,7 @@ class PHP_CRUD_API {
 	}
 
 	protected function retrieveInputs($data) {
+		$data = trim($data, " \t\n\r");
 		if (strlen($data)==0) {
 			$input = false;
 		} else if ($data[0]=='{' || $data[0]=='[') {
