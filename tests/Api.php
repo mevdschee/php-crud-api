@@ -138,4 +138,22 @@ class Api
         }
         return $this;
     }
+
+    public function expectPattern($expectedOutputPattern, $expectedErrorPattern) {
+        $exception = false;
+        ob_start();
+        try {
+            $this->api->executeCommand();
+        } catch (\Exception $e) {
+            $exception = $e->getMessage();
+        }
+        $outputData = ob_get_contents();
+        ob_end_clean();
+        if ($exception) {
+            $this->test->assertRegExp($expectedErrorPattern, $exception);
+        } else {
+            $this->test->assertRegExp($expectedOutputPattern, $outputData);
+        }
+        return $this;
+    }
 }

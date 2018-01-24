@@ -290,7 +290,7 @@ abstract class Tests extends TestBase
     {
         $test = new Api($this);
         $test->post('/posts', '{"}');
-        $test->expect(false, 'Not found (input)');
+        $test->expectPattern(false, '/^Bad request.*$/');
     }
 
     public function testErrorOnDuplicatePrimaryKey()
