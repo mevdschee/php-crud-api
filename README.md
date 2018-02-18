@@ -14,12 +14,16 @@ Related projects:
   - [VUE-CRUD-UI](https://github.com/nlware/vue-crud-ui): Single file Vue.js script that adds a UI to a PHP-CRUD-API project.
   
 There are also ports of this script in:
-[Java](https://github.com/mevdschee/java-crud-api/blob/master/src/main/java/com/tqdev/CrudApiHandler.java),
+
+- [Java JDBC by Ivan Kolchagov](https://github.com/kolchagov/java-crud-api)
+- [Java Spring Boort + jOOQ](https://github.com/mevdschee/java-crud-api/tree/master/full)(work in progress)
+
+There are also proof-of-concept ports of this script that only support basic REST CRUD functionality in:
+[Java](https://github.com/mevdschee/java-crud-api/blob/master/core/src/main/java/com/tqdev/CrudApiHandler.java),
 [Go](https://github.com/mevdschee/go-crud-api/blob/master/api.go),
 [C# .net core](https://github.com/mevdschee/core-data-api/blob/master/Program.cs),
 [Node.js](https://github.com/mevdschee/js-crud-api/blob/master/app.js) and
 [Python](https://github.com/mevdschee/py-crud-api/blob/master/api.py).
-These implementations are a proof-of-concept and do only support basic REST CRUD functionality.
 
 ## Requirements
 
