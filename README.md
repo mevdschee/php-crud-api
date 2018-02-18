@@ -16,7 +16,7 @@ Related projects:
 There are also ports of this script in:
 
 - [Java JDBC by Ivan Kolchagov](https://github.com/kolchagov/java-crud-api)
-- [Java Spring Boort + jOOQ](https://github.com/mevdschee/java-crud-api/tree/master/full) (work in progress)
+- [Java Spring Boot + jOOQ](https://github.com/mevdschee/java-crud-api/tree/master/full) (work in progress)
 
 There are also proof-of-concept ports of this script that only support basic REST CRUD functionality in:
 [Java](https://github.com/mevdschee/java-crud-api/blob/master/core/src/main/java/com/tqdev/CrudApiHandler.java),
