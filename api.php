@@ -2719,7 +2719,7 @@ class PHP_CRUD_API {
 // 	'username'=>'',
 // 	'password'=>'',
 // 	'database'=>'',
-// 	'charset'=>'utf8'
+// 	'charset'=>'utf8mb4'
 // ));
 // $api->executeCommand();
 
