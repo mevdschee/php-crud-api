@@ -1543,7 +1543,7 @@ class PHP_CRUD_API {
 			$params[] = $k;
 			$params[] = $v;
 		}
-		$this->addFilter($filters,$table,'and',$key[1],'eq',$key[0][0]);
+		if ($key) $this->addFilter($filters,$table,'and',$key[1],'eq',$key[0][0]);
 		$this->addWhereFromFilters($filters[$table],$sql,$params);
 		$result = $this->db->query($sql,$params);
 		if (!$result) return null;
