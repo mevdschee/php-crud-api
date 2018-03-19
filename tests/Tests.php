@@ -656,7 +656,7 @@ abstract class Tests extends TestBase
 
     public function testEditPostWithFilters(){
         $test = new Api($this);
-        $test->post('/posts?filter[]=user_id,eq,1&filter[]=category_id,eq,1&transform=1', '
+        $test->put('/posts?filter[]=user_id,eq,1&filter[]=category_id,eq,1&transform=1', '
                     {"content":"Post Updated with new value"}');
         $test->expect('1');
         $test->get('/posts/1');
