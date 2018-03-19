@@ -653,4 +653,14 @@ abstract class Tests extends TestBase
         $test->get('/posts/21');
         $test->expect('{"id":21,"user_id":1,"category_id":1,"content":"test whitespace"}');
     }
+
+    public function testEditPostWithFilters(){
+        $test = new Api($this);
+        $test->post('/posts?filter[]=user_id,eq,1&filter[]=category_id,eq,1&transform=1', '
+                    {"content":"Post Updated with new value"}');
+        $test->expect('1');
+        $test->get('/posts/1');
+        $test->expect('{"id":1,"user_id":1,"category_id":1,"content":"Post Updated with new value"}');
+    }
 }
+
