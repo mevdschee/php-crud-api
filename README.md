@@ -547,7 +547,7 @@ Output:
 }
 ```
 
-You can call the ```php_crud_api_tranform()``` function to structure the data hierarchical like this:
+You can call the ```php_crud_api_transform()``` function to structure the data hierarchical like this:
 
 ```
 {
@@ -604,7 +604,7 @@ You can call the ```php_crud_api_tranform()``` function to structure the data hi
 }
 ```
 
-This transform function is available for PHP and JavaScript in the files ```php_crud_api_tranform.php``` and ```php_crud_api_tranform.js``` in the "lib" folder.
+This transform function is available for PHP and JavaScript in the files ```php_crud_api_transform.php``` and ```php_crud_api_transform.js``` in the "lib" folder.
 
 ## Permissions
 
