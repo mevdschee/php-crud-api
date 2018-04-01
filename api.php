@@ -1270,6 +1270,15 @@ class PHP_CRUD_API {
 		}
 	}
 
+	protected function exitWith403($type) {
+		if (isset($_SERVER['REQUEST_METHOD'])) {
+			header('Content-Type:',true,403);
+			die("Forbidden ($type)");
+		} else {
+			throw new \Exception("Forbidden ($type)");
+		}
+	}
+
 	protected function exitWith400($type) {
 		if (isset($_SERVER['REQUEST_METHOD'])) {
 			header('Content-Type:',true,400);
@@ -2649,12 +2658,18 @@ class PHP_CRUD_API {
 	protected function allowOrigin($origin,$allowOrigins) {
 		if (isset($_SERVER['REQUEST_METHOD'])) {
 			header('Access-Control-Allow-Credentials: true');
-			foreach (explode(',',$allowOrigins) as $o) {
-				if (preg_match('/^'.str_replace('\*','.*',preg_quote(strtolower(trim($o)))).'$/',$origin)) { 
+		}
+		$found = false;
+		foreach (explode(',',$allowOrigins) as $o) {
+			if (preg_match('/^'.str_replace('\*','.*',preg_quote(strtolower(trim($o)))).'$/',$origin)) { 
+				if (isset($_SERVER['REQUEST_METHOD'])) {
 					header('Access-Control-Allow-Origin: '.$origin);
-					break;
 				}
+				break;
 			}
+		}
+		if (!$found) {
+			$this->exitWith403('origin');
 		}
 	}
 
