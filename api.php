@@ -2662,6 +2662,7 @@ class PHP_CRUD_API {
 		$found = false;
 		foreach (explode(',',$allowOrigins) as $o) {
 			if (preg_match('/^'.str_replace('\*','.*',preg_quote(strtolower(trim($o)))).'$/',$origin)) { 
+				$found = true;
 				if (isset($_SERVER['REQUEST_METHOD'])) {
 					header('Access-Control-Allow-Origin: '.$origin);
 				}
