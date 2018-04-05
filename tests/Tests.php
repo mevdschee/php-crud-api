@@ -653,4 +653,11 @@ abstract class Tests extends TestBase
         $test->get('/posts/21');
         $test->expect('{"id":21,"user_id":1,"category_id":1,"content":"test whitespace"}');
     }
+
+    public function testListPostWithIncludeButNoRecords()
+    {
+        $test = new Api($this);
+        $test->get('/posts?filter=id,eq,999&include=tags');
+        $test->expect('{"posts":{"columns":["id","user_id","category_id","content"],"records":[]},"post_tags":{"relations":{"post_id":"posts.id"},"columns":["id","post_id","tag_id"],"records":[]},"tags":{"relations":{"id":"post_tags.tag_id"},"columns":["id","name"],"records":[]}}');
+    }
 }

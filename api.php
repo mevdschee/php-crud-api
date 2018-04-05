@@ -2036,9 +2036,7 @@ class PHP_CRUD_API {
 				$first_row = true;
 				foreach ($select[$table] as $field => $path) {
 					$values = $collect[$path[0]][$path[1]];
-					if ($values) {
-						$this->addFilter($filters,$table,'and',$field,'in',implode(',',$values));
-					}
+					$this->addFilter($filters,$table,'and',$field,'in',implode(',',$values));
 					if ($first_row) $first_row = false;
 					else echo ',';
 					echo '"'.$field.'":"'.implode('.',$path).'"';
