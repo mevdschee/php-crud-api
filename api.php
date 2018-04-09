@@ -1908,7 +1908,7 @@ class PHP_CRUD_API {
 		// reflection
 		list($tables,$collect,$select) = $this->findRelations($tables,$database,$auto_include);
 		$allFields = $this->findFields($tables,$database);
-		$fields = $this->limitFields($allFields,$columns,$exclude,$select,$database);
+		$fields = $this->limitFields($allFields,$columns,$exclude,$select);
 		
 		// permissions
 		if ($table_authorizer) $this->applyTableAuthorizer($table_authorizer,$action,$database,$tables);
