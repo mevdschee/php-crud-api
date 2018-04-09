@@ -1908,13 +1908,13 @@ class PHP_CRUD_API {
 		// reflection
 		list($tables,$collect,$select) = $this->findRelations($tables,$database,$auto_include);
 		$allFields = $this->findFields($tables,$database);
-		if ($tenancy_function) $this->applyTenancyFunction($tenancy_function,$action,$database,$allFields,$filters);
 		$fields = $this->limitFields($allFields,$columns,$exclude,$select,$database);
 		
 		// permissions
 		if ($table_authorizer) $this->applyTableAuthorizer($table_authorizer,$action,$database,$tables);
 		if (!isset($tables[0])) $this->exitWith404('entity');
 		if ($record_filter) $this->applyRecordFilter($record_filter,$action,$database,$tables,$filters);
+		if ($tenancy_function) $this->applyTenancyFunction($tenancy_function,$action,$database,$allFields,$filters);
 		if ($column_authorizer) $this->applyColumnAuthorizer($column_authorizer,$action,$database,$fields);
 
 		// input
