@@ -660,4 +660,18 @@ abstract class Tests extends TestBase
         $test->get('/posts?filter=id,eq,999&include=tags');
         $test->expect('{"posts":{"columns":["id","user_id","category_id","content"],"records":[]},"post_tags":{"relations":{"post_id":"posts.id"},"columns":["id","post_id","tag_id"],"records":[]},"tags":{"relations":{"id":"post_tags.tag_id"},"columns":["id","name"],"records":[]}}');
     }
+
+    public function testListUsersExcludeTenancyId()
+    {
+        $test = new Api($this);
+        $test->get('/users?exclude=id');
+        $test->expect('{"users":{"columns":["username","location"],"records":[["user1","POINT(30 20)"]]}}');
+    }
+
+    public function testListUsersColumnsWithoutTenancyId()
+    {
+        $test = new Api($this);
+        $test->get('/users?columns=username,location');
+        $test->expect('{"users":{"columns":["username","location"],"records":[["user1","POINT(30 20)"]]}}');
+    }
 }

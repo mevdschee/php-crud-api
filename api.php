@@ -1734,21 +1734,26 @@ class PHP_CRUD_API {
 		return $keep;
 	}
 
-	protected function findFields($tables,$columns,$exclude,$select,$database) {
+	protected function findFields($tables,$database) {
 		$fields = array();
+		foreach ($tables as $i=>$table) {
+			$fields[$table] = $this->findTableFields($table,$database);
+		}
+		return $fields;
+	}
+	
+	protected function limitFields($fields,$columns,$exclude,$select) {
 		if ($select && ($columns || $exclude)) {
 			$keep = $this->getRelationShipColumns($select);
 		} else {
 			$keep = false;
 		}
-		foreach ($tables as $i=>$table) {
-			$fields[$table] = $this->findTableFields($table,$database);
+		foreach (array_keys($fields) as $i=>$table) {
 			$fields[$table] = $this->filterFieldsByColumns($fields[$table],$columns,$keep,$i==0,$table);
 			$fields[$table] = $this->filterFieldsByExclude($fields[$table],$exclude,$keep,$i==0,$table);
 		}
 		return $fields;
 	}
-
 	protected function filterFieldsByColumns($fields,$columns,$keep,$first,$table) {
 		if ($columns) {
 			$columns = explode(',',$columns);
@@ -1902,13 +1907,14 @@ class PHP_CRUD_API {
 
 		// reflection
 		list($tables,$collect,$select) = $this->findRelations($tables,$database,$auto_include);
-		$fields = $this->findFields($tables,$columns,$exclude,$select,$database);
-
+		$fields = $this->findFields($tables,$database);
+		if ($tenancy_function) $this->applyTenancyFunction($tenancy_function,$action,$database,$fields,$filters);
+		$fields = $this->limitFields($fields,$columns,$exclude,$select,$database);
+		
 		// permissions
 		if ($table_authorizer) $this->applyTableAuthorizer($table_authorizer,$action,$database,$tables);
 		if (!isset($tables[0])) $this->exitWith404('entity');
 		if ($record_filter) $this->applyRecordFilter($record_filter,$action,$database,$tables,$filters);
-		if ($tenancy_function) $this->applyTenancyFunction($tenancy_function,$action,$database,$fields,$filters);
 		if ($column_authorizer) $this->applyColumnAuthorizer($column_authorizer,$action,$database,$fields);
 
 		// input
@@ -2285,7 +2291,7 @@ class PHP_CRUD_API {
 		$table_names = array_map(function($v){ return $v['name'];},$tables);
 		foreach ($tables as $t=>$table)	{
 			$table_list = array($table['name']);
-			$table_fields = $this->findFields($table_list,false,false,false,$database);
+			$table_fields = $this->findFields($table_list,$database);
 			
 			// extensions
 			$result = $this->db->query($this->db->getSql('reflect_belongs_to'),array($table_list[0],$table_names,$database,$database));
