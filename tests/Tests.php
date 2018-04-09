@@ -674,4 +674,84 @@ abstract class Tests extends TestBase
         $test->get('/users?columns=username,location');
         $test->expect('{"users":{"columns":["username","location"],"records":[["user1","POINT(30 20)"]]}}');
     }
+
+    public function testTenancyCreateColumns()
+    {
+        // creation should fail, since due to tenancy function it will try to create with id=1, which is a PK and is already taken
+        $test = new Api($this);
+        $test->post('/users?columns=username,password,location', '{"username":"user3","password":"pass3","location":null}');
+        $test->expect('null');
+    }
+
+    public function testTenancyCreateExclude()
+    {
+        // creation should fail, since due to tenancy function it will try to create with id=1, which is a PK and is already taken
+        $test = new Api($this);
+        $test->post('/users?exclude=id', '{"username":"user3","password":"pass3","location":null}');
+        $test->expect('null');
+    }
+
+    public function testTenancyListColumns()
+    {
+        // should list only user with id=1 (exactly 1 record)
+        $test = new Api($this);
+        $test->get('/users?columns=username,location');
+        $test->expect('{"users":{"columns":["username","location"],"records":[["user1",null]]}}');
+    }
+
+    public function testTenancyListExclude()
+    {
+        // should list only user with id=1 (exactly 1 record)
+        $test = new Api($this);
+        $test->get('/users?exclude=id');
+        $test->expect('{"users":{"columns":["username","location"],"records":[["user1",null]]}}');
+    }
+
+    public function testTenancyReadColumns()
+    {
+        // should fail, since due to tenancy function user id=2 is unvailable to us
+        $test = new Api($this);
+        $test->get('/users/2?columns=username,location');
+        $test->expect(false, 'Not found (object)');
+    }
+
+    public function testTenancyReadExclude()
+    {
+        // should fail, since due to tenancy function user id=2 is unvailable to us
+        $test = new Api($this);
+        $test->get('/users/2?exclude=id');
+        $test->expect(false, 'Not found (object)');
+    }
+
+    public function testTenancyUpdateColumns()
+    {
+        // should fail, since due to tenancy function user id=2 is unvailable to us
+        $test = new Api($this);
+        $test->put('/users/2?columns=location', '{"location":"somelocation"}');
+        $test->expect('0');
+    }
+
+    public function testTenancyUpdateExclude()
+    {
+        // should fail, since due to tenancy function user id=2 is unvailable to us
+        $test = new Api($this);
+        $test->put('/users/2?exclude=id', '{"location":"somelocation"}');
+        $test->expect('0');
+    }
+
+    public function testTenancyDeleteColumns()
+    {
+        // should fail, since due to tenancy function user id=2 is unvailable to us
+        $test = new Api($this);
+        $test->delete('/users/2?columns=location');
+        $test->expect('0');
+    }
+
+    public function testTenancyDeleteExclude()
+    {
+        // should fail, since due to tenancy function user id=2 is unvailable to us
+        $test = new Api($this);
+        $test->delete('/users/2?exclude=id');
+        $test->expect('0');
+    }
 }
