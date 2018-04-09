@@ -661,20 +661,6 @@ abstract class Tests extends TestBase
         $test->expect('{"posts":{"columns":["id","user_id","category_id","content"],"records":[]},"post_tags":{"relations":{"post_id":"posts.id"},"columns":["id","post_id","tag_id"],"records":[]},"tags":{"relations":{"id":"post_tags.tag_id"},"columns":["id","name"],"records":[]}}');
     }
 
-    public function testListUsersExcludeTenancyId()
-    {
-        $test = new Api($this);
-        $test->get('/users?exclude=id');
-        $test->expect('{"users":{"columns":["username","location"],"records":[["user1","POINT(30 20)"]]}}');
-    }
-
-    public function testListUsersColumnsWithoutTenancyId()
-    {
-        $test = new Api($this);
-        $test->get('/users?columns=username,location');
-        $test->expect('{"users":{"columns":["username","location"],"records":[["user1","POINT(30 20)"]]}}');
-    }
-
     public function testTenancyCreateColumns()
     {
         // creation should fail, since due to tenancy function it will try to create with id=1, which is a PK and is already taken
@@ -696,7 +682,7 @@ abstract class Tests extends TestBase
         // should list only user with id=1 (exactly 1 record)
         $test = new Api($this);
         $test->get('/users?columns=username,location');
-        $test->expect('{"users":{"columns":["username","location"],"records":[["user1",null]]}}');
+        $test->expect('{"users":{"columns":["username","location"],"records":[["user1","POINT(30 20)"]]}}');
     }
 
     public function testTenancyListExclude()
@@ -704,7 +690,7 @@ abstract class Tests extends TestBase
         // should list only user with id=1 (exactly 1 record)
         $test = new Api($this);
         $test->get('/users?exclude=id');
-        $test->expect('{"users":{"columns":["username","location"],"records":[["user1",null]]}}');
+        $test->expect('{"users":{"columns":["username","location"],"records":[["user1","POINT(30 20)"]]}}');
     }
 
     public function testTenancyReadColumns()

@@ -1136,7 +1136,7 @@ class PHP_CRUD_API {
 
 	protected function applyBeforeHandler(&$action,&$database,&$table,&$ids,&$callback,&$inputs) {
 		if (is_callable($callback,true)) {
-			$max = (is_array($ids)&&count($ids))?:count($inputs);
+			$max = is_array($ids)?count($ids):count($inputs);
 			$values = array('action'=>$action,'database'=>$database,'table'=>$table);
 			for ($i=0;$i<$max;$i++) {
 				$action = $values['action'];
@@ -1907,9 +1907,9 @@ class PHP_CRUD_API {
 
 		// reflection
 		list($tables,$collect,$select) = $this->findRelations($tables,$database,$auto_include);
-		$fields = $this->findFields($tables,$database);
-		if ($tenancy_function) $this->applyTenancyFunction($tenancy_function,$action,$database,$fields,$filters);
-		$fields = $this->limitFields($fields,$columns,$exclude,$select,$database);
+		$allFields = $this->findFields($tables,$database);
+		if ($tenancy_function) $this->applyTenancyFunction($tenancy_function,$action,$database,$allFields,$filters);
+		$fields = $this->limitFields($allFields,$columns,$exclude,$select,$database);
 		
 		// permissions
 		if ($table_authorizer) $this->applyTableAuthorizer($table_authorizer,$action,$database,$tables);
@@ -1922,7 +1922,7 @@ class PHP_CRUD_API {
 		foreach ($inputs as $k=>$context) {
 			$input = $this->filterInputByFields($context,$fields[$tables[0]]);
 
-			if ($tenancy_function) $this->applyInputTenancy($tenancy_function,$action,$database,$tables[0],$input,$fields[$tables[0]]);
+			if ($tenancy_function) $this->applyInputTenancy($tenancy_function,$action,$database,$tables[0],$input,$allFields[$tables[0]]);
 			if ($input_sanitizer) $this->applyInputSanitizer($input_sanitizer,$action,$database,$tables[0],$input,$fields[$tables[0]]);
 			if ($input_validator) $this->applyInputValidator($input_validator,$action,$database,$tables[0],$input,$fields[$tables[0]],$context);
 
