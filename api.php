@@ -1136,7 +1136,7 @@ class PHP_CRUD_API {
 
 	protected function applyBeforeHandler(&$action,&$database,&$table,&$ids,&$callback,&$inputs) {
 		if (is_callable($callback,true)) {
-			$max = count($ids)?:count($inputs);
+			$max = (is_array($ids)&&count($ids))?:count($inputs);
 			$values = array('action'=>$action,'database'=>$database,'table'=>$table);
 			for ($i=0;$i<$max;$i++) {
 				$action = $values['action'];
