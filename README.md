@@ -604,7 +604,7 @@ You can call the ```php_crud_api_transform()``` function to structure the data h
 }
 ```
 
-This transform function is available for PHP and JavaScript in the files ```php_crud_api_transform.php``` and ```php_crud_api_transform.js``` in the "lib" folder.
+This transform function is available for PHP, JavaScript and Python in the files ```php_crud_api_transform.php```, ```php_crud_api_transform.js``` and ```php_crud_api_transform.py``` in the "lib" folder.
 
 ## Permissions
 
