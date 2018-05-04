@@ -40,6 +40,7 @@ This is a single file application! Upload "api.php" somewhere and enjoy!
 ## Limitations
 
   - Primary keys should either be auto-increment (from 1 to 2^53) or UUID
+  - Column names must be strictly alphanumeric, hyphens/underscores are allowed
   - Composite primary or foreign keys are not supported
   - Complex filters (with both "and" & "or") are not supported
   - Complex writes (transactions) are not supported
