@@ -181,7 +181,7 @@ Search is implemented with the "filter" parameter. You need to specify the colum
   - ge: greater or equal (number is higher than or equal to value)
   - gt: greater than (number is higher than value)
   - bt: between (number is between two comma separated values)
-  - in: in (number is in comma separated list of values)
+  - in: in (number or string is in comma separated list of values)
   - is: is null (field contains "NULL" value)
 
 You can negate all filters by prepending a 'n' character, so that 'eq' becomes 'neq'.
