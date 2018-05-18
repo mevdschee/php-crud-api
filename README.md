@@ -40,6 +40,7 @@ This is a single file application! Upload "api.php" somewhere and enjoy!
 ## Limitations
 
   - Primary keys should either be auto-increment (from 1 to 2^53) or UUID
+  - Column names must be strictly alphanumeric, hyphens/underscores are allowed
   - Composite primary or foreign keys are not supported
   - Complex filters (with both "and" & "or") are not supported
   - Complex writes (transactions) are not supported
@@ -180,7 +181,7 @@ Search is implemented with the "filter" parameter. You need to specify the colum
   - ge: greater or equal (number is higher than or equal to value)
   - gt: greater than (number is higher than value)
   - bt: between (number is between two comma separated values)
-  - in: in (number is in comma separated list of values)
+  - in: in (number or string is in comma separated list of values)
   - is: is null (field contains "NULL" value)
 
 You can negate all filters by prepending a 'n' character, so that 'eq' becomes 'neq'.
@@ -604,7 +605,7 @@ You can call the ```php_crud_api_transform()``` function to structure the data h
 }
 ```
 
-This transform function is available for PHP and JavaScript in the files ```php_crud_api_transform.php``` and ```php_crud_api_transform.js``` in the "lib" folder.
+This transform function is available for PHP, JavaScript and Python in the files ```php_crud_api_transform.php```, ```php_crud_api_transform.js``` and ```php_crud_api_transform.py``` in the "lib" folder.
 
 ## Permissions
 

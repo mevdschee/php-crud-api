@@ -391,6 +391,13 @@ abstract class Tests extends TestBase
         $test->expect('{"posts":[{"id":5,"user_id":1,"category_id":1,"content":"#1"},{"id":6,"user_id":1,"category_id":1,"content":"#2"}]}');
     }
 
+    public function testFilterCommentsStringIn()
+    {
+        $test = new Api($this);
+        $test->get('/comments?filter=message,in,fantastic,thank you&transform=1');
+        $test->expect('{"comments":[{"id":2,"post_id":1,"message":"fantastic"},{"id":3,"post_id":2,"message":"thank you"}]}');
+    }
+
     public function testFilterPostsBetween()
     {
         $test = new Api($this);
