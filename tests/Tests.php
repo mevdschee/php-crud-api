@@ -83,10 +83,10 @@ abstract class Tests extends TestBase
     {
         $utf8 = json_encode('Hello world, Καλημέρα κόσμε, コンニチハ');
         $test = new Api($this);
-        $test->put('/posts/2', '{"content":'.$utf8.'}');
+        $test->put('/posts/2', '{"content":' . $utf8 . '}');
         $test->expect('1');
         $test->get('/posts/2');
-        $test->expect('{"id":2,"user_id":1,"category_id":2,"content":'.$utf8.'}');
+        $test->expect('{"id":2,"user_id":1,"category_id":2,"content":' . $utf8 . '}');
     }
 
     public function testEditPostWithUtf8ContentWithPost()
@@ -95,10 +95,10 @@ abstract class Tests extends TestBase
         $url_encoded = urlencode($utf8);
         $json_encoded = json_encode($utf8);
         $test = new Api($this);
-        $test->put('/posts/2', 'content='.$url_encoded);
+        $test->put('/posts/2', 'content=' . $url_encoded);
         $test->expect('1');
         $test->get('/posts/2');
-        $test->expect('{"id":2,"user_id":1,"category_id":2,"content":'.$json_encoded.'}');
+        $test->expect('{"id":2,"user_id":1,"category_id":2,"content":' . $json_encoded . '}');
     }
 
     public function testDeletePost()
@@ -138,9 +138,9 @@ abstract class Tests extends TestBase
     public function testListWithPaginate()
     {
         $test = new Api($this);
-        for ($i=1;$i<=10;$i++) {
-            $test->post('/posts', '{"user_id":1,"category_id":1,"content":"#'.$i.'"}');
-            $test->expect(4+$i);
+        for ($i = 1; $i <= 10; $i++) {
+            $test->post('/posts', '{"user_id":1,"category_id":1,"content":"#' . $i . '"}');
+            $test->expect(4 + $i);
         }
         $test->get('/posts?page=2,2&order=id');
         $test->expect('{"posts":{"columns":["id","user_id","category_id","content"],"records":[[5,1,1,"#1"],[6,1,1,"#2"]],"results":11}}');
@@ -207,10 +207,10 @@ abstract class Tests extends TestBase
         $binary = base64_encode("\0abc\0\n\r\b\0");
         $base64url = rtrim(strtr($binary, '+/', '-_'), '=');
         $test = new Api($this);
-        $test->put('/categories/2', '{"icon":"'.$base64url.'"}');
+        $test->put('/categories/2', '{"icon":"' . $base64url . '"}');
         $test->expect('1');
         $test->get('/categories/2');
-        $test->expect('{"id":2,"name":"article","icon":"'.$binary.'"}');
+        $test->expect('{"id":2,"name":"article","icon":"' . $binary . '"}');
     }
 
     public function testEditCategoryWithNull()
@@ -227,10 +227,10 @@ abstract class Tests extends TestBase
         $binary = base64_encode("€ \0abc\0\n\r\b\0");
         $base64url = rtrim(strtr($binary, '+/', '-_'), '=');
         $test = new Api($this);
-        $test->put('/categories/2', 'icon='.$base64url);
+        $test->put('/categories/2', 'icon=' . $base64url);
         $test->expect('1');
         $test->get('/categories/2');
-        $test->expect('{"id":2,"name":"article","icon":"'.$binary.'"}');
+        $test->expect('{"id":2,"name":"article","icon":"' . $binary . '"}');
     }
 
     public function testListCategoriesWithBinaryContent()
@@ -327,7 +327,7 @@ abstract class Tests extends TestBase
         $test->put('/users/1', '{"location":"POINT(30 20)"}');
         $test->expect('1');
         $test->get('/users/1?columns=id,location');
-        if ($this->getEngineName()=='SQLServer') {
+        if ($this->getEngineName() == 'SQLServer') {
             $test->expect('{"id":1,"location":"POINT (30 20)"}');
         } else {
             $test->expect('{"id":1,"location":"POINT(30 20)"}');
@@ -338,7 +338,7 @@ abstract class Tests extends TestBase
     {
         $test = new Api($this);
         $test->get('/users?columns=id,location');
-        if ($this->getEngineName()=='SQLServer') {
+        if ($this->getEngineName() == 'SQLServer') {
             $test->expect('{"users":{"columns":["id","location"],"records":[[1,"POINT (30 20)"]]}}');
         } else {
             $test->expect('{"users":{"columns":["id","location"],"records":[[1,"POINT(30 20)"]]}}');
@@ -347,7 +347,7 @@ abstract class Tests extends TestBase
 
     public function testEditUserWithId()
     {
-        if ($this->getEngineName()!='SQLServer') {
+        if ($this->getEngineName() != 'SQLServer') {
             $test = new Api($this);
             $test->put('/users/1', '{"id":2,"password":"testtest2"}');
             $test->expect('1');
@@ -634,7 +634,7 @@ abstract class Tests extends TestBase
         $test->get('/barcodes?transform=1');
         $test->expect('{"barcodes":[{"id":1,"product_id":1,"hex":"00ff01","bin":"AP8B"}]}');
     }
-    
+
     public function testEditPostWithApostrophe()
     {
         $test = new Api($this);
@@ -647,7 +647,7 @@ abstract class Tests extends TestBase
     public function testAddPostWithLeadingWhitespaceInJSON()
     {
         $test = new Api($this);
-        $test->post('/posts', '      
+        $test->post('/posts', '
                     {"user_id":1,"category_id":1,"content":"test whitespace"}   ');
         $test->expect('21');
         $test->get('/posts/21');
@@ -682,7 +682,11 @@ abstract class Tests extends TestBase
         // should list only user with id=1 (exactly 1 record)
         $test = new Api($this);
         $test->get('/users?columns=username,location');
-        $test->expect('{"users":{"columns":["username","location"],"records":[["user1","POINT(30 20)"]]}}');
+        if ($this->getEngineName() == 'SQLServer') {
+            $test->expect('{"users":{"columns":["username","location"],"records":[["user1","POINT (30 20)"]]}}');
+        } else {
+            $test->expect('{"users":{"columns":["username","location"],"records":[["user1","POINT(30 20)"]]}}');
+        }
     }
 
     public function testTenancyListExclude()
@@ -690,7 +694,11 @@ abstract class Tests extends TestBase
         // should list only user with id=1 (exactly 1 record)
         $test = new Api($this);
         $test->get('/users?exclude=id');
-        $test->expect('{"users":{"columns":["username","location"],"records":[["user1","POINT(30 20)"]]}}');
+        if ($this->getEngineName() == 'SQLServer') {
+            $test->expect('{"users":{"columns":["username","location"],"records":[["user1","POINT (30 20)"]]}}');
+        } else {
+            $test->expect('{"users":{"columns":["username","location"],"records":[["user1","POINT(30 20)"]]}}');
+        }
     }
 
     public function testTenancyReadColumns()

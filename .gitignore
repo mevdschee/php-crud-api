@@ -2,7 +2,7 @@
 .project
 .settings/
 phpunit.phar
-tests/config.php
+tests/Config.php
 .idea/
 vendor
 composer.lock
