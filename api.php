@@ -2367,7 +2367,7 @@ class PHP_CRUD_API {
 			if ($i>0) echo ',';
 			echo '{';
 			echo '"name":"'.$table['name'].'",';
-			echo '"description":"'.$table['comments'].'"';
+			echo '"description":'.json_encode($table['comments']);
 			echo '}';
 		}
 		echo '],';
