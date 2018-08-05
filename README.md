@@ -170,7 +170,7 @@ NB: This transform is CPU and memory intensive and can also be executed client-s
 
 ### List + Filter
 
-Search is implemented with the "filter" parameter. You need to specify the column name, a comma, the match type, another commma and the value you want to filter on. These are supported match types:
+Search is implemented with the "filter" parameter. You need to specify the column name, a comma, the match type, another commma and the value or values you want to filter on. These are supported match types:
 
   - cs: contain string (string contains value)
   - sw: start with (string starts with value)
@@ -182,7 +182,7 @@ Search is implemented with the "filter" parameter. You need to specify the colum
   - gt: greater than (number is higher than value)
   - bt: between (number is between two comma separated values)
   - in: in (number or string is in comma separated list of values)
-  - is: is null (field contains "NULL" value)
+  - is: is null (field contains "NULL" value, does not need value specified)
 
 You can negate all filters by prepending a 'n' character, so that 'eq' becomes 'neq'.
 
@@ -192,6 +192,8 @@ GET http://localhost/api.php/categories?filter=name,sw,Inter
 GET http://localhost/api.php/categories?filter=id,le,1
 GET http://localhost/api.php/categories?filter=id,ngt,2
 GET http://localhost/api.php/categories?filter=id,bt,1,1
+GET http://localhost/api.php/categories?filter=id,nis
+GET http://localhost/api.php/categories?filter=categories.id,eq,1
 GET http://localhost/api.php/categories?filter=categories.id,eq,1
 ```
 
