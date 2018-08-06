@@ -1,0 +1,7 @@
+GET /records/posts/2
+===
+200
+Content-Type: application/json
+Content-Length: 58
+
+{"id":2,"user_id":1,"category_id":2,"content":"It works!"}

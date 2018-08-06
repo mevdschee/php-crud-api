@@ -1,0 +1,35 @@
+PUT /columns/barcodes
+
+{"name":"barcodes2"}
+===
+200
+Content-Type: application/json
+Content-Length: 4
+
+true
+===
+GET /columns/barcodes2
+===
+200
+Content-Type: application/json
+Content-Length: 202
+
+{"name":"barcodes2","columns":[{"name":"id","type":"integer","pk":true},{"name":"product_id","type":"integer","fk":"products"},{"name":"hex","type":"varchar","length":255},{"name":"bin","type":"blob"}]}
+===
+PUT /columns/barcodes2
+
+{"name":"barcodes"}
+===
+200
+Content-Type: application/json
+Content-Length: 4
+
+true
+===
+GET /columns/barcodes
+===
+200
+Content-Type: application/json
+Content-Length: 201
+
+{"name":"barcodes","columns":[{"name":"id","type":"integer","pk":true},{"name":"product_id","type":"integer","fk":"products"},{"name":"hex","type":"varchar","length":255},{"name":"bin","type":"blob"}]}

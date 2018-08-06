@@ -1,0 +1,9 @@
+POST /records/posts
+
+["truncat
+===
+422
+Content-Type: application/json
+Content-Length: 50
+
+{"code":1008,"message":"Cannot read HTTP message"}

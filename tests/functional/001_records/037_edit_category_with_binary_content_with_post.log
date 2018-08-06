@@ -1,0 +1,18 @@
+PUT /records/categories/2
+Content-Type: application/x-www-form-urlencoded
+
+icon=4oKsIABhYmMACg1cYgA
+===
+200
+Content-Type: application/json
+Content-Length: 1
+
+1
+===
+GET /records/categories/2
+===
+200
+Content-Type: application/json
+Content-Length: 55
+
+{"id":2,"name":"article","icon":"4oKsIABhYmMACg1cYgA="}

@@ -1,0 +1,7 @@
+GET /records/posts?order=id&size=0
+===
+200
+Content-Type: application/json
+Content-Length: 14
+
+{"records":[]}

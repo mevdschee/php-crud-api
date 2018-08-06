@@ -1,8 +1,0 @@
-<phpunit bootstrap="tests/autoload.php">
-    <php>
-        <ini name="display_errors" value="true"/>
-    </php>
-    <testsuite name="All Tests">
-        <directory suffix='.php'>./tests/</directory>
-    </testsuite>
-</phpunit>

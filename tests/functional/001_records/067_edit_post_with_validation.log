@@ -1,0 +1,9 @@
+PUT /records/comments/4
+
+{"post_id":"two"}
+===
+422
+Content-Type: application/json
+Content-Length: 104
+
+{"code":1013,"message":"Input validation failed for 'comments'","details":{"post_id":"must be numeric"}}

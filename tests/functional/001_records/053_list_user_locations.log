@@ -1,0 +1,7 @@
+GET /records/users?columns=id,location
+===
+200
+Content-Type: application/json
+Content-Length: 73
+
+{"records":[{"id":1,"location":"POINT(30 20)"},{"id":2,"location":null}]}

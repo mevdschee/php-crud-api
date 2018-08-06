@@ -1,0 +1,9 @@
+PUT /records/posts/1,2
+
+[{"id":1,"user_id":1,"category_id":1,"content":"blog started"}]
+===
+422
+Content-Type: application/json
+Content-Length: 58
+
+{"code":1002,"message":"Argument count mismatch in '1,2'"}

@@ -1,0 +1,10 @@
+PUT /records/posts/2
+Content-Type: application/json
+
+{"id":1}
+===
+200
+Content-Type: application/json
+Content-Length: 1
+
+0

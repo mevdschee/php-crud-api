@@ -1,0 +1,17 @@
+PUT /records/users/1
+
+{"id":2,"password":"testtest2"}
+===
+200
+Content-Type: application/json
+Content-Length: 1
+
+1
+===
+GET /records/users/1?columns=id,username,password
+===
+200
+Content-Type: application/json
+Content-Length: 50
+
+{"id":1,"username":"user1","password":"testtest2"}

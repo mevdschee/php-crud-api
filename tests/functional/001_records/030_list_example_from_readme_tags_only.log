@@ -1,0 +1,7 @@
+GET /records/posts?include=tags&filter=id,eq,1
+===
+200
+Content-Type: application/json
+Content-Length: 182
+
+{"records":[{"id":1,"user_id":1,"category_id":1,"content":"blog started","post_tags":[{"id":1,"name":"funny","is_important":false},{"id":2,"name":"important","is_important":true}]}]}

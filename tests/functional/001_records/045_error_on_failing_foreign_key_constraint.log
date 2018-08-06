@@ -1,0 +1,9 @@
+POST /records/posts
+
+{"user_id":3,"category_id":1,"content":"fk constraint"}
+===
+409
+Content-Type: application/json
+Content-Length: 50
+
+{"code":1010,"message":"Data integrity violation"}

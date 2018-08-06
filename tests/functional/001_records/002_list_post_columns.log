@@ -1,0 +1,7 @@
+GET /records/posts?columns=id,content
+===
+200
+Content-Type: application/json
+Content-Length: 78
+
+{"records":[{"id":1,"content":"blog started"},{"id":2,"content":"It works!"}]}

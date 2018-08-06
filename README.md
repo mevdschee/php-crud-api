@@ -1,22 +1,18 @@
-[![Average time to resolve an issue](http://isitmaintained.com/badge/resolution/mevdschee/php-crud-api.svg)](http://isitmaintained.com/project/mevdschee/php-crud-api "Average time to resolve an issue")
-[![Percentage of issues still open](http://isitmaintained.com/badge/open/mevdschee/php-crud-api.svg)](http://isitmaintained.com/project/mevdschee/php-crud-api "Percentage of issues still open")
-[![Build Status](https://travis-ci.org/mevdschee/php-crud-api.svg?branch=master)](https://travis-ci.org/mevdschee/php-crud-api)
+# php-crud-api
 
-# PHP-CRUD-API
-
-Single file PHP script that adds a REST API to a MySQL 5.5 InnoDB database. PostgreSQL 9.1 and MS SQL Server 2012 are fully supported. There is even limited support for SQLite 3.
+Single file PHP 7 script that adds a REST API to a MySQL 5.5 InnoDB database. PostgreSQL 9.1 and MS SQL Server 2012 are fully supported.
 
 Related projects:
 
-  - [PHP-API-AUTH](https://github.com/mevdschee/php-api-auth): Authentication add-on supporting JWT or username/password.
+  - [PHP-API-AUTH](https://github.com/mevdschee/php-api-auth): Authentication add-on (for v1) supporting JWT or username/password.
   - [PHP-SP-API](https://github.com/mevdschee/php-sp-api): Single file PHP script that adds a REST API to a SQL database.
-  - [PHP-CRUD-UI](https://github.com/mevdschee/PHP-crud-ui): Single file PHP script that adds a UI to a PHP-CRUD-API project.
-  - [VUE-CRUD-UI](https://github.com/nlware/vue-crud-ui): Single file Vue.js script that adds a UI to a PHP-CRUD-API project.
+  - [PHP-CRUD-UI](https://github.com/mevdschee/PHP-crud-ui): Single file PHP script that adds a UI to a PHP-CRUD-API (v1) project.
+  - [VUE-CRUD-UI](https://github.com/nlware/vue-crud-ui): Single file Vue.js script that adds a UI to a PHP-CRUD-API (v1) project.
   
 There are also ports of this script in:
 
-- [Java JDBC by Ivan Kolchagov](https://github.com/kolchagov/java-crud-api)
-- [Java Spring Boot + jOOQ](https://github.com/mevdschee/java-crud-api/tree/master/full) (work in progress)
+- [Java JDBC by Ivan Kolchagov (v1)](https://github.com/kolchagov/java-crud-api)
+- [Java Spring Boot + jOOQ (v2)](https://github.com/mevdschee/java-crud-api/tree/master/full) (work in progress)
 
 There are also proof-of-concept ports of this script that only support basic REST CRUD functionality in:
 [PHP](https://github.com/mevdschee/php-crud-api/blob/master/extras/core.php),
@@ -28,1054 +24,634 @@ There are also proof-of-concept ports of this script that only support basic RES
 
 ## Requirements
 
-  - PHP 5.3 or higher with MySQLi, libpq, SQLSRV or sqlite3 enabled (PHP 7 recommended)
-  - PHP on Windows when connecting to SQL Server 2012
+  - PHP 7.0 or higher with PDO drivers for MySQL, PgSQL or SqlSrv enabled
   - MySQL 5.6 / MariaDB 10.0 or higher for spatial features in MySQL
   - PostGIS 2.0 or higher for spatial features in PostgreSQL 9.1 or higher
+  - SQL Server 2012 or higher (2017 for Linux support)
 
 ## Installation
 
 This is a single file application! Upload "api.php" somewhere and enjoy!
 
-## Limitations
+For local development you may run PHP's built-in web server:
 
-  - Primary keys should either be auto-increment (from 1 to 2^53) or UUID
-  - Column names must be strictly alphanumeric, hyphens/underscores are allowed
-  - Composite primary or foreign keys are not supported
-  - Complex filters (with both "and" & "or") are not supported
-  - Complex writes (transactions) are not supported
-  - Complex queries calling functions (like "concat" or "sum") are not supported
-  - MySQL storage engine must be either InnoDB or XtraDB
-  - SQLite does not support binary and spatial/GIS functionality
-  - MySQL BIT field type is not supported (use TINYINT)
+    php -S localhost:8080
 
-## Features
+Test the script by opening the following URL:
 
-  - Single PHP file, easy to deploy.
-  - Very little code, easy to adapt and maintain
-  - Streaming data, low memory footprint
-  - Supports POST variables as input
-  - Supports a JSON object as input
-  - Supports a JSON array as input (batch insert)
-  - Supports file upload from web forms (multipart/form-data)
-  - Condensed JSON output: first row contains field names
-  - Sanitize and validate input using callbacks
-  - Permission system for databases, tables, columns and records
-  - Multi-tenant database layouts are supported
-  - Multi-domain CORS support for cross-domain requests
-  - Combined requests with support for multiple table names
-  - Search support on multiple criteria
-  - Pagination, sorting and column selection
-  - Relation detection and filtering on foreign keys
-  - Relation "transforms" for PHP and JavaScript
-  - Atomic increment support via PATCH (for counters)
-  - Binary fields supported with base64 encoding
-  - Spatial/GIS fields and filters supported with WKT
-  - Unstructured data support through JSON/JSONB/XML
-  - Generate API documentation using Swagger tools
-  - Authentication via JWT token or username/password (via [PHP-API-AUTH](https://github.com/mevdschee/php-api-auth))
+    http://localhost:8080/api.php/records/posts/1
+
+Dont forget to modify the configuration at the bottom of the file.
 
 ## Configuration
 
 Edit the following lines in the bottom of the file "api.php":
 
-```
-$api = new PHP_CRUD_API(array(
-	'username'=>'xxx',
-	'password'=>'xxx',
-	'database'=>'xxx',
-));
-$api->executeCommand();
-```
-
-These are all the configuration options and their default values:
-
-```
-$api = new PHP_CRUD_API(array(
-	'dbengine'=>'MySQL',
-	'username'=>'root',
-	'password'=>null,
-	'database'=>false,
-// for connectivity (defaults to localhost):
-	'hostname'=>null,
-	'port'=>null,
-	'socket'=>null,
-	'charset'=>'utf8',
-// callbacks with their default behavior
-	'table_authorizer'=>function($cmd,$db,$tab) { return true; },
-	'record_filter'=>function($cmd,$db,$tab) { return false; },
-	'column_authorizer'=>function($cmd,$db,$tab,$col) { return true; },
-	'tenancy_function'=>function($cmd,$db,$tab,$col) { return null; },
-	'input_sanitizer'=>function($cmd,$db,$tab,$col,$typ,$val) { return $val; },
-	'input_validator'=>function($cmd,$db,$tab,$col,$typ,$val,$ctx) { return true; },
-	'before'=>function(&$cmd,&$db,&$tab,&$id,&$in) { /* adjust array $in */ },
-	'after'=>function($cmd,$db,$tab,$id,$in,$out) { /* do something */ },
-// configurable options
-	'allow_origin'=>'*',
-	'auto_include'=>true,
-// dependencies (added for unit testing):
-	'db'=>null,
-	'method'=>$_SERVER['REQUEST_METHOD'],
-	'request'=>$_SERVER['PATH_INFO'],
-	'get'=>$_GET,
-	'post'=>file_get_contents('php://input'),
-	'origin'=>$_SERVER['HTTP_ORIGIN'],
-));
-$api->executeCommand();
-```
-
-NB: The "socket" option is not supported by MS SQL Server. SQLite expects the filename in the "database" field.
-
-## Documentation
-
-After configuring you can directly benefit from generated API documentation. On the URL below you find the generated API specification in [Swagger](http://swagger.io/) 2.0 format.
-
-    http://localhost/api.php
-
-Try the [editor](http://editor.swagger.io/) to quickly view it! Choose "File" > "Paste JSON..." from the menu.
-
-## Usage
-
-You can do all CRUD (Create, Read, Update, Delete) operations and one extra List operation. Here is how:
-
-### List
-
-List all records of a database table.
-
-```
-GET http://localhost/api.php/categories
-```
+    $config = new Config([
+        'username' => 'xxx',
+        'password' => 'xxx',
+        'database' => 'xxx',
+    ]);
+
+These are all the configuration options and their default value between brackets:
+
+- "driver": "mysql" (default), "pgsql" or "sqlsrv"
+- "address": Hostname of the database server ("localhost")
+- "port": TCP port of the database server (defaults to driver default)
+- "username": Username of the user connecting to the database (no default)
+- "password": Password of the user connecting to the database (no default)
+- "database": Database the connecting is made to (no default)
+- "middlewares": List of middlewares to load ("cors")
+- "controllers": List of controllers to load ("records,columns,cache,openapi")
+- "cacheType": "TempFile" (default), "Redis", "Memcache" or "Memcached"
+- "cachePath": Path/address of the cache (defaults to system's "temp" directory)
+- "cacheTime": Number of seconds the cache is valid (10)
+- "debug": Show errors in the "X-Debug-Info" header (false)
+
+## Compilation
+
+The code resides in the "src" directory. You can access it at the URL:
+
+    http://localhost:8080/src/records/posts/1
+
+You can compile all files into a single "api.php" file using:
+
+    php build.php
+
+NB: The script appends the classes in alphabetical order (directories first).
+
+## Limitations
+
+These limitation were also present in v1:
 
-Output:
+  - Primary keys should either be auto-increment (from 1 to 2^53) or UUID
+  - Composite primary or foreign keys are not supported
+  - Complex writes (transactions) are not supported
+  - Complex queries calling functions (like "concat" or "sum") are not supported
+  - MySQL storage engine must be either InnoDB or XtraDB
+  - Only MySQL, PostgreSQL and SQLServer support spatial/GIS functionality
 
-```
-{"categories":{"columns":["id","name"],"records":[[1,"Internet"],[3,"Web development"]]}}
-```
+## Features
+
+These features match features in v1:
 
-### List + Transform
+  - [x] Single PHP file, easy to deploy.
+  - [x] Very little code, easy to adapt and maintain
+  - [ ] ~~Streaming data, low memory footprint~~
+  - [x] Supports POST variables as input (x-www-form-urlencoded)
+  - [x] Supports a JSON object as input
+  - [x] Supports a JSON array as input (batch insert)
+  - [ ] Supports file upload from web forms (multipart/form-data)
+  - [ ] ~~Condensed JSON output: first row contains field names~~
+  - [x] Sanitize and validate input using callbacks
+  - [ ] Permission system for databases, tables, columns and records
+  - [ ] Multi-tenant database layouts are supported
+  - [x] Multi-domain CORS support for cross-domain requests
+  - [x] Combined requests with support for multiple table names
+  - [x] Search support on multiple criteria
+  - [x] Pagination, seeking, sorting and column selection
+  - [x] Relation detection nested results (belongsTo, hasMany and HABTM)
+  - [ ] ~~Relation "transforms" (of condensed JSON) for PHP and JavaScript~~
+  - [x] Atomic increment support via PATCH (for counters)
+  - [x] Binary fields supported with base64 encoding
+  - [x] Spatial/GIS fields and filters supported with WKT
+  - [ ] Unstructured data support through JSON/JSONB
+  - [ ] Generate API documentation using OpenAPI tools
+  - [ ] Authentication via JWT token or username/password
 
-List all records of a database table and transform them to objects.
+ NB: No checkmark means: not yet implemented. Striken means: will not be implemented.
 
-```
-GET http://localhost/api.php/categories?transform=1
-```
+### Extra Features
 
-Output:
+These features are new and were not included in v1.
 
-```
-{"categories":[{"id":1,"name":"Internet"},{"id":3,"name":"Web development"}]}
-```
+  - Does not reflect on every request (better performance)
+  - Complex filters (with both "and" & "or") are supported
+  - Support for output of database structure in JSON
+  - Support for boolean and binary data in all database engines
+  - Support for relational data on read (not only on list operation)
+  - Support for middleware to modify all operations (also list)
+  - Error reporting in JSON with corresponding HTTP status
 
-NB: This transform is CPU and memory intensive and can also be executed client-side (see: [lib](https://github.com/mevdschee/php-crud-api/tree/master/lib)).
+## Middleware
 
-### List + Filter
+You can enable the following middleware using the "middlewares" config parameter:
 
-Search is implemented with the "filter" parameter. You need to specify the column name, a comma, the match type, another commma and the value or values you want to filter on. These are supported match types:
+- "cors": Support for CORS requests (enabled by default)
+- "basicAuth": Support for "Basic Authentication"
+- "firewall": Limit access to specific IP addresses
+- "validation": Return input validation errors for custom rules
+- "sanitation": Apply input sanitation on create and update
 
-  - cs: contain string (string contains value)
-  - sw: start with (string starts with value)
-  - ew: end with (string end with value)
-  - eq: equal (string or number matches exactly)
-  - lt: lower than (number is lower than value)
-  - le: lower or equal (number is lower than or equal to value)
-  - ge: greater or equal (number is higher than or equal to value)
-  - gt: greater than (number is higher than value)
-  - bt: between (number is between two comma separated values)
-  - in: in (number or string is in comma separated list of values)
-  - is: is null (field contains "NULL" value, does not need value specified)
+The "middlewares" config parameter is a comma separated list of enabled middlewares.
+You can tune the middleware behavior using middleware specific configuration parameters:
 
-You can negate all filters by prepending a 'n' character, so that 'eq' becomes 'neq'.
+- "cors.allowedOrigins": The origins allowed in the CORS headers ("*")
+- "cors.allowHeaders": The headers allowed in the CORS request ("Content-Type, X-XSRF-TOKEN")
+- "cors.allowMethods": The methods allowed in the CORS request ("OPTIONS, GET, PUT, POST, DELETE, PATCH")
+- "cors.allowCredentials": To allow credentials in the CORS request ("true")
+- "cors.maxAge": The time that the CORS grant is valid in seconds ("1728000")
+- "basicAuth.passwordFile": The file to read for username/password combinations (".htpasswd")
+- "basicAuth.realm": Message shown when asking for credentials ("Username and password required")
+- "firewall.reverseProxy": Set to "true" when a reverse proxy is used ("")
+- "firewall.allowedIpAddresses": List of IP addresses that are allowed to connect ("")
+- "validation.handler": Handler to implement validation rules for input values ("")
+- "sanitation.handler": Handler to implement sanitation rules for input values ("")
 
-```
-GET http://localhost/api.php/categories?filter=name,eq,Internet
-GET http://localhost/api.php/categories?filter=name,sw,Inter
-GET http://localhost/api.php/categories?filter=id,le,1
-GET http://localhost/api.php/categories?filter=id,ngt,2
-GET http://localhost/api.php/categories?filter=id,bt,1,1
-GET http://localhost/api.php/categories?filter=id,nis
-GET http://localhost/api.php/categories?filter=categories.id,eq,1
-GET http://localhost/api.php/categories?filter=categories.id,eq,1
-```
+If you don't specify these parameters in the configuration, then the default values (between brackets) are used.
 
-Output:
+## TreeQL, a pragmatic GraphQL
 
-```
-{"categories":{"columns":["id","name"],"records":[[1,"Internet"]]}}
-```
+TreeQL allow you to create a Tree of JSON objects based on your SQL database structure (relations).
 
-NB: You may specify table name before the field name, seperated with a dot.
+It is loosely based on the REST standard and also inspired by json:api.
 
-### List + Filter + Satisfy
+### CRUD + List
 
-Multiple filters can be applied by using "filter[]" instead of "filter" as a parameter name. Then the parameter "satisfy" is used to indicate whether "all" (default) or "any" filter should be satisfied to lead to a match:
+The example posts table has only a a few fields:
 
-```
-GET http://localhost/api.php/categories?filter[]=id,eq,1&filter[]=id,eq,3&satisfy=any
-GET http://localhost/api.php/categories?filter[]=id,ge,1&filter[]=id,le,3&satisfy=all
-GET http://localhost/api.php/categories?filter[]=id,ge,1&filter[]=id,le,3&satisfy=categories.all
-GET http://localhost/api.php/categories?filter[]=id,ge,1&filter[]=id,le,3
-```
+    posts  
+    =======
+    id     
+    title  
+    content
+    created
 
-Output:
+The CRUD + List operations below act on this table.
 
-```
-{"categories":{"columns":["id","name"],"records":[[1,"Internet"],[3,"Web development"]]}}
-```
+#### Create
 
-NB: You may specify "satisfy=categories.all,posts.any" if you want to mix "and" and "or" for different tables.
+If you want to create a record the request can be written in URL format as: 
 
-### List + Column selection
+    POST /records/posts
 
-By default all columns are selected. With the "columns" parameter you can select specific columns. Multiple columns should be comma separated. 
-An asterisk ("*") may be used as a wildcard to indicate "all columns". Similar to "columns" you may use the "exclude" parameter to remove certain columns:
+You have to send a body containing:
 
-```
-GET http://localhost/api.php/categories?columns=name
-GET http://localhost/api.php/categories?columns=categories.name
-GET http://localhost/api.php/categories?exclude=categories.id
-```
+    {
+        "title": "Black is the new red",
+        "content": "This is the second post.",
+        "created": "2018-03-06T21:34:01Z"
+    }
 
-Output:
+And it will return the value of the primary key of the newly created record:
 
-```
-{"categories":{"columns":["name"],"records":[["Web development"],["Internet"]]}}
-```
+    2
 
-NB: Columns that are used to include related entities are automatically added and cannot be left out of the output.
+#### Read
 
-### List + Order
+To read a record from this table the request can be written in URL format as:
 
-With the "order" parameter you can sort. By default the sort is in ascending order, but by specifying "desc" this can be reversed:
+    GET /records/posts/1
 
-```
-GET http://localhost/api.php/categories?order=name,desc
-GET http://localhost/api.php/posts?order[]=icon,desc&order[]=name
-```
+Where "1" is the value of the primary key of the record that you want to read. It will return:
 
-Output:
+    {
+        "id": 1
+        "title": "Hello world!",
+        "content": "Welcome to the first post.",
+        "created": "2018-03-05T20:12:56Z"
+    }
 
-```
-{"categories":{"columns":["id","name"],"records":[[3,"Web development"],[1,"Internet"]]}}
-```
+On read operations you may apply includes.
 
-NB: You may sort on multiple fields by using "order[]" instead of "order" as a parameter name.
+#### Update
 
-### List + Order + Pagination
+To update a record in this table the request can be written in URL format as:
 
-The "page" parameter holds the requested page. The default page size is 20, but can be adjusted (e.g. to 50):
+    PUT /records/posts/1
 
-```
-GET http://localhost/api.php/categories?order=id&page=1
-GET http://localhost/api.php/categories?order=id&page=1,50
-```
+Where "1" is the value of the primary key of the record that you want to update. Send as a body:
 
-Output:
+    {
+        "title": "Adjusted title!"
+    }
 
-```
-{"categories":{"columns":["id","name"],"records":[[1,"Internet"],[3,"Web development"]],"results":2}}
-```
+This adjusts the title of the post. And the return value is the number of rows that are set:
 
-NB: Pages that are not ordered cannot be paginated.
+    1
 
-### Create
+#### Delete
 
-You can easily add a record using the POST method (x-www-form-urlencoded, see rfc1738). The call returns the "last insert id".
+If you want to delete a record from this table the request can be written in URL format as:
 
-```
-POST http://localhost/api.php/categories
-id=1&name=Internet
-```
+    DELETE /records/posts/1
 
-Output:
+And it will return the number of deleted rows:
 
-```
-1
-```
+    1
 
-Note that the fields that are not specified in the request get the default value as specified in the database.
+#### List
 
-### Create (with JSON object)
+To list records from this table the request can be written in URL format as:
 
-Alternatively you can send a JSON object in the body. The call returns the "last insert id".
+    GET /records/posts
 
-```
-POST http://localhost/api.php/categories
-{"id":1,"name":"Internet"}
-```
+It will return:
 
-Output:
-
-```
-1
-```
-
-Note that the fields that are not specified in the request get the default value as specified in the database.
-
-### Create (with JSON array)
-
-Alternatively you can send a JSON array containing multiple JSON objects in the body. The call returns an array of "last insert id" values. 
-
-```
-POST http://localhost/api.php/categories
-[{"name":"Internet"},{"name":"Programming"},{"name":"Web development"}]
-```
-
-Output:
-
-```
-[1,2,3]
-```
-
-This call uses a transaction and will either insert all or no records. If the transaction fails it will return 'null'.
-
-### Read
-
-If you want to read a single object you can use:
-
-```
-GET http://localhost/api.php/categories/1
-```
-
-Output:
-
-```
-{"id":1,"name":"Internet"}
-```
-
-### Read (multiple)
-
-If you want to read multiple objects you can use:
-
-```
-GET http://localhost/api.php/categories/1,2
-```
-
-Output:
-
-```
-[{"id":1,"name":"Internet"},{"id":2,"name":"Programming"}]
-```
-
-### Update
-
-Editing a record is done with the PUT method. The call returns the number of rows affected.
-
-```
-PUT http://localhost/api.php/categories/2
-name=Internet+networking
-```
-
-Output:
-
-```
-1
-```
-
-Note that only fields that are specified in the request will be updated.
-
-### Update (with JSON object)
-
-Alternatively you can send a JSON object in the body. The call returns the number of rows affected.
-
-```
-PUT http://localhost/api.php/categories/2
-{"name":"Internet networking"}
-```
-
-Output:
-
-```
-1
-```
-
-Note that only fields that are specified in the request will be updated.
-
-### Update (with JSON array)
-
-Alternatively you can send a JSON array containing multiple JSON objects in the body. The call returns an array of the rows affected.
-
-```
-PUT http://localhost/api.php/categories/1,2
-[{"name":"Internet"},{"name":"Programming"}]
-```
-
-Output:
-
-```
-[1,1]
-```
-
-The number of primary key values in the URL should match the number of elements in the JSON array (and be in the same order).
-
-This call uses a transaction and will either update all or no records. If the transaction fails it will return 'null'.
-
-### Delete
-
-The DELETE verb is used to delete a record. The call returns the number of rows affected.
-
-```
-DELETE http://localhost/api.php/categories/2
-```
-
-Output:
-
-```
-1
-```
-
-### Delete (multiple)
-
-The DELETE verb can also be used to delete multiple records. The call returns the number of rows affected for each primary key value specified in the URL.
-
-```
-DELETE http://localhost/api.php/categories/1,2
-```
-
-Output:
-
-```
-[1,1]
-```
-
-This call uses a transaction and will either delete all or no records. If the transaction fails it will return 'null'.
-
-## Relations
-
-The explanation of this feature is based on the data structure from the ```blog.sql``` database file. This database is a very simple blog data structure with corresponding foreign key relations between the tables. These foreign key constraints are required as the relationship detection is based on them, not on column naming.
-
-You can get the "post" that has "id" equal to "1" with it's corresponding "categories", "tags" and "comments" using:
-
-```
-GET http://localhost/api.php/posts?include=categories,tags,comments&filter=id,eq,1
-```
-
-Output:
-
-```
-{
-    "posts": {
-        "columns": [
-            "id",
-            "user_id",
-            "category_id",
-            "content"
-        ],
-        "records": [
-            [
-                1,
-                1,
-                1,
-                "blog started"
-            ]
-        ]
-    },
-    "post_tags": {
-        "relations": {
-            "post_id": "posts.id"
-        },
-        "columns": [
-            "id",
-            "post_id",
-            "tag_id"
-        ],
-        "records": [
-            [
-                1,
-                1,
-                1
-            ],
-            [
-                2,
-                1,
-                2
-            ]
-        ]
-    },
-    "categories": {
-        "relations": {
-            "id": "posts.category_id"
-        },
-        "columns": [
-            "id",
-            "name"
-        ],
-        "records": [
-            [
-                1,
-                "anouncement"
-            ]
-        ]
-    },
-    "tags": {
-        "relations": {
-            "id": "post_tags.tag_id"
-        },
-        "columns": [
-            "id",
-            "name"
-        ],
-        "records": [
-            [
-                1,
-                "funny"
-            ],
-            [
-                2,
-                "important"
-            ]
-        ]
-    },
-    "comments": {
-        "relations": {
-            "post_id": "posts.id"
-        },
-        "columns": [
-            "id",
-            "post_id",
-            "message"
-        ],
-        "records": [
-            [
-                1,
-                1,
-                "great"
-            ],
-            [
-                2,
-                1,
-                "fantastic"
-            ]
+    {
+        "records":[
+            {
+                "id": 1,
+                "title": "Hello world!",
+                "content": "Welcome to the first post.",
+                "created": "2018-03-05T20:12:56Z"
+            }
         ]
     }
-}
-```
 
-You can call the ```php_crud_api_transform()``` function to structure the data hierarchical like this:
+On list operations you may apply filters and includes.
 
-```
-{
-    "posts": [
-        {
-            "id": 1,
-            "post_tags": [
-                {
-                    "id": 1,
-                    "post_id": 1,
-                    "tag_id": 1,
-                    "tags": [
-                        {
-                            "id": 1,
-                            "name": "funny"
-                        }
-                    ]
-                },
-                {
-                    "id": 2,
-                    "post_id": 1,
-                    "tag_id": 2,
-                    "tags": [
-                        {
-                            "id": 2,
-                            "name": "important"
-                        }
-                    ]
-                }
-            ],
-            "comments": [
-                {
-                    "id": 1,
-                    "post_id": 1,
-                    "message": "great"
-                },
-                {
-                    "id": 2,
-                    "post_id": 1,
-                    "message": "fantastic"
-                }
-            ],
-            "user_id": 1,
-            "category_id": 1,
-            "categories": [
-                {
-                    "id": 1,
-                    "name": "anouncement"
-                }
-            ],
-            "content": "blog started"
-        }
+### Filters
+
+Filters provide search functionality, on list calls, using the "filter" parameter. You need to specify the column
+name, a comma, the match type, another commma and the value you want to filter on. These are supported match types:
+
+  - "cs": contain string (string contains value)
+  - "sw": start with (string starts with value)
+  - "ew": end with (string end with value)
+  - "eq": equal (string or number matches exactly)
+  - "lt": lower than (number is lower than value)
+  - "le": lower or equal (number is lower than or equal to value)
+  - "ge": greater or equal (number is higher than or equal to value)
+  - "gt": greater than (number is higher than value)
+  - "bt": between (number is between two comma separated values)
+  - "in": in (number or string is in comma separated list of values)
+  - "is": is null (field contains "NULL" value)
+
+You can negate all filters by prepending a "n" character, so that "eq" becomes "neq". 
+Examples of filter usage are:
+
+    GET /records/categories?filter=name,eq,Internet
+    GET /records/categories?filter=name,sw,Inter
+    GET /records/categories?filter=id,le,1
+    GET /records/categories?filter=id,ngt,2
+    GET /records/categories?filter=id,bt,1,1
+
+Output:
+
+    {
+        "records":[
+            {
+                "id": 1
+                "name": "Internet"
+            }
+        ]
+    }
+
+In the next section we dive deeper into how you can apply multiple filters on a single list call.
+
+### Multiple filters
+
+Filters can be a by applied by repeating the "filter" parameter in the URL. For example the following URL: 
+
+    GET /records/categories?filter=id,gt,1&filter=id,lt,3
+
+will request all categories "where id > 1 and id < 3". If you wanted "where id = 2 or id = 4" you should write:
+
+    GET /records/categories?filter1=id,eq,2&filter2=id,eq,4
+    
+As you see we added a number to the "filter" parameter to indicate that "OR" instead of "AND" should be applied.
+Note that you can also repeat "filter1" and create an "AND" within an "OR". Since you can also go one level deeper
+by adding a letter (a-f) you can create almost any reasonably complex condition tree.
+
+NB: You can only filter on the requested table (not on it's included) and filters are only applied on list calls.
+
+### Includes
+
+Let's say that you have a posts table that has comments (made by users) and the posts can have tags.
+
+    posts    comments  users     post_tags  tags
+    =======  ========  =======   =========  ======= 
+    id       id        id        id         id
+    title    post_id   username  post_id    name
+    content  user_id   phone     tag_id
+    created  message
+
+When you want to list posts with their comments users and tags you can ask for two "tree" paths:
+
+    posts -> comments  -> users
+    posts -> post_tags -> tags
+
+These paths have the same root and this request can be written in URL format as:
+
+    GET /records/posts?include=comments,users&include=tags
+
+Here you are allowed to leave out the intermediate table that binds posts to tags. In this example
+you see all three table relation types (hasMany, belongsTo and hasAndBelongsToMany) in effect:
+
+- "post" has many "comments"
+- "comment" belongs to "user"
+- "post" has and belongs to many "tags"
+
+This may lead to the following JSON data:
+
+    {
+        "records":[
+            {
+                "id": 1,
+                "title": "Hello world!",
+                "content": "Welcome to the first post.",
+                "created": "2018-03-05T20:12:56Z",
+                "comments": [
+                    {
+                        id: 1,
+                        post_id: 1,
+                        user_id: {
+                            id: 1,
+                            username: "mevdschee",
+                            phone: null,
+                        },
+                        message: "Hi!"
+                    },
+                    {
+                        id: 2,
+                        post_id: 1,
+                        user_id: {
+                            id: 1,
+                            username: "mevdschee",
+                            phone: null,
+                        },
+                        message: "Hi again!"
+                    }
+                ],
+                "tags": []
+            },
+            {
+                "id": 2,
+                "title": "Black is the new red",
+                "content": "This is the second post.",
+                "created": "2018-03-06T21:34:01Z",
+                "comments": [],
+                "tags": [
+                    {
+                        id: 1,
+                        message: "Funny"
+                    },
+                    {
+                        id: 2,
+                        message: "Informational"
+                    }
+                ]
+            }
+        ]
+    }
+
+You see that the "belongsTo" relationships are detected and the foreign key value is replaced by the referenced object.
+In case of "hasMany" and "hasAndBelongsToMany" the table name is used a new property on the object.
+
+### Batch operations
+
+When you want to create, read, update or delete you may specify multiple primary key values in the URL.
+You also need to send an array instead of an object in the request body for create and update. 
+
+To read a record from this table the request can be written in URL format as:
+
+    GET /records/posts/1,2
+
+The result may be:
+
+    [
+            {
+                "id": 1,
+                "title": "Hello world!",
+                "content": "Welcome to the first post.",
+                "created": "2018-03-05T20:12:56Z"
+            },
+            {
+                "id": 2,
+                "title": "Black is the new red",
+                "content": "This is the second post.",
+                "created": "2018-03-06T21:34:01Z"
+            }
     ]
-}
-```
 
-This transform function is available for PHP, JavaScript and Python in the files ```php_crud_api_transform.php```, ```php_crud_api_transform.js``` and ```php_crud_api_transform.py``` in the "lib" folder.
+Similarly when you want to do a batch update the request in URL format is written as:
 
-## Permissions
+    PUT /records/posts/1,2
 
-By default a single database is exposed with all it's tables and columns in read-write mode. You can change the permissions by specifying
-a 'table_authorizer' and/or a 'column_authorizer' function that returns a boolean indicating whether or not the table or column is allowed
-for a specific CRUD action.
+Where "1" and "2" are the values of the primary keys of the records that you want to update. The body should 
+contain the same number of objects as there are primary keys in the URL:
 
-## Record filter
+    [   
+        {
+            "title": "Adjusted title for ID 1"
+        },
+        {
+            "title": "Adjusted title for ID 2"
+        }        
+    ]
 
-By defining a 'record_filter' function you can apply a forced filter, for instance to implement roles in a database system.
-The rule "you cannot view unpublished blog posts unless you have the admin role" can be implemented with this filter.
+This adjusts the titles of the posts. And the return values are the number of rows that are set:
 
-```
-return ($table=='posts' && $_SESSION['role']!='admin')?array('published,nis,null'):false;
-```
+    1,1
 
-## Multi-tenancy
+Which means that there were two update operations and each of them had set one row. Batch operations use database
+transactions, so they either all succeed or all fail (successful ones get roled back).
 
-The 'tenancy_function' allows you to expose an API for a multi-tenant database schema. In the simplest model all tables have a column
-named 'customer_id' and the 'tenancy_function' is defined as:
+### Spatial support
 
-```
-return $col=='customer_id'?$_SESSION['customer_id']:null
-```
+For spatial support there is an extra set of filters that can be applied on geometry columns and that starting with an "s":
 
-In this example ```$_SESSION['customer_id']``` is the authenticated customer in your API.
+  - "sco": spatial contains (geometry contains another)
+  - "scr": spatial crosses (geometry crosses another)
+  - "sdi": spatial disjoint (geometry is disjoint from another)
+  - "seq": spatial equal (geometry is equal to another)
+  - "sin": spatial intersects (geometry intersects another)
+  - "sov": spatial overlaps (geometry overlaps another)
+  - "sto": spatial touches (geometry touches another)
+  - "swi": spatial within (geometry is within another)
+  - "sic": spatial is closed (geometry is closed and simple)
+  - "sis": spatial is simple (geometry is simple)
+  - "siv": spatial is valid (geometry is valid)
 
-## Sanitizing input
+These filters are based on OGC standards and so is the WKT specification in which the geometry columns are represented.
 
-By default all input is accepted and sent to the database. If you want to strip (certain) HTML tags before storing you may specify a
-'input_sanitizer' function that returns the adjusted value.
+### Sanitizing input
 
-## Validating input
+By default all input is accepted and sent to the database. If you want to strip (certain) HTML tags before storing you may add the 'sanitation' middleware and define a 'sanitation.handler' function that returns the adjusted value.
 
-By default all input is accepted. If you want to validate the input, you may specify a 'input_validator' function that returns a boolean
-indicating whether or not the value is valid.
+    'sanitation.handler' => function ($method, $tableName, $column, $value) {
+        return is_string($value) ? strip_tags($value) : $value;
+    },
 
-## Multi-Database
+The above example will strip all HTML tags from strings in the input.
 
-The code also supports multi-database API's. These have URLs where the first segment in the path is the database and not the table name.
-This can be enabled by NOT specifying a database in the configuration. Also the permissions in the configuration should contain a dot
-character to seperate the database from the table name. The databases 'mysql', 'information_schema' and 'sys' are automatically blocked.
+### Validating input
 
-## Atomic increment (for counters)
+By default all input is accepted. If you want to validate the input, you may add the 'validation' middleware and define a 'validation.handler' function that returns a boolean indicating whether or not the value is valid.
 
-Incrementing a numeric field of a record is done with the PATCH method (non-numeric fields are ignored).
-Decrementing can be done using a negative increment value.
-To add '2' to the field 'visitors' in the 'events' table for record with primary key '1', execute:
+    'validation.handler' => function ($method, $tableName, $column, $value, $context) {
+        return ($column['name'] == 'post_id' && !is_numeric($value)) ? 'must be numeric' : true;
+    },
 
-```
-PATCH http://localhost/api.php/events/1
-{"visitors":2}
-```
+When you edit a comment with id 4 using:
 
-Output:
+    PUT /records/comments/4
 
-```
-1
-```
+And you send as a body:
 
-The call returns the number of rows affected. Note that multiple fields can be incremented and batch operations are supported (see: update/PUT).
+    {"post_id":"two"}
 
-## Binary data
+Then the server will return a '422' HTTP status code and nice error message:
 
-Binary fields are automatically detected and data in those fields is returned using base64 encoding.
+    {
+        "code": 1013,
+        "message": "Input validation failed for 'comments'",
+        "details": {
+            "post_id":"must be numeric"
+        }
+    }
 
-```
-GET http://localhost/api.php/categories/2
-```
+You can parse this output to make form fields show up with a red border and their appropriate error message.
 
-Output:
+## Cache
 
-```
-{"id":2,"name":"funny","icon":"ZGF0YQ=="}
-```
+There are 4 cache engines that can be configured by the "cacheType" config parameter:
 
-When sending a record that contains a binary field you will also have to send base64 encoded data.
+- TempFile (default)
+- Redis
+- Memcache
+- Memcached
 
-```
-PUT http://localhost/api.php/categories/2
-icon=ZGF0YQ
-```
+You can install the dependencies for the last three engines by running:
 
-In the above example you see how binary data is sent. Both "base64url" and standard "base64" are allowed (see rfc4648).
+    sudo apt install php-redis redis
+    sudo apt install php-memcache memcached
+    sudo apt install php-memcached memcached
 
-## File uploads
+The default engine has no dependencies and will use temporary files in the system "temp" path.
 
-You can also upload a file using a web form (multipart/form-data) like this:
+You may use the "cachePath" config parameter to specify the file system path for the temporary files or
+in case that you use a non-default "cacheType" the hostname (optionally with port) of the cache server.
 
-```
-<form method="post" action="http://localhost/api.php/categories" enctype="multipart/form-data">
-  Select image to upload:
-  <input type="file" name="icon">
-  <input type="submit">
-</form>
-```
+## Types
 
-Then this is handled as if you would have sent:
+These are the supported types with their default length/precision/scale:
 
-```
-POST http://localhost/api.php/categories
-{"icon_name":"not.gif","icon_type":"image\/gif","icon":"ZGF0YQ==","icon_error":0,"icon_size":4}
-```
+character types
+- varchar(255)
+- clob
 
-As you can see the "xxx_name", "xxx_type", "xxx_error" and "xxx_size" meta fields are added (where "xxx" is the name of the file field).
+boolean types:
+- boolean
 
-NB: You cannot edit a file using this method, because browsers do not support the "PUT" method in these forms.
+integer types:
+- integer
+- bigint
 
-## Spatial/GIS support
+floating point types:
+- float
+- double
 
-There is also support for spatial filters:
-  
-  - sco: spatial contains (geometry contains another)
-  - scr: spatial crosses (geometry crosses another)
-  - sdi: spatial disjoint (geometry is disjoint from another)
-  - seq: spatial equal (geometry is equal to another)
-  - sin: spatial intersects (geometry intersects another)
-  - sov: spatial overlaps (geometry overlaps another)
-  - sto: spatial touches (geometry touches another)
-  - swi: spatial within (geometry is within another)
-  - sic: spatial is closed (geometry is closed and simple)
-  - sis: spatial is simple (geometry is simple)
-  - siv: spatial is valid (geometry is valid)
+decimal types:
+- decimal(19,4)
 
-You can negate these filters as well by prepending a 'n' character, so that 'sco' becomes 'nsco'.
+date/time types:
+- date
+- time
+- timestamp
 
-Example:
+binary types:
+- varbinary(255)
+- blob
 
-```
-GET http://localhost/api.php/countries?columns=name,shape&filter[]=shape,sco,POINT(30 20)
-```
-
-Output:
-
-```
-{"countries":{"columns":["name","shape"],"records":[["Italy","POLYGON((30 10,40 40,20 40,10 20,30 10))"]]}}
-```
-
-When sending a record that contains a geometry (spatial) field you will also have to send a WKT string.
-
-```
-PUT http://localhost/api.php/users/1
-{"location":"POINT(30 20)"}
-```
-
-In the above example you see how a [WKT string](https://en.wikipedia.org/wiki/Well-known_text) is sent.
-
-## Unstructured data support
-
-You may store JSON documents in JSON (MySQL), JSONB (PostgreSQL) or XML (SQL Server) field types in the database.
-These documents have no schema. Whitespace in the structure is not maintained.
-
-## Sending NULL
-
-When using the POST method (x-www-form-urlencoded, see rfc1738) a database NULL value can be set using a parameter with the "__is_null" suffix:
-
-```
-PUT http://localhost/api.php/categories/2
-name=Internet&icon__is_null
-```
-
-When sending JSON data, then sending a NULL value for a nullable database field is easier as you can use the JSON "null" value (without quotes).
-
-```
-PUT http://localhost/api.php/categories/2
-{"name":"Internet","icon":null}
-```
-
-## Automatic fields
-
-Before any operation the 'before' function is called that allows you to do set some automatic fields.
-Note that the 'input' parameter is writable and is an object (or 'false' when it is missing or invalid).
-
-## Soft delete
-
-The 'before' function allows modification of the request parameters and can (for instance) be used to implement soft delete behavior.
-
-```php
-'before'=>function(&$cmd, &$db, &$tab, &$id, &$in) { 
-	if ($cmd == 'delete') {
-		$cmd = 'update'; // change command to update
-		$in = (object)array('deleted' => date('Y-m-d H:i:s', time()));
-	}
-},
-'column_authorizer'=>function($cmd, $db ,$tab, $col) { 
-	return ( ! in_array($col, array('deleted')));
-},
-'record_filter'=>function($cmd,$db,$tab) { 
-	return array('deleted,is,null');
-}
-```
-
-## Custom actions
-
-After any operation the 'after' function is called that allows you to do some custom actions.
-Note that the output parameter is not filled for 'read' or 'list' operations due to the streaming nature of the API.
-
-## Multi-domain CORS
-
-By specifying `allow_origin` in the configuration you can control the `Access-Control-Allow-Origin` response header that is being sent.
-
-If you set `allow_origin` to `*` the `Access-Control-Allow-Origin` response header will be set to `*`.
-In all other cases the `Access-Control-Allow-Origin` response header is set to the value of the request header `Origin` when a match is found.
- 
-You may also specify `allow_origin` to `https://*.yourdomain.com` matching any host that starts with `https://` and ends on `.yourdomain.com`.
-
-Multiple hosts may be specified using a comma, allowing you to set `allow_origin` to `https://yourdomain.com, https://*.yourdomain.com`.
+other types:
+- geometry /* non-jdbc type, extension with limited support */
 
 ## 64 bit integers in JavaScript
 
-JavaScript does not support 64 bit integers. All numbers are stored as 64 bit floating point values. The mantissa of a 64 bit floating point
-number is only 53 bit and that is why all integer numbers bigger than 53 bit may cause problems in JavaScript.
+JavaScript does not support 64 bit integers. All numbers are stored as 64 bit floating point values. The mantissa of a 64 bit floating point number is only 53 bit and that is why all integer numbers bigger than 53 bit may cause problems in JavaScript.
 
 ## Errors
 
-The following types of 404 'Not found' errors may be reported:
+The following errors may be reported:
 
-  - entity (could not find entity)
-  - object (instance not found on read)
-  - input (instance not found on create)
-  - subject (instance not found on update)
-  - 1pk (primary key not found or composite)
+- 1000: Route not found (404 NOT FOUND)
+- 1001: Table not found (404 NOT FOUND)
+- 1002: Argument count mismatch (422 UNPROCESSABLE ENTITY)
+- 1003: Record not found (404 NOT FOUND)
+- 1004: Origin is forbidden (403 FORBIDDEN)
+- 1005: Column not found (404 NOT FOUND)
+- 1006: Table already exists (409 CONFLICT)
+- 1007: Column already exists (409 CONFLICT)
+- 1008: Cannot read HTTP message (422 UNPROCESSABLE ENTITY)
+- 1009: Duplicate key exception (409 CONFLICT)
+- 1010: Data integrity violation (409 CONFLICT)
+- 1011: Authorization required (401 UNAUTHORIZED)
+- 1012: Access denied (403 FORBIDDEN)
+- 1013: Input validation failed (422 UNPROCESSABLE ENTITY)
+- 9999: Unknown error (500: INTERNAL_SERVER_ERROR)
+
+The following JSON structure is used:
+
+    {
+        "code":1002,
+        "message":"Argument count mismatch in '1'"
+    }
+
+NB: Any non-error response will have status: 200 OK
 
 ## Tests
 
 I am testing mainly on Ubuntu and I have the following test setups:
 
-  - Ubuntu 12.04 Server with PHP 5.3 and MySQL 5.5 and PostgreSQL 9.1
-  - Ubuntu 14.04 Server with PHP 5.5 and MySQL 5.5 and PostgreSQL 9.3
-  - Ubuntu 16.04 Server with PHP 7.0 and MySQL 5.7 / MariaDB 10.0 and PostgreSQL 9.5
-  - Debian 7 Server with PHP 5.4 and MySQL 5.5 and PostgreSQL 9.1
-  - Debian 8 Server with PHP 5.6 and MySQL 5.5 / MariaDB 10.0 and PostgreSQL 9.4
-  - Debian 9 Server with PHP 7.0 and MySQL 5.5 / MariaDB 10.1 and PostgreSQL 9.6
-  - CentOS 7 Server with PHP 5.4 and MariaDB 5.5 and PostgreSQL 9.2
-  - Windows 2012 R2 with PHP 5.6 and SQL Server 2012
-
-This should cover most environments, but please notify me of failing tests and report your environment. 
-I will try to cover most of the above setup in the "docker" folder of the project.
-
-### Travis CI
-
-Unfortunately not all tests are automated yet. Contributions in this area are very welcome!
-
-### MySQL, PostgreSQL, and SQLite on Linux
-
-The tests are held in the `Tests.php` file, but first you should copy the `Config.php.dist` file to `Config.php` and add your database credentials. You can add credentials for one or all the databases supported.
-
-After configuring the database connections, use PHPUnit to run all the tests:
-
-```
-$ wget https://phar.phpunit.de/phpunit.phar
-$ php phpunit.phar
-PHPUnit 5.7.17 by Sebastian Bergmann and contributors.
-
-...............................................................  63 / 304 ( 20%)
-............................................................... 126 / 304 ( 41%)
-..........................SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS 189 / 304 ( 62%)
-SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS........................ 252 / 304 ( 82%)
-....................................................            304 / 304 (100%)
-
-Time: 11.16 seconds, Memory: 12.00MB
-
-OK, but incomplete, skipped, or risky tests!
-Tests: 6004, Assertions: 338, Skipped: 76.
-$
-```
-
-You can also run tests for only one database at a time if you'd like. For example to run MySQL tests, specify the `MysqlTest.php` file:
-
-```
-$ php phpunit.phar tests/MysqlTest.php
-PHPUnit 5.7.17 by Sebastian Bergmann and contributors.
-
-................................................................. 65 / 76 ( 85%)
-...........                                                       76 / 76 (100%)
-
-Time: 3.54 seconds, Memory: 10.00MB
-
-OK (76 tests, 113 assertions)
-$
-```
-
-NB: You MUST use an empty database as a destructive database fixture is loaded.
-
-### SQL server on Windows:
-
-```
-C:\php-crud-api>c:\PHP\php.exe phpunit.phar tests\SqlServerTest.php
-PHPUnit 5.2.10 by Sebastian Bergmann and contributors.
-
-................................................................ 64 / 76 ( 84%)
-............                                                     76 / 76 (100%)
-
-Time: 9.53 seconds, Memory: 7.25Mb
-
-OK (76 tests, 111 assertions)
-
-C:\php-crud-api>
-```
-
-NB: You MUST use an empty database as a desctructive database fixture ('blog_sqlserver.sql') is loaded.
-
-## Installing MySQL on Ubuntu Linux
-
-### Ubuntu 12.04
-
-```
-apt-get -y remove mysql-server
-apt-get -y autoremove
-apt-get -y install software-properties-common
-add-apt-repository -y ppa:ondrej/mysql-5.6
-apt-get update
-apt-get -y install mysql-server
-```
-
-## Installing PostGIS on Ubuntu Linux
-
-### Ubuntu 12.04
-
-Install PostGIS on Ubuntu Linux with the following commands:
-
-```
-sudo apt-get install python-software-properties
-sudo apt-add-repository ppa:ubuntugis/ppa
-sudo apt-get update
-sudo apt-get install postgresql-9.1-postgis-2.0
-```
-
-### Ubuntu 14.04
-
-Install PostGIS on Ubuntu Linux with the following command:
-
-```
-sudo apt-get install postgresql-9.3-postgis-2.1
-```
-
-### Ubuntu 16.04
-
-Install PostGIS on Ubuntu Linux with the following command:
-
-```
-sudo apt-get install postgresql-9.5-postgis-2.2
-```
-
-### Finally (for all distros)
-
-Now enable the PostGIS extension for your database:
-
-```
-sudo -u postgres psql phpcrudapi -c "CREATE EXTENSION postgis;"
-```
-
-In the above string "phpcrudapi" is the name of your database.
-
-## Nginx config example
-```
-server {
-    listen 80 default_server;
-    listen [::]:80 default_server;
-
-    root /var/www/html;
-    index index.php index.html index.htm index.nginx-debian.html;
-    server_name server_domain_or_IP;
-
-    location / {
-        try_files $uri $uri/ =404;
-    }
-
-    location ~ [^/]\.php(/|$) {
-        fastcgi_split_path_info ^(.+\.php)(/.+)$;
-        try_files $fastcgi_script_name =404;
-        set $path_info $fastcgi_path_info;
-        fastcgi_param PATH_INFO $path_info;
-        fastcgi_index index.php;
-        include fastcgi.conf;
-        fastcgi_pass unix:/run/php/php7.0-fpm.sock;
-    }
-
-    location ~ /\.ht {
-        deny all;
-    }
-}
-```
-
-## Pretty URL
-
-You may "rewrite" the URL to remove the "api.php" from the URL.
-
-### Apache
-
-Enable mod_rewrite and add the following to your ".htaccess" file:
-
-```
-RewriteEngine On
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteRule ^(.*)$ api.php/$1 [L,QSA]
-```
-
-The ".htaccess" file needs to go in the same folder as "api.php".
-
-### Nginx
-
-For Nginx you may want to add something like this:
-
-```
-location /api {
-    rewrite ^/api(.*)$ /api.php$1 last;
-}
-```
-
-This should be added to your Nginx config, before or after the `location ~ [^/]\.php(/|$)` section.
-
-## Debugging
-
-If you have trouble getting the file to work you may want to check the two environment variables used. Uncomment the following line:
-
-```
-var_dump($_SERVER['REQUEST_METHOD'],$_SERVER['PATH_INFO']); die();
-```
-
-And then visit:
-
-```
-http://localhost/api.php/posts
-```
-
-This should output:
-
-```
-string(3) "GET"
-string(6) "/posts"
-```
-
-If it does not, something is wrong on your hosting environment.
-
-## Composer Installation
-
-You can use [Composer](https://getcomposer.org/) to install. Include the library in your composer.json file:
-
-```json
-{
-    "require": {
-        "mevdschee/php-crud-api": "dev-master"
-    }
-}
-```
-
-Run `composer install` and then to use the library in your own code like this:
-
-```php
-<?php
-
-include './vendor/autoload.php';
-
-// DB Connection
-$api = new PHP_CRUD_API(array(
- 	'dbengine'=>'MySQL',
- 	'hostname'=>'localhost',
- 	'username'=>'',
- 	'password'=>'',
-	'database'=>'',
-	'charset'=>'utf8'
-));
-$api->executeCommand();
-
-```
-
-## License
-
-MIT
+  - (Docker) Debian 9 with PHP 7.0, MariaDB 10.1, PostgreSQL 9.6 (PostGIS 2.3)
+  - (Docker) Ubuntu 16.04 with PHP 7.0, MariaDB 10.0, PostgreSQL 9.5 (PostGIS 2.2) and SQL Server 2017
+  - (Docker) Ubuntu 18.04 with PHP 7.2, MySQL 5.7, PostgreSQL 10.4 (PostGIS 2.4)
+
+This covers not all environments (yet), so please notify me of failing tests and report your environment. 
+I will try to cover most relevant setups in the "docker" folder of the project.
+
+### Running
+
+To run the functional tests locally you may run the following command:
+
+    php test.php
+
+This runs the functional tests from the "tests" directory. It uses the database dumps (fixtures) and
+database configuration (config) from the corresponding subdirectories.
+
+### Docker
+
+Install docker using the following commands and then logout and login for the changes to take effect:
+
+    sudo apt install docker.io
+    sudo usermod -aG docker ${USER}
+
+To run the docker tests run "build_all.sh" and "run_all.sh" from the docker directory. The output should be:
+
+    ================================================
+    Debian 9
+    ================================================
+    [1/4] Starting MariaDB 10.1 ..... done
+    [2/4] Starting PostgreSQL 9.6 ... done
+    [3/4] Starting SQLServer 2017 ... skipped
+    [4/4] Cloning PHP-CRUD-API v2 ... done
+    ------------------------------------------------
+    mysql: 80 tests ran in 2470 ms, 0 failed
+    pgsql: 80 tests ran in 680 ms, 0 failed
+    sqlsrv: skipped, driver not loaded
+    ================================================
+    Ubuntu 16.04
+    ================================================
+    [1/4] Starting MariaDB 10.0 ..... done
+    [2/4] Starting PostgreSQL 9.5 ... done
+    [3/4] Starting SQLServer 2017 ... done
+    [4/4] Cloning PHP-CRUD-API v2 ... done
+    ------------------------------------------------
+    mysql: 80 tests ran in 2490 ms, 0 failed
+    pgsql: 80 tests ran in 710 ms, 0 failed
+    sqlsrv: 80 tests ran in 4204 ms, 0 failed
+    ================================================
+    Ubuntu 18.04
+    ================================================
+    [1/4] Starting MySQL 5.7 ........ done
+    [2/4] Starting PostgreSQL 10.4 .. done
+    [3/4] Starting SQLServer 2017 ... skipped
+    [4/4] Cloning PHP-CRUD-API v2 ... done
+    ------------------------------------------------
+    mysql: 80 tests ran in 2882 ms, 0 failed
+    pgsql: 80 tests ran in 668 ms, 0 failed
+    sqlsrv: skipped, driver not loaded
+
+The above test run (including starting up the databases) takes less than one minute on my machine.

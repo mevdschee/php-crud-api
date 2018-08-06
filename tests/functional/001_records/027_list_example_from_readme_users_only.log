@@ -1,0 +1,7 @@
+GET /records/posts?include=users&filter=id,eq,1
+===
+200
+Content-Type: application/json
+Content-Length: 136
+
+{"records":[{"id":1,"user_id":{"id":1,"username":"user1","password":"pass1","location":null},"category_id":1,"content":"blog started"}]}

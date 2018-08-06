@@ -1,0 +1,35 @@
+PUT /columns/barcodes/hex
+
+{"type":"clob"}
+===
+200
+Content-Type: application/json
+Content-Length: 4
+
+true
+===
+GET /columns/barcodes/hex
+===
+200
+Content-Type: application/json
+Content-Length: 28
+
+{"name":"hex","type":"clob"}
+===
+PUT /columns/barcodes/hex
+
+{"type":"varchar","length":255}
+===
+200
+Content-Type: application/json
+Content-Length: 4
+
+true
+===
+GET /columns/barcodes/hex
+===
+200
+Content-Type: application/json
+Content-Length: 44
+
+{"name":"hex","type":"varchar","length":255}

@@ -1,0 +1,7 @@
+GET /postzzz
+==
+404
+Content-Type: application/json
+Content-Length: 53
+
+{"code":1000,"message":"Route '\/postzzz' not found"}

@@ -1,10 +1,16 @@
 FROM debian:9
 
-ADD packages.sh /usr/sbin/docker-packages
-RUN docker-packages
+ARG DEBIAN_FRONTEND=noninteractive
 
-ADD install.sh /usr/sbin/docker-install
-RUN docker-install
+# install: php / mysql / postgres / sqlite / tools / mssql deps
+RUN apt-get update && apt-get -y install \
+php-cli php-xml \
+mariadb-server mariadb-client php-mysql \
+postgresql php-pgsql \
+postgresql-9.6-postgis-2.3 \
+sqlite php-sqlite3 \
+git wget
 
+# install run script
 ADD run.sh /usr/sbin/docker-run
 CMD docker-run

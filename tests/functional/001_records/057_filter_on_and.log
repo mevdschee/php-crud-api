@@ -1,0 +1,7 @@
+GET /records/posts?columns=id&filter=id,ge,1&filter=id,le,2
+===
+200
+Content-Type: application/json
+Content-Length: 31
+
+{"records":[{"id":1},{"id":2}]}

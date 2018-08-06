@@ -1,0 +1,7 @@
+GET /records/posts/1?columns=content,tags.name&include=tags
+===
+200
+Content-Type: application/json
+Content-Length: 99
+
+{"id":1,"content":"blog started","post_tags":[{"id":1,"name":"funny"},{"id":2,"name":"important"}]}

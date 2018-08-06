@@ -1,0 +1,17 @@
+PUT /records/categories/2
+
+{"icon":null}
+===
+200
+Content-Type: application/json
+Content-Length: 1
+
+1
+===
+GET /records/categories/2
+===
+200
+Content-Type: application/json
+Content-Length: 37
+
+{"id":2,"name":"article","icon":null}

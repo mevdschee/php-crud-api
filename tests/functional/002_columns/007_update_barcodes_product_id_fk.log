@@ -1,0 +1,35 @@
+PUT /columns/barcodes/product_id
+
+{"fk":""}
+===
+200
+Content-Type: application/json
+Content-Length: 4
+
+true
+===
+GET /columns/barcodes/product_id
+===
+200
+Content-Type: application/json
+Content-Length: 38
+
+{"name":"product_id","type":"integer"}
+===
+PUT /columns/barcodes/product_id
+
+{"fk":"products"}
+===
+200
+Content-Type: application/json
+Content-Length: 4
+
+true
+===
+GET /columns/barcodes/product_id
+===
+200
+Content-Type: application/json
+Content-Length: 54
+
+{"name":"product_id","type":"integer","fk":"products"}

@@ -1,0 +1,7 @@
+GET /records/posts?exclude=id&filter=id,eq,1
+===
+200
+Content-Type: application/json
+Content-Length: 68
+
+{"records":[{"user_id":1,"category_id":1,"content":"blog started"}]}

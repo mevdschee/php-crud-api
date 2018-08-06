@@ -1,0 +1,17 @@
+POST /records/comments
+
+{"user_id":1,"post_id":2,"message":"<h1>Title</h1> <p>Body</p>"}
+===
+200
+Content-Type: application/json
+Content-Length: 1
+
+5
+===
+GET /records/comments/5
+===
+200
+Content-Type: application/json
+Content-Length: 43
+
+{"id":5,"post_id":2,"message":"Title Body"}

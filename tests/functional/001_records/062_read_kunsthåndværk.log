@@ -1,0 +1,7 @@
+GET /records/kunsthåndværk/e42c77c6-06a4-4502-816c-d112c7142e6
+===
+404
+Content-Type: application/json
+Content-Length: 80
+
+{"code":1003,"message":"Record 'e42c77c6-06a4-4502-816c-d112c7142e6' not found"}

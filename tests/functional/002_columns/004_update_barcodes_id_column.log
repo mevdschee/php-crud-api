@@ -1,0 +1,35 @@
+PUT /columns/barcodes/id
+
+{"name":"id2","type":"bigint"}
+===
+200
+Content-Type: application/json
+Content-Length: 4
+
+true
+===
+GET /columns/barcodes/id2
+===
+200
+Content-Type: application/json
+Content-Length: 40
+
+{"name":"id2","type":"bigint","pk":true}
+===
+PUT /columns/barcodes/id2
+
+{"name":"id","type":"integer"}
+===
+200
+Content-Type: application/json
+Content-Length: 4
+
+true
+===
+GET /columns/barcodes/id
+===
+200
+Content-Type: application/json
+Content-Length: 40
+
+{"name":"id","type":"integer","pk":true}

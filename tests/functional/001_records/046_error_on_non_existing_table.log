@@ -1,0 +1,7 @@
+GET /records/postzzz
+===
+404
+Content-Type: application/json
+Content-Length: 51
+
+{"code":1001,"message":"Table 'postzzz' not found"}

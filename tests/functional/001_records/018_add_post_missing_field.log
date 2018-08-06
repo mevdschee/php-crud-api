@@ -1,0 +1,10 @@
+POST /records/posts
+Content-Type: application/json
+
+{"category_id":1,"content":"test"}
+===
+409
+Content-Type: application/json
+Content-Length: 50
+
+{"code":1010,"message":"Data integrity violation"}

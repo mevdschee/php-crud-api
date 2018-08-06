@@ -1,0 +1,9 @@
+PUT /records/kunsthåndværk/34451583-a747-4417-bdf0-bec7a5eacffa
+
+{"Umlauts ä_ö_ü-COUNT":3}
+===
+200
+Content-Type: application/json
+Content-Length: 1
+
+1

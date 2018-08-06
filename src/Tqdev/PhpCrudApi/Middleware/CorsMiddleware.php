@@ -1,0 +1,53 @@
+<?php
+namespace Tqdev\PhpCrudApi\Middleware;
+
+use Tqdev\PhpCrudApi\Controller\Responder;
+use Tqdev\PhpCrudApi\Record\ErrorCode;
+use Tqdev\PhpCrudApi\Request;
+use Tqdev\PhpCrudApi\Response;
+use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
+
+class CorsMiddleware extends Middleware
+{
+    private function isOriginAllowed(String $origin, String $allowedOrigins): bool
+    {
+        $found = false;
+        foreach (explode(',', $allowedOrigins) as $allowedOrigin) {
+            $hostname = preg_quote(strtolower(trim($allowedOrigin)));
+            $regex = '/^' . str_replace('\*', '.*', $hostname) . '$/';
+            if (preg_match($regex, $origin)) {
+                $found = true;
+                break;
+            }
+        }
+        return $found;
+    }
+
+    public function handle(Request $request): Response
+    {
+        $method = $request->getMethod();
+        $origin = $request->getHeader('Origin');
+        $allowedOrigins = $this->getProperty('allowedOrigins', '*');
+        if ($origin && !$this->isOriginAllowed($origin, $allowedOrigins)) {
+            $response = $this->responder->error(ErrorCode::ORIGIN_FORBIDDEN, $origin);
+        } elseif ($method == 'OPTIONS') {
+            $response = new Response(Response::OK, '');
+            $allowHeaders = $this->getProperty('allowHeaders', 'Content-Type, X-XSRF-TOKEN');
+            $response->addHeader('Access-Control-Allow-Headers', $allowHeaders);
+            $allowMethods = $this->getProperty('allowMethods', 'OPTIONS, GET, PUT, POST, DELETE, PATCH');
+            $response->addHeader('Access-Control-Allow-Methods', $allowMethods);
+            $allowCredentials = $this->getProperty('allowCredentials', 'true');
+            $response->addHeader('Access-Control-Allow-Credentials', $allowCredentials);
+            $maxAge = $this->getProperty('maxAge', '1728000');
+            $response->addHeader('Access-Control-Max-Age', $maxAge);
+        } else {
+            $response = $this->next->handle($request);
+        }
+        if ($origin) {
+            $allowCredentials = $this->getProperty('allowCredentials', 'true');
+            $response->addHeader('Access-Control-Allow-Credentials', $allowCredentials);
+            $response->addHeader('Access-Control-Allow-Origin', $origin);
+        }
+        return $response;
+    }
+}

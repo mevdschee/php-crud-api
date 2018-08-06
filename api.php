@@ -1,2776 +1,4529 @@
 <?php
-//var_dump($_SERVER['REQUEST_METHOD'],$_SERVER['PATH_INFO']); die();
+/**
+ * PHP-CRUD-API v2              License: MIT
+ * Maurits van der Schee: maurits@vdschee.nl
+ * https://github.com/mevdschee/php-crud-api
+ **/
 
-interface DatabaseInterface {
-	public function getSql($name);
-	public function connect($hostname,$username,$password,$database,$port,$socket,$charset);
-	public function query($sql,$params=array());
-	public function fetchAssoc($result);
-	public function fetchRow($result);
-	public function insertId($result);
-	public function affectedRows($result);
-	public function close($result);
-	public function fetchFields($table);
-	public function addLimitToSql($sql,$limit,$offset);
-	public function likeEscape($string);
-	public function isNumericType($field);
-	public function isBinaryType($field);
-	public function isGeometryType($field);
-	public function isJsonType($field);
-	public function getDefaultCharset();
-	public function beginTransaction();
-	public function commitTransaction();
-	public function rollbackTransaction();
-	public function jsonEncode($object);
-	public function jsonDecode($string);
+namespace Tqdev\PhpCrudApi;
+
+// file: src/Tqdev/PhpCrudApi/Cache/Cache.php
+
+interface Cache
+{
+    public function set(String $key, String $value, int $ttl = 0): bool;
+    public function get(String $key): String;
+    public function clear(): bool;
 }
 
-class MySQL implements DatabaseInterface {
+// file: src/Tqdev/PhpCrudApi/Cache/CacheFactory.php
 
-	protected $db;
-	protected $queries;
+class CacheFactory
+{
+    const PREFIX = 'phpcrudapi-%s-';
 
-	public function __construct() {
-		$this->queries = array(
-			'list_tables'=>'SELECT
-					"TABLE_NAME","TABLE_COMMENT"
-				FROM
-					"INFORMATION_SCHEMA"."TABLES"
-				WHERE
-					"TABLE_SCHEMA" = ?',
-			'reflect_table'=>'SELECT
-					"TABLE_NAME"
-				FROM
-					"INFORMATION_SCHEMA"."TABLES"
-				WHERE
-					"TABLE_NAME" COLLATE \'utf8_bin\' = ? AND
-					"TABLE_SCHEMA" = ?',
-			'reflect_pk'=>'SELECT
-					"COLUMN_NAME"
-				FROM
-					"INFORMATION_SCHEMA"."COLUMNS"
-				WHERE
-					"COLUMN_KEY" = \'PRI\' AND
-					"TABLE_NAME" = ? AND
-					"TABLE_SCHEMA" = ?',
-			'reflect_belongs_to'=>'SELECT
-					"TABLE_NAME","COLUMN_NAME",
-					"REFERENCED_TABLE_NAME","REFERENCED_COLUMN_NAME"
-				FROM
-					"INFORMATION_SCHEMA"."KEY_COLUMN_USAGE"
-				WHERE
-					"TABLE_NAME" COLLATE \'utf8_bin\' = ? AND
-					"REFERENCED_TABLE_NAME" COLLATE \'utf8_bin\' IN ? AND
-					"TABLE_SCHEMA" = ? AND
-					"REFERENCED_TABLE_SCHEMA" = ?',
-			'reflect_has_many'=>'SELECT
-					"TABLE_NAME","COLUMN_NAME",
-					"REFERENCED_TABLE_NAME","REFERENCED_COLUMN_NAME"
-				FROM
-					"INFORMATION_SCHEMA"."KEY_COLUMN_USAGE"
-				WHERE
-					"TABLE_NAME" COLLATE \'utf8_bin\' IN ? AND
-					"REFERENCED_TABLE_NAME" COLLATE \'utf8_bin\' = ? AND
-					"TABLE_SCHEMA" = ? AND
-					"REFERENCED_TABLE_SCHEMA" = ?',
-			'reflect_habtm'=>'SELECT
-					k1."TABLE_NAME", k1."COLUMN_NAME",
-					k1."REFERENCED_TABLE_NAME", k1."REFERENCED_COLUMN_NAME",
-					k2."TABLE_NAME", k2."COLUMN_NAME",
-					k2."REFERENCED_TABLE_NAME", k2."REFERENCED_COLUMN_NAME"
-				FROM
-					"INFORMATION_SCHEMA"."KEY_COLUMN_USAGE" k1,
-					"INFORMATION_SCHEMA"."KEY_COLUMN_USAGE" k2
-				WHERE
-					k1."TABLE_SCHEMA" = ? AND
-					k2."TABLE_SCHEMA" = ? AND
-					k1."REFERENCED_TABLE_SCHEMA" = ? AND
-					k2."REFERENCED_TABLE_SCHEMA" = ? AND
-					k1."TABLE_NAME" COLLATE \'utf8_bin\' = k2."TABLE_NAME" COLLATE \'utf8_bin\' AND
-					k1."REFERENCED_TABLE_NAME" COLLATE \'utf8_bin\' = ? AND
-					k2."REFERENCED_TABLE_NAME" COLLATE \'utf8_bin\' IN ?',
-			'reflect_columns'=> 'SELECT
-					"COLUMN_NAME", "COLUMN_DEFAULT", "IS_NULLABLE", "DATA_TYPE", "CHARACTER_MAXIMUM_LENGTH"
-				FROM 
-					"INFORMATION_SCHEMA"."COLUMNS" 
-				WHERE 
-					"TABLE_NAME" = ? AND
-					"TABLE_SCHEMA" = ?
-				ORDER BY
-					"ORDINAL_POSITION"'
-		);
-	}
+    private static function getPrefix(): String
+    {
+        return sprintf(self::PREFIX, substr(md5(__FILE__), 0, 8));
+    }
 
-	public function getSql($name) {
-		return isset($this->queries[$name])?$this->queries[$name]:false;
-	}
-
-	public function connect($hostname,$username,$password,$database,$port,$socket,$charset) {
-		$db = mysqli_init();
-		if (defined('MYSQLI_OPT_INT_AND_FLOAT_NATIVE')) {
-			mysqli_options($db,MYSQLI_OPT_INT_AND_FLOAT_NATIVE,true);
-		}
-		$success = mysqli_real_connect($db,$hostname,$username,$password,$database,$port,$socket,MYSQLI_CLIENT_FOUND_ROWS);
-		if (!$success) {
-			throw new \Exception('Connect failed. '.mysqli_connect_error());
-		}
-		if (!mysqli_set_charset($db,$charset)) {
-			throw new \Exception('Error setting charset. '.mysqli_error($db));
-		}
-		if (!mysqli_query($db,'SET SESSION sql_mode = \'ANSI_QUOTES\';')) {
-			throw new \Exception('Error setting ANSI quotes. '.mysqli_error($db));
-		}
-		$this->db = $db;
-	}
-
-	public function query($sql,$params=array()) {
-		$db = $this->db;
-		$sql = preg_replace_callback('/\!|\?/', function ($matches) use (&$db,&$params) {
-			$param = array_shift($params);
-			if ($matches[0]=='!') {
-				$key = preg_replace('/[^a-zA-Z0-9\-_=<> ]/','',is_object($param)?$param->key:$param);
-				if (is_object($param) && $param->type=='hex') {
-					return "HEX(\"$key\") as \"$key\"";
-				}
-				if (is_object($param) && $param->type=='wkt') {
-					return "ST_AsText(\"$key\") as \"$key\"";
-				}
-				return '"'.$key.'"';
-			} else {
-				if (is_array($param)) return '('.implode(',',array_map(function($v) use (&$db) {
-					return "'".mysqli_real_escape_string($db,$v)."'";
-				},$param)).')';
-				if (is_object($param) && $param->type=='hex') {
-					return "x'".$param->value."'";
-				}
-				if (is_object($param) && $param->type=='wkt') {
-					return "ST_GeomFromText('".mysqli_real_escape_string($db,$param->value)."')";
-				}
-				if ($param===null) return 'NULL';
-				return "'".mysqli_real_escape_string($db,$param)."'";
-			}
-		}, $sql);
-		//if (!strpos($sql,'INFORMATION_SCHEMA')) echo "\n$sql\n";
-		//if (!strpos($sql,'INFORMATION_SCHEMA')) file_put_contents('log.txt',"\n$sql\n",FILE_APPEND);
-		return mysqli_query($db,$sql);
-	}
-
-	public function fetchAssoc($result) {
-		return mysqli_fetch_assoc($result);
-	}
-
-	public function fetchRow($result) {
-		return mysqli_fetch_row($result);
-	}
-
-	public function insertId($result) {
-		return mysqli_insert_id($this->db);
-	}
-
-	public function affectedRows($result) {
-		return mysqli_affected_rows($this->db);
-	}
-
-	public function close($result) {
-		return mysqli_free_result($result);
-	}
-
-	public function fetchFields($table) {
-		$result = $this->query('SELECT * FROM ! WHERE 1=2;',array($table));
-		return mysqli_fetch_fields($result);
-	}
-
-	public function addLimitToSql($sql,$limit,$offset) {
-		return "$sql LIMIT $limit OFFSET $offset";
-	}
-
-	public function likeEscape($string) {
-		return addcslashes($string,'%_');
-	}
-
-	public function convertFilter($field, $comparator, $value) {
-		return false;
-	}
-
-	public function isNumericType($field) {
-		return in_array($field->type,array(1,2,3,4,5,6,8,9));
-	}
-
-	public function isBinaryType($field) {
-		//echo "$field->name: $field->type ($field->flags)\n";
-		return (($field->flags & 128) && (($field->type>=249 && $field->type<=252) || ($field->type>=253 && $field->type<=254 && $field->charsetnr==63)));
-	}
-
-	public function isGeometryType($field) {
-		return ($field->type==255);
-	}
-
-	public function isJsonType($field) {
-		return ($field->type==245);
-	}
-
-	public function getDefaultCharset() {
-		return 'utf8';
-	}
-
-	public function beginTransaction() {
-		mysqli_query($this->db,'BEGIN');
-		//return mysqli_begin_transaction($this->db);
-	}
-
-	public function commitTransaction() {
-		mysqli_query($this->db,'COMMIT');
-		//return mysqli_commit($this->db);
-	}
-
-	public function rollbackTransaction() {
-		mysqli_query($this->db,'ROLLBACK');
-		//return mysqli_rollback($this->db);
-	}
-
-	public function jsonEncode($object) {
-		return json_encode($object);
-	}
-
-	public function jsonDecode($string) {
-		return json_decode($string);
-	}
+    public static function create(Config $config): Cache
+    {
+        switch ($config->getCacheType()) {
+            case 'TempFile':
+                $cache = new TempFileCache(self::getPrefix(), $config->getCachePath());
+                break;
+            case 'Redis':
+                $cache = new RedisCache(self::getPrefix(), $config->getCachePath());
+                break;
+            case 'Memcache':
+                $cache = new MemcacheCache(self::getPrefix(), $config->getCachePath());
+                break;
+            case 'Memcached':
+                $cache = new MemcachedCache(self::getPrefix(), $config->getCachePath());
+                break;
+            default:
+                $cache = new NoCache();
+        }
+        return $cache;
+    }
 }
 
-class PostgreSQL implements DatabaseInterface {
+// file: src/Tqdev/PhpCrudApi/Cache/MemcacheCache.php
 
-	protected $db;
-	protected $queries;
+class MemcacheCache implements Cache
+{
+    protected $prefix;
+    protected $memcache;
 
-	public function __construct() {
-		$this->queries = array(
-			'list_tables'=>'select
-					"table_name",\'\' as "table_comment"
-				from
-					"information_schema"."tables"
-				where
-					"table_schema" = \'public\' and
-					"table_catalog" = ?',
-			'reflect_table'=>'select
-					"table_name"
-				from
-					"information_schema"."tables"
-				where
-					"table_name" = ? and
-					"table_schema" = \'public\' and
-					"table_catalog" = ?',
-			'reflect_pk'=>'select
-					"column_name"
-				from
-					"information_schema"."table_constraints" tc,
-					"information_schema"."key_column_usage" ku
-				where
-					tc."constraint_type" = \'PRIMARY KEY\' and
-					tc."constraint_name" = ku."constraint_name" and
-					ku."table_name" = ? and
-					ku."table_schema" = \'public\' and
-					ku."table_catalog" = ?',
-			'reflect_belongs_to'=>'select
-					cu1."table_name",cu1."column_name",
-					cu2."table_name",cu2."column_name"
-				from
-					"information_schema".referential_constraints rc,
-					"information_schema".key_column_usage cu1,
-					"information_schema".key_column_usage cu2
-				where
-					cu1."constraint_name" = rc."constraint_name" and
-					cu2."constraint_name" = rc."unique_constraint_name" and
-					cu1."table_name" = ? and
-					cu2."table_name" in ? and
-					cu1."table_schema" = \'public\' and
-					cu2."table_schema" = \'public\' and
-					cu1."table_catalog" = ? and
-					cu2."table_catalog" = ?',
-			'reflect_has_many'=>'select
-					cu1."table_name",cu1."column_name",
-					cu2."table_name",cu2."column_name"
-				from
-					"information_schema".referential_constraints rc,
-					"information_schema".key_column_usage cu1,
-					"information_schema".key_column_usage cu2
-				where
-					cu1."constraint_name" = rc."constraint_name" and
-					cu2."constraint_name" = rc."unique_constraint_name" and
-					cu1."table_name" in ? and
-					cu2."table_name" = ? and
-					cu1."table_schema" = \'public\' and
-					cu2."table_schema" = \'public\' and
-					cu1."table_catalog" = ? and
-					cu2."table_catalog" = ?',
-			'reflect_habtm'=>'select
-					cua1."table_name",cua1."column_name",
-					cua2."table_name",cua2."column_name",
-					cub1."table_name",cub1."column_name",
-					cub2."table_name",cub2."column_name"
-				from
-					"information_schema".referential_constraints rca,
-					"information_schema".referential_constraints rcb,
-					"information_schema".key_column_usage cua1,
-					"information_schema".key_column_usage cua2,
-					"information_schema".key_column_usage cub1,
-					"information_schema".key_column_usage cub2
-				where
-					cua1."constraint_name" = rca."constraint_name" and
-					cua2."constraint_name" = rca."unique_constraint_name" and
-					cub1."constraint_name" = rcb."constraint_name" and
-					cub2."constraint_name" = rcb."unique_constraint_name" and
-					cua1."table_catalog" = ? and
-					cub1."table_catalog" = ? and
-					cua2."table_catalog" = ? and
-					cub2."table_catalog" = ? and
-					cua1."table_schema" = \'public\' and
-					cub1."table_schema" = \'public\' and
-					cua2."table_schema" = \'public\' and
-					cub2."table_schema" = \'public\' and
-					cua1."table_name" = cub1."table_name" and
-					cua2."table_name" = ? and
-					cub2."table_name" in ?',
-			'reflect_columns'=> 'select
-					"column_name", "column_default", "is_nullable", "data_type", "character_maximum_length"
-				from 
-					"information_schema"."columns" 
-				where
-					"table_name" = ? and
-					"table_schema" = \'public\' and
-					"table_catalog" = ?
-				order by
-					"ordinal_position"'
-		);
-	}
+    public function __construct(String $prefix, String $config)
+    {
+        $this->prefix = $prefix;
+        if ($config == '') {
+            $address = 'localhost';
+            $port = 11211;
+        } elseif (strpos($config, ':') === false) {
+            $address = $config;
+            $port = 11211;
+        } else {
+            list($address, $port) = explode(':', $config);
+        }
+        $this->memcache = $this->create();
+        $this->memcache->addServer($address, $port);
+    }
 
-	public function getSql($name) {
-		return isset($this->queries[$name])?$this->queries[$name]:false;
-	}
+    protected function create(): object
+    {
+        return new \Memcache();
+    }
 
-	public function connect($hostname,$username,$password,$database,$port,$socket,$charset) {
-		$e = function ($v) { return str_replace(array('\'','\\'),array('\\\'','\\\\'),$v); };
-		$conn_string = '';
-		if ($hostname || $socket) {
-			if ($socket) $hostname = $e($socket);
-			else $hostname = $e($hostname);
-			$conn_string.= " host='$hostname'";
-		}
-		if ($port) {
-			$port = ($port+0);
-			$conn_string.= " port='$port'";
-		}
-		if ($database) {
-			$database = $e($database);
-			$conn_string.= " dbname='$database'";
-		}
-		if ($username) {
-			$username = $e($username);
-			$conn_string.= " user='$username'";
-		}
-		if ($password) {
-			$password = $e($password);
-			$conn_string.= " password='$password'";
-		}
-		if ($charset) {
-			$charset = $e($charset);
-			$conn_string.= " options='--client_encoding=$charset'";
-		}
-		$db = pg_connect($conn_string);
-		$this->db = $db;
-	}
+    public function set(String $key, String $value, int $ttl = 0): bool
+    {
+        return $this->memcache->set($this->prefix . $key, $value, 0, $ttl);
+    }
 
-	public function query($sql,$params=array()) {
-		$db = $this->db;
-		$sql = preg_replace_callback('/\!|\?/', function ($matches) use (&$db,&$params) {
-			$param = array_shift($params);
-			if ($matches[0]=='!') {
-				$key = preg_replace('/[^a-zA-Z0-9\-_=<> ]/','',is_object($param)?$param->key:$param);
-				if (is_object($param) && $param->type=='hex') {
-					return "encode(\"$key\",'hex') as \"$key\"";
-				}
-				if (is_object($param) && $param->type=='wkt') {
-					return "ST_AsText(\"$key\") as \"$key\"";
-				}
-				return '"'.$key.'"';
-			} else {
-				if (is_array($param)) return '('.implode(',',array_map(function($v) use (&$db) {
-					return "'".pg_escape_string($db,$v)."'";
-				},$param)).')';
-				if (is_object($param) && $param->type=='hex') {
-					return "'\x".$param->value."'";
-				}
-				if (is_object($param) && $param->type=='wkt') {
-					return "ST_GeomFromText('".pg_escape_string($db,$param->value)."')";
-				}
-				if ($param===null) return 'NULL';
-				return "'".pg_escape_string($db,$param)."'";
-			}
-		}, $sql);
-		if (strtoupper(substr($sql,0,6))=='INSERT') {
-			$sql .= ' RETURNING id;';
-		}
-		//echo "\n$sql\n";
-		return @pg_query($db,$sql);
-	}
+    public function get(String $key): String
+    {
+        return $this->memcache->get($this->prefix . $key) ?: '';
+    }
 
-	public function fetchAssoc($result) {
-		return pg_fetch_assoc($result);
-	}
-
-	public function fetchRow($result) {
-		return pg_fetch_row($result);
-	}
-
-	public function insertId($result) {
-		list($id) = pg_fetch_row($result);
-		return (int)$id;
-	}
-
-	public function affectedRows($result) {
-		return pg_affected_rows($result);
-	}
-
-	public function close($result) {
-		return pg_free_result($result);
-	}
-
-	public function fetchFields($table) {
-		$result = $this->query('SELECT * FROM ! WHERE 1=2;',array($table));
-		$keys = array();
-		for($i=0;$i<pg_num_fields($result);$i++) {
-			$field = array();
-			$field['name'] = pg_field_name($result,$i);
-			$field['type'] = pg_field_type($result,$i);
-			$keys[$i] = (object)$field;
-		}
-		return $keys;
-	}
-
-	public function addLimitToSql($sql,$limit,$offset) {
-		return "$sql LIMIT $limit OFFSET $offset";
-	}
-
-	public function likeEscape($string) {
-		return addcslashes($string,'%_');
-	}
-
-	public function convertFilter($field, $comparator, $value) {
-		return false;
-	}
-
-	public function isNumericType($field) {
-		return in_array($field->type, array('int2', 'int4', 'int8', 'float4', 'float8'));
-	}
-
-	public function isBinaryType($field) {
-		return $field->type == 'bytea';
-	}
-
-	public function isGeometryType($field) {
-		return $field->type == 'geometry';
-	}
-
-	public function isJsonType($field) {
-		return in_array($field->type,array('json','jsonb'));
-	}
-
-	public function getDefaultCharset() {
-		return 'UTF8';
-	}
-
-	public function beginTransaction() {
-		return $this->query('BEGIN');
-	}
-
-	public function commitTransaction() {
-		return $this->query('COMMIT');
-	}
-
-	public function rollbackTransaction() {
-		return $this->query('ROLLBACK');
-	}
-
-	public function jsonEncode($object) {
-		return json_encode($object);
-	}
-
-	public function jsonDecode($string) {
-		return json_decode($string);
-	}
+    public function clear(): bool
+    {
+        return $this->memcache->flush();
+    }
 }
 
-class SQLServer implements DatabaseInterface {
+// file: src/Tqdev/PhpCrudApi/Cache/MemcachedCache.php
 
-	protected $db;
-	protected $queries;
+class MemcachedCache extends MemcacheCache
+{
+    protected function create(): object
+    {
+        return new \Memcached();
+    }
 
-	public function __construct() {
-		$this->queries = array(
-			'list_tables'=>'SELECT
-					"TABLE_NAME",\'\' as "TABLE_COMMENT"
-				FROM
-					"INFORMATION_SCHEMA"."TABLES"
-				WHERE
-					"TABLE_CATALOG" = ?',
-			'reflect_table'=>'SELECT
-					"TABLE_NAME"
-				FROM
-					"INFORMATION_SCHEMA"."TABLES"
-				WHERE
-					"TABLE_NAME" = ? AND
-					"TABLE_CATALOG" = ?',
-			'reflect_pk'=>'SELECT
-					"COLUMN_NAME"
-				FROM
-					"INFORMATION_SCHEMA"."TABLE_CONSTRAINTS" tc,
-					"INFORMATION_SCHEMA"."KEY_COLUMN_USAGE" ku
-				WHERE
-					tc."CONSTRAINT_TYPE" = \'PRIMARY KEY\' AND
-					tc."CONSTRAINT_NAME" = ku."CONSTRAINT_NAME" AND
-					ku."TABLE_NAME" = ? AND
-					ku."TABLE_CATALOG" = ?',
-			'reflect_belongs_to'=>'SELECT
-					cu1."TABLE_NAME",cu1."COLUMN_NAME",
-					cu2."TABLE_NAME",cu2."COLUMN_NAME"
-				FROM
-					"INFORMATION_SCHEMA".REFERENTIAL_CONSTRAINTS rc,
-					"INFORMATION_SCHEMA".CONSTRAINT_COLUMN_USAGE cu1,
-					"INFORMATION_SCHEMA".CONSTRAINT_COLUMN_USAGE cu2
-				WHERE
-					cu1."CONSTRAINT_NAME" = rc."CONSTRAINT_NAME" AND
-					cu2."CONSTRAINT_NAME" = rc."UNIQUE_CONSTRAINT_NAME" AND
-					cu1."TABLE_NAME" = ? AND
-					cu2."TABLE_NAME" IN ? AND
-					cu1."TABLE_CATALOG" = ? AND
-					cu2."TABLE_CATALOG" = ?',
-			'reflect_has_many'=>'SELECT
-					cu1."TABLE_NAME",cu1."COLUMN_NAME",
-					cu2."TABLE_NAME",cu2."COLUMN_NAME"
-				FROM
-					"INFORMATION_SCHEMA".REFERENTIAL_CONSTRAINTS rc,
-					"INFORMATION_SCHEMA".CONSTRAINT_COLUMN_USAGE cu1,
-					"INFORMATION_SCHEMA".CONSTRAINT_COLUMN_USAGE cu2
-				WHERE
-					cu1."CONSTRAINT_NAME" = rc."CONSTRAINT_NAME" AND
-					cu2."CONSTRAINT_NAME" = rc."UNIQUE_CONSTRAINT_NAME" AND
-					cu1."TABLE_NAME" IN ? AND
-					cu2."TABLE_NAME" = ? AND
-					cu1."TABLE_CATALOG" = ? AND
-					cu2."TABLE_CATALOG" = ?',
-			'reflect_habtm'=>'SELECT
-					cua1."TABLE_NAME",cua1."COLUMN_NAME",
-					cua2."TABLE_NAME",cua2."COLUMN_NAME",
-					cub1."TABLE_NAME",cub1."COLUMN_NAME",
-					cub2."TABLE_NAME",cub2."COLUMN_NAME"
-				FROM
-					"INFORMATION_SCHEMA".REFERENTIAL_CONSTRAINTS rca,
-					"INFORMATION_SCHEMA".REFERENTIAL_CONSTRAINTS rcb,
-					"INFORMATION_SCHEMA".CONSTRAINT_COLUMN_USAGE cua1,
-					"INFORMATION_SCHEMA".CONSTRAINT_COLUMN_USAGE cua2,
-					"INFORMATION_SCHEMA".CONSTRAINT_COLUMN_USAGE cub1,
-					"INFORMATION_SCHEMA".CONSTRAINT_COLUMN_USAGE cub2
-				WHERE
-					cua1."CONSTRAINT_NAME" = rca."CONSTRAINT_NAME" AND
-					cua2."CONSTRAINT_NAME" = rca."UNIQUE_CONSTRAINT_NAME" AND
-					cub1."CONSTRAINT_NAME" = rcb."CONSTRAINT_NAME" AND
-					cub2."CONSTRAINT_NAME" = rcb."UNIQUE_CONSTRAINT_NAME" AND
-					cua1."TABLE_CATALOG" = ? AND
-					cub1."TABLE_CATALOG" = ? AND
-					cua2."TABLE_CATALOG" = ? AND
-					cub2."TABLE_CATALOG" = ? AND
-					cua1."TABLE_NAME" = cub1."TABLE_NAME" AND
-					cua2."TABLE_NAME" = ? AND
-					cub2."TABLE_NAME" IN ?',
-			'reflect_columns'=> 'SELECT
-					"COLUMN_NAME", "COLUMN_DEFAULT", "IS_NULLABLE", "DATA_TYPE", "CHARACTER_MAXIMUM_LENGTH"
-				FROM 
-					"INFORMATION_SCHEMA"."COLUMNS" 
-				WHERE 
-					"TABLE_NAME" LIKE ? AND
-					"TABLE_CATALOG" = ?
-				ORDER BY
-					"ORDINAL_POSITION"'
-		);
-	}
-
-	public function getSql($name) {
-		return isset($this->queries[$name])?$this->queries[$name]:false;
-	}
-
-	public function connect($hostname,$username,$password,$database,$port,$socket,$charset) {
-		$connectionInfo = array();
-		if ($port) $hostname.=','.$port;
-		if ($username) $connectionInfo['UID']=$username;
-		if ($password) $connectionInfo['PWD']=$password;
-		if ($database) $connectionInfo['Database']=$database;
-		if ($charset) $connectionInfo['CharacterSet']=$charset;
-		$connectionInfo['QuotedId']=1;
-		$connectionInfo['ReturnDatesAsStrings']=1;
-
-		$db = sqlsrv_connect($hostname, $connectionInfo);
-		if (!$db) {
-			throw new \Exception('Connect failed. '.print_r( sqlsrv_errors(), true));
-		}
-		if ($socket) {
-			throw new \Exception('Socket connection is not supported.');
-		}
-		$this->db = $db;
-	}
-
-	public function query($sql,$params=array()) {
-		$args = array();
-		$db = $this->db;
-		$sql = preg_replace_callback('/\!|\?/', function ($matches) use (&$db,&$params,&$args) {
-			static $i=-1;
-			$i++;
-			$param = $params[$i];
-			if ($matches[0]=='!') {
-				$key = preg_replace('/[^a-zA-Z0-9\-_=<> ]/','',is_object($param)?$param->key:$param);
-				if (is_object($param) && $param->type=='hex') {
-					return "CONVERT(varchar(max), \"$key\", 2) as \"$key\"";
-				}
-				if (is_object($param) && $param->type=='wkt') {
-					return "\"$key\".STAsText() as \"$key\"";
-				}
-				return '"'.$key.'"';
-			} else {
-				// This is workaround because SQLSRV cannot accept NULL in a param
-				if ($matches[0]=='?' && is_null($param)) {
-					return 'NULL';
-				}
-				if (is_array($param)) {
-					$args = array_merge($args,$param);
-					return '('.implode(',',str_split(str_repeat('?',count($param)))).')';
-				}
-				if (is_object($param) && $param->type=='hex') {
-					$args[] = $param->value;
-					return 'CONVERT(VARBINARY(MAX),?,2)';
-				}
-				if (is_object($param) && $param->type=='wkt') {
-					$args[] = $param->value;
-					return 'geometry::STGeomFromText(?,0)';
-				}
-				$args[] = $param;
-				return '?';
-			}
-		}, $sql);
-		//var_dump($params);
-		//echo "\n$sql\n";
-		//var_dump($args);
-		//file_put_contents('sql.txt',"\n$sql\n".var_export($args,true)."\n",FILE_APPEND);
-		if (strtoupper(substr($sql,0,6))=='INSERT') {
-			$sql .= ';SELECT SCOPE_IDENTITY()';
-		}
-		return sqlsrv_query($db,$sql,$args)?:null;
-	}
-
-	public function fetchAssoc($result) {
-		return sqlsrv_fetch_array($result, SQLSRV_FETCH_ASSOC);
-	}
-
-	public function fetchRow($result) {
-		return sqlsrv_fetch_array($result, SQLSRV_FETCH_NUMERIC);
-	}
-
-	public function insertId($result) {
-		sqlsrv_next_result($result);
-		sqlsrv_fetch($result);
-		return (int)sqlsrv_get_field($result, 0);
-	}
-
-	public function affectedRows($result) {
-		return sqlsrv_rows_affected($result);
-	}
-
-	public function close($result) {
-		return sqlsrv_free_stmt($result);
-	}
-
-	public function fetchFields($table) {
-		$result = $this->query('SELECT * FROM ! WHERE 1=2;',array($table));
-		//var_dump(sqlsrv_field_metadata($result));
-		return array_map(function($a){
-			$p = array();
-			foreach ($a as $k=>$v) {
-				$p[strtolower($k)] = $v;
-			}
-			return (object)$p;
-		},sqlsrv_field_metadata($result));
-	}
-
-	public function addLimitToSql($sql,$limit,$offset) {
-		return "$sql OFFSET $offset ROWS FETCH NEXT $limit ROWS ONLY";
-	}
-
-	public function likeEscape($string) {
-		return str_replace(array('%','_'),array('[%]','[_]'),$string);
-	}
-
-	public function convertFilter($field, $comparator, $value) {
-		$comparator = strtolower($comparator);
-		if ($comparator[0]!='n') {
-			switch ($comparator) {
-				case 'sco': return array('!.STContains(geometry::STGeomFromText(?,0))=1',$field,$value);
-				case 'scr': return array('!.STCrosses(geometry::STGeomFromText(?,0))=1',$field,$value);
-				case 'sdi': return array('!.STDisjoint(geometry::STGeomFromText(?,0))=1',$field,$value);
-				case 'seq': return array('!.STEquals(geometry::STGeomFromText(?,0))=1',$field,$value);
-				case 'sin': return array('!.STIntersects(geometry::STGeomFromText(?,0))=1',$field,$value);
-				case 'sov': return array('!.STOverlaps(geometry::STGeomFromText(?,0))=1',$field,$value);
-				case 'sto': return array('!.STTouches(geometry::STGeomFromText(?,0))=1',$field,$value);
-				case 'swi': return array('!.STWithin(geometry::STGeomFromText(?,0))=1',$field,$value);
-				case 'sic': return array('!.STIsClosed()=1',$field);
-				case 'sis': return array('!.STIsSimple()=1',$field);
-				case 'siv': return array('!.STIsValid()=1',$field);
-			}
-		} else {
-			switch ($comparator) {
-				case 'nsco': return array('!.STContains(geometry::STGeomFromText(?,0))=0',$field,$value);
-				case 'nscr': return array('!.STCrosses(geometry::STGeomFromText(?,0))=0',$field,$value);
-				case 'nsdi': return array('!.STDisjoint(geometry::STGeomFromText(?,0))=0',$field,$value);
-				case 'nseq': return array('!.STEquals(geometry::STGeomFromText(?,0))=0',$field,$value);
-				case 'nsin': return array('!.STIntersects(geometry::STGeomFromText(?,0))=0',$field,$value);
-				case 'nsov': return array('!.STOverlaps(geometry::STGeomFromText(?,0))=0',$field,$value);
-				case 'nsto': return array('!.STTouches(geometry::STGeomFromText(?,0))=0',$field,$value);
-				case 'nswi': return array('!.STWithin(geometry::STGeomFromText(?,0))=0',$field,$value);
-				case 'nsic': return array('!.STIsClosed()=0',$field);
-				case 'nsis': return array('!.STIsSimple()=0',$field);
-				case 'nsiv': return array('!.STIsValid()=0',$field);
-			}
-		}
-		return false;
-	}
-
-	public function isNumericType($field) {
-		return in_array($field->type,array(-6,-5,4,5,2,6,7));
-	}
-
-	public function isBinaryType($field) {
-		return ($field->type>=-4 && $field->type<=-2);
-	}
-
-	public function isGeometryType($field) {
-		return ($field->type==-151);
-	}
-
-	public function isJsonType($field) {
-		return ($field->type==-152);
-	}
-
-	public function getDefaultCharset() {
-		return 'UTF-8';
-	}
-
-	public function beginTransaction() {
-		return sqlsrv_begin_transaction($this->db);
-	}
-
-	public function commitTransaction() {
-		return sqlsrv_commit($this->db);
-	}
-
-	public function rollbackTransaction() {
-		return sqlsrv_rollback($this->db);
-	}
-
-	public function jsonEncode($object) {
-		$a = $object;
-		$d = new DOMDocument();
-		$c = $d->createElement("root");
-		$d->appendChild($c);
-		$t = function($v) {
-			$type = gettype($v);
-			switch($type) {
-				case 'integer': return 'number';
-				case 'double':  return 'number';
-				default: return strtolower($type);
-			}
-		};
-		$f = function($f,$c,$a,$s=false) use ($t,$d) {
-			$c->setAttribute('type', $t($a));
-			if ($t($a) != 'array' && $t($a) != 'object') {
-				if ($t($a) == 'boolean') {
-					$c->appendChild($d->createTextNode($a?'true':'false'));
-				} else {
-					$c->appendChild($d->createTextNode($a));
-				}
-			} else {
-				foreach($a as $k=>$v) {
-					if ($k == '__type' && $t($a) == 'object') {
-						$c->setAttribute('__type', $v);
-					} else {
-						if ($t($v) == 'object') {
-							$ch = $c->appendChild($d->createElementNS(null, $s ? 'item' : $k));
-							$f($f, $ch, $v);
-						} else if ($t($v) == 'array') {
-							$ch = $c->appendChild($d->createElementNS(null, $s ? 'item' : $k));
-							$f($f, $ch, $v, true);
-						} else {
-							$va = $d->createElementNS(null, $s ? 'item' : $k);
-							if ($t($v) == 'boolean') {
-								$va->appendChild($d->createTextNode($v?'true':'false'));
-							} else {
-								$va->appendChild($d->createTextNode($v));
-							}
-							$ch = $c->appendChild($va);
-							$ch->setAttribute('type', $t($v));
-						}
-					}
-				}
-			}
-		};
-		$f($f,$c,$a,$t($a)=='array');
-		return $d->saveXML($d->documentElement);
-	}
-
-	public function jsonDecode($string) {
-		$a = dom_import_simplexml(simplexml_load_string($string));
-		$t = function($v) {
-			return $v->getAttribute('type');
-		};
-		$f = function($f,$a) use ($t) {
-			$c = null;
-			if ($t($a)=='null') {
-				$c = null; 
-			} else if ($t($a)=='boolean') {
-				$b = substr(strtolower($a->textContent),0,1);
-				$c = in_array($b,array('1','t'));
-			} else if ($t($a)=='number') {
-				$c = $a->textContent+0; 
-			} else if ($t($a)=='string') {
-				$c = $a->textContent;
-			} else if ($t($a)=='object') {
-				$c = array();
-				if ($a->getAttribute('__type')) {
-					$c['__type'] = $a->getAttribute('__type');
-				}
-				for ($i=0;$i<$a->childNodes->length;$i++) {
-					$v = $a->childNodes[$i];
-					$c[$v->nodeName] = $f($f,$v);
-				}
-				$c = (object)$c;
-			} else if ($t($a)=='array') {
-				$c = array();
-				for ($i=0;$i<$a->childNodes->length;$i++) {
-					$v = $a->childNodes[$i];
-					$c[$i] = $f($f,$v);
-				}
-			}
-			return $c;
-		};
-		$c = $f($f,$a);
-		return $c;
-	}
+    public function set(String $key, String $value, int $ttl = 0): bool
+    {
+        return $this->memcache->set($this->prefix . $key, $value, $ttl);
+    }
 }
 
-class SQLite implements DatabaseInterface {
+// file: src/Tqdev/PhpCrudApi/Cache/NoCache.php
 
-	protected $db;
-	protected $queries;
+class NoCache implements Cache
+{
+    public function __construct()
+    {
+    }
 
-	public function __construct() {
-		$this->queries = array(
-			'list_tables'=>'SELECT
-					"name", ""
-				FROM
-					"sys/tables"',
-			'reflect_table'=>'SELECT
-					"name"
-				FROM
-					"sys/tables"
-				WHERE
-					"name"=?',
-			'reflect_pk'=>'SELECT
-					"name"
-				FROM
-					"sys/columns"
-				WHERE
-					"pk"=1 AND
-					"self"=?',
-			'reflect_belongs_to'=>'SELECT
-					"self", "from",
-					"table", "to"
-				FROM
-					"sys/foreign_keys"
-				WHERE
-					"self" = ? AND
-					"table" IN ? AND
-					? like "%" AND
-					? like "%"',
-			'reflect_has_many'=>'SELECT
-					"self", "from",
-					"table", "to"
-				FROM
-					"sys/foreign_keys"
-				WHERE
-					"self" IN ? AND
-					"table" = ? AND
-					? like "%" AND
-					? like "%"',
-			'reflect_habtm'=>'SELECT
-					k1."self", k1."from",
-					k1."table", k1."to",
-					k2."self", k2."from",
-					k2."table", k2."to"
-				FROM
-					"sys/foreign_keys" k1,
-					"sys/foreign_keys" k2
-				WHERE
-					? like "%" AND
-					? like "%" AND
-					? like "%" AND
-					? like "%" AND
-					k1."self" = k2."self" AND
-					k1."table" = ? AND
-					k2."table" IN ?',
-			'reflect_columns'=> 'SELECT
-					"name", "dflt_value", case when "notnull"==1 then \'no\' else \'yes\' end as "nullable", "type", 2147483647
-				FROM 
-					"sys/columns"
-				WHERE 
-					"self"=?
-				ORDER BY
-					"cid"'
-		);
-	}
+    public function set(String $key, String $value, int $ttl = 0): bool
+    {
+        return true;
+    }
 
-	public function getSql($name) {
-		return isset($this->queries[$name])?$this->queries[$name]:false;
-	}
+    public function get(String $key): String
+    {
+        return '';
+    }
 
-	public function connect($hostname,$username,$password,$database,$port,$socket,$charset) {
-		$this->db = new SQLite3($database);
-		// optimizations
-		$this->db->querySingle('PRAGMA synchronous = NORMAL');
-		$this->db->querySingle('PRAGMA foreign_keys = on');
-		$reflection = $this->db->querySingle('SELECT name FROM sqlite_master WHERE type = "table" and name like "sys/%"');
-		if (!$reflection) {
-			//create reflection tables
-			$this->query('CREATE table "sys/version" ("version" integer)');
-			$this->query('CREATE table "sys/tables" ("name" text)');
-			$this->query('CREATE table "sys/columns" ("self" text,"cid" integer,"name" text,"type" integer,"notnull" integer,"dflt_value" integer,"pk" integer)');
-			$this->query('CREATE table "sys/foreign_keys" ("self" text,"id" integer,"seq" integer,"table" text,"from" text,"to" text,"on_update" text,"on_delete" text,"match" text)');
-		}
-		$version = $this->db->querySingle('pragma schema_version');
-		if ($version != $this->db->querySingle('SELECT "version" from "sys/version"')) {
-			// reflection may take a while
-			set_time_limit(3600);
-			// update version data
-			$this->query('DELETE FROM "sys/version"');
-			$this->query('INSERT into "sys/version" ("version") VALUES (?)',array($version));
-			// update tables data
-			$this->query('DELETE FROM "sys/tables"');
-			$result = $this->query('SELECT * FROM sqlite_master WHERE (type = "table" or type = "view") and name not like "sys/%" and name<>"sqlite_sequence"');
-			$tables = array();
-			while ($row = $this->fetchAssoc($result)) {
-				$tables[] = $row['name'];
-				$this->query('INSERT into "sys/tables" ("name") VALUES (?)',array($row['name']));
-			}
-			// update columns and foreign_keys data
-			$this->query('DELETE FROM "sys/columns"');
-			$this->query('DELETE FROM "sys/foreign_keys"');
-			foreach ($tables as $table) {
-				$result = $this->query('pragma table_info(!)',array($table));
-				while ($row = $this->fetchRow($result)) {
-					array_unshift($row, $table);
-					$this->query('INSERT into "sys/columns" ("self","cid","name","type","notnull","dflt_value","pk") VALUES (?,?,?,?,?,?,?)',$row);
-				}
-				$result = $this->query('pragma foreign_key_list(!)',array($table));
-				while ($row = $this->fetchRow($result)) {
-					array_unshift($row, $table);
-					$this->query('INSERT into "sys/foreign_keys" ("self","id","seq","table","from","to","on_update","on_delete","match") VALUES (?,?,?,?,?,?,?,?,?)',$row);
-				}
-			}
-		}
-	}
-
-	public function query($sql,$params=array()) {
-		$db = $this->db;
-		$sql = preg_replace_callback('/\!|\?/', function ($matches) use (&$db,&$params) {
-			$param = array_shift($params);
-			if ($matches[0]=='!') {
-				$key = preg_replace('/[^a-zA-Z0-9\-_=<> ]/','',is_object($param)?$param->key:$param);
-				return '"'.$key.'"';
-			} else {
-				if (is_array($param)) return '('.implode(',',array_map(function($v) use (&$db) {
-					return "'".$db->escapeString($v)."'";
-				},$param)).')';
-				if (is_object($param) && $param->type=='hex') {
-					return "'".$db->escapeString($param->value)."'";
-				}
-				if (is_object($param) && $param->type=='wkt') {
-					return "'".$db->escapeString($param->value)."'";
-				}
-				if ($param===null) return 'NULL';
-				return "'".$db->escapeString($param)."'";
-			}
-		}, $sql);
-		//echo "\n$sql\n";
-		try {	$result=$db->query($sql); } catch(\Exception $e) { $result=null; }
-		return $result;
-	}
-
-	public function fetchAssoc($result) {
-		return $result->fetchArray(SQLITE3_ASSOC);
-	}
-
-	public function fetchRow($result) {
-		return $result->fetchArray(SQLITE3_NUM);
-	}
-
-	public function insertId($result) {
-		return $this->db->lastInsertRowID();
-	}
-
-	public function affectedRows($result) {
-		return $this->db->changes();
-	}
-
-	public function close($result) {
-		return $result->finalize();
-	}
-
-	public function fetchFields($table) {
-		$result = $this->query('SELECT * FROM "sys/columns" WHERE "self"=?;',array($table));
-		$fields = array();
-		while ($row = $this->fetchAssoc($result)){
-			$fields[strtolower($row['name'])] = (object)$row;
-		}
-		return $fields;
-	}
-
-	public function addLimitToSql($sql,$limit,$offset) {
-		return "$sql LIMIT $limit OFFSET $offset";
-	}
-
-	public function likeEscape($string) {
-		return addcslashes($string,'%_');
-	}
-
-	public function convertFilter($field, $comparator, $value) {
-		return false;
-	}
-
-	public function isNumericType($field) {
-		return in_array($field->type,array('integer','real'));
-	}
-
-	public function isBinaryType($field) {
-		return (substr($field->type,0,4)=='data');
-	}
-
-	public function isGeometryType($field) {
-		return in_array($field->type,array('geometry'));
-	}
-
-	public function isJsonType($field) {
-		return in_array($field->type,array('json','jsonb'));
-	}
-
-	public function getDefaultCharset() {
-		return 'utf8';
-	}
-
-	public function beginTransaction() {
-		return $this->query('BEGIN');
-	}
-
-	public function commitTransaction() {
-		return $this->query('COMMIT');
-	}
-
-	public function rollbackTransaction() {
-		return $this->query('ROLLBACK');
-	}
-
-	public function jsonEncode($object) {
-		return json_encode($object);
-	}
-
-	public function jsonDecode($string) {
-		return json_decode($string);
-	}
+    public function clear(): bool
+    {
+        return true;
+    }
 }
 
-class PHP_CRUD_API {
-
-	protected $db;
-	protected $settings;
-
-	protected function mapMethodToAction($method,$key) {
-		switch ($method) {
-			case 'OPTIONS': return 'headers';
-			case 'GET': return ($key===false)?'list':'read';
-			case 'PUT': return 'update';
-			case 'POST': return 'create';
-			case 'DELETE': return 'delete';
-			case 'PATCH': return 'increment';
-			default: $this->exitWith404('method');
-		}
-		return false;
-	}
-
-	protected function parseRequestParameter(&$request,$characters) {
-		if ($request==='') return false;
-		$pos = strpos($request,'/');
-		$value = $pos?substr($request,0,$pos):$request;
-		$request = $pos?substr($request,$pos+1):'';
-		if (!$characters) return $value;
-		return preg_replace("/[^$characters]/",'',$value);
-	}
-
-	protected function parseGetParameter($get,$name,$characters) {
-		$value = isset($get[$name])?$get[$name]:false;
-		return $characters?preg_replace("/[^$characters]/",'',$value):$value;
-	}
-
-	protected function parseGetParameterArray($get,$name,$characters) {
-		$values = isset($get[$name])?$get[$name]:false;
-		if (!is_array($values)) $values = array($values);
-		if ($characters) {
-			foreach ($values as &$value) {
-				$value = preg_replace("/[^$characters]/",'',$value);
-			}
-		}
-		return $values;
-	}
-
-	protected function applyBeforeHandler(&$action,&$database,&$table,&$ids,&$callback,&$inputs) {
-		if (is_callable($callback,true)) {
-			$max = is_array($ids)?count($ids):count($inputs);
-			$values = array('action'=>$action,'database'=>$database,'table'=>$table);
-			for ($i=0;$i<$max;$i++) {
-				$action = $values['action'];
-				$database = $values['database'];
-				$table = $values['table'];
-				if (!isset($ids[$i])) $ids[$i] = false;
-				if (!isset($inputs[$i])) $inputs[$i] = false;
-				$callback($action,$database,$table,$ids[$i],$inputs[$i]);
-			}
-		}
-	}
-
-	protected function applyAfterHandler($parameters,$outputs) {
-		$callback = $parameters['after'];
-		if (is_callable($callback,true)) {
-			$action = $parameters['action'];
-			$database = $parameters['database'];
-			$table = $parameters['tables'][0];
-			$ids = $parameters['key'][0];
-			$inputs = $parameters['inputs'];
-			$max = max(count($ids),count($inputs));
-			for ($i=0;$i<$max;$i++) {
-				$id = isset($ids[$i])?$ids[$i]:false;
-				$input = isset($inputs[$i])?$inputs[$i]:false;
-				$output = is_array($outputs)?$outputs[$i]:$outputs;
-				$callback($action,$database,$table,$id,$input,$output);
-			}
-		}
-	}
-
-	protected function applyTableAuthorizer($callback,$action,$database,&$tables) {
-		if (is_callable($callback,true)) foreach ($tables as $i=>$table) {
-			if (!$callback($action,$database,$table)) {
-				unset($tables[$i]);
-			}
-		}
-	}
-
-	protected function applyRecordFilter($callback,$action,$database,$tables,&$filters) {
-		if (is_callable($callback,true)) foreach ($tables as $i=>$table) {
-			$this->addFilters($filters,$table,array($table=>'and'),$callback($action,$database,$table));
-		}
-	}
-
-	protected function applyTenancyFunction($callback,$action,$database,$fields,&$filters) {
-		if (is_callable($callback,true)) foreach ($fields as $table=>$keys) {
-			foreach ($keys as $field) {
-				$v = $callback($action,$database,$table,$field->name);
-				if ($v!==null) {
-					if (is_array($v)) $this->addFilter($filters,$table,'and',$field->name,'in',implode(',',$v));
-					else $this->addFilter($filters,$table,'and',$field->name,'eq',$v);
-				}
-			}
-		}
-	}
-
-	protected function applyColumnAuthorizer($callback,$action,$database,&$fields) {
-		if (is_callable($callback,true)) foreach ($fields as $table=>$keys) {
-			foreach ($keys as $field) {
-				if (!$callback($action,$database,$table,$field->name)) {
-					unset($fields[$table][$field->name]);
-				}
-			}
-		}
-	}
-
-	protected function applyInputTenancy($callback,$action,$database,$table,&$input,$keys) {
-		if (is_callable($callback,true)) foreach ($keys as $key=>$field) {
-			$v = $callback($action,$database,$table,$key);
-			if ($v!==null && (isset($input->$key) || $action=='create')) {
-				if (is_array($v)) {
-					if (!count($v)) {
-						$input->$key = null;
-					} elseif (!isset($input->$key)) {
-						$input->$key = $v[0];
-					} elseif (!in_array($input->$key,$v)) {
-						$input->$key = null;
-					}
-				} else {
-					$input->$key = $v;
-				}
-			}
-		}
-	}
-
-	protected function applyInputSanitizer($callback,$action,$database,$table,&$input,$keys) {
-		if (is_callable($callback,true)) foreach ((array)$input as $key=>$value) {
-			if (isset($keys[$key])) {
-				$input->$key = $callback($action,$database,$table,$key,$keys[$key]->type,$value);
-			}
-		}
-	}
-
-	protected function applyInputValidator($callback,$action,$database,$table,$input,$keys,$context) {
-		$errors = array();
-		if (is_callable($callback,true)) foreach ((array)$input as $key=>$value) {
-			if (isset($keys[$key])) {
-				$error = $callback($action,$database,$table,$key,$keys[$key]->type,$value,$context);
-				if ($error!==true && $error!==null) $errors[$key] = $error;
-			}
-		}
-		if (!empty($errors)) $this->exitWith422($errors);
-	}
-
-	protected function processTableAndIncludeParameters($database,$table,$include,$action) {
-		$blacklist = array('information_schema','mysql','sys','pg_catalog');
-		if (in_array(strtolower($database), $blacklist)) return array();
-		$table_list = array();
-		if ($result = $this->db->query($this->db->getSql('reflect_table'),array($table,$database))) {
-			while ($row = $this->db->fetchRow($result)) $table_list[] = $row[0];
-			$this->db->close($result);
-		}
-		if (empty($table_list)) $this->exitWith404('entity');
-		if ($action=='list') {
-			foreach (explode(',',$include) as $table) {
-				if ($result = $this->db->query($this->db->getSql('reflect_table'),array($table,$database))) {
-					while ($row = $this->db->fetchRow($result)) $table_list[] = $row[0];
-					$this->db->close($result);
-				}
-			}
-		}
-		return $table_list;
-	}
-
-	protected function exitWith404($type) {
-		if (isset($_SERVER['REQUEST_METHOD'])) {
-			header('Content-Type:',true,404);
-			die("Not found ($type)");
-		} else {
-			throw new \Exception("Not found ($type)");
-		}
-	}
-
-	protected function exitWith403($type) {
-		if (isset($_SERVER['REQUEST_METHOD'])) {
-			header('Content-Type:',true,403);
-			die("Forbidden ($type)");
-		} else {
-			throw new \Exception("Forbidden ($type)");
-		}
-	}
-
-	protected function exitWith400($type) {
-		if (isset($_SERVER['REQUEST_METHOD'])) {
-			header('Content-Type:',true,400);
-			die("The request could not be understood by the server due to malformed syntax. The client SHOULD NOT repeat the request without modifications. ($type)");
-		} else {
-			throw new \Exception("Bad request ($type)");
-		}
-	}
-
-	protected function exitWith422($object) {
-		if (isset($_SERVER['REQUEST_METHOD'])) {
-			header('Content-Type:',true,422);
-			die(json_encode($object));
-		} else {
-			throw new \Exception(json_encode($object));
-		}
-	}
-
-	protected function headersCommand($parameters) {
-		$headers = array();
-		$headers[]='Access-Control-Allow-Headers: Content-Type, X-XSRF-TOKEN';
-		$headers[]='Access-Control-Allow-Methods: OPTIONS, GET, PUT, POST, DELETE, PATCH';
-		$headers[]='Access-Control-Allow-Credentials: true';
-		$headers[]='Access-Control-Max-Age: 1728000';
-		if (isset($_SERVER['REQUEST_METHOD'])) {
-			foreach ($headers as $header) header($header);
-		} else {
-			echo json_encode($headers);
-		}
-		return false;
-	}
-
-	protected function startOutput() {
-		if (isset($_SERVER['REQUEST_METHOD'])) {
-			header('Content-Type: application/json; charset=utf-8');
-		}
-	}
-
-	protected function findPrimaryKeys($table,$database) {
-		$fields = array();
-		if ($result = $this->db->query($this->db->getSql('reflect_pk'),array($table,$database))) {
-			while ($row = $this->db->fetchRow($result)) {
-				$fields[] = $row[0];
-			}
-			$this->db->close($result);
-		}
-		return $fields;
-	}
-
-	protected function processKeyParameter($key,$tables,$database) {
-		if ($key===false) return false;
-		$fields = $this->findPrimaryKeys($tables[0],$database);
-		if (count($fields)!=1) $this->exitWith404('1pk');
-		return array(explode(',',$key),$fields[0]);
-	}
-
-	protected function processOrderingsParameter($orderings) {
-		if (!$orderings) return false;
-		foreach ($orderings as &$order) {
-			$order = explode(',',$order,2);
-			if (count($order)<2) $order[1]='ASC';
-			if (!strlen($order[0])) return false;
-			$direction = strtoupper($order[1]);
-			if (in_array($direction,array('ASC','DESC'))) {
-				$order[1] = $direction;
-			}
-		}
-		return $orderings;
-	}
-
-	protected function convertFilter($field, $comparator, $value) {
-		$result = $this->db->convertFilter($field,$comparator,$value);
-		if ($result) return $result;
-		// default behavior
-		$comparator = strtolower($comparator);
-		if ($comparator[0]!='n') {
-			if (strlen($comparator)==2) {
-				switch ($comparator) {
-					case 'cs': return array('! LIKE ?',$field,'%'.$this->db->likeEscape($value).'%');
-					case 'sw': return array('! LIKE ?',$field,$this->db->likeEscape($value).'%');
-					case 'ew': return array('! LIKE ?',$field,'%'.$this->db->likeEscape($value));
-					case 'eq': return array('! = ?',$field,$value);
-					case 'lt': return array('! < ?',$field,$value);
-					case 'le': return array('! <= ?',$field,$value);
-					case 'ge': return array('! >= ?',$field,$value);
-					case 'gt': return array('! > ?',$field,$value);
-					case 'bt':
-						$v = explode(',',$value);
-						if (count($v)<2) return false;
-						return array('! BETWEEN ? AND ?',$field,$v[0],$v[1]);
-					case 'in': return array('! IN ?',$field,explode(',',$value));
-					case 'is': return array('! IS NULL',$field);
-				}
-			} else {
-				switch ($comparator) {
-					case 'sco': return array('ST_Contains(!,ST_GeomFromText(?))=TRUE',$field,$value);
-					case 'scr': return array('ST_Crosses(!,ST_GeomFromText(?))=TRUE',$field,$value);
-					case 'sdi': return array('ST_Disjoint(!,ST_GeomFromText(?))=TRUE',$field,$value);
-					case 'seq': return array('ST_Equals(!,ST_GeomFromText(?))=TRUE',$field,$value);
-					case 'sin': return array('ST_Intersects(!,ST_GeomFromText(?))=TRUE',$field,$value);
-					case 'sov': return array('ST_Overlaps(!,ST_GeomFromText(?))=TRUE',$field,$value);
-					case 'sto': return array('ST_Touches(!,ST_GeomFromText(?))=TRUE',$field,$value);
-					case 'swi': return array('ST_Within(!,ST_GeomFromText(?))=TRUE',$field,$value);
-					case 'sic': return array('ST_IsClosed(!)=TRUE',$field);
-					case 'sis': return array('ST_IsSimple(!)=TRUE',$field);
-					case 'siv': return array('ST_IsValid(!)=TRUE',$field);
-				}
-			}
-		} else {
-			if (strlen($comparator)==2) {
-				switch ($comparator) {
-					case 'ne': return $this->convertFilter($field, 'neq', $value); // deprecated
-					case 'ni': return $this->convertFilter($field, 'nin', $value); // deprecated
-					case 'no': return $this->convertFilter($field, 'nis', $value); // deprecated
-				}
-			} elseif (strlen($comparator)==3) {
-				switch ($comparator) {
-					case 'ncs': return array('! NOT LIKE ?',$field,'%'.$this->db->likeEscape($value).'%');
-					case 'nsw': return array('! NOT LIKE ?',$field,$this->db->likeEscape($value).'%');
-					case 'new': return array('! NOT LIKE ?',$field,'%'.$this->db->likeEscape($value));
-					case 'neq': return array('! <> ?',$field,$value);
-					case 'nlt': return array('! >= ?',$field,$value);
-					case 'nle': return array('! > ?',$field,$value);
-					case 'nge': return array('! < ?',$field,$value);
-					case 'ngt': return array('! <= ?',$field,$value);
-					case 'nbt':
-						$v = explode(',',$value);
-						if (count($v)<2) return false;
-						return array('! NOT BETWEEN ? AND ?',$field,$v[0],$v[1]);
-					case 'nin': return array('! NOT IN ?',$field,explode(',',$value));
-					case 'nis': return array('! IS NOT NULL',$field);
-				}
-			} else {
-				switch ($comparator) {
-					case 'nsco': return array('ST_Contains(!,ST_GeomFromText(?))=FALSE',$field,$value);
-					case 'nscr': return array('ST_Crosses(!,ST_GeomFromText(?))=FALSE',$field,$value);
-					case 'nsdi': return array('ST_Disjoint(!,ST_GeomFromText(?))=FALSE',$field,$value);
-					case 'nseq': return array('ST_Equals(!,ST_GeomFromText(?))=FALSE',$field,$value);
-					case 'nsin': return array('ST_Intersects(!,ST_GeomFromText(?))=FALSE',$field,$value);
-					case 'nsov': return array('ST_Overlaps(!,ST_GeomFromText(?))=FALSE',$field,$value);
-					case 'nsto': return array('ST_Touches(!,ST_GeomFromText(?))=FALSE',$field,$value);
-					case 'nswi': return array('ST_Within(!,ST_GeomFromText(?))=FALSE',$field,$value);
-					case 'nsic': return array('ST_IsClosed(!)=FALSE',$field);
-					case 'nsis': return array('ST_IsSimple(!)=FALSE',$field);
-					case 'nsiv': return array('ST_IsValid(!)=FALSE',$field);
-				}
-			}
-		}
-		return false;
-	}
-
-	public function addFilter(&$filters,$table,$and,$field,$comparator,$value) {
-		if (!isset($filters[$table])) $filters[$table] = array();
-		if (!isset($filters[$table][$and])) $filters[$table][$and] = array();
-		$filter = $this->convertFilter($field,$comparator,$value);
-		if ($filter) $filters[$table][$and][] = $filter;
-	}
-
-	public function addFilters(&$filters,$table,$satisfy,$filterStrings) {
-		if ($filterStrings) {
-			for ($i=0;$i<count($filterStrings);$i++) {
-				$parts = explode(',',$filterStrings[$i],3);
-				if (count($parts)>=2) {
-					if (strpos($parts[0],'.')) list($t,$f) = explode('.',$parts[0],2);
-					else list($t,$f) = array($table,$parts[0]);
-					$comparator = $parts[1];
-					$value = isset($parts[2])?$parts[2]:null;
-					$and = isset($satisfy[$t])?$satisfy[$t]:'and';
-					$this->addFilter($filters,$t,$and,$f,$comparator,$value);
-				}
-			}
-		}
-	}
-
-	protected function processSatisfyParameter($tables,$satisfyString) {
-		$satisfy = array();
-		foreach (explode(',',$satisfyString) as $str) {
-			if (strpos($str,'.')) list($t,$s) = explode('.',$str,2);
-			else list($t,$s) = array($tables[0],$str);
-			$and = ($s && strtolower($s)=='any')?'or':'and';
-			$satisfy[$t] = $and;
-		}
-		return $satisfy;
-	}
-
-	protected function processFiltersParameter($tables,$satisfy,$filterStrings) {
-		$filters = array();
-		$this->addFilters($filters,$tables[0],$satisfy,$filterStrings);
-		return $filters;
-	}
-
-	protected function processPageParameter($page) {
-		if (!$page) return false;
-		$page = explode(',',$page,2);
-		if (count($page)<2) $page[1]=20;
-		$page[0] = ($page[0]-1)*$page[1];
-		return $page;
-	}
-
-	protected function retrieveObject($key,$fields,$filters,$tables) {
-		if (!$key) return false;
-		$table = $tables[0];
-		$params = array();
-		$sql = 'SELECT ';
-		$this->convertOutputs($sql,$params,$fields[$table]);
-		$sql .= ' FROM !';
-		$params[] = $table;
-		$this->addFilter($filters,$table,'and',$key[1],'eq',$key[0][0]);
-		$this->addWhereFromFilters($filters[$table],$sql,$params);
-		$object = null;
-		if ($result = $this->db->query($sql,$params)) {
-			$object = $this->fetchAssoc($result,$fields[$table]);
-			$this->db->close($result);
-		}
-		return $object;
-	}
-
-	protected function retrieveObjects($key,$fields,$filters,$tables) {
-		$keyField = $key[1];
-		$keys = $key[0];
-		$rows = array();
-		foreach ($keys as $key) {
-			$result = $this->retrieveObject(array(array($key),$keyField),$fields,$filters,$tables);
-			if ($result===null) {
-				return null;
-			}
-			$rows[] = $result;
-		}
-		return $rows;
-	}
-
-	protected function createObject($input,$tables) {
-		if (!$input) return false;
-		$input = (array)$input;
-		$keys = implode(',',str_split(str_repeat('!', count($input))));
-		$values = implode(',',str_split(str_repeat('?', count($input))));
-		$params = array_merge(array_keys($input),array_values($input));
-		array_unshift($params, $tables[0]);
-		$result = $this->db->query('INSERT INTO ! ('.$keys.') VALUES ('.$values.')',$params);
-		if (!$result) return null;
-		$insertId = $this->db->insertId($result);
-		return $insertId;
-	}
-
-	protected function createObjects($inputs,$tables) {
-		if (!$inputs) return false;
-		$ids = array();
-		$this->db->beginTransaction();
-		foreach ($inputs as $input) {
-			$result = $this->createObject($input,$tables);
-			if ($result===null) {
-				$this->db->rollbackTransaction();
-				return null;
-			}
-			$ids[] = $result;
-		}
-		$this->db->commitTransaction();
-		return $ids;
-	}
-
-	protected function updateObject($key,$input,$filters,$tables) {
-		if (!$input) return null;
-		$input = (array)$input;
-		$table = $tables[0];
-		$sql = 'UPDATE ! SET ';
-		$params = array($table);
-		foreach (array_keys($input) as $j=>$k) {
-			if ($j) $sql .= ',';
-			$v = $input[$k];
-			$sql .= '!=?';
-			$params[] = $k;
-			$params[] = $v;
-		}
-		$this->addFilter($filters,$table,'and',$key[1],'eq',$key[0][0]);
-		$this->addWhereFromFilters($filters[$table],$sql,$params);
-		$result = $this->db->query($sql,$params);
-		if (!$result) return null;
-		return $this->db->affectedRows($result);
-	}
-
-	protected function updateObjects($key,$inputs,$filters,$tables) {
-		if (!$inputs) return null;
-		$keyField = $key[1];
-		$keys = $key[0];
-		if (count(array_filter($inputs))!=count(array_filter($keys))) {
-			$this->exitWith404('subject');
-		}
-		$rows = array();
-		$this->db->beginTransaction();
-		foreach ($inputs as $i=>$input) {
-			$result = $this->updateObject(array(array($keys[$i]),$keyField),$input,$filters,$tables);
-			if ($result===null) {
-				$this->db->rollbackTransaction();
-				return null;
-			}
-			$rows[] = $result;
-		}
-		$this->db->commitTransaction();
-		return $rows;
-	}
-
-	protected function deleteObject($key,$filters,$tables) {
-		$table = $tables[0];
-		$sql = 'DELETE FROM !';
-		$params = array($table);
-		$this->addFilter($filters,$table,'and',$key[1],'eq',$key[0][0]);
-		$this->addWhereFromFilters($filters[$table],$sql,$params);
-		$result = $this->db->query($sql,$params);
-		if (!$result) return null;
-		return $this->db->affectedRows($result);
-	}
-
-	protected function deleteObjects($key,$filters,$tables) {
-		$keyField = $key[1];
-		$keys = $key[0];
-		$rows = array();
-		$this->db->beginTransaction();
-		foreach ($keys as $key) {
-			$result = $this->deleteObject(array(array($key),$keyField),$filters,$tables);
-			if ($result===null) {
-				$this->db->rollbackTransaction();
-				return null;
-			}
-			$rows[] = $result;
-		}
-		$this->db->commitTransaction();
-		return $rows;
-	}
-
-	protected function incrementObject($key,$input,$filters,$tables,$fields) {
-		if (!$input) return null;
-		$input = (array)$input;
-		$table = $tables[0];
-		$sql = 'UPDATE ! SET ';
-		$params = array($table);
-		foreach (array_keys($input) as $j=>$k) {
-			if ($j) $sql .= ',';
-			$v = $input[$k];
-			if ($this->db->isNumericType($fields[$table][$k])) {
-				$sql .= '!=!+?';
-				$params[] = $k;
-				$params[] = $k;
-				$params[] = $v;
-			} else {
-				$sql .= '!=!';
-				$params[] = $k;
-				$params[] = $k;
-			}
-		}
-		$this->addFilter($filters,$table,'and',$key[1],'eq',$key[0][0]);
-		$this->addWhereFromFilters($filters[$table],$sql,$params);
-		$result = $this->db->query($sql,$params);
-		if (!$result) return null;
-		return $this->db->affectedRows($result);
-	}
-
-	protected function incrementObjects($key,$inputs,$filters,$tables,$fields) {
-		if (!$inputs) return null;
-		$keyField = $key[1];
-		$keys = $key[0];
-		if (count(array_filter($inputs))!=count(array_filter($keys))) {
-			$this->exitWith404('subject');
-		}
-		$rows = array();
-		$this->db->beginTransaction();
-		foreach ($inputs as $i=>$input) {
-			$result = $this->incrementObject(array(array($keys[$i]),$keyField),$input,$filters,$tables,$fields);
-			if ($result===null) {
-				$this->db->rollbackTransaction();
-				return null;
-			}
-			$rows[] = $result;
-		}
-		$this->db->commitTransaction();
-		return $rows;
-	}
-
-	protected function findRelations($tables,$database,$auto_include) {
-		$tableset = array();
-		$collect = array();
-		$select = array();
-
-		while (count($tables)>1) {
-			$table0 = array_shift($tables);
-			$tableset[] = $table0;
-
-			$result = $this->db->query($this->db->getSql('reflect_belongs_to'),array($table0,$tables,$database,$database));
-			while ($row = $this->db->fetchRow($result)) {
-				if (!$auto_include && !in_array($row[0],array_merge($tables,$tableset))) continue;
-				$collect[$row[0]][$row[1]]=array();
-				$select[$row[2]][$row[3]]=array($row[0],$row[1]);
-				if (!in_array($row[0],$tableset)) $tableset[] = $row[0];
-			}
-			$result = $this->db->query($this->db->getSql('reflect_has_many'),array($tables,$table0,$database,$database));
-			while ($row = $this->db->fetchRow($result)) {
-				if (!$auto_include && !in_array($row[2],array_merge($tables,$tableset))) continue;
-				$collect[$row[2]][$row[3]]=array();
-				$select[$row[0]][$row[1]]=array($row[2],$row[3]);
-				if (!in_array($row[2],$tableset)) $tableset[] = $row[2];
-			}
-			$result = $this->db->query($this->db->getSql('reflect_habtm'),array($database,$database,$database,$database,$table0,$tables));
-			while ($row = $this->db->fetchRow($result)) {
-				if (!$auto_include && !in_array($row[2],array_merge($tables,$tableset))) continue;
-				if (!$auto_include && !in_array($row[4],array_merge($tables,$tableset))) continue;
-				$collect[$row[2]][$row[3]]=array();
-				$select[$row[0]][$row[1]]=array($row[2],$row[3]);
-				$collect[$row[4]][$row[5]]=array();
-				$select[$row[6]][$row[7]]=array($row[4],$row[5]);
-				if (!in_array($row[2],$tableset)) $tableset[] = $row[2];
-				if (!in_array($row[4],$tableset)) $tableset[] = $row[4];
-			}
-		}
-		$tableset[] = array_shift($tables);
-		$tableset = array_unique($tableset);
-		return array($tableset,$collect,$select);
-	}
-
-	protected function retrieveInputs($data) {
-		$data = trim($data, " \t\n\r");
-		if (strlen($data)==0) {
-			$input = false;
-		} else if ($data[0]=='{' || $data[0]=='[') {
-			$input = json_decode($data);
-			$causeCode = json_last_error();
-			if ($causeCode !== JSON_ERROR_NONE) {
-				$errorString = "Error decoding input JSON. json_last_error code: " . $causeCode;
-				$this->exitWith400($errorString);
-			}
-		} else {
-			parse_str($data, $input);
-			foreach ($input as $key => $value) {
-				if (substr($key,-9)=='__is_null') {
-					$input[substr($key,0,-9)] = null;
-					unset($input[$key]);
-				}
-			}
-			$input = (object)$input;
-		}
-		return is_array($input)?$input:array($input);
-	}
-
-	protected function getRelationShipColumns($select) {
-		$keep = array();
-		foreach ($select as $table=>$keys) {
-			foreach ($keys as $key=>$other) {
-				if (!isset($keep[$table])) $keep[$table] = array();
-				$keep[$table][$key]=true;
-				list($table2,$key2) = $other;
-				if (!isset($keep[$table2])) $keep[$table2] = array();
-				$keep[$table2][$key2]=true;
-			}
-		}
-		return $keep;
-	}
-
-	protected function findFields($tables,$database) {
-		$fields = array();
-		foreach ($tables as $i=>$table) {
-			$fields[$table] = $this->findTableFields($table,$database);
-		}
-		return $fields;
-	}
-	
-	protected function limitFields($fields,$columns,$exclude,$select) {
-		if ($select && ($columns || $exclude)) {
-			$keep = $this->getRelationShipColumns($select);
-		} else {
-			$keep = false;
-		}
-		foreach (array_keys($fields) as $i=>$table) {
-			$fields[$table] = $this->filterFieldsByColumns($fields[$table],$columns,$keep,$i==0,$table);
-			$fields[$table] = $this->filterFieldsByExclude($fields[$table],$exclude,$keep,$i==0,$table);
-		}
-		return $fields;
-	}
-	protected function filterFieldsByColumns($fields,$columns,$keep,$first,$table) {
-		if ($columns) {
-			$columns = explode(',',$columns);
-			foreach (array_keys($fields) as $key) {
-				$delete = true;
-				foreach ($columns as $column) {
-					if (strpos($column,'.')) {
-						if ($column=="$table.$key" || $column=="$table.*") {
-							$delete = false;
-						}
-					} elseif ($first) {
-						if ($column==$key || $column=="*") {
-							$delete = false;
-						}
-					}
-				}
-				if ($delete && !isset($keep[$table][$key])) {
-					unset($fields[$key]);
-				}
-			}
-		}
-		return $fields;
-	}
-
-	protected function filterFieldsByExclude($fields,$exclude,$keep,$first,$table) {
-		if ($exclude) {
-			$columns = explode(',',$exclude);
-			foreach (array_keys($fields) as $key) {
-				$delete = false;
-				foreach ($columns as $column) {
-					if (strpos($column,'.')) {
-						if ($column=="$table.$key" || $column=="$table.*") {
-							$delete = true;
-						}
-					} elseif ($first) {
-						if ($column==$key || $column=="*") {
-							$delete = true;
-						}
-					}
-				}
-				if ($delete && !isset($keep[$table][$key])) {
-					unset($fields[$key]);
-				}
-			}
-		}
-		return $fields;
-	}
-
-	protected function findTableFields($table,$database) {
-		$fields = array();
-		foreach ($this->db->fetchFields($table) as $field) {
-			$fields[$field->name] = $field;
-		}
-		return $fields;
-	}
-
-	protected function filterInputByFields($input,$fields) {
-		if ($fields) foreach (array_keys((array)$input) as $key) {
-			if (!isset($fields[$key])) {
-				unset($input->$key);
-			}
-		}
-		return $input;
-	}
-
-	protected function convertInputs(&$input,$fields) {
-		foreach ($fields as $key=>$field) {
-			if (isset($input->$key) && $input->$key && $this->db->isBinaryType($field)) {
-				$value = $input->$key;
-				$value = str_pad(strtr($value, '-_', '+/'), ceil(strlen($value) / 4) * 4, '=', STR_PAD_RIGHT);
-				$input->$key = (object)array('type'=>'hex','value'=>bin2hex(base64_decode($value)));
-			}
-			if (isset($input->$key) && $input->$key && $this->db->isGeometryType($field)) {
-				$input->$key = (object)array('type'=>'wkt','value'=>$input->$key);
-			}
-			if (isset($input->$key) && $input->$key && $this->db->isJsonType($field)) {
-				$input->$key = $this->db->jsonEncode($input->$key);
-			}
-		}
-	}
-
-	protected function convertOutputs(&$sql, &$params, $fields) {
-		$sql .= implode(',',str_split(str_repeat('!',count($fields))));
-		foreach ($fields as $key=>$field) {
-			if ($this->db->isBinaryType($field)) {
-				$params[] = (object)array('type'=>'hex','key'=>$key);
-			}
-			else if ($this->db->isGeometryType($field)) {
-				$params[] = (object)array('type'=>'wkt','key'=>$key);
-			}
-			else {
-				$params[] = $key;
-			}
-		}
-	}
-
-	protected function convertTypes($result,&$values,&$fields) {
-		foreach ($values as $i=>$v) {
-			if (is_string($v)) {
-				if ($this->db->isNumericType($fields[$i])) {
-					$values[$i] = $v + 0;
-				}
-				else if ($this->db->isBinaryType($fields[$i])) {
-					$values[$i] = base64_encode(pack("H*",$v));
-				}
-				else if ($this->db->isJsonType($fields[$i])) {
-					$values[$i] = $this->db->jsonDecode($v);
-				}
-			}
-		}
-	}
-
-	protected function fetchAssoc($result,$fields=false) {
-		$values = $this->db->fetchAssoc($result);
-		if ($values && $fields) {
-			$this->convertTypes($result,$values,$fields);
-		}
-		return $values;
-	}
-
-	protected function fetchRow($result,$fields=false) {
-		$values = $this->db->fetchRow($result,$fields);
-		if ($values && $fields) {
-			$fields = array_values($fields);
-			$this->convertTypes($result,$values,$fields);
-		}
-		return $values;
-	}
-
-	protected function getParameters($settings) {
-		extract($settings);
-
-		$table     = $this->parseRequestParameter($request, 'a-zA-Z0-9\-_');
-		$key       = $this->parseRequestParameter($request, 'a-zA-Z0-9\-_,'); // auto-increment or uuid
-		$action    = $this->mapMethodToAction($method,$key);
-		$include   = $this->parseGetParameter($get, 'include', 'a-zA-Z0-9\-_,');
-		$page      = $this->parseGetParameter($get, 'page', '0-9,');
-		$filters   = $this->parseGetParameterArray($get, 'filter', false);
-		$satisfy   = $this->parseGetParameter($get, 'satisfy', 'a-zA-Z0-9\-_,.');
-		$columns   = $this->parseGetParameter($get, 'columns', 'a-zA-Z0-9\-_,.*');
-		$exclude   = $this->parseGetParameter($get, 'exclude', 'a-zA-Z0-9\-_,.*');
-		$orderings = $this->parseGetParameterArray($get, 'order', 'a-zA-Z0-9\-_,');
-		$transform = $this->parseGetParameter($get, 'transform', 't1');
-
-		$tables    = $this->processTableAndIncludeParameters($database,$table,$include,$action);
-		$key       = $this->processKeyParameter($key,$tables,$database);
-		$satisfy   = $this->processSatisfyParameter($tables,$satisfy);
-		$filters   = $this->processFiltersParameter($tables,$satisfy,$filters);
-		$page      = $this->processPageParameter($page);
-		$orderings = $this->processOrderingsParameter($orderings);
-
-		// reflection
-		list($tables,$collect,$select) = $this->findRelations($tables,$database,$auto_include);
-		$allFields = $this->findFields($tables,$database);
-		$fields = $this->limitFields($allFields,$columns,$exclude,$select);
-		
-		// permissions
-		if ($table_authorizer) $this->applyTableAuthorizer($table_authorizer,$action,$database,$tables);
-		if (!isset($tables[0])) $this->exitWith404('entity');
-		if ($record_filter) $this->applyRecordFilter($record_filter,$action,$database,$tables,$filters);
-		if ($tenancy_function) $this->applyTenancyFunction($tenancy_function,$action,$database,$allFields,$filters);
-		if ($column_authorizer) $this->applyColumnAuthorizer($column_authorizer,$action,$database,$fields);
-
-		// input
-		$inputs = $this->retrieveInputs($post);
-		foreach ($inputs as $k=>$context) {
-			$input = $this->filterInputByFields($context,$fields[$tables[0]]);
-
-			if ($tenancy_function) $this->applyInputTenancy($tenancy_function,$action,$database,$tables[0],$input,$allFields[$tables[0]]);
-			if ($input_sanitizer) $this->applyInputSanitizer($input_sanitizer,$action,$database,$tables[0],$input,$fields[$tables[0]]);
-			if ($input_validator) $this->applyInputValidator($input_validator,$action,$database,$tables[0],$input,$fields[$tables[0]],$context);
-
-			$this->convertInputs($input,$fields[$tables[0]]);
-			$inputs[$k] = $input;
-		}
-
-		if ($before) {
-			$this->applyBeforeHandler($action,$database,$tables[0],$key[0],$before,$inputs);
-		}
-
-		return compact('action','database','tables','key','page','filters','fields','orderings','transform','inputs','collect','select','before','after');
-	}
-
-	protected function addWhereFromFilters($filters,&$sql,&$params) {
-		$first = true;
-		if (isset($filters['or'])) {
-			$first = false;
-			$sql .= ' WHERE (';
-			foreach ($filters['or'] as $i=>$filter) {
-				$sql .= $i==0?'':' OR ';
-				$sql .= $filter[0];
-				for ($i=1;$i<count($filter);$i++) {
-					$params[] = $filter[$i];
-				}
-			}
-			$sql .= ')';
-		}
-		if (isset($filters['and'])) {
-			foreach ($filters['and'] as $i=>$filter) {
-				$sql .= $first?' WHERE ':' AND ';
-				$sql .= $filter[0];
-				for ($i=1;$i<count($filter);$i++) {
-					$params[] = $filter[$i];
-				}
-				$first = false;
-			}
-		}
-	}
-
-	protected function addOrderByFromOrderings($orderings,&$sql,&$params) {
-		foreach ($orderings as $i=>$ordering) {
-			$sql .= $i==0?' ORDER BY ':', ';
-			$sql .= '! '.$ordering[1];
-			$params[] = $ordering[0];
-		}
-	}
-
-	protected function listCommandInternal($parameters) {
-		extract($parameters);
-		echo '{';
-		$table = array_shift($tables);
-		// first table
-		$count = false;
-		echo '"'.$table.'":{';
-		if (is_array($orderings) && is_array($page)) {
-			$params = array();
-			$sql = 'SELECT COUNT(*) FROM !';
-			$params[] = $table;
-			if (isset($filters[$table])) {
-					$this->addWhereFromFilters($filters[$table],$sql,$params);
-			}
-			if ($result = $this->db->query($sql,$params)) {
-				while ($pages = $this->db->fetchRow($result)) {
-					$count = (int)$pages[0];
-				}
-			}
-		}
-		$params = array();
-		$sql = 'SELECT ';
-		$this->convertOutputs($sql,$params,$fields[$table]);
-		$sql .= ' FROM !';
-		$params[] = $table;
-		if (isset($filters[$table])) {
-			$this->addWhereFromFilters($filters[$table],$sql,$params);
-		}
-		if (is_array($orderings)) {
-			$this->addOrderByFromOrderings($orderings,$sql,$params);
-		}
-		if (is_array($orderings) && is_array($page)) {
-			$sql = $this->db->addLimitToSql($sql,$page[1],$page[0]);
-		}
-		if ($result = $this->db->query($sql,$params)) {
-			echo '"columns":';
-			$keys = array_keys($fields[$table]);
-			echo json_encode($keys);
-			$keys = array_flip($keys);
-			echo ',"records":[';
-			$first_row = true;
-			while ($row = $this->fetchRow($result,$fields[$table])) {
-				if ($first_row) $first_row = false;
-				else echo ',';
-				if (isset($collect[$table])) {
-					foreach (array_keys($collect[$table]) as $field) {
-						$collect[$table][$field][] = $row[$keys[$field]];
-					}
-				}
-				echo json_encode($row);
-			}
-			$this->db->close($result);
-			echo ']';
-			if ($count) echo ',';
-		}
-		if ($count) echo '"results":'.$count;
-		echo '}';
-		// other tables
-		foreach ($tables as $t=>$table) {
-			echo ',';
-			echo '"'.$table.'":{';
-			$params = array();
-			$sql = 'SELECT ';
-			$this->convertOutputs($sql,$params,$fields[$table]);
-			$sql .= ' FROM !';
-			$params[] = $table;
-			if (isset($select[$table])) {
-				echo '"relations":{';
-				$first_row = true;
-				foreach ($select[$table] as $field => $path) {
-					$values = $collect[$path[0]][$path[1]];
-					$this->addFilter($filters,$table,'and',$field,'in',implode(',',$values));
-					if ($first_row) $first_row = false;
-					else echo ',';
-					echo '"'.$field.'":"'.implode('.',$path).'"';
-				}
-				echo '}';
-			}
-			if (isset($filters[$table])) {
-				$this->addWhereFromFilters($filters[$table],$sql,$params);
-			}
-			if ($result = $this->db->query($sql,$params)) {
-				if (isset($select[$table])) echo ',';
-				echo '"columns":';
-				$keys = array_keys($fields[$table]);
-				echo json_encode($keys);
-				$keys = array_flip($keys);
-				echo ',"records":[';
-				$first_row = true;
-				while ($row = $this->fetchRow($result,$fields[$table])) {
-					if ($first_row) $first_row = false;
-					else echo ',';
-					if (isset($collect[$table])) {
-						foreach (array_keys($collect[$table]) as $field) {
-							$collect[$table][$field][]=$row[$keys[$field]];
-						}
-					}
-					echo json_encode($row);
-				}
-				$this->db->close($result);
-				echo ']';
-			}
-			echo '}';
-		}
-		echo '}';
-	}
-
-	protected function readCommand($parameters) {
-		extract($parameters);
-		if (count($key[0])>1) $object = $this->retrieveObjects($key,$fields,$filters,$tables);
-		else $object = $this->retrieveObject($key,$fields,$filters,$tables);
-		if (!$object) $this->exitWith404('object');
-		$this->startOutput();
-		echo json_encode($object);
-		return false;
-	}
-
-	protected function createCommand($parameters) {
-		extract($parameters);
-		if (!$inputs || !$inputs[0]) $this->exitWith404('input');
-		if (count($inputs)>1) return $this->createObjects($inputs,$tables);
-		return $this->createObject($inputs[0],$tables);
-	}
-
-	protected function updateCommand($parameters) {
-		extract($parameters);
-		if (!$inputs || !$inputs[0]) $this->exitWith404('subject');
-		if (count($inputs)>1) return $this->updateObjects($key,$inputs,$filters,$tables);
-		return $this->updateObject($key,$inputs[0],$filters,$tables);
-	}
-
-	protected function deleteCommand($parameters) {
-		extract($parameters);
-		if (count($key[0])>1) return $this->deleteObjects($key,$filters,$tables);
-		return $this->deleteObject($key,$filters,$tables);
-	}
-
-	protected function incrementCommand($parameters) {
-		extract($parameters);
-		if (!$inputs || !$inputs[0]) $this->exitWith404('subject');
-		if (count($inputs)>1) return $this->incrementObjects($key,$inputs,$filters,$tables,$fields);
-		return $this->incrementObject($key,$inputs[0],$filters,$tables,$fields);
-	}
-
-	protected function listCommand($parameters) {
-		extract($parameters);
-		$this->startOutput();
-		if ($transform) {
-			ob_start();
-		}
-		$this->listCommandInternal($parameters);
-		if ($transform) {
-			$content = ob_get_contents();
-			ob_end_clean();
-			$data = json_decode($content,true);
-			echo json_encode(self::php_crud_api_transform($data));
-		}
-		return false;
-	}
-
-	protected function retrievePostData() {
-		if ($_FILES) {
-			$files = array();
-			foreach ($_FILES as $name => $file) {
-				foreach ($file as $key => $value) {
-					switch ($key) {
-						case 'tmp_name': $files[$name] = $value?base64_encode(file_get_contents($value)):''; break;
-						default: $files[$name.'_'.$key] = $value;
-					}
-				}
-			}
-			return http_build_query(array_merge($files,$_POST));
-		}
-		return file_get_contents('php://input');
-	}
-
-	public function __construct($config) {
-		extract($config);
-
-		// initialize
-		$dbengine = isset($dbengine)?$dbengine:null;
-		$hostname = isset($hostname)?$hostname:null;
-		$username = isset($username)?$username:null;
-		$password = isset($password)?$password:null;
-		$database = isset($database)?$database:null;
-		$port = isset($port)?$port:null;
-		$socket = isset($socket)?$socket:null;
-		$charset = isset($charset)?$charset:null;
-
-		$table_authorizer = isset($table_authorizer)?$table_authorizer:null;
-		$record_filter = isset($record_filter)?$record_filter:null;
-		$column_authorizer = isset($column_authorizer)?$column_authorizer:null;
-		$tenancy_function = isset($tenancy_function)?$tenancy_function:null;
-		$input_sanitizer = isset($input_sanitizer)?$input_sanitizer:null;
-		$input_validator = isset($input_validator)?$input_validator:null;
-		$auto_include = isset($auto_include)?$auto_include:null;
-		$allow_origin = isset($allow_origin)?$allow_origin:null;
-		$before = isset($before)?$before:null;
-		$after = isset($after)?$after:null;
-
-		$db = isset($db)?$db:null;
-		$method = isset($method)?$method:null;
-		$request = isset($request)?$request:null;
-		$get = isset($get)?$get:null;
-		$post = isset($post)?$post:null;
-		$origin = isset($origin)?$origin:null;
-
-		// defaults
-		if (!$dbengine) {
-			$dbengine = 'MySQL';
-		}
-		if (!$method) {
-			$method = $_SERVER['REQUEST_METHOD'];
-		}
-		if (!$request) {
-			$request = isset($_SERVER['PATH_INFO'])?$_SERVER['PATH_INFO']:'';
-			if (!$request) {
-				$request = isset($_SERVER['ORIG_PATH_INFO'])?$_SERVER['ORIG_PATH_INFO']:'';
-				$request = $request!=$_SERVER['SCRIPT_NAME']?$request:'';
-			}
-		}
-		if (!$get) {
-			$get = $_GET;
-		}
-		if (!$post) {
-			$post = $this->retrievePostData();
-		}
-		if (!$origin) {
-			$origin = isset($_SERVER['HTTP_ORIGIN'])?$_SERVER['HTTP_ORIGIN']:'';
-		}
-
-		// connect
-		$request = trim($request,'/');
-		if (!$database) {
-			$database = $this->parseRequestParameter($request, 'a-zA-Z0-9\-_');
-		}
-		if (!$db) {
-			$db = new $dbengine();
-			if (!$charset) {
-				$charset = $db->getDefaultCharset();
-			}
-			$db->connect($hostname,$username,$password,$database,$port,$socket,$charset);
-		}
-		if ($auto_include===null) {
-			$auto_include = true;
-		}
-		if ($allow_origin===null) {
-			$allow_origin = '*';
-		}
-
-		$this->db = $db;
-		$this->settings = compact('method', 'request', 'get', 'post', 'origin', 'database', 'table_authorizer', 'record_filter', 'column_authorizer', 'tenancy_function', 'input_sanitizer', 'input_validator', 'before', 'after', 'auto_include', 'allow_origin');
-	}
-
-	public static function php_crud_api_transform(&$tables) {
-		$get_objects = function (&$tables,$table_name,$where_index=false,$match_value=false) use (&$get_objects) {
-			$objects = array();
-			if (isset($tables[$table_name]['records'])) {
-				foreach ($tables[$table_name]['records'] as $record) {
-					if ($where_index===false || $record[$where_index]==$match_value) {
-						$object = array();
-						foreach ($tables[$table_name]['columns'] as $index=>$column) {
-							$object[$column] = $record[$index];
-							foreach ($tables as $relation=>$reltable) {
-								if (isset($reltable['relations'])) {
-									foreach ($reltable['relations'] as $key=>$target) {
-										if ($target == "$table_name.$column") {
-											$column_indices = array_flip($reltable['columns']);
-											$object[$relation] = $get_objects($tables,$relation,$column_indices[$key],$record[$index]);
-										}
-									}
-								}
-							}
-						}
-						$objects[] = $object;
-					}
-				}
-			}
-			return $objects;
-		};
-		$tree = array();
-		foreach ($tables as $name=>$table) {
-			if (!isset($table['relations'])) {
-				$tree[$name] = $get_objects($tables,$name);
-				if (isset($table['results'])) {
-					$tree['_results'] = $table['results'];
-				}
-			}
-		}
-		return $tree;
-	}
-
-	protected function swagger($settings) {
-		extract($settings);
-
-		$tables = array();
-		if ($result = $this->db->query($this->db->getSql('list_tables'),array($database))) {
-			while ($row = $this->db->fetchRow($result)) {
-				$table = array(
-					'name'=>$row[0],
-					'comments'=>$row[1],
-					'root_actions'=>array(
-						array('name'=>'list','method'=>'get'),
-						array('name'=>'create','method'=>'post'),
-					),
-					'id_actions'=>array(
-						array('name'=>'read','method'=>'get'),
-						array('name'=>'update','method'=>'put'),
-						array('name'=>'delete','method'=>'delete'),
-						array('name'=>'increment','method'=>'patch'),
-					),
-				);
-				$tables[] = $table;
-			}
-			$this->db->close($result);
-		}
-
-		$table_names = array_map(function($v){ return $v['name'];},$tables);
-		foreach ($tables as $t=>$table)	{
-			$table_list = array($table['name']);
-			$table_fields = $this->findFields($table_list,$database);
-			
-			// extensions
-			$result = $this->db->query($this->db->getSql('reflect_belongs_to'),array($table_list[0],$table_names,$database,$database));
-			while ($row = $this->db->fetchRow($result)) {
-				$table_fields[$table['name']][$row[1]]->references=array($row[2],$row[3]);
-			}
-			$result = $this->db->query($this->db->getSql('reflect_has_many'),array($table_names,$table_list[0],$database,$database));
-			while ($row = $this->db->fetchRow($result)) {
-				$table_fields[$table['name']][$row[3]]->referenced[]=array($row[0],$row[1]);
-			}
-			$primaryKeys = $this->findPrimaryKeys($table_list[0],$database);
-			foreach ($primaryKeys as $primaryKey) {
-				$table_fields[$table['name']][$primaryKey]->primaryKey = true;
-			}
-			$result = $this->db->query($this->db->getSql('reflect_columns'),array($table_list[0],$database));
-			while ($row = $this->db->fetchRow($result)) {
-				$table_fields[$table['name']][$row[0]]->required = strtolower($row[2])=='no' && $row[1]===null;
-				$table_fields[$table['name']][$row[0]]->{'x-nullable'} = strtolower($row[2])=='yes';
-				$table_fields[$table['name']][$row[0]]->{'x-dbtype'} = $row[3];
-				if ($this->db->isNumericType($table_fields[$table['name']][$row[0]])) {
-					if (strpos(strtolower($table_fields[$table['name']][$row[0]]->{'x-dbtype'}),'int')!==false) {
-						$table_fields[$table['name']][$row[0]]->type = 'integer';
-						if ($row[1]!==null) $table_fields[$table['name']][$row[0]]->default = (int)$row[1];
-					} else {
-						$table_fields[$table['name']][$row[0]]->type = 'number';
-						if ($row[1]!==null) $table_fields[$table['name']][$row[0]]->default = (float)$row[1];
-					}
-				} else {
-					if ($this->db->isBinaryType($table_fields[$table['name']][$row[0]])) {
-						$table_fields[$table['name']][$row[0]]->format = 'byte';
-					} else if ($this->db->isGeometryType($table_fields[$table['name']][$row[0]])) {
-						$table_fields[$table['name']][$row[0]]->format = 'wkt';
-					} else if ($this->db->isJsonType($table_fields[$table['name']][$row[0]])) {
-						$table_fields[$table['name']][$row[0]]->format = 'json';
-					}
-					$table_fields[$table['name']][$row[0]]->type = 'string';
-					if ($row[1]!==null) $table_fields[$table['name']][$row[0]]->default = $row[1];
-					if ($row[4]!==null) $table_fields[$table['name']][$row[0]]->maxLength = (int)$row[4];
-				}
-			}
-
-			foreach (array('root_actions','id_actions') as $path) {
-				foreach ($table[$path] as $i=>$action) {
-					$table_list = array($table['name']);
-					$fields = $table_fields;
-					if ($table_authorizer) $this->applyTableAuthorizer($table_authorizer,$action['name'],$database,$table_list);
-					if ($column_authorizer) $this->applyColumnAuthorizer($column_authorizer,$action['name'],$database,$fields);
-					if (!$table_list || !$fields[$table['name']]) $tables[$t][$path][$i] = false;
-					else $tables[$t][$path][$i]['fields'] = $fields[$table['name']];
-				}
-				// remove unauthorized tables and tables without fields
-				$tables[$t][$path] = array_values(array_filter($tables[$t][$path]));
-			}
-			if (!$tables[$t]['root_actions']&&!$tables[$t]['id_actions']) $tables[$t] = false;
-		}
-		$tables = array_merge(array_filter($tables));
-		//var_dump($tables);die();
-
-		header('Content-Type: application/json; charset=utf-8');
-		echo '{"swagger":"2.0",';
-		echo '"info":{';
-		echo '"title":"'.$database.'",';
-		echo '"description":"API generated with [PHP-CRUD-API](https://github.com/mevdschee/php-crud-api)",';
-		echo '"version":"1.0.0"';
-		echo '},';
-		echo '"host":"'.$_SERVER['HTTP_HOST'].'",';
-		echo '"basePath":"'.$_SERVER['SCRIPT_NAME'].'",';
-		echo '"schemes":["http'.((!empty($_SERVER['HTTPS'])&&$_SERVER['HTTPS']!=='off')?'s':'').'"],';
-		echo '"consumes":["application/json"],';
-		echo '"produces":["application/json"],';
-		echo '"tags":[';
-		foreach ($tables as $i=>$table) {
-			if ($i>0) echo ',';
-			echo '{';
-			echo '"name":"'.$table['name'].'",';
-			echo '"description":'.json_encode($table['comments']);
-			echo '}';
-		}
-		echo '],';
-		echo '"paths":{';
-		foreach ($tables as $i=>$table) {
-			if ($table['root_actions']) {
-				if ($i>0) echo ',';
-				echo '"/'.$table['name'].'":{';
-				foreach ($table['root_actions'] as $j=>$action) {
-					if ($j>0) echo ',';
-					echo '"'.$action['method'].'":{';
-					echo '"tags":["'.$table['name'].'"],';
-					echo '"summary":"'.ucfirst($action['name']).'",';
-					if ($action['name']=='list') {
-						echo '"parameters":[';
-						echo '{';
-						echo '"name":"exclude",';
-						echo '"in":"query",';
-						echo '"description":"One or more related entities (comma separated).",';
-						echo '"required":false,';
-						echo '"type":"string"';
-						echo '},';
-						echo '{';
-						echo '"name":"include",';
-						echo '"in":"query",';
-						echo '"description":"One or more related entities (comma separated).",';
-						echo '"required":false,';
-						echo '"type":"string"';
-						echo '},';
-						echo '{';
-						echo '"name":"order",';
-						echo '"in":"query",';
-						echo '"description":"Column you want to sort on and the sort direction (comma separated). Example: id,desc",';
-						echo '"required":false,';
-						echo '"type":"string"';
-						echo '},';
-						echo '{';
-						echo '"name":"page",';
-						echo '"in":"query",';
-						echo '"description":"Page number and page size (comma separated). NB: You cannot use \"page\" without \"order\"! Example: 1,10",';
-						echo '"required":false,';
-						echo '"type":"string"';
-						echo '},';
-						echo '{';
-						echo '"name":"transform",';
-						echo '"in":"query",';
-						echo '"description":"Transform the records to object format. NB: This can also be done client-side in JavaScript!",';
-						echo '"required":false,';
-						echo '"type":"boolean"';
-						echo '},';
-						echo '{';
-						echo '"name":"columns",';
-						echo '"in":"query",';
-						echo '"description":"The table columns you want to retrieve (comma separated). Example: posts.*,categories.name",';
-						echo '"required":false,';
-						echo '"type":"string"';
-						echo '},';
-						echo '{';
-						echo '"name":"filter[]",';
-						echo '"in":"query",';
-						echo '"description":"Filters to be applied. Each filter consists of a column, an operator and a value (comma separated). Example: id,eq,1",';
-						echo '"required":false,';
-						echo '"type":"array",';
-						echo '"collectionFormat":"multi",';
-						echo '"items":{"type":"string"}';
-						echo '},';
-						echo '{';
-						echo '"name":"satisfy",';
-						echo '"in":"query",';
-						echo '"description":"Should all filters match (default)? Or any?",';
-						echo '"required":false,';
-						echo '"type":"string",';
-						echo '"enum":["any"]';
-						echo '}';
-						echo '],';
-						echo '"responses":{';
-						echo '"200":{';
-						echo '"description":"An array of '.$table['name'].'",';
-						echo '"schema":{';
-						echo '"type": "object",';
-						echo '"properties": {';
-						echo '"'.$table['name'].'": {';
-						echo '"type":"array",';
-						echo '"items":{';
-						echo '"type": "object",';
-						echo '"properties": {';
-						foreach (array_keys($action['fields']) as $k=>$field) {
-							if ($k>0) echo ',';
-							echo '"'.$field.'": {';
-							echo '"type": '.json_encode($action['fields'][$field]->type);
-							if (isset($action['fields'][$field]->format)) {
-								echo ',"format": '.json_encode($action['fields'][$field]->format);
-							}
-							echo ',"x-dbtype": '.json_encode($action['fields'][$field]->{'x-dbtype'});
-							echo ',"x-nullable": '.json_encode($action['fields'][$field]->{'x-nullable'});
-							if (isset($action['fields'][$field]->maxLength) && $action['fields'][$field]->maxLength>0) {
-								echo ',"maxLength": '.json_encode($action['fields'][$field]->maxLength);
-							}
-							if (isset($action['fields'][$field]->default)) {
-								echo ',"default": '.json_encode($action['fields'][$field]->default);
-							}
-							if (isset($action['fields'][$field]->referenced)) {
-								echo ',"x-referenced": '.json_encode($action['fields'][$field]->referenced);
-							}
-							if (isset($action['fields'][$field]->references)) {
-								echo ',"x-references": '.json_encode($action['fields'][$field]->references);
-							}
-							if (isset($action['fields'][$field]->primaryKey)) {
-								echo ',"x-primary-key": true';
-							}
-							echo '}';
-						}
-						echo '}'; //properties
-						echo '}'; //items
-						echo '}'; //table
-						echo '}'; //properties
-						echo '}'; //schema
-						echo '}'; //200
-						echo '}'; //responses
-					}
-					if ($action['name']=='create') {
-						echo '"parameters":[{';
-						echo '"name":"item",';
-						echo '"in":"body",';
-						echo '"description":"Item to create.",';
-						echo '"required":true,';
-						echo '"schema":{';
-						echo '"type": "object",';
-						$required_fields = array_keys(array_filter($action['fields'],function($f){ return $f->required; }));
-						if (count($required_fields) > 0) {
-							echo '"required":'.json_encode($required_fields).',';
-						}
-						echo '"properties": {';
-						foreach (array_keys($action['fields']) as $k=>$field) {
-							if ($k>0) echo ',';
-							echo '"'.$field.'": {';
-							echo '"type": '.json_encode($action['fields'][$field]->type);
-							if (isset($action['fields'][$field]->format)) {
-								echo ',"format": '.json_encode($action['fields'][$field]->format);
-							}
-							echo ',"x-dbtype": '.json_encode($action['fields'][$field]->{'x-dbtype'});
-							echo ',"x-nullable": '.json_encode($action['fields'][$field]->{'x-nullable'});
-							if (isset($action['fields'][$field]->maxLength)) {
-								echo ',"maxLength": '.json_encode($action['fields'][$field]->maxLength);
-							}
-							if (isset($action['fields'][$field]->default)) {
-								echo ',"default": '.json_encode($action['fields'][$field]->default);
-							}
-							if (isset($action['fields'][$field]->referenced)) {
-								echo ',"x-referenced": '.json_encode($action['fields'][$field]->referenced);
-							}
-							if (isset($action['fields'][$field]->references)) {
-								echo ',"x-references": '.json_encode($action['fields'][$field]->references);
-							}
-							if (isset($action['fields'][$field]->primaryKey)) {
-								echo ',"x-primary-key": true';
-							}
-							echo '}';
-						}
-						echo '}'; //properties
-						echo '}'; //schema
-						echo '}],';
-						echo '"responses":{';
-						echo '"200":{';
-						echo '"description":"Identifier of created item.",';
-						echo '"schema":{';
-						echo '"type":"integer"';
-						echo '}';//schema
-						echo '}';//200
-						echo '}';//responses
-					}
-					echo '}';//method
-				}
-				echo '}';
-			}
-			if ($table['id_actions']) {
-				if ($i>0 || $table['root_actions']) echo ',';
-				echo '"/'.$table['name'].'/{id}":{';
-				foreach ($table['id_actions'] as $j=>$action) {
-					if ($j>0) echo ',';
-					echo '"'.$action['method'].'":{';
-					echo '"tags":["'.$table['name'].'"],';
-					echo '"summary":"'.ucfirst($action['name']).'",';
-					echo '"parameters":[';
-					echo '{';
-					echo '"name":"id",';
-					echo '"in":"path",';
-					echo '"description":"Identifier for item.",';
-					echo '"required":true,';
-					echo '"type":"string"';
-					echo '}';
-					if ($action['name']=='update' || $action['name']=='increment') {
-						echo ',{';
-						echo '"name":"item",';
-						echo '"in":"body",';
-						echo '"description":"Properties of item to update.",';
-						echo '"required":true,';
-						echo '"schema":{';
-						echo '"type": "object",';
-						$required_fields = array_keys(array_filter($action['fields'],function($f){ return $f->required; }));
-						if (count($required_fields) > 0) {
-							echo '"required":'.json_encode($required_fields).',';
-						}
-						echo '"properties": {';
-						foreach (array_keys($action['fields']) as $k=>$field) {
-							if ($k>0) echo ',';
-							echo '"'.$field.'": {';
-							echo '"type": '.json_encode($action['fields'][$field]->type);
-							if (isset($action['fields'][$field]->format)) {
-								echo ',"format": '.json_encode($action['fields'][$field]->format);
-							}
-							echo ',"x-dbtype": '.json_encode($action['fields'][$field]->{'x-dbtype'});
-							echo ',"x-nullable": '.json_encode($action['fields'][$field]->{'x-nullable'});
-							if (isset($action['fields'][$field]->maxLength)) {
-								echo ',"maxLength": '.json_encode($action['fields'][$field]->maxLength);
-							}
-							if (isset($action['fields'][$field]->default)) {
-								echo ',"default": '.json_encode($action['fields'][$field]->default);
-							}
-							if (isset($action['fields'][$field]->referenced)) {
-								echo ',"x-referenced": '.json_encode($action['fields'][$field]->referenced);
-							}
-							if (isset($action['fields'][$field]->references)) {
-								echo ',"x-references": '.json_encode($action['fields'][$field]->references);
-							}
-							if (isset($action['fields'][$field]->primaryKey)) {
-								echo ',"x-primary-key": true';
-							}
-							echo '}';
-						}
-						echo '}'; //properties
-						echo '}'; //schema
-						echo '}';
-					}
-					echo '],';
-					if ($action['name']=='read') {
-						echo '"responses":{';
-						echo '"200":{';
-						echo '"description":"The requested item.",';
-						echo '"schema":{';
-						echo '"type": "object",';
-						echo '"properties": {';
-						foreach (array_keys($action['fields']) as $k=>$field) {
-							if ($k>0) echo ',';
-							echo '"'.$field.'": {';
-							echo '"type": '.json_encode($action['fields'][$field]->type);
-							if (isset($action['fields'][$field]->format)) {
-								echo ',"format": '.json_encode($action['fields'][$field]->format);
-							}
-							echo ',"x-dbtype": '.json_encode($action['fields'][$field]->{'x-dbtype'});
-							echo ',"x-nullable": '.json_encode($action['fields'][$field]->{'x-nullable'});
-							if (isset($action['fields'][$field]->maxLength)) {
-								echo ',"maxLength": '.json_encode($action['fields'][$field]->maxLength);
-							}
-							if (isset($action['fields'][$field]->default)) {
-								echo ',"default": '.json_encode($action['fields'][$field]->default);
-							}
-							if (isset($action['fields'][$field]->referenced)) {
-								echo ',"x-referenced": '.json_encode($action['fields'][$field]->referenced);
-							}
-							if (isset($action['fields'][$field]->references)) {
-								echo ',"x-references": '.json_encode($action['fields'][$field]->references);
-							}
-							if (isset($action['fields'][$field]->primaryKey)) {
-								echo ',"x-primary-key": true';
-							}
-							echo '}';
-						}
-						echo '}'; //properties
-						echo '}'; //schema
-						echo '}';
-						echo '}';
-					} else {
-						echo '"responses":{';
-						echo '"200":{';
-						echo '"description":"Number of affected rows.",';
-						echo '"schema":{';
-						echo '"type":"integer"';
-						echo '}';
-						echo '}';
-						echo '}';
-					}
-					echo '}';
-				}
-				echo '}';
-			}
-		}
-		echo '}';
-			echo '}';
-	}
-
-	protected function allowOrigin($origin,$allowOrigins) {
-		if (isset($_SERVER['REQUEST_METHOD'])) {
-			header('Access-Control-Allow-Credentials: true');
-		}
-		$found = false;
-		foreach (explode(',',$allowOrigins) as $o) {
-			if (preg_match('/^'.str_replace('\*','.*',preg_quote(strtolower(trim($o)))).'$/',$origin)) { 
-				$found = true;
-				if (isset($_SERVER['REQUEST_METHOD'])) {
-					header('Access-Control-Allow-Origin: '.$origin);
-				}
-				break;
-			}
-		}
-		if (!$found) {
-			$this->exitWith403('origin');
-		}
-	}
-
-	public function executeCommand() {
-		if ($this->settings['origin']) {
-			$this->allowOrigin($this->settings['origin'],$this->settings['allow_origin']);
-		}
-		if (!$this->settings['request']) {
-			$this->swagger($this->settings);
-		} else {
-			$parameters = $this->getParameters($this->settings);
-			switch($parameters['action']){
-				case 'list': $output = $this->listCommand($parameters); break;
-				case 'read': $output = $this->readCommand($parameters); break;
-				case 'create': $output = $this->createCommand($parameters); break;
-				case 'update': $output = $this->updateCommand($parameters); break;
-				case 'delete': $output = $this->deleteCommand($parameters); break;
-				case 'increment': $output = $this->incrementCommand($parameters); break;
-				case 'headers': $output = $this->headersCommand($parameters); break;
-				default: $output = false;
-			}
-			if ($output!==false) {
-				$this->startOutput();
-				echo json_encode($output);
-			}
-			if ($parameters['after']) {
-				$this->applyAfterHandler($parameters,$output);
-			}
-		}
-	}
+// file: src/Tqdev/PhpCrudApi/Cache/RedisCache.php
+
+class RedisCache implements Cache
+{
+    protected $prefix;
+    protected $redis;
+
+    public function __construct(String $prefix, String $config)
+    {
+        $this->prefix = $prefix;
+        if ($config == '') {
+            $config = '127.0.0.1';
+        }
+        $params = explode(':', $config, 6);
+        if (isset($params[3])) {
+            $params[3] = null;
+        }
+        $this->redis = new \Redis();
+        call_user_func_array(array($this->redis, 'pconnect'), $params);
+    }
+
+    public function set(String $key, String $value, int $ttl = 0): bool
+    {
+        return $this->redis->set($this->prefix . $key, $value, $ttl);
+    }
+
+    public function get(String $key): String
+    {
+        return $this->redis->get($this->prefix . $key) ?: '';
+    }
+
+    public function clear(): bool
+    {
+        return $this->redis->flushDb();
+    }
 }
 
-// require 'auth.php'; // from the PHP-API-AUTH project, see: https://github.com/mevdschee/php-api-auth
+// file: src/Tqdev/PhpCrudApi/Cache/TempFileCache.php
 
-// uncomment the lines below for token+session based authentication (see "login_token.html" + "login_token.php"):
+class TempFileCache implements Cache
+{
+    const SUFFIX = 'cache';
 
-// $auth = new PHP_API_AUTH(array(
-// 	'secret'=>'someVeryLongPassPhraseChangeMe',
-// ));
-// if ($auth->executeCommand()) exit(0);
-// if (empty($_SESSION['user']) || !$auth->hasValidCsrfToken()) {
-//	header('HTTP/1.0 401 Unauthorized');
-//	exit(0);
-// }
+    private $path;
+    private $segments;
 
-// uncomment the lines below for form+session based authentication (see "login.html"):
+    public function __construct(String $prefix, String $config)
+    {
+        $this->segments = [];
+        $s = DIRECTORY_SEPARATOR;
+        $ps = PATH_SEPARATOR;
+        if ($config == '') {
+            $id = substr(md5(__FILE__), 0, 8);
+            $this->path = sys_get_temp_dir() . $s . $prefix . self::SUFFIX;
+        } elseif (strpos($config, $ps) === false) {
+            $this->path = $config;
+        } else {
+            list($path, $segments) = explode($ps, $config);
+            $this->path = $path;
+            $this->segments = explode(',', $segments);
+        }
+        if (file_exists($this->path) && is_dir($this->path)) {
+            $this->clean($this->path, array_filter($this->segments), strlen(md5('')), false);
+        }
+    }
 
-// $auth = new PHP_API_AUTH(array(
-// 	'authenticator'=>function($user,$pass){ $_SESSION['user']=($user=='admin' && $pass=='admin'); }
-// ));
-// if ($auth->executeCommand()) exit(0);
-// if (empty($_SESSION['user']) || !$auth->hasValidCsrfToken()) {
-//	header('HTTP/1.0 401 Unauthorized');
-//	exit(0);
-// }
+    private function getFileName(String $key): String
+    {
+        $s = DIRECTORY_SEPARATOR;
+        $md5 = md5($key);
+        $filename = rtrim($this->path, $s) . $s;
+        $i = 0;
+        foreach ($this->segments as $segment) {
+            $filename .= substr($md5, $i, $segment) . $s;
+            $i += $segment;
+        }
+        $filename .= substr($md5, $i);
+        return $filename;
+    }
 
-// uncomment the lines below when running in stand-alone mode:
+    public function set(String $key, String $value, int $ttl = 0): bool
+    {
+        $filename = $this->getFileName($key);
+        $dirname = dirname($filename);
+        if (!file_exists($dirname)) {
+            if (!mkdir($dirname, 0755, true)) {
+                return false;
+            }
+        }
+        $string = $ttl . '|' . $value;
+        return file_put_contents($filename, $string, LOCK_EX) !== false;
+    }
 
-// $api = new PHP_CRUD_API(array(
-// 	'dbengine'=>'MySQL',
-// 	'hostname'=>'localhost',
-// 	'username'=>'',
-// 	'password'=>'',
-// 	'database'=>'',
-// 	'charset'=>'utf8mb4'
-// ));
-// $api->executeCommand();
+    private function getString($filename): String
+    {
+        $data = file_get_contents($filename);
+        if ($data === false) {
+            return '';
+        }
+        list($ttl, $string) = explode('|', $data, 2);
+        if ($ttl > 0 && time() - filemtime($filename) > $ttl) {
+            return '';
+        }
+        return $string;
+    }
 
-// For Microsoft SQL Server 2012 use:
+    public function get(String $key): String
+    {
+        $filename = $this->getFileName($key);
+        if (!file_exists($filename)) {
+            return '';
+        }
+        $string = $this->getString($filename);
+        if ($string == null) {
+            return '';
+        }
+        return $string;
+    }
 
-// $api = new PHP_CRUD_API(array(
-// 	'dbengine'=>'SQLServer',
-// 	'hostname'=>'(local)',
-// 	'username'=>'',
-// 	'password'=>'',
-// 	'database'=>'xxx',
-// 	'charset'=>'UTF-8'
-// ));
-// $api->executeCommand();
+    private function clean(String $path, array $segments, int $len, bool $all)/*: void*/
+    {
+        $entries = scandir($path);
+        foreach ($entries as $entry) {
+            if ($entry === '.' || $entry === '..') {
+                continue;
+            }
+            $filename = $path . DIRECTORY_SEPARATOR . $entry;
+            if (count($segments) == 0) {
+                if (strlen($entry) != $len) {
+                    continue;
+                }
+                if (is_file($filename)) {
+                    if ($all || $this->getString($filename) == null) {
+                        unlink($filename);
+                    }
+                }
+            } else {
+                if (strlen($entry) != $segments[0]) {
+                    continue;
+                }
+                if (is_dir($filename)) {
+                    $this->clean($filename, array_slice($segments, 1), $len - $segments[0], $all);
+                    rmdir($filename);
+                }
+            }
+        }
+    }
 
-// For PostgreSQL 9 use:
+    public function clear(): bool
+    {
+        if (!file_exists($this->path) || !is_dir($this->path)) {
+            return false;
+        }
+        $this->clean($this->path, array_filter($this->segments), strlen(md5('')), true);
+        return true;
+    }
+}
 
-// $api = new PHP_CRUD_API(array(
-// 	'dbengine'=>'PostgreSQL',
-// 	'hostname'=>'localhost',
-// 	'username'=>'xxx',
-// 	'password'=>'xxx',
-// 	'database'=>'xxx',
-// 	'charset'=>'UTF8'
-// ));
-// $api->executeCommand();
+// file: src/Tqdev/PhpCrudApi/Column/Reflection/ReflectedColumn.php
 
-// For SQLite 3 use:
+class ReflectedColumn implements \JsonSerializable
+{
+    const DEFAULT_LENGTH = 255;
+    const DEFAULT_PRECISION = 19;
+    const DEFAULT_SCALE = 4;
 
-// $api = new PHP_CRUD_API(array(
-// 	'dbengine'=>'SQLite',
-// 	'database'=>'data/blog.db',
-// ));
-// $api->executeCommand();
+    private $name;
+    private $type;
+    private $length;
+    private $precision;
+    private $scale;
+    private $nullable;
+    private $pk;
+    private $fk;
+
+    public function __construct(String $name, String $type, int $length, int $precision, int $scale, bool $nullable, bool $pk, String $fk)
+    {
+        $this->name = $name;
+        $this->type = $type;
+        $this->length = $length;
+        $this->precision = $precision;
+        $this->scale = $scale;
+        $this->nullable = $nullable;
+        $this->pk = $pk;
+        $this->fk = $fk;
+        $this->sanitize();
+    }
+
+    public static function fromReflection(GenericReflection $reflection, array $columnResult): ReflectedColumn
+    {
+        $name = $columnResult['COLUMN_NAME'];
+        $length = $columnResult['CHARACTER_MAXIMUM_LENGTH'] + 0;
+        $type = $reflection->toJdbcType($columnResult['DATA_TYPE'], $length);
+        $precision = $columnResult['NUMERIC_PRECISION'] + 0;
+        $scale = $columnResult['NUMERIC_SCALE'] + 0;
+        $nullable = in_array(strtoupper($columnResult['IS_NULLABLE']), ['TRUE', 'YES', 'T', 'Y', '1']);
+        $pk = false;
+        $fk = '';
+        return new ReflectedColumn($name, $type, $length, $precision, $scale, $nullable, $pk, $fk);
+    }
+
+    public static function fromJson( /* object */$json): ReflectedColumn
+    {
+        $name = $json->name;
+        $type = $json->type;
+        $length = isset($json->length) ? $json->length : 0;
+        $precision = isset($json->precision) ? $json->precision : 0;
+        $scale = isset($json->scale) ? $json->scale : 0;
+        $nullable = isset($json->nullable) ? $json->nullable : false;
+        $pk = isset($json->pk) ? $json->pk : false;
+        $fk = isset($json->fk) ? $json->fk : '';
+        return new ReflectedColumn($name, $type, $length, $precision, $scale, $nullable, $pk, $fk);
+    }
+
+    private function sanitize()
+    {
+        $this->length = $this->hasLength() ? $this->getLength() : 0;
+        $this->precision = $this->hasPrecision() ? $this->getPrecision() : 0;
+        $this->scale = $this->hasScale() ? $this->getScale() : 0;
+    }
+
+    public function getName(): String
+    {
+        return $this->name;
+    }
+
+    public function getNullable(): bool
+    {
+        return $this->nullable;
+    }
+
+    public function getType(): String
+    {
+        return $this->type;
+    }
+
+    public function getLength(): int
+    {
+        return $this->length ?: self::DEFAULT_LENGTH;
+    }
+
+    public function getPrecision(): int
+    {
+        return $this->precision ?: self::DEFAULT_PRECISION;
+    }
+
+    public function getScale(): int
+    {
+        return $this->scale ?: self::DEFAULT_SCALE;
+    }
+
+    public function hasLength(): bool
+    {
+        return in_array($this->type, ['varchar', 'varbinary']);
+    }
+
+    public function hasPrecision(): bool
+    {
+        return $this->type == 'decimal';
+    }
+
+    public function hasScale(): bool
+    {
+        return $this->type == 'decimal';
+    }
+
+    public function isBinary(): bool
+    {
+        return in_array($this->type, ['blob', 'varbinary']);
+    }
+
+    public function isBoolean(): bool
+    {
+        return $this->type == 'boolean';
+    }
+
+    public function isGeometry(): bool
+    {
+        return $this->type == 'geometry';
+    }
+
+    public function setPk($value) /*: void*/
+    {
+        $this->pk = $value;
+    }
+
+    public function getPk(): bool
+    {
+        return $this->pk;
+    }
+
+    public function setFk($value) /*: void*/
+    {
+        $this->fk = $value;
+    }
+
+    public function getFk(): String
+    {
+        return $this->fk;
+    }
+
+    public function serialize()
+    {
+        return [
+            'name' => $this->name,
+            'type' => $this->type,
+            'length' => $this->length,
+            'precision' => $this->precision,
+            'scale' => $this->scale,
+            'nullable' => $this->nullable,
+            'pk' => $this->pk,
+            'fk' => $this->fk,
+        ];
+    }
+
+    public function jsonSerialize()
+    {
+        return array_filter($this->serialize());
+    }
+}
+
+// file: src/Tqdev/PhpCrudApi/Column/Reflection/ReflectedDatabase.php
+
+class ReflectedDatabase implements \JsonSerializable
+{
+    private $name;
+    private $tables;
+
+    public function __construct(String $name, array $tables)
+    {
+        $this->name = $name;
+        $this->tables = [];
+        foreach ($tables as $table) {
+            $this->tables[$table->getName()] = $table;
+        }
+    }
+
+    public static function fromReflection(GenericReflection $reflection): ReflectedDatabase
+    {
+        $name = $reflection->getDatabaseName();
+        $tables = [];
+        foreach ($reflection->getTables() as $tableName) {
+            if (in_array($tableName['TABLE_NAME'], $reflection->getIgnoredTables())) {
+                continue;
+            }
+            $table = ReflectedTable::fromReflection($reflection, $tableName);
+            $tables[$table->getName()] = $table;
+        }
+        return new ReflectedDatabase($name, array_values($tables));
+    }
+
+    public static function fromJson( /* object */$json): ReflectedDatabase
+    {
+        $name = $json->name;
+        $tables = [];
+        if (isset($json->tables) && is_array($json->tables)) {
+            foreach ($json->tables as $table) {
+                $tables[] = ReflectedTable::fromJson($table);
+            }
+        }
+        return new ReflectedDatabase($name, $tables);
+    }
+
+    public function getName(): String
+    {
+        return $this->name;
+    }
+
+    public function exists(String $tableName): bool
+    {
+        return isset($this->tables[$tableName]);
+    }
+
+    public function get(String $tableName): ReflectedTable
+    {
+        return $this->tables[$tableName];
+    }
+
+    public function getTableNames(): array
+    {
+        return array_keys($this->tables);
+    }
+
+    public function serialize()
+    {
+        return [
+            'name' => $this->name,
+            'tables' => array_values($this->tables),
+        ];
+    }
+
+    public function jsonSerialize()
+    {
+        return $this->serialize();
+    }
+}
+
+// file: src/Tqdev/PhpCrudApi/Column/Reflection/ReflectedTable.php
+
+class ReflectedTable implements \JsonSerializable
+{
+    private $name;
+    private $columns;
+    private $pk;
+    private $fks;
+
+    public function __construct(String $name, array $columns)
+    {
+        $this->name = $name;
+        $this->columns = [];
+        foreach ($columns as $column) {
+            $columnName = $column->getName();
+            $this->columns[$columnName] = $column;
+        }
+        $this->pk = null;
+        foreach ($columns as $column) {
+            if ($column->getPk() == true) {
+                $this->pk = $column;
+            }
+        }
+        $this->fks = [];
+        foreach ($columns as $column) {
+            $columnName = $column->getName();
+            $referencedTableName = $column->getFk();
+            if ($referencedTableName != '') {
+                $this->fks[$columnName] = $referencedTableName;
+            }
+        }
+    }
+
+    public static function fromReflection(GenericReflection $reflection, array $tableResult): ReflectedTable
+    {
+        $name = $tableResult['TABLE_NAME'];
+        $columns = [];
+        foreach ($reflection->getTableColumns($name) as $tableColumn) {
+            $column = ReflectedColumn::fromReflection($reflection, $tableColumn);
+            $columns[$column->getName()] = $column;
+        }
+        $columnNames = $reflection->getTablePrimaryKeys($name);
+        if (count($columnNames) == 1) {
+            $columnName = $columnNames[0];
+            if (isset($columns[$columnName])) {
+                $pk = $columns[$columnName];
+                $pk->setPk(true);
+            }
+        }
+        $fks = $reflection->getTableForeignKeys($name);
+        foreach ($fks as $columnName => $table) {
+            $columns[$columnName]->setFk($table);
+        }
+        return new ReflectedTable($name, array_values($columns));
+    }
+
+    public static function fromJson( /* object */$json): ReflectedTable
+    {
+        $name = $json->name;
+        $columns = [];
+        if (isset($json->columns) && is_array($json->columns)) {
+            foreach ($json->columns as $column) {
+                $columns[] = ReflectedColumn::fromJson($column);
+            }
+        }
+        return new ReflectedTable($name, $columns);
+    }
+
+    public function exists(String $columnName): bool
+    {
+        return isset($this->columns[$columnName]);
+    }
+
+    public function hasPk(): bool
+    {
+        return $this->pk != null;
+    }
+
+    public function getPk(): ReflectedColumn
+    {
+        return $this->pk;
+    }
+
+    public function getName(): String
+    {
+        return $this->name;
+    }
+
+    public function columnNames(): array
+    {
+        return array_keys($this->columns);
+    }
+
+    public function get($columnName): ReflectedColumn
+    {
+        return $this->columns[$columnName];
+    }
+
+    public function getFksTo(String $tableName): array
+    {
+        $columns = array();
+        foreach ($this->fks as $columnName => $referencedTableName) {
+            if ($tableName == $referencedTableName) {
+                $columns[] = $this->columns[$columnName];
+            }
+        }
+        return $columns;
+    }
+
+    public function serialize()
+    {
+        return [
+            'name' => $this->name,
+            'columns' => array_values($this->columns),
+        ];
+    }
+
+    public function jsonSerialize()
+    {
+        return $this->serialize();
+    }
+}
+
+// file: src/Tqdev/PhpCrudApi/Column/DefinitionService.php
+
+class DefinitionService
+{
+    private $db;
+    private $reflection;
+
+    public function __construct(GenericDB $db, ReflectionService $reflection)
+    {
+        $this->db = $db;
+        $this->reflection = $reflection;
+    }
+
+    public function updateTable(String $tableName, /* object */ $changes): bool
+    {
+        $table = $this->reflection->getTable($tableName);
+        $newTable = ReflectedTable::fromJson((object) array_merge((array) $table->jsonSerialize(), (array) $changes));
+        if ($table->getName() != $newTable->getName()) {
+            if (!$this->db->definition()->renameTable($table->getName(), $newTable->getName())) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public function updateColumn(String $tableName, String $columnName, /* object */ $changes): bool
+    {
+        $table = $this->reflection->getTable($tableName);
+        $column = $table->get($columnName);
+
+        $newColumn = ReflectedColumn::fromJson((object) array_merge((array) $column->jsonSerialize(), (array) $changes));
+        if ($newColumn->getPk() != $column->getPk() && $table->hasPk()) {
+            $oldColumn = $table->getPk();
+            if ($oldColumn->getName() != $columnName) {
+                $oldColumn->setPk(false);
+                if (!$this->db->definition()->removeColumnPrimaryKey($table->getName(), $oldColumn->getName(), $oldColumn)) {
+                    return false;
+                }
+            }
+        }
+
+        $newColumn = ReflectedColumn::fromJson((object) array_merge((array) $column->jsonSerialize(), ['pk' => false, 'fk' => false]));
+        if ($newColumn->getPk() != $column->getPk() && !$newColumn->getPk()) {
+            if (!$this->db->definition()->removeColumnPrimaryKey($table->getName(), $column->getName(), $newColumn)) {
+                return false;
+            }
+        }
+        if ($newColumn->getFk() != $column->getFk() && !$newColumn->getFk()) {
+            if (!$this->db->definition()->removeColumnForeignKey($table->getName(), $column->getName(), $newColumn)) {
+                return false;
+            }
+        }
+
+        $newColumn = ReflectedColumn::fromJson((object) array_merge((array) $column->jsonSerialize(), (array) $changes));
+        $newColumn->setPk(false);
+        $newColumn->setFk('');
+        if ($newColumn->getName() != $column->getName()) {
+            if (!$this->db->definition()->renameColumn($table->getName(), $column->getName(), $newColumn)) {
+                return false;
+            }
+        }
+        if ($newColumn->getType() != $column->getType() ||
+            $newColumn->getLength() != $column->getLength() ||
+            $newColumn->getPrecision() != $column->getPrecision() ||
+            $newColumn->getScale() != $column->getScale()
+        ) {
+            if (!$this->db->definition()->retypeColumn($table->getName(), $newColumn->getName(), $newColumn)) {
+                return false;
+            }
+        }
+        if ($newColumn->getNullable() != $column->getNullable()) {
+            if (!$this->db->definition()->setColumnNullable($table->getName(), $newColumn->getName(), $newColumn)) {
+                return false;
+            }
+        }
+
+        $newColumn = ReflectedColumn::fromJson((object) array_merge((array) $column->jsonSerialize(), (array) $changes));
+        if ($newColumn->getFk()) {
+            if (!$this->db->definition()->addColumnForeignKey($table->getName(), $newColumn->getName(), $newColumn)) {
+                return false;
+            }
+        }
+        if ($newColumn->getPk()) {
+            if (!$this->db->definition()->addColumnPrimaryKey($table->getName(), $newColumn->getName(), $newColumn)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public function addTable( /* object */$definition)
+    {
+        $newTable = ReflectedTable::fromJson($definition);
+        if (!$this->db->definition()->addTable($newTable)) {
+            return false;
+        }
+        return true;
+    }
+
+    public function addColumn(String $tableName, /* object */ $definition)
+    {
+        $newColumn = ReflectedColumn::fromJson($definition);
+        if (!$this->db->definition()->addColumn($tableName, $newColumn)) {
+            return false;
+        }
+        if ($newColumn->getFk()) {
+            if (!$this->db->definition()->addColumnForeignKey($tableName, $newColumn->getName(), $newColumn)) {
+                return false;
+            }
+        }
+        if ($newColumn->getPk()) {
+            if (!$this->db->definition()->addColumnPrimaryKey($tableName, $newColumn->getName(), $newColumn)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public function removeTable(String $tableName)
+    {
+        if (!$this->db->definition()->removeTable($tableName)) {
+            return false;
+        }
+        return true;
+    }
+
+    public function removeColumn(String $tableName, String $columnName)
+    {
+        $table = $this->reflection->getTable($tableName);
+        $newColumn = $table->get($columnName);
+        if ($newColumn->getPk()) {
+            $newColumn->setPk(false);
+            if (!$this->db->definition()->removeColumnPrimaryKey($table->getName(), $newColumn->getName(), $newColumn)) {
+                return false;
+            }
+        }
+        if ($newColumn->getFk()) {
+            $newColumn->setFk("");
+            if (!$this->db->definition()->removeColumnForeignKey($tableName, $columnName, $newColumn)) {
+                return false;
+            }
+        }
+        if (!$this->db->definition()->removeColumn($tableName, $columnName)) {
+            return false;
+        }
+        return true;
+    }
+
+}
+
+// file: src/Tqdev/PhpCrudApi/Column/ReflectionService.php
+
+class ReflectionService
+{
+    private $db;
+    private $cache;
+    private $ttl;
+    private $tables;
+
+    public function __construct(GenericDB $db, Cache $cache, int $ttl)
+    {
+        $this->db = $db;
+        $this->cache = $cache;
+        $this->ttl = $ttl;
+        $data = $this->cache->get('ReflectedDatabase');
+        if ($data != '') {
+            $this->tables = ReflectedDatabase::fromJson(json_decode(gzuncompress($data)));
+        } else {
+            $this->refresh();
+        }
+    }
+
+    public function refresh()
+    {
+        $this->tables = ReflectedDatabase::fromReflection($this->db->reflection());
+        $data = gzcompress(json_encode($this->tables, JSON_UNESCAPED_UNICODE));
+        $this->cache->set('ReflectedDatabase', $data, $this->ttl);
+    }
+
+    public function hasTable(String $table): bool
+    {
+        return $this->tables->exists($table);
+    }
+
+    public function getTable(String $table): ReflectedTable
+    {
+        return $this->tables->get($table);
+    }
+
+    public function getDatabase(): ReflectedDatabase
+    {
+        return $this->tables;
+    }
+}
+
+// file: src/Tqdev/PhpCrudApi/Controller/CacheController.php
+
+class CacheController
+{
+    private $cache;
+    private $responder;
+
+    public function __construct(Router $router, Responder $responder, Cache $cache)
+    {
+        $router->register('GET', '/cache/clear', array($this, 'clear'));
+        $this->cache = $cache;
+        $this->responder = $responder;
+    }
+
+    public function clear(Request $request): Response
+    {
+        return $this->responder->success($this->cache->clear());
+    }
+
+}
+
+// file: src/Tqdev/PhpCrudApi/Controller/ColumnController.php
+
+class ColumnController
+{
+    private $responder;
+    private $reflection;
+    private $definition;
+
+    public function __construct(Router $router, Responder $responder, ReflectionService $reflection, DefinitionService $definition)
+    {
+        $router->register('GET', '/columns', array($this, 'getDatabase'));
+        $router->register('GET', '/columns/*', array($this, 'getTable'));
+        $router->register('GET', '/columns/*/*', array($this, 'getColumn'));
+        $router->register('PUT', '/columns/*', array($this, 'updateTable'));
+        $router->register('PUT', '/columns/*/*', array($this, 'updateColumn'));
+        $router->register('POST', '/columns', array($this, 'addTable'));
+        $router->register('POST', '/columns/*', array($this, 'addColumn'));
+        $router->register('DELETE', '/columns/*', array($this, 'removeTable'));
+        $router->register('DELETE', '/columns/*/*', array($this, 'removeColumn'));
+        $this->responder = $responder;
+        $this->reflection = $reflection;
+        $this->definition = $definition;
+    }
+
+    public function getDatabase(Request $request): Response
+    {
+        $database = $this->reflection->getDatabase();
+        return $this->responder->success($database);
+    }
+
+    public function getTable(Request $request): Response
+    {
+        $tableName = $request->getPathSegment(2);
+        if (!$this->reflection->hasTable($tableName)) {
+            return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $tableName);
+        }
+        $table = $this->reflection->getTable($tableName);
+        return $this->responder->success($table);
+    }
+
+    public function getColumn(Request $request): Response
+    {
+        $tableName = $request->getPathSegment(2);
+        $columnName = $request->getPathSegment(3);
+        if (!$this->reflection->hasTable($tableName)) {
+            return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $tableName);
+        }
+        $table = $this->reflection->getTable($tableName);
+        if (!$table->exists($columnName)) {
+            return $this->responder->error(ErrorCode::COLUMN_NOT_FOUND, $columnName);
+        }
+        $column = $table->get($columnName);
+        return $this->responder->success($column);
+    }
+
+    public function updateTable(Request $request): Response
+    {
+        $tableName = $request->getPathSegment(2);
+        if (!$this->reflection->hasTable($tableName)) {
+            return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $tableName);
+        }
+        $success = $this->definition->updateTable($tableName, $request->getBody());
+        if ($success) {
+            $this->reflection->refresh();
+        }
+        return $this->responder->success($success);
+    }
+
+    public function updateColumn(Request $request): Response
+    {
+        $tableName = $request->getPathSegment(2);
+        $columnName = $request->getPathSegment(3);
+        if (!$this->reflection->hasTable($tableName)) {
+            return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $tableName);
+        }
+        $table = $this->reflection->getTable($tableName);
+        if (!$table->exists($columnName)) {
+            return $this->responder->error(ErrorCode::COLUMN_NOT_FOUND, $columnName);
+        }
+        $success = $this->definition->updateColumn($tableName, $columnName, $request->getBody());
+        if ($success) {
+            $this->reflection->refresh();
+        }
+        return $this->responder->success($success);
+    }
+
+    public function addTable(Request $request): Response
+    {
+        $tableName = $request->getBody()->name;
+        if ($this->reflection->hasTable($tableName)) {
+            return $this->responder->error(ErrorCode::TABLE_ALREADY_EXISTS, $tableName);
+        }
+        $success = $this->definition->addTable($request->getBody());
+        if ($success) {
+            $this->reflection->refresh();
+        }
+        return $this->responder->success($success);
+    }
+
+    public function addColumn(Request $request): Response
+    {
+        $tableName = $request->getPathSegment(2);
+        if (!$this->reflection->hasTable($tableName)) {
+            return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $tableName);
+        }
+        $columnName = $request->getBody()->name;
+        $table = $this->reflection->getTable($tableName);
+        if ($table->exists($columnName)) {
+            return $this->responder->error(ErrorCode::COLUMN_ALREADY_EXISTS, $columnName);
+        }
+        $success = $this->definition->addColumn($tableName, $request->getBody());
+        if ($success) {
+            $this->reflection->refresh();
+        }
+        return $this->responder->success($success);
+    }
+
+    public function removeTable(Request $request): Response
+    {
+        $tableName = $request->getPathSegment(2);
+        if (!$this->reflection->hasTable($tableName)) {
+            return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $tableName);
+        }
+        $success = $this->definition->removeTable($tableName);
+        if ($success) {
+            $this->reflection->refresh();
+        }
+        return $this->responder->success($success);
+    }
+
+    public function removeColumn(Request $request): Response
+    {
+        $tableName = $request->getPathSegment(2);
+        $columnName = $request->getPathSegment(3);
+        if (!$this->reflection->hasTable($tableName)) {
+            return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $tableName);
+        }
+        $table = $this->reflection->getTable($tableName);
+        if (!$table->exists($columnName)) {
+            return $this->responder->error(ErrorCode::COLUMN_NOT_FOUND, $columnName);
+        }
+        $success = $this->definition->removeColumn($tableName, $columnName);
+        if ($success) {
+            $this->reflection->refresh();
+        }
+        return $this->responder->success($success);
+    }
+}
+
+// file: src/Tqdev/PhpCrudApi/Controller/OpenApiController.php
+
+class OpenApiController
+{
+    private $openApi;
+    private $responder;
+
+    public function __construct(Router $router, Responder $responder, OpenApiService $openApi)
+    {
+        $router->register('GET', '/openapi', array($this, 'openapi'));
+        $this->openApi = $openApi;
+        $this->responder = $responder;
+    }
+
+    public function openapi(Request $request): Response
+    {
+        return $this->responder->success(false);
+    }
+
+}
+
+// file: src/Tqdev/PhpCrudApi/Controller/RecordController.php
+
+class RecordController
+{
+    private $service;
+    private $responder;
+
+    public function __construct(Router $router, Responder $responder, RecordService $service)
+    {
+        $router->register('GET', '/records/*', array($this, '_list'));
+        $router->register('POST', '/records/*', array($this, 'create'));
+        $router->register('GET', '/records/*/*', array($this, 'read'));
+        $router->register('PUT', '/records/*/*', array($this, 'update'));
+        $router->register('DELETE', '/records/*/*', array($this, 'delete'));
+        $router->register('PATCH', '/records/*/*', array($this, 'increment'));
+        $this->service = $service;
+        $this->responder = $responder;
+    }
+
+    public function _list(Request $request): Response
+    {
+        $table = $request->getPathSegment(2);
+        $params = $request->getParams();
+        if (!$this->service->exists($table)) {
+            return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $table);
+        }
+        return $this->responder->success($this->service->_list($table, $params));
+    }
+
+    public function read(Request $request): Response
+    {
+        $table = $request->getPathSegment(2);
+        $id = $request->getPathSegment(3);
+        $params = $request->getParams();
+        if (!$this->service->exists($table)) {
+            return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $table);
+        }
+        if (strpos($id, ',') !== false) {
+            $ids = explode(',', $id);
+            $result = [];
+            for ($i = 0; $i < count($ids); $i++) {
+                array_push($result, $this->service->read($table, $ids[$i], $params));
+            }
+            return $this->responder->success($result);
+        } else {
+            $response = $this->service->read($table, $id, $params);
+            if ($response === null) {
+                return $this->responder->error(ErrorCode::RECORD_NOT_FOUND, $id);
+            }
+            return $this->responder->success($response);
+        }
+    }
+
+    public function create(Request $request): Response
+    {
+        $table = $request->getPathSegment(2);
+        $record = $request->getBody();
+        if ($record === null) {
+            return $this->responder->error(ErrorCode::HTTP_MESSAGE_NOT_READABLE, '');
+        }
+        $params = $request->getParams();
+        if (!$this->service->exists($table)) {
+            return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $table);
+        }
+        if (is_array($record)) {
+            $result = array();
+            foreach ($record as $r) {
+                $result[] = $this->service->create($table, $r, $params);
+            }
+            return $this->responder->success($result);
+        } else {
+            return $this->responder->success($this->service->create($table, $record, $params));
+        }
+    }
+
+    public function update(Request $request): Response
+    {
+        $table = $request->getPathSegment(2);
+        $id = $request->getPathSegment(3);
+        $record = $request->getBody();
+        if ($record === null) {
+            return $this->responder->error(ErrorCode::HTTP_MESSAGE_NOT_READABLE, '');
+        }
+        $params = $request->getParams();
+        if (!$this->service->exists($table)) {
+            return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $table);
+        }
+        $ids = explode(',', $id);
+        if (is_array($record)) {
+            if (count($ids) != count($record)) {
+                return $this->responder->error(ErrorCode::ARGUMENT_COUNT_MISMATCH, $id);
+            }
+            $result = array();
+            for ($i = 0; $i < count($ids); $i++) {
+                $result[] = $this->service->update($table, $ids[$i], $record[$i], $params);
+            }
+            return $this->responder->success($result);
+        } else {
+            if (count($ids) != 1) {
+                return $this->responder->error(ErrorCode::ARGUMENT_COUNT_MISMATCH, $id);
+            }
+            return $this->responder->success($this->service->update($table, $id, $record, $params));
+        }
+    }
+
+    public function delete(Request $request): Response
+    {
+        $table = $request->getPathSegment(2);
+        $id = $request->getPathSegment(3);
+        $params = $request->getParams();
+        if (!$this->service->exists($table)) {
+            return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $table);
+        }
+        $ids = explode(',', $id);
+        if (count($ids) > 1) {
+            $result = array();
+            for ($i = 0; $i < count($ids); $i++) {
+                $result[] = $this->service->delete($table, $ids[$i], $params);
+            }
+            return $this->responder->success($result);
+        } else {
+            return $this->responder->success($this->service->delete($table, $id, $params));
+        }
+    }
+
+}
+
+// file: src/Tqdev/PhpCrudApi/Controller/Responder.php
+
+class Responder
+{
+    public function error(int $error, String $argument, $details = null): Response
+    {
+        $errorCode = new ErrorCode($error);
+        $status = $errorCode->getStatus();
+        $document = new ErrorDocument($errorCode, $argument, $details);
+        return new Response($status, $document);
+    }
+
+    public function success($result): Response
+    {
+        return new Response(Response::OK, $result);
+    }
+
+}
+
+// file: src/Tqdev/PhpCrudApi/Database/ColumnConverter.php
+
+class ColumnConverter
+{
+    private $driver;
+
+    public function __construct(String $driver)
+    {
+        $this->driver = $driver;
+    }
+
+    public function convertColumnValue(ReflectedColumn $column): String
+    {
+        if ($column->isBinary()) {
+            switch ($this->driver) {
+                case 'mysql':
+                    return "FROM_BASE64(?)";
+                case 'pgsql':
+                    return "decode(?, 'base64')";
+                case 'sqlsrv':
+                    return "CONVERT(XML, ?).value('.','varbinary(max)')";
+            }
+        }
+        if ($column->isGeometry()) {
+            switch ($this->driver) {
+                case 'mysql':
+                case 'pgsql':
+                    return "ST_GeomFromText(?)";
+                case 'sqlsrv':
+                    return "geometry::STGeomFromText(?,0)";
+            }
+        }
+        return '?';
+    }
+
+    public function convertColumnName(ReflectedColumn $column, $value): String
+    {
+        if ($column->isBinary()) {
+            switch ($this->driver) {
+                case 'mysql':
+                    return "TO_BASE64($value) as $value";
+                case 'pgsql':
+                    return "encode($value::bytea, 'base64') as $value";
+                case 'sqlsrv':
+                    return "CAST(N'' AS XML).value('xs:base64Binary(xs:hexBinary(sql:column($value)))', 'VARCHAR(MAX)') as $value";
+
+            }
+        }
+        if ($column->isGeometry()) {
+            switch ($this->driver) {
+                case 'mysql':
+                case 'pgsql':
+                    return "ST_AsText($value) as $value";
+                case 'sqlsrv':
+                    return "REPLACE($value.STAsText(),' (','(') as $value";
+            }
+        }
+        return $value;
+    }
+
+}
+
+// file: src/Tqdev/PhpCrudApi/Database/ColumnsBuilder.php
+
+class ColumnsBuilder
+{
+    private $driver;
+    private $converter;
+
+    public function __construct(String $driver)
+    {
+        $this->driver = $driver;
+        $this->converter = new ColumnConverter($driver);
+    }
+
+    public function getOffsetLimit(int $offset, int $limit): String
+    {
+        if ($limit < 0 || $offset < 0) {
+            return '';
+        }
+        switch ($this->driver) {
+            case 'mysql':return "LIMIT $offset, $limit";
+            case 'pgsql':return "LIMIT $limit OFFSET $offset";
+            case 'sqlsrv':return "OFFSET $offset ROWS FETCH NEXT $limit ROWS ONLY";
+        }
+    }
+
+    private function quoteColumnName(ReflectedColumn $column): String
+    {
+        return '"' . $column->getName() . '"';
+    }
+
+    public function getOrderBy(ReflectedTable $table, array $columnOrdering): String
+    {
+        $results = array();
+        foreach ($columnOrdering as $i => list($columnName, $ordering)) {
+            $column = $table->get($columnName);
+            $quotedColumnName = $this->quoteColumnName($column);
+            $results[] = $quotedColumnName . ' ' . $ordering;
+        }
+        return implode(',', $results);
+    }
+
+    public function getSelect(ReflectedTable $table, array $columnNames): String
+    {
+        $results = array();
+        foreach ($columnNames as $columnName) {
+            $column = $table->get($columnName);
+            $quotedColumnName = $this->quoteColumnName($column);
+            $quotedColumnName = $this->converter->convertColumnName($column, $quotedColumnName);
+            $results[] = $quotedColumnName;
+        }
+        return implode(',', $results);
+    }
+
+    public function getInsert(ReflectedTable $table, array $columnValues): String
+    {
+        $columns = array();
+        $values = array();
+        foreach ($columnValues as $columnName => $columnValue) {
+            $column = $table->get($columnName);
+            $quotedColumnName = $this->quoteColumnName($column);
+            $columns[] = $quotedColumnName;
+            $columnValue = $this->converter->convertColumnValue($column);
+            $values[] = $columnValue;
+        }
+        $columnsSql = '(' . implode(',', $columns) . ')';
+        $valuesSql = '(' . implode(',', $values) . ')';
+        $outputColumn = $this->quoteColumnName($table->getPk());
+        switch ($this->driver) {
+            case 'mysql':return "$columnsSql VALUES $valuesSql";
+            case 'pgsql':return "$columnsSql VALUES $valuesSql RETURNING $outputColumn";
+            case 'sqlsrv':return "$columnsSql OUTPUT INSERTED.$outputColumn VALUES $valuesSql";
+        }
+    }
+
+    public function getUpdate(ReflectedTable $table, array $columnValues): String
+    {
+        $results = array();
+        foreach ($columnValues as $columnName => $columnValue) {
+            $column = $table->get($columnName);
+            $quotedColumnName = $this->quoteColumnName($column);
+            $columnValue = $this->converter->convertColumnValue($column);
+            $results[] = $quotedColumnName . '=' . $columnValue;
+        }
+        return implode(',', $results);
+    }
+
+    public function getIncrement(ReflectedTable $table, array $columnValues): String
+    {
+        $results = array();
+        foreach ($columnValues as $columnName => $columnValue) {
+            if (!is_numeric($columnValue)) {
+                continue;
+            }
+            $column = $table->get($columnName);
+            $quotedColumnName = $this->quoteColumnName($column);
+            $columnValue = $this->converter->convertColumnValue($column);
+            $results[] = $quotedColumnName . '=' . $quotedColumnName . '+' . $columnValue;
+        }
+        return implode(',', $results);
+    }
+
+}
+
+// file: src/Tqdev/PhpCrudApi/Database/ConditionsBuilder.php
+
+class ConditionsBuilder
+{
+    private $driver;
+
+    public function __construct(String $driver)
+    {
+        $this->driver = $driver;
+    }
+
+    private function getConditionSql(Condition $condition, array &$arguments): String
+    {
+        if ($condition instanceof AndCondition) {
+            return $this->getAndConditionSql($condition, $arguments);
+        }
+        if ($condition instanceof OrCondition) {
+            return $this->getOrConditionSql($condition, $arguments);
+        }
+        if ($condition instanceof NotCondition) {
+            return $this->getNotConditionSql($condition, $arguments);
+        }
+        if ($condition instanceof ColumnCondition) {
+            return $this->getColumnConditionSql($condition, $arguments);
+        }
+        if ($condition instanceof SpatialCondition) {
+            return $this->getSpatialConditionSql($condition, $arguments);
+        }
+        throw new \Exception('Unknown Condition: ' . get_class($condition));
+    }
+
+    private function getAndConditionSql(AndCondition $and, array &$arguments): String
+    {
+        $parts = [];
+        foreach ($and->getConditions() as $condition) {
+            $parts[] = $this->getConditionSql($condition, $arguments);
+        }
+        return '(' . implode(' AND ', $parts) . ')';
+    }
+
+    private function getOrConditionSql(OrCondition $or, array &$arguments): String
+    {
+        $parts = [];
+        foreach ($or->getConditions() as $condition) {
+            $parts[] = $this->getConditionSql($condition, $arguments);
+        }
+        return '(' . implode(' OR ', $parts) . ')';
+    }
+
+    private function getNotConditionSql(NotCondition $not, array &$arguments): String
+    {
+        $condition = $not->getCondition();
+        return '(NOT ' . $this->getConditionSql($condition, $arguments) . ')';
+    }
+
+    private function quoteColumnName(ReflectedColumn $column): String
+    {
+        return '"' . $column->getName() . '"';
+    }
+
+    private function escapeLikeValue(String $value): String
+    {
+        return addcslashes($value, '%_');
+    }
+
+    private function getColumnConditionSql(ColumnCondition $condition, array &$arguments): String
+    {
+        $column = $this->quoteColumnName($condition->getColumn());
+        $operator = $condition->getOperator();
+        $value = $condition->getValue();
+        switch ($operator) {
+            case 'cs':
+                $sql = "$column LIKE ?";
+                $arguments[] = '%' . $this->escapeLikeValue($value) . '%';
+                break;
+            case 'sw':
+                $sql = "$column LIKE ?";
+                $arguments[] = $this->escapeLikeValue($value) . '%';
+                break;
+            case 'ew':
+                $sql = "$column LIKE ?";
+                $arguments[] = '%' . $this->escapeLikeValue($value);
+                break;
+            case 'eq':
+                $sql = "$column = ?";
+                $arguments[] = $value;
+                break;
+            case 'lt':
+                $sql = "$column < ?";
+                $arguments[] = $value;
+                break;
+            case 'le':
+                $sql = "$column <= ?";
+                $arguments[] = $value;
+                break;
+            case 'ge':
+                $sql = "$column >= ?";
+                $arguments[] = $value;
+                break;
+            case 'gt':
+                $sql = "$column > ?";
+                $arguments[] = $value;
+                break;
+            case 'bt':
+                $parts = explode(',', $value, 2);
+                $count = count($parts);
+                if ($count == 2) {
+                    $sql = "($column >= ? AND $column <= ?)";
+                    $arguments[] = $parts[0];
+                    $arguments[] = $parts[1];
+                } else {
+                    $sql = "FALSE";
+                }
+                break;
+            case 'in':
+                $parts = explode(',', $value);
+                $count = count($parts);
+                if ($count > 0) {
+                    $qmarks = implode(',', str_split(str_repeat('?', $count)));
+                    $sql = "$column IN ($qmarks)";
+                    for ($i = 0; $i < $count; $i++) {
+                        $arguments[] = $parts[$i];
+                    }
+                } else {
+                    $sql = "FALSE";
+                }
+                break;
+            case 'is':
+                $sql = "$column IS NULL";
+                break;
+        }
+        return $sql;
+    }
+
+    private function getSpatialFunctionName(String $operator): String
+    {
+        switch ($operator) {
+            case 'co':return 'ST_Contains';
+            case 'cr':return 'ST_Crosses';
+            case 'di':return 'ST_Disjoint';
+            case 'eq':return 'ST_Equals';
+            case 'in':return 'ST_Intersects';
+            case 'ov':return 'ST_Overlaps';
+            case 'to':return 'ST_Touches';
+            case 'wi':return 'ST_Within';
+            case 'ic':return 'ST_IsClosed';
+            case 'is':return 'ST_IsSimple';
+            case 'iv':return 'ST_IsValid';
+        }
+    }
+
+    private function hasSpatialArgument(String $operator): bool
+    {
+        return in_array($opertor, ['ic', 'is', 'iv']) ? false : true;
+    }
+
+    private function getSpatialFunctionCall(String $functionName, String $column, bool $hasArgument): String
+    {
+        switch ($this->driver) {
+            case 'mysql':
+            case 'pgsql':
+                $argument = $hasArgument ? 'ST_GeomFromText(?)' : '';
+                return "$functionName($column, $argument)=TRUE";
+            case 'sql_srv':
+                $functionName = str_replace('ST_', 'ST', $functionName);
+                $argument = $hasArgument ? 'geometry::STGeomFromText(?,0)' : '';
+                return "$column.$functionName($argument)=1";
+        }
+    }
+
+    private function getSpatialConditionSql(ColumnCondition $condition, array &$arguments): String
+    {
+        $column = $this->quoteColumnName($condition->getColumn());
+        $operator = $condition->getOperator();
+        $value = $condition->getValue();
+        $functionName = $this->getSpatialFunctionName($operator);
+        $hasArgument = $this->hasSpatialArgument($operator);
+        $sql = $this->getSpatialFunctionCall($functionName, $column, $hasArgument);
+        if ($hasArgument) {
+            $arguments[] = $value;
+        }
+        return $sql;
+    }
+
+    public function getWhereClause(Condition $condition, array &$arguments): String
+    {
+        if ($condition instanceof NoCondition) {
+            return '';
+        }
+        return ' WHERE ' . $this->getConditionSql($condition, $arguments);
+    }
+}
+
+// file: src/Tqdev/PhpCrudApi/Database/DataConverter.php
+
+class DataConverter
+{
+    private $driver;
+
+    public function __construct(String $driver)
+    {
+        $this->driver = $driver;
+    }
+
+    private function convertRecordValue($conversion, $value)
+    {
+        switch ($conversion) {
+            case 'boolean':
+                return $value ? true : false;
+        }
+        return $value;
+    }
+
+    private function getRecordValueConversion(ReflectedColumn $column): String
+    {
+        if (in_array($this->driver, ['mysql', 'sqlsrv']) && $column->isBoolean()) {
+            return 'boolean';
+        }
+        return 'none';
+    }
+
+    public function convertRecords(ReflectedTable $table, array $columnNames, array &$records) /*: void*/
+    {
+        foreach ($columnNames as $columnName) {
+            $column = $table->get($columnName);
+            $conversion = $this->getRecordValueConversion($column);
+            if ($conversion != 'none') {
+                foreach ($records as $i => $record) {
+                    $value = $records[$i][$columnName];
+                    if ($value === null) {
+                        continue;
+                    }
+                    $records[$i][$columnName] = $this->convertRecordValue($conversion, $value);
+                }
+            }
+        }
+    }
+
+    private function convertInputValue($conversion, $value)
+    {
+        switch ($conversion) {
+            case 'base64url_to_base64':
+                return str_pad(strtr($value, '-_', '+/'), ceil(strlen($value) / 4) * 4, '=', STR_PAD_RIGHT);
+        }
+        return $value;
+    }
+
+    private function getInputValueConversion(ReflectedColumn $column): String
+    {
+        if ($column->isBinary()) {
+            return 'base64url_to_base64';
+        }
+        return 'none';
+    }
+
+    public function convertColumnValues(ReflectedTable $table, array &$columnValues) /*: void*/
+    {
+        $columnNames = array_keys($columnValues);
+        foreach ($columnNames as $columnName) {
+            $column = $table->get($columnName);
+            $conversion = $this->getInputValueConversion($column);
+            if ($conversion != 'none') {
+                $value = $columnValues[$columnName];
+                if ($value !== null) {
+                    $columnValues[$columnName] = $this->convertInputValue($conversion, $value);
+                }
+            }
+        }
+    }
+}
+
+// file: src/Tqdev/PhpCrudApi/Database/GenericDB.php
+
+class GenericDB
+{
+    private $driver;
+    private $database;
+    private $pdo;
+    private $reflection;
+    private $columns;
+    private $conditions;
+    private $converter;
+
+    private function getDsn(String $address, String $port = null, String $database = null): String
+    {
+        switch ($this->driver) {
+            case 'mysql':return "$this->driver:host=$address;port=$port;dbname=$database;charset=utf8mb4";
+            case 'pgsql':return "$this->driver:host=$address port=$port dbname=$database options='--client_encoding=UTF8'";
+            case 'sqlsrv':return "$this->driver:Server=$address,$port;Database=$database";
+        }
+    }
+
+    private function getCommands(): array
+    {
+        switch ($this->driver) {
+            case 'mysql':return [
+                    'SET SESSION sql_warnings=1;',
+                    'SET NAMES utf8mb4;',
+                    'SET SESSION sql_mode = "ANSI,TRADITIONAL";',
+                ];
+            case 'pgsql':return [
+                    "SET NAMES 'UTF8';",
+                ];
+            case 'sqlsrv':return [
+                ];
+        }
+    }
+
+    private function getOptions(): array
+    {
+        $options = array(
+            \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
+            \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
+        );
+        switch ($this->driver) {
+            case 'mysql':return $options + [
+                    \PDO::ATTR_EMULATE_PREPARES => false,
+                    \PDO::MYSQL_ATTR_FOUND_ROWS => true,
+                ];
+            case 'pgsql':return $options + [
+                    \PDO::ATTR_EMULATE_PREPARES => false,
+                ];
+            case 'sqlsrv':return $options + [
+                    \PDO::SQLSRV_ATTR_FETCHES_NUMERIC_TYPE => true,
+                ];
+        }
+    }
+
+    public function __construct(String $driver, String $address, String $port = null, String $database = null, String $username = null, String $password = null)
+    {
+        $this->driver = $driver;
+        $this->database = $database;
+        $dsn = $this->getDsn($address, $port, $database);
+        $options = $this->getOptions();
+        $this->pdo = new \PDO($dsn, $username, $password, $options);
+        $commands = $this->getCommands();
+        foreach ($commands as $command) {
+            $this->pdo->query($command);
+        }
+        $this->reflection = new GenericReflection($this->pdo, $driver, $database);
+        $this->definition = new GenericDefinition($this->pdo, $driver, $database);
+        $this->conditions = new ConditionsBuilder($driver);
+        $this->columns = new ColumnsBuilder($driver);
+        $this->converter = new DataConverter($driver);
+    }
+
+    public function pdo(): \PDO
+    {
+        return $this->pdo;
+    }
+
+    public function reflection(): GenericReflection
+    {
+        return $this->reflection;
+    }
+
+    public function definition(): GenericDefinition
+    {
+        return $this->definition;
+    }
+
+    public function createSingle(ReflectedTable $table, array $columnValues) /*: ?String*/
+    {
+        $this->converter->convertColumnValues($table, $columnValues);
+        $insertColumns = $this->columns->getInsert($table, $columnValues);
+        $tableName = $table->getName();
+        $pkName = $table->getPk()->getName();
+        $parameters = array_values($columnValues);
+        $sql = 'INSERT INTO "' . $tableName . '" ' . $insertColumns;
+        $stmt = $this->query($sql, $parameters);
+        if (isset($columnValues[$pkName])) {
+            return $columnValues[$pkName];
+        }
+        switch ($this->driver) {
+            case 'mysql':
+                $stmt = $this->query('SELECT LAST_INSERT_ID()', []);
+                break;
+        }
+        return $stmt->fetchColumn(0);
+    }
+
+    public function selectSingle(ReflectedTable $table, array $columnNames, String $id) /*: ?array*/
+    {
+        $selectColumns = $this->columns->getSelect($table, $columnNames);
+        $tableName = $table->getName();
+        $condition = new ColumnCondition($table->getPk(), 'eq', $id);
+        $parameters = array();
+        $whereClause = $this->conditions->getWhereClause($condition, $parameters);
+        $sql = 'SELECT ' . $selectColumns . ' FROM "' . $tableName . '" ' . $whereClause;
+        $stmt = $this->query($sql, $parameters);
+        $record = $stmt->fetch() ?: null;
+        if ($record === null) {
+            return null;
+        }
+        $records = array($record);
+        $this->converter->convertRecords($table, $columnNames, $records);
+        return $records[0];
+    }
+
+    public function selectMultiple(ReflectedTable $table, array $columnNames, array $ids): array
+    {
+        if (count($ids) == 0) {
+            return [];
+        }
+        $selectColumns = $this->columns->getSelect($table, $columnNames);
+        $tableName = $table->getName();
+        $condition = new ColumnCondition($table->getPk(), 'in', implode(',', $ids));
+        $parameters = array();
+        $whereClause = $this->conditions->getWhereClause($condition, $parameters);
+        $sql = 'SELECT ' . $selectColumns . ' FROM "' . $tableName . '" ' . $whereClause;
+        $stmt = $this->query($sql, $parameters);
+        $records = $stmt->fetchAll();
+        $this->converter->convertRecords($table, $columnNames, $records);
+        return $records;
+    }
+
+    public function selectCount(ReflectedTable $table, Condition $condition): int
+    {
+        $tableName = $table->getName();
+        $parameters = array();
+        $whereClause = $this->conditions->getWhereClause($condition, $parameters);
+        $sql = 'SELECT COUNT(*) FROM "' . $tableName . '"' . $whereClause;
+        $stmt = $this->query($sql, $parameters);
+        return $stmt->fetchColumn(0);
+    }
+
+    public function selectAllUnordered(ReflectedTable $table, array $columnNames, Condition $condition): array
+    {
+        $selectColumns = $this->columns->getSelect($table, $columnNames);
+        $tableName = $table->getName();
+        $parameters = array();
+        $whereClause = $this->conditions->getWhereClause($condition, $parameters);
+        $sql = 'SELECT ' . $selectColumns . ' FROM "' . $tableName . '"' . $whereClause;
+        $stmt = $this->query($sql, $parameters);
+        $records = $stmt->fetchAll();
+        $this->converter->convertRecords($table, $columnNames, $records);
+        return $records;
+    }
+
+    public function selectAll(ReflectedTable $table, array $columnNames, Condition $condition, array $columnOrdering, int $offset, int $limit): array
+    {
+        if ($limit == 0) {
+            return array();
+        }
+        $selectColumns = $this->columns->getSelect($table, $columnNames);
+        $tableName = $table->getName();
+        $parameters = array();
+        $whereClause = $this->conditions->getWhereClause($condition, $parameters);
+        $orderBy = $this->columns->getOrderBy($table, $columnOrdering);
+        $offsetLimit = $this->columns->getOffsetLimit($offset, $limit);
+        $sql = 'SELECT ' . $selectColumns . ' FROM "' . $tableName . '"' . $whereClause . ' ORDER BY ' . $orderBy . ' ' . $offsetLimit;
+        $stmt = $this->query($sql, $parameters);
+        $records = $stmt->fetchAll();
+        $this->converter->convertRecords($table, $columnNames, $records);
+        return $records;
+    }
+
+    public function updateSingle(ReflectedTable $table, array $columnValues, String $id)
+    {
+        if (count($columnValues) == 0) {
+            return 0;
+        }
+        $this->converter->convertColumnValues($table, $columnValues);
+        $updateColumns = $this->columns->getUpdate($table, $columnValues);
+        $tableName = $table->getName();
+        $condition = new ColumnCondition($table->getPk(), 'eq', $id);
+        $parameters = array_values($columnValues);
+        $whereClause = $this->conditions->getWhereClause($condition, $parameters);
+        $sql = 'UPDATE "' . $tableName . '" SET ' . $updateColumns . $whereClause;
+        $stmt = $this->query($sql, $parameters);
+        return $stmt->rowCount();
+    }
+
+    public function deleteSingle(ReflectedTable $table, String $id)
+    {
+        $tableName = $table->getName();
+        $condition = new ColumnCondition($table->getPk(), 'eq', $id);
+        $parameters = array();
+        $whereClause = $this->conditions->getWhereClause($condition, $parameters);
+        $sql = 'DELETE FROM "' . $tableName . '" ' . $whereClause;
+        $stmt = $this->query($sql, $parameters);
+        return $stmt->rowCount();
+    }
+
+    private function query(String $sql, array $parameters): \PDOStatement
+    {
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($parameters);
+        return $stmt;
+    }
+}
+
+// file: src/Tqdev/PhpCrudApi/Database/GenericDefinition.php
+
+class GenericDefinition
+{
+    private $pdo;
+    private $driver;
+    private $database;
+    private $typeConverter;
+    private $reflection;
+
+    public function __construct(\PDO $pdo, String $driver, String $database)
+    {
+        $this->pdo = $pdo;
+        $this->driver = $driver;
+        $this->database = $database;
+        $this->typeConverter = new TypeConverter($driver);
+        $this->reflection = new GenericReflection($pdo, $driver, $database);
+    }
+
+    private function quote(String $identifier): String
+    {
+        return '"' . str_replace('"', '', $identifier) . '"';
+    }
+
+    public function getColumnType(ReflectedColumn $column, bool $update): String
+    {
+        if ($this->driver == 'pgsql' && !$update && $column->getPk() && $this->canAutoIncrement($column)) {
+            return 'serial';
+        }
+        $type = $this->typeConverter->fromJdbc($column->getType(), $column->getPk());
+        if ($column->hasPrecision() && $column->hasScale()) {
+            $size = '(' . $column->getPrecision() . ',' . $column->getScale() . ')';
+        } else if ($column->hasPrecision()) {
+            $size = '(' . $column->getPrecision() . ')';
+        } else if ($column->hasLength()) {
+            $size = '(' . $column->getLength() . ')';
+        } else {
+            $size = '';
+        }
+        $null = $this->getColumnNullType($column, $update);
+        $auto = $this->getColumnAutoIncrement($column, $update);
+        return $type . $size . $null . $auto;
+    }
+
+    private function getPrimaryKey(String $tableName): String
+    {
+        $pks = $this->reflection->getTablePrimaryKeys($tableName);
+        if (count($pks) == 1) {
+            return $pks[0];
+        }
+        return "";
+    }
+
+    private function canAutoIncrement(ReflectedColumn $column): bool
+    {
+        return in_array($column->getType(), ['integer', 'bigint']);
+    }
+
+    private function getColumnAutoIncrement(ReflectedColumn $column, bool $update): String
+    {
+        if (!$this->canAutoIncrement($column)) {
+            return '';
+        }
+        switch ($this->driver) {
+            case 'mysql':
+                return $column->getPk() ? ' AUTO_INCREMENT' : '';
+            case 'pgsql':
+                return '';
+            case 'sqlsrv':
+                return ($column->getPk() && !$update) ? ' IDENTITY(1,1)' : '';
+        }
+    }
+
+    private function getColumnNullType(ReflectedColumn $column, bool $update): String
+    {
+        if ($this->driver == 'pgsql' && $update) {
+            return '';
+        }
+        return $column->getNullable() ? ' NULL' : ' NOT NULL';
+    }
+
+    private function getTableRenameSQL(String $tableName, String $newTableName): String
+    {
+        $p1 = $this->quote($tableName);
+        $p2 = $this->quote($newTableName);
+
+        switch ($this->driver) {
+            case 'mysql':
+                return "RENAME TABLE $p1 TO $p2";
+            case 'pgsql':
+                return "ALTER TABLE $p1 RENAME TO $p2";
+            case 'sqlsrv':
+                return "EXEC sp_rename $p1, $p2";
+        }
+    }
+
+    private function getColumnRenameSQL(String $tableName, String $columnName, ReflectedColumn $newColumn): String
+    {
+        $p1 = $this->quote($tableName);
+        $p2 = $this->quote($columnName);
+        $p3 = $this->quote($newColumn->getName());
+
+        switch ($this->driver) {
+            case 'mysql':
+                $p4 = $this->getColumnType($newColumn, true);
+                return "ALTER TABLE $p1 CHANGE $p2 $p3 $p4";
+            case 'pgsql':
+                return "ALTER TABLE $p1 RENAME COLUMN $p2 TO $p3";
+            case 'sqlsrv':
+                $p4 = $this->quote($tableName . '.' . $columnName);
+                return "EXEC sp_rename $p4, $p3, 'COLUMN'";
+        }
+    }
+
+    private function getColumnRetypeSQL(String $tableName, String $columnName, ReflectedColumn $newColumn): String
+    {
+        $p1 = $this->quote($tableName);
+        $p2 = $this->quote($columnName);
+        $p3 = $this->quote($newColumn->getName());
+        $p4 = $this->getColumnType($newColumn, true);
+
+        switch ($this->driver) {
+            case 'mysql':
+                return "ALTER TABLE $p1 CHANGE $p2 $p3 $p4";
+            case 'pgsql':
+                return "ALTER TABLE $p1 ALTER COLUMN $p3 TYPE $p4";
+            case 'sqlsrv':
+                return "ALTER TABLE $p1 ALTER COLUMN $p3 $p4";
+        }
+    }
+
+    private function getSetColumnNullableSQL(String $tableName, String $columnName, ReflectedColumn $newColumn): String
+    {
+        $p1 = $this->quote($tableName);
+        $p2 = $this->quote($columnName);
+        $p3 = $this->quote($newColumn->getName());
+        $p4 = $this->getColumnType($newColumn, true);
+
+        switch ($this->driver) {
+            case 'mysql':
+                return "ALTER TABLE $p1 CHANGE $p2 $p3 $p4";
+            case 'pgsql':
+                $p5 = $newColumn->getNullable() ? 'DROP NOT NULL' : 'SET NOT NULL';
+                return "ALTER TABLE $p1 ALTER COLUMN $p2 $p5";
+            case 'sqlsrv':
+                return "ALTER TABLE $p1 ALTER COLUMN $p2 $p4";
+        }
+    }
+
+    private function getSetColumnPkConstraintSQL(String $tableName, String $columnName, ReflectedColumn $newColumn): String
+    {
+        $p1 = $this->quote($tableName);
+        $p2 = $this->quote($columnName);
+        $p3 = $this->quote($tableName . '_pkey');
+
+        switch ($this->driver) {
+            case 'mysql':
+                $p4 = $newColumn->getPk() ? "ADD PRIMARY KEY ($p2)" : 'DROP PRIMARY KEY';
+                return "ALTER TABLE $p1 $p4";
+            case 'pgsql':
+            case 'sqlsrv':
+                $p4 = $newColumn->getPk() ? "ADD PRIMARY KEY ($p2)" : "DROP CONSTRAINT $p3";
+                return "ALTER TABLE $p1 $p4";
+        }
+    }
+
+    private function getSetColumnPkSequenceSQL(String $tableName, String $columnName, ReflectedColumn $newColumn): String
+    {
+        $p1 = $this->quote($tableName);
+        $p2 = $this->quote($columnName);
+        $p3 = $this->quote($tableName . '_' . $columnName . '_seq');
+
+        switch ($this->driver) {
+            case 'mysql':
+                return "select 1";
+            case 'pgsql':
+                return $newColumn->getPk() ? "CREATE SEQUENCE $p3 OWNED BY $p1.$p2" : "DROP SEQUENCE $p3";
+            case 'sqlsrv':
+                return $newColumn->getPk() ? "CREATE SEQUENCE $p3" : "DROP SEQUENCE $p3";
+        }
+    }
+
+    private function getSetColumnPkSequenceStartSQL(String $tableName, String $columnName, ReflectedColumn $newColumn): String
+    {
+        $p1 = $this->quote($tableName);
+        $p2 = $this->quote($columnName);
+        $p3 = $this->pdo->quote($tableName . '_' . $columnName . '_seq');
+
+        switch ($this->driver) {
+            case 'mysql':
+                return "select 1";
+            case 'pgsql':
+                return "SELECT setval($p3, (SELECT max($p2)+1 FROM $p1));";
+            case 'sqlsrv':
+                return "ALTER SEQUENCE $p3 RESTART WITH (SELECT max($p2)+1 FROM $p1)";
+        }
+    }
+
+    private function getSetColumnPkDefaultSQL(String $tableName, String $columnName, ReflectedColumn $newColumn): String
+    {
+        $p1 = $this->quote($tableName);
+        $p2 = $this->quote($columnName);
+
+        switch ($this->driver) {
+            case 'mysql':
+                $p3 = $this->quote($newColumn->getName());
+                $p4 = $this->getColumnType($newColumn, true);
+                return "ALTER TABLE $p1 CHANGE $p2 $p3 $p4";
+            case 'pgsql':
+                if ($newColumn->getPk()) {
+                    $p3 = $this->pdo->quote($tableName . '_' . $columnName . '_seq');
+                    $p4 = "SET DEFAULT nextval($p3)";
+                } else {
+                    $p4 = 'DROP DEFAULT';
+                }
+                return "ALTER TABLE $p1 ALTER COLUMN $p2 $p4";
+            case 'sqlsrv':
+                $p3 = $this->pdo->quote($tableName . '_' . $columnName . '_seq');
+                $p4 = $this->quote('DF_' . $tableName . '_' . $columnName);
+                if ($newColumn->getPk()) {
+                    return "ALTER TABLE $p1 ADD CONSTRAINT $p4 DEFAULT NEXT VALUE FOR $p3 FOR $p2";
+                } else {
+                    return "ALTER TABLE $p1 DROP CONSTRAINT $p4";
+                }
+        }
+    }
+
+    private function getAddColumnFkConstraintSQL(String $tableName, String $columnName, ReflectedColumn $newColumn): String
+    {
+        $p1 = $this->quote($tableName);
+        $p2 = $this->quote($columnName);
+        $p3 = $this->quote($tableName . '_' . $columnName . '_fkey');
+        $p4 = $this->quote($newColumn->getFk());
+        $p5 = $this->quote($this->getPrimaryKey($newColumn->getFk()));
+
+        return "ALTER TABLE $p1 ADD CONSTRAINT $p3 FOREIGN KEY ($p2) REFERENCES $p4 ($p5)";
+    }
+
+    private function getRemoveColumnFkConstraintSQL(String $tableName, String $columnName, ReflectedColumn $newColumn): String
+    {
+        $p1 = $this->quote($tableName);
+        $p2 = $this->quote($tableName . '_' . $columnName . '_fkey');
+
+        switch ($this->driver) {
+            case 'mysql':
+                return "ALTER TABLE $p1 DROP FOREIGN KEY $p2";
+            case 'pgsql':
+            case 'sqlsrv':
+                return "ALTER TABLE $p1 DROP CONSTRAINT $p2";
+        }
+    }
+
+    private function getAddTableSQL(ReflectedTable $newTable): String
+    {
+        $tableName = $newTable->getName();
+        $p1 = $this->quote($tableName);
+        $fields = [];
+        $constraints = [];
+        foreach ($newTable->columnNames() as $columnName) {
+            $newColumn = $newTable->get($columnName);
+            $f1 = $this->quote($columnName);
+            $f2 = $this->getColumnType($newColumn, false);
+            $f3 = $this->quote($tableName . '_' . $columnName . '_fkey');
+            $f4 = $this->quote($newColumn->getFk());
+            $f5 = $this->quote($this->getPrimaryKey($newColumn->getFk()));
+            $fields[] = "$f1 $f2";
+            if ($newColumn->getPk()) {
+                $constraints[] = "PRIMARY KEY ($f1)";
+            }
+            if ($newColumn->getFk()) {
+                $constraints[] = "CONSTRAINT $f3 FOREIGN KEY ($f1) REFERENCES $f4 ($f5)";
+            }
+        }
+        $p2 = implode(',', array_merge($fields, $constraints));
+
+        return "CREATE TABLE $p1 ($p2);";
+    }
+
+    private function getAddColumnSQL(String $tableName, ReflectedColumn $newColumn): String
+    {
+        $p1 = $this->quote($tableName);
+        $p2 = $this->quote($newColumn->getName());
+        $p3 = $this->getColumnType($newColumn, false);
+
+        return "ALTER TABLE $p1 ADD COLUMN $p2 $p3";
+    }
+
+    private function getRemoveTableSQL(String $tableName): String
+    {
+        $p1 = $this->quote($tableName);
+
+        return "DROP TABLE $p1 CASCADE;";
+    }
+
+    private function getRemoveColumnSQL(String $tableName, String $columnName): String
+    {
+        $p1 = $this->quote($tableName);
+        $p2 = $this->quote($columnName);
+
+        return "ALTER TABLE $p1 DROP COLUMN $p2 CASCADE;";
+    }
+
+    public function renameTable(String $tableName, String $newTableName)
+    {
+        $sql = $this->getTableRenameSQL($tableName, $newTableName);
+        $stmt = $this->pdo->prepare($sql);
+        return $stmt->execute();
+    }
+
+    public function renameColumn(String $tableName, String $columnName, ReflectedColumn $newColumn)
+    {
+        $sql = $this->getColumnRenameSQL($tableName, $columnName, $newColumn);
+        $stmt = $this->pdo->prepare($sql);
+        return $stmt->execute();
+    }
+
+    public function retypeColumn(String $tableName, String $columnName, ReflectedColumn $newColumn)
+    {
+        $sql = $this->getColumnRetypeSQL($tableName, $columnName, $newColumn);
+        $stmt = $this->pdo->prepare($sql);
+        return $stmt->execute();
+    }
+
+    public function setColumnNullable(String $tableName, String $columnName, ReflectedColumn $newColumn)
+    {
+        $sql = $this->getSetColumnNullableSQL($tableName, $columnName, $newColumn);
+        $stmt = $this->pdo->prepare($sql);
+        return $stmt->execute();
+    }
+
+    public function addColumnPrimaryKey(String $tableName, String $columnName, ReflectedColumn $newColumn)
+    {
+        $sql = $this->getSetColumnPkConstraintSQL($tableName, $columnName, $newColumn);
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute();
+        if ($this->canAutoIncrement($newColumn)) {
+            $sql = $this->getSetColumnPkSequenceSQL($tableName, $columnName, $newColumn);
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute();
+            $sql = $this->getSetColumnPkSequenceStartSQL($tableName, $columnName, $newColumn);
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute();
+            $sql = $this->getSetColumnPkDefaultSQL($tableName, $columnName, $newColumn);
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute();
+        }
+        return true;
+    }
+
+    public function removeColumnPrimaryKey(String $tableName, String $columnName, ReflectedColumn $newColumn)
+    {
+        if ($this->canAutoIncrement($newColumn)) {
+            $sql = $this->getSetColumnPkDefaultSQL($tableName, $columnName, $newColumn);
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute();
+            $sql = $this->getSetColumnPkSequenceSQL($tableName, $columnName, $newColumn);
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute();
+        }
+        $sql = $this->getSetColumnPkConstraintSQL($tableName, $columnName, $newColumn);
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute();
+        return true;
+    }
+
+    public function addColumnForeignKey(String $tableName, String $columnName, ReflectedColumn $newColumn)
+    {
+        $sql = $this->getAddColumnFkConstraintSQL($tableName, $columnName, $newColumn);
+        $stmt = $this->pdo->prepare($sql);
+        return $stmt->execute();
+    }
+
+    public function removeColumnForeignKey(String $tableName, String $columnName, ReflectedColumn $newColumn)
+    {
+        $sql = $this->getRemoveColumnFkConstraintSQL($tableName, $columnName, $newColumn);
+        $stmt = $this->pdo->prepare($sql);
+        return $stmt->execute();
+    }
+
+    public function addTable(ReflectedTable $newTable)
+    {
+        $sql = $this->getAddTableSQL($newTable);
+        $stmt = $this->pdo->prepare($sql);
+        return $stmt->execute();
+    }
+
+    public function addColumn(String $tableName, ReflectedColumn $newColumn)
+    {
+        $sql = $this->getAddColumnSQL($tableName, $newColumn);
+        $stmt = $this->pdo->prepare($sql);
+        return $stmt->execute();
+    }
+
+    public function removeTable(String $tableName)
+    {
+        $sql = $this->getRemoveTableSQL($tableName);
+        $stmt = $this->pdo->prepare($sql);
+        return $stmt->execute();
+    }
+
+    public function removeColumn(String $tableName, String $columnName)
+    {
+        $sql = $this->getRemoveColumnSQL($tableName, $columnName);
+        $stmt = $this->pdo->prepare($sql);
+        return $stmt->execute();
+    }
+}
+
+// file: src/Tqdev/PhpCrudApi/Database/GenericReflection.php
+
+class GenericReflection
+{
+    private $pdo;
+    private $driver;
+    private $database;
+    private $typeConverter;
+
+    public function __construct(\PDO $pdo, String $driver, String $database)
+    {
+        $this->pdo = $pdo;
+        $this->driver = $driver;
+        $this->database = $database;
+        $this->typeConverter = new TypeConverter($driver);
+    }
+
+    public function getIgnoredTables(): array
+    {
+        switch ($this->driver) {
+            case 'mysql':return [];
+            case 'pgsql':return ['spatial_ref_sys'];
+            case 'sqlsrv':return [];
+        }
+    }
+
+    private function getTablesSQL(): String
+    {
+        switch ($this->driver) {
+            case 'mysql':return 'SELECT "TABLE_NAME" FROM "INFORMATION_SCHEMA"."TABLES" WHERE "TABLE_TYPE" IN (\'BASE TABLE\') AND "TABLE_SCHEMA" = ? ORDER BY BINARY "TABLE_NAME"';
+            case 'pgsql':return 'SELECT c.relname as "TABLE_NAME" FROM pg_catalog.pg_class c LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace WHERE c.relkind IN (\'r\') AND n.nspname <> \'pg_catalog\' AND n.nspname <> \'information_schema\' AND n.nspname !~ \'^pg_toast\' AND pg_catalog.pg_table_is_visible(c.oid) AND \'\' <> ? ORDER BY "TABLE_NAME";';
+            case 'sqlsrv':return 'SELECT o.name as "TABLE_NAME" FROM sysobjects o WHERE o.xtype = \'U\' ORDER BY "TABLE_NAME"';
+        }
+    }
+
+    private function getTableColumnsSQL(): String
+    {
+        switch ($this->driver) {
+            case 'mysql':return 'SELECT "COLUMN_NAME", "IS_NULLABLE", "DATA_TYPE", "CHARACTER_MAXIMUM_LENGTH", "NUMERIC_PRECISION", "NUMERIC_SCALE" FROM "INFORMATION_SCHEMA"."COLUMNS" WHERE "TABLE_NAME" = ? AND "TABLE_SCHEMA" = ?';
+            case 'pgsql':return 'SELECT a.attname AS "COLUMN_NAME", case when a.attnotnull then \'NO\' else \'YES\' end as "IS_NULLABLE", pg_catalog.format_type(a.atttypid, -1) as "DATA_TYPE", case when a.atttypmod < 0 then NULL else a.atttypmod-4 end as "CHARACTER_MAXIMUM_LENGTH", case when a.atttypid != 1700 then NULL else ((a.atttypmod - 4) >> 16) & 65535 end as "NUMERIC_PRECISION", case when a.atttypid != 1700 then NULL else (a.atttypmod - 4) & 65535 end as "NUMERIC_SCALE" FROM pg_attribute a JOIN pg_class pgc ON pgc.oid = a.attrelid WHERE pgc.relname = ? AND \'\' <> ? AND a.attnum > 0 AND NOT a.attisdropped;';
+            case 'sqlsrv':return 'SELECT c.name AS "COLUMN_NAME", c.is_nullable AS "IS_NULLABLE", t.Name AS "DATA_TYPE", (c.max_length/2) AS "CHARACTER_MAXIMUM_LENGTH", c.precision AS "NUMERIC_PRECISION", c.scale AS "NUMERIC_SCALE" FROM sys.columns c INNER JOIN sys.types t ON c.user_type_id = t.user_type_id WHERE c.object_id = OBJECT_ID(?) AND \'\' <> ?';
+        }
+    }
+
+    private function getTablePrimaryKeysSQL(): String
+    {
+        switch ($this->driver) {
+            case 'mysql':return 'SELECT "COLUMN_NAME" FROM "INFORMATION_SCHEMA"."KEY_COLUMN_USAGE" WHERE "CONSTRAINT_NAME" = \'PRIMARY\' AND "TABLE_NAME" = ? AND "TABLE_SCHEMA" = ?';
+            case 'pgsql':return 'SELECT a.attname AS "COLUMN_NAME" FROM pg_attribute a JOIN pg_constraint c ON (c.conrelid, c.conkey[1]) = (a.attrelid, a.attnum) JOIN pg_class pgc ON pgc.oid = a.attrelid WHERE pgc.relname = ? AND \'\' <> ? AND c.contype = \'p\'';
+            case 'sqlsrv':return 'SELECT c.NAME as "COLUMN_NAME" FROM sys.key_constraints kc inner join sys.objects t on t.object_id = kc.parent_object_id INNER JOIN sys.index_columns ic ON kc.parent_object_id = ic.object_id and kc.unique_index_id = ic.index_id INNER JOIN sys.columns c ON ic.object_id = c.object_id AND ic.column_id = c.column_id WHERE kc.type = \'PK\' and t.object_id = OBJECT_ID(?) and \'\' <> ?';
+        }
+    }
+
+    private function getTableForeignKeysSQL(): String
+    {
+        switch ($this->driver) {
+            case 'mysql':return 'SELECT "COLUMN_NAME", "REFERENCED_TABLE_NAME" FROM "INFORMATION_SCHEMA"."KEY_COLUMN_USAGE" WHERE "REFERENCED_TABLE_NAME" IS NOT NULL AND "TABLE_NAME" = ? AND "TABLE_SCHEMA" = ?';
+            case 'pgsql':return 'SELECT a.attname AS "COLUMN_NAME", c.confrelid::regclass::text AS "REFERENCED_TABLE_NAME" FROM pg_attribute a JOIN pg_constraint c ON (c.conrelid, c.conkey[1]) = (a.attrelid, a.attnum) JOIN pg_class pgc ON pgc.oid = a.attrelid WHERE pgc.relname = ? AND \'\' <> ? AND c.contype  = \'f\'';
+            case 'sqlsrv':return 'SELECT COL_NAME(fc.parent_object_id, fc.parent_column_id) AS "COLUMN_NAME", OBJECT_NAME (f.referenced_object_id) AS "REFERENCED_TABLE_NAME" FROM sys.foreign_keys AS f INNER JOIN sys.foreign_key_columns AS fc ON f.OBJECT_ID = fc.constraint_object_id WHERE f.parent_object_id = OBJECT_ID(?) and \'\' <> ?';
+        }
+    }
+
+    public function getDatabaseName(): String
+    {
+        return $this->database;
+    }
+
+    public function getTables(): array
+    {
+        $stmt = $this->pdo->prepare($this->getTablesSQL());
+        $stmt->execute([$this->database]);
+        return $stmt->fetchAll();
+    }
+
+    public function getTableColumns(String $tableName): array
+    {
+        $stmt = $this->pdo->prepare($this->getTableColumnsSQL());
+        $stmt->execute([$tableName, $this->database]);
+        return $stmt->fetchAll();
+    }
+
+    public function getTablePrimaryKeys(String $tableName): array
+    {
+        $stmt = $this->pdo->prepare($this->getTablePrimaryKeysSQL());
+        $stmt->execute([$tableName, $this->database]);
+        $results = $stmt->fetchAll();
+        $primaryKeys = [];
+        foreach ($results as $result) {
+            $primaryKeys[] = $result['COLUMN_NAME'];
+        }
+        return $primaryKeys;
+    }
+
+    public function getTableForeignKeys(String $tableName): array
+    {
+        $stmt = $this->pdo->prepare($this->getTableForeignKeysSQL());
+        $stmt->execute([$tableName, $this->database]);
+        $results = $stmt->fetchAll();
+        $foreignKeys = [];
+        foreach ($results as $result) {
+            $foreignKeys[$result['COLUMN_NAME']] = $result['REFERENCED_TABLE_NAME'];
+        }
+        return $foreignKeys;
+    }
+
+    public function toJdbcType(String $type, int $size): String
+    {
+        return $this->typeConverter->toJdbc($type, $size);
+    }
+}
+
+// file: src/Tqdev/PhpCrudApi/Database/TypeConverter.php
+
+class TypeConverter
+{
+    private $driver;
+
+    public function __construct(String $driver)
+    {
+        $this->driver = $driver;
+    }
+
+    private $fromJdbc = [
+        'mysql' => [
+            'clob' => 'longtext',
+            'boolean' => 'bit',
+            'blob' => 'longblob',
+            'timestamp' => 'datetime',
+        ],
+        'pgsql' => [
+            'clob' => 'text',
+            'blob' => 'bytea',
+        ],
+        'sqlsrv' => [
+            'boolean' => 'bit',
+        ],
+    ];
+
+    private $toJdbc = [
+        'simplified' => [
+            'char' => 'varchar',
+            'longvarchar' => 'clob',
+            'nchar' => 'varchar',
+            'nvarchar' => 'varchar',
+            'longnvarchar' => 'clob',
+            'binary' => 'varbinary',
+            'longvarbinary' => 'blob',
+            'tinyint' => 'integer',
+            'smallint' => 'integer',
+            'real' => 'float',
+            'numeric' => 'decimal',
+            'time_with_timezone' => 'time',
+            'timestamp_with_timezone' => 'timestamp',
+        ],
+        'mysql' => [
+            'tinyint(1)' => 'boolean',
+            'bit(0)' => 'boolean',
+            'bit(1)' => 'boolean',
+            'tinyblob' => 'blob',
+            'mediumblob' => 'blob',
+            'longblob' => 'blob',
+            'tinytext' => 'clob',
+            'mediumtext' => 'clob',
+            'longtext' => 'clob',
+            'text' => 'clob',
+            'int' => 'integer',
+            'polygon' => 'geometry',
+            'point' => 'geometry',
+            'datetime' => 'timestamp',
+        ],
+        'pgsql' => [
+            'bigserial' => 'bigint',
+            'bit varying' => 'bit',
+            'box' => 'geometry',
+            'bytea' => 'blob',
+            'character varying' => 'varchar',
+            'character' => 'char',
+            'cidr' => 'varchar',
+            'circle' => 'geometry',
+            'double precision' => 'double',
+            'inet' => 'integer',
+            'jsonb' => 'clob',
+            'line' => 'geometry',
+            'lseg' => 'geometry',
+            'macaddr' => 'varchar',
+            'money' => 'decimal',
+            'path' => 'geometry',
+            'point' => 'geometry',
+            'polygon' => 'geometry',
+            'real' => 'float',
+            'serial' => 'integer',
+            'text' => 'clob',
+            'time without time zone' => 'time',
+            'time with time zone' => 'time_with_timezone',
+            'timestamp without time zone' => 'timestamp',
+            'timestamp with time zone' => 'timestamp_with_timezone',
+            'uuid' => 'char',
+            'xml' => 'clob',
+        ],
+        'sqlsrv' => [
+            'varbinary(0)' => 'blob',
+            'bit' => 'boolean',
+            'datetime' => 'timestamp',
+            'datetime2' => 'timestamp',
+            'float' => 'double',
+            'image' => 'longvarbinary',
+            'int' => 'integer',
+            'money' => 'decimal',
+            'ntext' => 'longnvarchar',
+            'smalldatetime' => 'timestamp',
+            'smallmoney' => 'decimal',
+            'text' => 'longvarchar',
+            'timestamp' => 'binary',
+            'tinyint' => 'tinyint',
+            'udt' => 'varbinary',
+            'uniqueidentifier' => 'char',
+            'xml' => 'longnvarchar',
+        ],
+    ];
+
+    private $valid = [
+        'bigint' => true,
+        'binary' => true,
+        'bit' => true,
+        'blob' => true,
+        'boolean' => true,
+        'char' => true,
+        'clob' => true,
+        'date' => true,
+        'decimal' => true,
+        'distinct' => true,
+        'double' => true,
+        'float' => true,
+        'integer' => true,
+        'longnvarchar' => true,
+        'longvarbinary' => true,
+        'longvarchar' => true,
+        'nchar' => true,
+        'nclob' => true,
+        'numeric' => true,
+        'nvarchar' => true,
+        'real' => true,
+        'smallint' => true,
+        'time' => true,
+        'time_with_timezone' => true,
+        'timestamp' => true,
+        'timestamp_with_timezone' => true,
+        'tinyint' => true,
+        'varbinary' => true,
+        'varchar' => true,
+        'geometry' => true,
+    ];
+
+    public function toJdbc(String $type, int $size): String
+    {
+        $jdbcType = strtolower($type);
+        if (isset($this->toJdbc[$this->driver]["$jdbcType($size)"])) {
+            $jdbcType = $this->toJdbc[$this->driver]["$jdbcType($size)"];
+        }
+        if (isset($this->toJdbc[$this->driver][$jdbcType])) {
+            $jdbcType = $this->toJdbc[$this->driver][$jdbcType];
+        }
+        if (isset($this->toJdbc['simplified'][$jdbcType])) {
+            $jdbcType = $this->toJdbc['simplified'][$jdbcType];
+        }
+        if (!isset($this->valid[$jdbcType])) {
+            throw new \Exception("Unsupported type '$jdbcType' for driver '$this->driver'");
+        }
+        return $jdbcType;
+    }
+
+    public function fromJdbc(String $type): String
+    {
+        $jdbcType = strtolower($type);
+        if (isset($this->fromJdbc[$this->driver][$jdbcType])) {
+            $jdbcType = $this->fromJdbc[$this->driver][$jdbcType];
+        }
+        return $jdbcType;
+    }
+}
+
+// file: src/Tqdev/PhpCrudApi/Middleware/Base/Handler.php
+
+interface Handler
+{
+    public function handle(Request $request): Response;
+}
+
+// file: src/Tqdev/PhpCrudApi/Middleware/Base/Middleware.php
+
+abstract class Middleware implements Handler
+{
+    protected $next;
+    protected $responder;
+    private $properties;
+
+    public function __construct(Router $router, Responder $responder, array $properties)
+    {
+        $router->load($this);
+        $this->responder = $responder;
+        $this->properties = $properties;
+    }
+
+    public function setNext(Handler $handler) /*: void*/
+    {
+        $this->next = $handler;
+    }
+
+    protected function getProperty(String $key, $default)
+    {
+        return isset($this->properties[$key]) ? $this->properties[$key] : $default;
+    }
+}
+
+// file: src/Tqdev/PhpCrudApi/Middleware/Router/Router.php
+
+interface Router extends Handler
+{
+    public function register(String $method, String $path, array $handler);
+
+    public function load(Middleware $middleware);
+
+    public function route(Request $request): Response;
+}
+
+// file: src/Tqdev/PhpCrudApi/Middleware/Router/SimpleRouter.php
+
+class SimpleRouter implements Router
+{
+    private $responder;
+    private $routes;
+    private $midlewares;
+
+    public function __construct(Responder $responder)
+    {
+        $this->responder = $responder;
+        $this->routes = new PathTree();
+        $this->middlewares = array();
+    }
+
+    public function register(String $method, String $path, array $handler)
+    {
+        $parts = explode('/', trim($path, '/'));
+        array_unshift($parts, $method);
+        $this->routes->put($parts, $handler);
+    }
+
+    public function load(Middleware $middleware) /*: void*/
+    {
+        if (count($this->middlewares) > 0) {
+            $next = $this->middlewares[0];
+        } else {
+            $next = $this;
+        }
+        $middleware->setNext($next);
+        array_unshift($this->middlewares, $middleware);
+    }
+
+    public function route(Request $request): Response
+    {
+        $obj = $this;
+        if (count($this->middlewares) > 0) {
+            $obj = $this->middlewares[0];
+        }
+        return $obj->handle($request);
+    }
+
+    private function getHandlers(Request $request): array
+    {
+        $method = strtoupper($request->getMethod());
+        $path = explode('/', trim($request->getPath(0), '/'));
+        array_unshift($path, $method);
+
+        return $this->matchPath($path, $this->routes);
+    }
+
+    public function handle(Request $request): Response
+    {
+        $handlers = $this->getHandlers($request);
+        if (count($handlers) == 0) {
+            return $this->responder->error(ErrorCode::ROUTE_NOT_FOUND, $request->getPath());
+        }
+        return call_user_func($handlers[0], $request);
+    }
+
+    private function matchPath(array $path, PathTree $tree): array
+    {
+        $values = array();
+        while (count($path) > 0) {
+            $key = array_shift($path);
+            if ($tree->has($key)) {
+                $tree = $tree->get($key);
+            } else if ($tree->has('*')) {
+                $tree = $tree->get('*');
+            } else {
+                $tree = null;
+                break;
+            }
+        }
+        if ($tree !== null) {
+            $values = $tree->getValues();
+        }
+        return $values;
+    }
+}
+
+// file: src/Tqdev/PhpCrudApi/Middleware/BasicAuthMiddleware.php
+
+class BasicAuthMiddleware extends Middleware
+{
+    private function isAllowed(String $username, String $password, array &$passwords): bool
+    {
+        $hash = isset($passwords[$username]) ? $passwords[$username] : false;
+        if ($hash && password_verify($password, $hash)) {
+            if (password_needs_rehash($hash, PASSWORD_DEFAULT)) {
+                $passwords[$username] = password_hash($password, PASSWORD_DEFAULT);
+            }
+            return true;
+        }
+        return false;
+    }
+
+    private function authenticate(String $username, String $password, String $passwordFile): bool
+    {
+        if (session_status() == PHP_SESSION_NONE) {
+            session_start();
+        }
+        if (isset($_SESSION['user']) && $_SESSION['user'] == $username) {
+            return true;
+        }
+        $passwords = $this->readPasswords($passwordFile);
+        $allowed = $this->isAllowed($username, $password, $passwords);
+        if ($allowed) {
+            $_SESSION['user'] = $username;
+        }
+        $this->writePasswords($passwordFile, $passwords);
+        return $allowed;
+    }
+
+    private function readPasswords(String $passwordFile): array
+    {
+        $passwords = [];
+        $passwordLines = file($passwordFile);
+        foreach ($passwordLines as $passwordLine) {
+            if (strpos($passwordLine, ':') !== false) {
+                list($username, $hash) = explode(':', trim($passwordLine), 2);
+                if (strlen($hash) > 0 && $hash[0] != '$') {
+                    $hash = password_hash($hash, PASSWORD_DEFAULT);
+                }
+                $passwords[$username] = $hash;
+            }
+        }
+        return $passwords;
+    }
+
+    private function writePasswords(String $passwordFile, array $passwords): bool
+    {
+        $success = false;
+        $passwordFileContents = '';
+        foreach ($passwords as $username => $hash) {
+            $passwordFileContents .= "$username:$hash\n";
+        }
+        if (file_get_contents($passwordFile) != $passwordFileContents) {
+            $success = file_put_contents($passwordFile, $passwordFileContents) !== false;
+        }
+        return $success;
+    }
+
+    public function handle(Request $request): Response
+    {
+        $username = isset($_SERVER['PHP_AUTH_USER']) ? $_SERVER['PHP_AUTH_USER'] : '';
+        $password = isset($_SERVER['PHP_AUTH_PW']) ? $_SERVER['PHP_AUTH_PW'] : '';
+        $passwordFile = $this->getProperty('passwordFile', '.htpasswd');
+        if (!$username) {
+            $response = $this->responder->error(ErrorCode::AUTHORIZATION_REQUIRED, $username);
+            $realm = $this->getProperty('realm', 'Username and password required');
+            $response->addHeader('WWW-Authenticate', "Basic realm=\"$realm\"");
+        } elseif (!$this->authenticate($username, $password, $passwordFile)) {
+            $response = $this->responder->error(ErrorCode::ACCESS_DENIED, $username);
+        } else {
+            $response = $this->next->handle($request);
+        }
+        return $response;
+    }
+}
+
+// file: src/Tqdev/PhpCrudApi/Middleware/CorsMiddleware.php
+
+class CorsMiddleware extends Middleware
+{
+    private function isOriginAllowed(String $origin, String $allowedOrigins): bool
+    {
+        $found = false;
+        foreach (explode(',', $allowedOrigins) as $allowedOrigin) {
+            $hostname = preg_quote(strtolower(trim($allowedOrigin)));
+            $regex = '/^' . str_replace('\*', '.*', $hostname) . '$/';
+            if (preg_match($regex, $origin)) {
+                $found = true;
+                break;
+            }
+        }
+        return $found;
+    }
+
+    public function handle(Request $request): Response
+    {
+        $method = $request->getMethod();
+        $origin = $request->getHeader('Origin');
+        $allowedOrigins = $this->getProperty('allowedOrigins', '*');
+        if ($origin && !$this->isOriginAllowed($origin, $allowedOrigins)) {
+            $response = $this->responder->error(ErrorCode::ORIGIN_FORBIDDEN, $origin);
+        } elseif ($method == 'OPTIONS') {
+            $response = new Response(Response::OK, '');
+            $allowHeaders = $this->getProperty('allowHeaders', 'Content-Type, X-XSRF-TOKEN');
+            $response->addHeader('Access-Control-Allow-Headers', $allowHeaders);
+            $allowMethods = $this->getProperty('allowMethods', 'OPTIONS, GET, PUT, POST, DELETE, PATCH');
+            $response->addHeader('Access-Control-Allow-Methods', $allowMethods);
+            $allowCredentials = $this->getProperty('allowCredentials', 'true');
+            $response->addHeader('Access-Control-Allow-Credentials', $allowCredentials);
+            $maxAge = $this->getProperty('maxAge', '1728000');
+            $response->addHeader('Access-Control-Max-Age', $maxAge);
+        } else {
+            $response = $this->next->handle($request);
+        }
+        if ($origin) {
+            $allowCredentials = $this->getProperty('allowCredentials', 'true');
+            $response->addHeader('Access-Control-Allow-Credentials', $allowCredentials);
+            $response->addHeader('Access-Control-Allow-Origin', $origin);
+        }
+        return $response;
+    }
+}
+
+// file: src/Tqdev/PhpCrudApi/Middleware/FirewallMiddleware.php
+
+class FirewallMiddleware extends Middleware
+{
+    private function isIpAllowed(String $ipAddress, String $allowedIpAddresses): bool
+    {
+        foreach (explode(',', $allowedIpAddresses) as $allowedIp) {
+            if ($ipAddress == trim($allowedIp)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public function handle(Request $request): Response
+    {
+        $reverseProxy = $this->getProperty('reverseProxy', '');
+        if ($reverseProxy) {
+            $ipAddress = array_pop(explode(',', $request->getHeader('X-Forwarded-For')));
+        } elseif (isset($_SERVER['REMOTE_ADDR'])) {
+            $ipAddress = $_SERVER['REMOTE_ADDR'];
+        } else {
+            $ipAddress = '127.0.0.1';
+        }
+        $allowedIpAddresses = $this->getProperty('allowedIpAddresses', '');
+        if (!$this->isIpAllowed($ipAddress, $allowedIpAddresses)) {
+            $response = $this->responder->error(ErrorCode::ACCESS_DENIED, $ipAddress);
+        } else {
+            $response = $this->next->handle($request);
+        }
+        return $response;
+    }
+}
+
+// file: src/Tqdev/PhpCrudApi/Middleware/SanitationMiddleware.php
+
+class SanitationMiddleware extends Middleware
+{
+    private $reflection;
+
+    public function __construct(Router $router, Responder $responder, array $properties, ReflectionService $reflection)
+    {
+        parent::__construct($router, $responder, $properties);
+        $this->reflection = $reflection;
+    }
+
+    private function callHandler($handler, $record, String $method, ReflectedTable $table) /*: object */
+    {
+        $context = (array) $record;
+        $tableName = $table->getName();
+        foreach ($context as $columnName => &$value) {
+            if ($table->exists($columnName)) {
+                $column = $table->get($columnName);
+                $value = call_user_func($handler, $method, $tableName, $column->serialize(), $value);
+            }
+        }
+        return (object) $context;
+    }
+
+    public function handle(Request $request): Response
+    {
+        $path = $request->getPathSegment(1);
+        $tableName = $request->getPathSegment(2);
+        $record = $request->getBody();
+        $database = $this->reflection->getDatabase();
+        if ($path == 'records' && $database->exists($tableName) && $record !== null) {
+            $table = $database->get($tableName);
+            $method = $request->getMethod();
+            $handler = $this->getProperty('handler', '');
+            if ($handler !== '') {
+                if (is_array($record)) {
+                    foreach ($record as &$r) {
+                        $r = $this->callHandler($handler, $r, $method, $table);
+                    }
+                } else {
+                    $record = $this->callHandler($handler, $record, $method, $table);
+                }
+                $path = $request->getPath();
+                $query = urldecode(http_build_query($request->getParams()));
+                $headers = $request->getHeaders();
+                $body = json_encode($record);
+                $request = new Request($method, $path, $query, $headers, $body);
+            }
+        }
+        return $this->next->handle($request);
+    }
+}
+
+// file: src/Tqdev/PhpCrudApi/Middleware/ValidationMiddleware.php
+
+class ValidationMiddleware extends Middleware
+{
+    private $reflection;
+
+    public function __construct(Router $router, Responder $responder, array $properties, ReflectionService $reflection)
+    {
+        parent::__construct($router, $responder, $properties);
+        $this->reflection = $reflection;
+    }
+
+    private function callHandler($handler, $record, String $method, ReflectedTable $table) /*: Response?*/
+    {
+        $context = (array) $record;
+        $details = array();
+        $tableName = $table->getName();
+        foreach ($context as $columnName => $value) {
+            if ($table->exists($columnName)) {
+                $column = $table->get($columnName);
+                $valid = call_user_func($handler, $method, $tableName, $column->serialize(), $value, $context);
+                if ($valid !== true && $valid !== '') {
+                    $details[$columnName] = $valid;
+                }
+            }
+        }
+        if (count($details) > 0) {
+            return $this->responder->error(ErrorCode::INPUT_VALIDATION_FAILED, $tableName, $details);
+        }
+        return null;
+    }
+
+    public function handle(Request $request): Response
+    {
+        $path = $request->getPathSegment(1);
+        $tableName = $request->getPathSegment(2);
+        $record = $request->getBody();
+        $database = $this->reflection->getDatabase();
+        if ($path == 'records' && $database->exists($tableName) && $record !== null) {
+            $table = $database->get($tableName);
+            $method = $request->getMethod();
+            $handler = $this->getProperty('handler', '');
+            if ($handler !== '') {
+                if (is_array($record)) {
+                    foreach ($record as $r) {
+                        $response = $this->callHandler($handler, $r, $method, $table);
+                        if ($response !== null) {
+                            return $response;
+                        }
+                    }
+                } else {
+                    $response = $this->callHandler($handler, $record, $method, $table);
+                    if ($response !== null) {
+                        return $response;
+                    }
+                }
+            }
+        }
+        return $this->next->handle($request);
+    }
+}
+
+// file: src/Tqdev/PhpCrudApi/OpenApi/DefaultOpenApiDefinition.php
+
+class DefaultOpenApiDefinition
+{
+    private $root = [
+        "openapi" => "3.0.0",
+        "info" => [
+            "title" => "JAVA-CRUD-API",
+            "version" => "1.0.0",
+        ],
+        "paths" => [],
+        "components" => [
+            "schemas" => [
+                "Category" => [
+                    "type" => "object",
+                    "properties" => [
+                        "id" => [
+                            "type" => "integer",
+                            "format" => "int64",
+                        ],
+                        "name" => [
+                            "type" => "string",
+                        ],
+                    ],
+                ],
+                "Tag" => [
+                    "type" => "object",
+                    "properties" => [
+                        "id" => [
+                            "type" => "integer",
+                            "format" => "int64",
+                        ],
+                        "name" => [
+                            "type" => "string",
+                        ],
+                    ],
+                ],
+            ],
+        ],
+    ];
+}
+
+// file: src/Tqdev/PhpCrudApi/OpenApi/OpenApiDefinition.php
+
+class OpenApiDefinition extends DefaultOpenApiDefinition
+{
+    private function set(String $path, String $value) /*: void*/
+    {
+        $parts = explode('/', trim($path, '/'));
+        $current = &$this->root;
+        while (count($parts) > 0) {
+            $part = array_shift($parts);
+            if (!isset($current[$part])) {
+                $current[$part] = [];
+            }
+            $current = &$current[$part];
+        }
+        $current = $value;
+    }
+
+    public function setPaths(DatabaseDefinition $database): void
+    {
+        $result = [];
+        foreach ($database->getTables() as $database) {
+            $path = sprintf('/records/%s', $table->getName());
+            foreach (['get', 'post', 'put', 'patch', 'delete'] as $method) {
+                $this->set("/paths/$path/$method/description", "$method operation");
+            }
+        }
+    }
+
+    private function fillParametersWithPrimaryKey(String $method, TableDefinition $table) /*: void*/
+    {
+        if ($table->getPk() != null) {
+            $pathWithId = sprintf('/records/%s/{%s}', $table->getName(), $table->getPk()->getName());
+            $this->set("/paths/$pathWithId/$method/responses/200/description", "$method operation");
+        }
+    }
+}
+
+// file: src/Tqdev/PhpCrudApi/OpenApi/OpenApiService.php
+
+class OpenApiService
+{
+    private $tables;
+
+    public function __construct(ReflectionService $reflection)
+    {
+        $this->tables = $reflection->getDatabase();
+    }
+
+}
+
+// file: src/Tqdev/PhpCrudApi/Record/Condition/AndCondition.php
+
+class AndCondition extends Condition
+{
+    private $conditions;
+
+    public function __construct(Condition $condition1, Condition $condition2)
+    {
+        $this->conditions = [$condition1, $condition2];
+    }
+
+    public function _and(Condition $condition): Condition
+    {
+        if ($condition instanceof NoCondition) {
+            return $this;
+        }
+        $this->conditions[] = $condition;
+        return $this;
+    }
+
+    public function getConditions(): array
+    {
+        return $this->conditions;
+    }
+
+    public static function fromArray(array $conditions): Condition
+    {
+        $condition = new NoCondition();
+        foreach ($conditions as $c) {
+            $condition = $condition->_and($c);
+        }
+        return $condition;
+    }
+}
+
+// file: src/Tqdev/PhpCrudApi/Record/Condition/ColumnCondition.php
+
+class ColumnCondition extends Condition
+{
+    private $column;
+    private $operator;
+    private $value;
+
+    public function __construct(ReflectedColumn $column, String $operator, String $value)
+    {
+        $this->column = $column;
+        $this->operator = $operator;
+        $this->value = $value;
+    }
+
+    public function getColumn(): ReflectedColumn
+    {
+        return $this->column;
+    }
+
+    public function getOperator(): String
+    {
+        return $this->operator;
+    }
+
+    public function getValue(): String
+    {
+        return $this->value;
+    }
+}
+
+// file: src/Tqdev/PhpCrudApi/Record/Condition/Condition.php
+
+abstract class Condition
+{
+    public function _and(Condition $condition): Condition
+    {
+        if ($condition instanceof NoCondition) {
+            return $this;
+        }
+        return new AndCondition($this, $condition);
+    }
+
+    public function _or(Condition $condition): Condition
+    {
+        if ($condition instanceof NoCondition) {
+            return $this;
+        }
+        return new OrCondition($this, $condition);
+    }
+
+    public function _not(): Condition
+    {
+        return new NotCondition($this);
+    }
+
+    public static function fromString(ReflectedTable $table, String $value): Condition
+    {
+        $condition = new NoCondition();
+        $parts = explode(',', $value, 3);
+        if (count($parts) < 2) {
+            return null;
+        }
+        $field = $table->get($parts[0]);
+        $command = $parts[1];
+        $negate = false;
+        $spatial = false;
+        if (strlen($command) > 2) {
+            if (substr($command, 0, 1) == 'n') {
+                $negate = true;
+                $command = substr($command, 1);
+            }
+            if (substr($command, 0, 1) == 's') {
+                $spatial = true;
+                $command = substr($command, 1);
+            }
+        }
+        if (count($parts) == 3 || (count($parts) == 2 && in_array($command, ['ic', 'is', 'iv']))) {
+            if ($spatial) {
+                if (in_array($command, ['co', 'cr', 'di', 'eq', 'in', 'ov', 'to', 'wi', 'ic', 'is', 'iv'])) {
+                    $condition = new SpatialCondition($field, $command, $parts[2]);
+                }
+            } else {
+                if (in_array($command, ['cs', 'sw', 'ew', 'eq', 'lt', 'le', 'ge', 'gt', 'bt', 'in', 'is'])) {
+                    $condition = new ColumnCondition($field, $command, $parts[2]);
+                }
+            }
+        }
+        if ($negate) {
+            $condition = $condition->_not();
+        }
+        return $condition;
+    }
+
+}
+
+// file: src/Tqdev/PhpCrudApi/Record/Condition/NoCondition.php
+
+class NoCondition extends Condition
+{
+    public function _and(Condition $condition): Condition
+    {
+        return $condition;
+    }
+
+    public function _or(Condition $condition): Condition
+    {
+        return $condition;
+    }
+
+    public function not(): Condition
+    {
+        return $this;
+    }
+
+}
+
+// file: src/Tqdev/PhpCrudApi/Record/Condition/NotCondition.php
+
+class NotCondition extends Condition
+{
+    private $condition;
+
+    public function __construct(Condition $condition)
+    {
+        $this->condition = $condition;
+    }
+
+    public function getCondition(): Condition
+    {
+        return $this->condition;
+    }
+}
+
+// file: src/Tqdev/PhpCrudApi/Record/Condition/OrCondition.php
+
+class OrCondition extends Condition
+{
+    private $conditions;
+
+    public function __construct(Condition $condition1, Condition $condition2)
+    {
+        $this->conditions = [$condition1, $condition2];
+    }
+
+    public function _or(Condition $condition): Condition
+    {
+        if ($condition instanceof NoCondition) {
+            return $this;
+        }
+        $this->conditions[] = $condition;
+        return $this;
+    }
+
+    public function getConditions(): array
+    {
+        return $this->conditions;
+    }
+
+    public static function fromArray(array $conditions): Condition
+    {
+        $condition = new NoCondition();
+        foreach ($conditions as $c) {
+            $condition = $condition->_or($c);
+        }
+        return $condition;
+    }
+}
+
+// file: src/Tqdev/PhpCrudApi/Record/Condition/SpatialCondition.php
+
+class SpatialCondition extends ColumnCondition
+{
+}
+
+// file: src/Tqdev/PhpCrudApi/Record/Document/ErrorDocument.php
+
+class ErrorDocument implements \JsonSerializable
+{
+    public $code;
+    public $message;
+    public $details;
+
+    public function __construct(ErrorCode $errorCode, String $argument, $details)
+    {
+        $this->code = $errorCode->getCode();
+        $this->message = $errorCode->getMessage($argument);
+        $this->details = $details;
+    }
+
+    public function getCode(): int
+    {
+        return $this->code;
+    }
+
+    public function getMessage(): String
+    {
+        return $this->message;
+    }
+
+    public function serialize()
+    {
+        return [
+            'code' => $this->code,
+            'message' => $this->message,
+            'details' => $this->details,
+        ];
+    }
+
+    public function jsonSerialize()
+    {
+        return array_filter($this->serialize());
+    }
+}
+
+// file: src/Tqdev/PhpCrudApi/Record/Document/ListDocument.php
+
+class ListDocument implements \JsonSerializable
+{
+
+    private $records;
+
+    private $results;
+
+    public function __construct(array $records, int $results)
+    {
+        $this->records = $records;
+        $this->results = $results;
+    }
+
+    public function getRecords(): array
+    {
+        return $this->records;
+    }
+
+    public function getResults(): int
+    {
+        return $this->results;
+    }
+
+    public function serialize()
+    {
+        return [
+            'records' => $this->records,
+            'results' => $this->results,
+        ];
+    }
+
+    public function jsonSerialize()
+    {
+        return array_filter($this->serialize(), function ($v) {
+            return $v !== 0;
+        });
+    }
+}
+
+// file: src/Tqdev/PhpCrudApi/Record/ColumnSelector.php
+
+class ColumnSelector
+{
+
+    private function isMandatory(String $tableName, String $columnName, array $params): bool
+    {
+        return isset($params['mandatory']) && in_array($tableName . "." . $columnName, $params['mandatory']);
+    }
+
+    private function select(String $tableName, bool $primaryTable, array $params, String $paramName,
+        array $columnNames, bool $include): array{
+        if (!isset($params[$paramName])) {
+            return $columnNames;
+        }
+        $columns = array();
+        foreach (explode(',', $params[$paramName][0]) as $columnName) {
+            $columns[$columnName] = true;
+        }
+        $result = array();
+        foreach ($columnNames as $columnName) {
+            $match = isset($columns['*.*']);
+            if (!$match) {
+                $match = isset($columns[$tableName . '.*']) || isset($columns[$tableName . '.' . $columnName]);
+            }
+            if ($primaryTable && !$match) {
+                $match = isset($columns['*']) || isset($columns[$columnName]);
+            }
+            if ($match) {
+                if ($include || $this->isMandatory($tableName, $columnName, $params)) {
+                    $result[] = $columnName;
+                }
+            } else {
+                if (!$include || $this->isMandatory($tableName, $columnName, $params)) {
+                    $result[] = $columnName;
+                }
+            }
+        }
+        return $result;
+    }
+
+    public function getNames(ReflectedTable $table, bool $primaryTable, array $params): array
+    {
+        $tableName = $table->getName();
+        $results = $table->columnNames();
+        $results = $this->select($tableName, $primaryTable, $params, 'columns', $results, true);
+        $results = $this->select($tableName, $primaryTable, $params, 'exclude', $results, false);
+        return $results;
+    }
+
+    public function getValues(ReflectedTable $table, bool $primaryTable, /* object */ $record, array $params): array
+    {
+        $results = array();
+        $columnNames = $this->getNames($table, $primaryTable, $params);
+        foreach ($columnNames as $columnName) {
+            if (property_exists($record, $columnName)) {
+                $results[$columnName] = $record->$columnName;
+            }
+        }
+        return $results;
+    }
+
+}
+
+// file: src/Tqdev/PhpCrudApi/Record/ErrorCode.php
+
+class ErrorCode
+{
+
+    private $code;
+    private $message;
+    private $status;
+
+    const ERROR_NOT_FOUND = 9999;
+    const ROUTE_NOT_FOUND = 1000;
+    const TABLE_NOT_FOUND = 1001;
+    const ARGUMENT_COUNT_MISMATCH = 1002;
+    const RECORD_NOT_FOUND = 1003;
+    const ORIGIN_FORBIDDEN = 1004;
+    const COLUMN_NOT_FOUND = 1005;
+    const TABLE_ALREADY_EXISTS = 1006;
+    const COLUMN_ALREADY_EXISTS = 1007;
+    const HTTP_MESSAGE_NOT_READABLE = 1008;
+    const DUPLICATE_KEY_EXCEPTION = 1009;
+    const DATA_INTEGRITY_VIOLATION = 1010;
+    const AUTHORIZATION_REQUIRED = 1011;
+    const ACCESS_DENIED = 1012;
+    const INPUT_VALIDATION_FAILED = 1013;
+
+    private $values = [
+        9999 => ["%s", Response::INTERNAL_SERVER_ERROR],
+        1000 => ["Route '%s' not found", Response::NOT_FOUND],
+        1001 => ["Table '%s' not found", Response::NOT_FOUND],
+        1002 => ["Argument count mismatch in '%s'", Response::UNPROCESSABLE_ENTITY],
+        1003 => ["Record '%s' not found", Response::NOT_FOUND],
+        1004 => ["Origin '%s' is forbidden", Response::FORBIDDEN],
+        1005 => ["Column '%s' not found", Response::NOT_FOUND],
+        1006 => ["Table '%s' already exists", Response::CONFLICT],
+        1007 => ["Column '%s' already exists", Response::CONFLICT],
+        1008 => ["Cannot read HTTP message", Response::UNPROCESSABLE_ENTITY],
+        1009 => ["Duplicate key exception", Response::CONFLICT],
+        1010 => ["Data integrity violation", Response::CONFLICT],
+        1011 => ["Authorization required", Response::UNAUTHORIZED],
+        1012 => ["Access denied for '%s'", Response::FORBIDDEN],
+        1013 => ["Input validation failed for '%s'", Response::UNPROCESSABLE_ENTITY],
+    ];
+
+    public function __construct(int $code)
+    {
+        if (!isset($this->values[$code])) {
+            $code = 9999;
+        }
+        $this->code = $code;
+        $this->message = $this->values[$code][0];
+        $this->status = $this->values[$code][1];
+    }
+
+    public function getCode(): int
+    {
+        return $this->code;
+    }
+
+    public function getMessage(String $argument): String
+    {
+        return sprintf($this->message, $argument);
+    }
+
+    public function getStatus(): int
+    {
+        return $this->status;
+    }
+
+}
+
+// file: src/Tqdev/PhpCrudApi/Record/FilterInfo.php
+
+class FilterInfo
+{
+
+    private function addConditionFromFilterPath(PathTree $conditions, array $path, ReflectedTable $table, array $params)
+    {
+        $key = 'filter' . implode('', $path);
+        if (isset($params[$key])) {
+            foreach ($params[$key] as $filter) {
+                $condition = Condition::fromString($table, $filter);
+                if ($condition != null) {
+                    $conditions->put($path, $condition);
+                }
+            }
+        }
+    }
+
+    private function getConditionsAsPathTree(ReflectedTable $table, array $params): PathTree
+    {
+        $conditions = new PathTree();
+        $this->addConditionFromFilterPath($conditions, [], $table, $params);
+        for ($n = ord('0'); $n <= ord('9'); $n++) {
+            $this->addConditionFromFilterPath($conditions, [chr($n)], $table, $params);
+            for ($l = ord('a'); $l <= ord('f'); $l++) {
+                $this->addConditionFromFilterPath($conditions, [chr($n), chr($l)], $table, $params);
+            }
+        }
+        return $conditions;
+    }
+
+    private function combinePathTreeOfConditions(PathTree $tree): Condition
+    {
+        $andConditions = $tree->getValues();
+        $and = AndCondition::fromArray($andConditions);
+        $orConditions = [];
+        foreach ($tree->getKeys() as $p) {
+            $orConditions[] = $this->combinePathTreeOfConditions($tree->get($p));
+        }
+        $or = OrCondition::fromArray($orConditions);
+        return $and->_and($or);
+    }
+
+    public function getCombinedConditions(ReflectedTable $table, array $params): Condition
+    {
+        return $this->combinePathTreeOfConditions($this->getConditionsAsPathTree($table, $params));
+    }
+
+}
+
+// file: src/Tqdev/PhpCrudApi/Record/HabtmValues.php
+
+class HabtmValues
+{
+    public $pkValues;
+    public $fkValues;
+
+    public function __construct(array $pkValues, array $fkValues)
+    {
+        $this->pkValues = $pkValues;
+        $this->fkValues = $fkValues;
+    }
+}
+
+// file: src/Tqdev/PhpCrudApi/Record/OrderingInfo.php
+
+class OrderingInfo
+{
+
+    public function getColumnOrdering(ReflectedTable $table, array $params): array
+    {
+        $fields = array();
+        if (isset($params['order'])) {
+            foreach ($params['order'] as $order) {
+                $parts = explode(',', $order, 3);
+                $columnName = $parts[0];
+                if (!$table->exists($columnName)) {
+                    continue;
+                }
+                $ascending = 'ASC';
+                if (count($parts) > 1) {
+                    if (substr(strtoupper($parts[1]), 0, 4) == "DESC") {
+                        $ascending = 'DESC';
+                    }
+                }
+                $fields[] = [$columnName, $ascending];
+            }
+        }
+        if (count($fields) == 0) {
+            $fields[] = [$table->getPk()->getName(), 'ASC'];
+        }
+        return $fields;
+    }
+}
+
+// file: src/Tqdev/PhpCrudApi/Record/PaginationInfo.php
+
+class PaginationInfo
+{
+
+    public $DEFAULT_PAGE_SIZE = 20;
+
+    public function hasPage(array $params): bool
+    {
+        return isset($params['page']);
+    }
+
+    public function getPageOffset(array $params): int
+    {
+        $offset = 0;
+        $pageSize = $this->getPageSize($params);
+        if (isset($params['page'])) {
+            foreach ($params['page'] as $page) {
+                $parts = explode(',', $page, 2);
+                $page = intval($parts[0]) - 1;
+                $offset = $page * $pageSize;
+            }
+        }
+        return $offset;
+    }
+
+    public function getPageSize(array $params): int
+    {
+        $pageSize = $this->DEFAULT_PAGE_SIZE;
+        if (isset($params['page'])) {
+            foreach ($params['page'] as $page) {
+                $parts = explode(',', $page, 2);
+                if (count($parts) > 1) {
+                    $pageSize = intval($parts[1]);
+                }
+            }
+        }
+        return $pageSize;
+    }
+
+    public function getResultSize(array $params): int
+    {
+        $numberOfRows = -1;
+        if (isset($params['size'])) {
+            foreach ($params['size'] as $size) {
+                $numberOfRows = intval($size);
+            }
+        }
+        return $numberOfRows;
+    }
+
+}
+
+// file: src/Tqdev/PhpCrudApi/Record/PathTree.php
+
+class PathTree
+{
+
+    private $values = array();
+
+    private $branches = array();
+
+    public function getValues(): array
+    {
+        return $this->values;
+    }
+
+    public function put(array $path, $value)
+    {
+        if (count($path) == 0) {
+            $this->values[] = $value;
+            return;
+        }
+        $key = array_shift($path);
+        if (!isset($this->branches[$key])) {
+            $this->branches[$key] = new PathTree();
+        }
+        $tree = $this->branches[$key];
+        $tree->put($path, $value);
+    }
+
+    public function getKeys(): array
+    {
+        return array_keys($this->branches);
+    }
+
+    public function has($key): bool
+    {
+        return isset($this->branches[$key]);
+    }
+
+    public function get($key): PathTree
+    {
+        return $this->branches[$key];
+    }
+}
+
+// file: src/Tqdev/PhpCrudApi/Record/RecordService.php
+
+class RecordService
+{
+    private $db;
+    private $tables;
+    private $columns;
+    private $includer;
+    private $filters;
+    private $ordering;
+    private $pagination;
+
+    public function __construct(GenericDB $db, ReflectionService $reflection)
+    {
+        $this->db = $db;
+        $this->tables = $reflection->getDatabase();
+        $this->columns = new ColumnSelector();
+        $this->includer = new RelationIncluder($this->columns);
+        $this->filters = new FilterInfo();
+        $this->ordering = new OrderingInfo();
+        $this->pagination = new PaginationInfo();
+    }
+
+    private function sanitizeRecord(String $tableName, /* object */ $record, String $id)
+    {
+        $keyset = array_keys((array) $record);
+        foreach ($keyset as $key) {
+            if (!$this->tables->get($tableName)->exists($key)) {
+                unset($record->$key);
+            }
+        }
+        if ($id != '') {
+            $pk = $this->tables->get($tableName)->getPk();
+            foreach ($this->tables->get($tableName)->columnNames() as $key) {
+                $field = $this->tables->get($tableName)->get($key);
+                if ($field->getName() == $pk->getName()) {
+                    unset($record->$key);
+                }
+            }
+        }
+    }
+
+    public function exists(String $table): bool
+    {
+        return $this->tables->exists($table);
+    }
+
+    public function create(String $tableName, /* object */ $record, array $params)
+    {
+        $this->sanitizeRecord($tableName, $record, '');
+        $table = $this->tables->get($tableName);
+        $columnValues = $this->columns->getValues($table, true, $record, $params);
+        return $this->db->createSingle($table, $columnValues);
+    }
+
+    public function read(String $tableName, String $id, array $params) /*: ?object*/
+    {
+        $table = $this->tables->get($tableName);
+        $this->includer->addMandatoryColumns($table, $this->tables, $params);
+        $columnNames = $this->columns->getNames($table, true, $params);
+        $record = $this->db->selectSingle($table, $columnNames, $id);
+        if ($record == null) {
+            return null;
+        }
+        $records = array($record);
+        $this->includer->addIncludes($table, $records, $this->tables, $params, $this->db);
+        return $records[0];
+    }
+
+    public function update(String $tableName, String $id, /* object */ $record, array $params)
+    {
+        $this->sanitizeRecord($tableName, $record, $id);
+        $table = $this->tables->get($tableName);
+        $columnValues = $this->columns->getValues($table, true, $record, $params);
+        return $this->db->updateSingle($table, $columnValues, $id);
+    }
+
+    public function delete(String $tableName, String $id, array $params)
+    {
+        $table = $this->tables->get($tableName);
+        return $this->db->deleteSingle($table, $id);
+    }
+
+    public function _list(String $tableName, array $params): ListDocument
+    {
+        $table = $this->tables->get($tableName);
+        $this->includer->addMandatoryColumns($table, $this->tables, $params);
+        $columnNames = $this->columns->getNames($table, true, $params);
+        $condition = $this->filters->getCombinedConditions($table, $params);
+        $columnOrdering = $this->ordering->getColumnOrdering($table, $params);
+        if (!$this->pagination->hasPage($params)) {
+            $offset = 0;
+            $limit = $this->pagination->getResultSize($params);
+            $count = 0;
+        } else {
+            $offset = $this->pagination->getPageOffset($params);
+            $limit = $this->pagination->getPageSize($params);
+            $count = $this->db->selectCount($table, $condition);
+        }
+        $records = $this->db->selectAll($table, $columnNames, $condition, $columnOrdering, $offset, $limit);
+        $this->includer->addIncludes($table, $records, $this->tables, $params, $this->db);
+        return new ListDocument($records, $count);
+    }
+}
+
+// file: src/Tqdev/PhpCrudApi/Record/RelationIncluder.php
+
+class RelationIncluder
+{
+
+    private $columns;
+
+    public function __construct(ColumnSelector $columns)
+    {
+        $this->columns = $columns;
+    }
+
+    public function addMandatoryColumns(ReflectedTable $table, ReflectedDatabase $tables, array &$params)/*: void*/
+    {
+        if (!isset($params['include']) || !isset($params['columns'])) {
+            return;
+        }
+        $params['mandatory'] = array();
+        foreach ($params['include'] as $tableNames) {
+            $t1 = $table;
+            foreach (explode(',', $tableNames) as $tableName) {
+                if (!$tables->exists($tableName)) {
+                    continue;
+                }
+                $t2 = $tables->get($tableName);
+                $fks1 = $t1->getFksTo($t2->getName());
+                $t3 = $this->hasAndBelongsToMany($t1, $t2, $tables);
+                if ($t3 != null || count($fks1) > 0) {
+                    $params['mandatory'][] = $t2->getName() . '.' . $t2->getPk()->getName();
+                }
+                foreach ($fks1 as $fk) {
+                    $params['mandatory'][] = $t1->getName() . '.' . $fk->getName();
+                }
+                $fks2 = $t2->getFksTo($t1->getName());
+                if ($t3 != null || count($fks2) > 0) {
+                    $params['mandatory'][] = $t1->getName() . '.' . $t1->getPk()->getName();
+                }
+                foreach ($fks2 as $fk) {
+                    $params['mandatory'][] = $t2->getName() . '.' . $fk->getName();
+                }
+                $t1 = $t2;
+            }
+        }
+    }
+
+    private function getIncludesAsPathTree(ReflectedDatabase $tables, array $params): PathTree
+    {
+        $includes = new PathTree();
+        if (isset($params['include'])) {
+            foreach ($params['include'] as $tableNames) {
+                $path = array();
+                foreach (explode(',', $tableNames) as $tableName) {
+                    $t = $tables->get($tableName);
+                    if ($t != null) {
+                        $path[] = $t->getName();
+                    }
+                }
+                $includes->put($path, true);
+            }
+        }
+        return $includes;
+    }
+
+    public function addIncludes(ReflectedTable $table, array &$records, ReflectedDatabase $tables, array $params,
+        GenericDB $db)/*: void*/{
+
+        $includes = $this->getIncludesAsPathTree($tables, $params);
+        $this->addIncludesForTables($table, $includes, $records, $tables, $params, $db);
+    }
+
+    private function hasAndBelongsToMany(ReflectedTable $t1, ReflectedTable $t2, ReflectedDatabase $tables) /*: ?ReflectedTable*/
+    {
+        foreach ($tables->getTableNames() as $tableName) {
+            $t3 = $tables->get($tableName);
+            if (count($t3->getFksTo($t1->getName())) > 0 && count($t3->getFksTo($t2->getName())) > 0) {
+                return $t3;
+            }
+        }
+        return null;
+    }
+
+    private function addIncludesForTables(ReflectedTable $t1, PathTree $includes, array &$records,
+        ReflectedDatabase $tables, array $params, GenericDB $db) {
+
+        foreach ($includes->getKeys() as $t2Name) {
+
+            $t2 = $tables->get($t2Name);
+
+            $belongsTo = count($t1->getFksTo($t2->getName())) > 0;
+            $hasMany = count($t2->getFksTo($t1->getName())) > 0;
+            $t3 = $this->hasAndBelongsToMany($t1, $t2, $tables);
+            $hasAndBelongsToMany = ($t3 != null);
+
+            $newRecords = array();
+            $fkValues = null;
+            $pkValues = null;
+            $habtmValues = null;
+
+            if ($belongsTo) {
+                $fkValues = $this->getFkEmptyValues($t1, $t2, $records);
+                $this->addFkRecords($t2, $fkValues, $params, $db, $newRecords);
+            }
+            if ($hasMany) {
+                $pkValues = $this->getPkEmptyValues($t1, $records);
+                $this->addPkRecords($t1, $t2, $pkValues, $params, $db, $newRecords);
+            }
+            if ($hasAndBelongsToMany) {
+                $habtmValues = $this->getHabtmEmptyValues($t1, $t2, $t3, $db, $records);
+                $this->addFkRecords($t2, $habtmValues->fkValues, $params, $db, $newRecords);
+            }
+
+            $this->addIncludesForTables($t2, $includes->get($t2Name), $newRecords, $tables, $params, $db);
+
+            if ($fkValues != null) {
+                $this->fillFkValues($t2, $newRecords, $fkValues);
+                $this->setFkValues($t1, $t2, $records, $fkValues);
+            }
+            if ($pkValues != null) {
+                $this->fillPkValues($t1, $t2, $newRecords, $pkValues);
+                $this->setPkValues($t1, $t2, $records, $pkValues);
+            }
+            if ($habtmValues != null) {
+                $this->fillFkValues($t2, $newRecords, $habtmValues->fkValues);
+                $this->setHabtmValues($t1, $t3, $records, $habtmValues);
+            }
+        }
+    }
+
+    private function getFkEmptyValues(ReflectedTable $t1, ReflectedTable $t2, array $records): array
+    {
+        $fkValues = array();
+        $fks = $t1->getFksTo($t2->getName());
+        foreach ($fks as $fk) {
+            $fkName = $fk->getName();
+            foreach ($records as $record) {
+                if (isset($record[$fkName])) {
+                    $fkValue = $record[$fkName];
+                    $fkValues[$fkValue] = null;
+                }
+            }
+        }
+        return $fkValues;
+    }
+
+    private function addFkRecords(ReflectedTable $t2, array $fkValues, array $params, GenericDB $db, array &$records)/*: void*/
+    {
+        $pk = $t2->getPk();
+        $columnNames = $this->columns->getNames($t2, false, $params);
+        $fkIds = array_keys($fkValues);
+
+        foreach ($db->selectMultiple($t2, $columnNames, $fkIds) as $record) {
+            $records[] = $record;
+        }
+    }
+
+    private function fillFkValues(ReflectedTable $t2, array $fkRecords, array &$fkValues)/*: void*/
+    {
+        $pkName = $t2->getPk()->getName();
+        foreach ($fkRecords as $fkRecord) {
+            $pkValue = $fkRecord[$pkName];
+            $fkValues[$pkValue] = $fkRecord;
+        }
+    }
+
+    private function setFkValues(ReflectedTable $t1, ReflectedTable $t2, array &$records, array $fkValues)/*: void*/
+    {
+        $fks = $t1->getFksTo($t2->getName());
+        foreach ($fks as $fk) {
+            $fkName = $fk->getName();
+            foreach ($records as $i => $record) {
+                if (isset($record[$fkName])) {
+                    $key = $record[$fkName];
+                    $records[$i][$fkName] = $fkValues[$key];
+                }
+            }
+        }
+    }
+
+    private function getPkEmptyValues(ReflectedTable $t1, array $records): array
+    {
+        $pkValues = array();
+        $pkName = $t1->getPk()->getName();
+        foreach ($records as $record) {
+            $key = $record[$pkName];
+            $pkValues[$key] = array();
+        }
+        return $pkValues;
+    }
+
+    private function addPkRecords(ReflectedTable $t1, ReflectedTable $t2, array $pkValues, array $params, GenericDB $db, array &$records)/*: void*/
+    {
+        $fks = $t2->getFksTo($t1->getName());
+        $columnNames = $this->columns->getNames($t2, false, $params);
+        $pkValueKeys = implode(',', array_keys($pkValues));
+        $conditions = array();
+        foreach ($fks as $fk) {
+            $conditions[] = new ColumnCondition($fk, 'in', $pkValueKeys);
+        }
+        $condition = OrCondition::fromArray($conditions);
+        foreach ($db->selectAllUnordered($t2, $columnNames, $condition) as $record) {
+            $records[] = $record;
+        }
+    }
+
+    private function fillPkValues(ReflectedTable $t1, ReflectedTable $t2, array $pkRecords, array &$pkValues)/*: void*/
+    {
+        $fks = $t2->getFksTo($t1->getName());
+        foreach ($fks as $fk) {
+            $fkName = $fk->getName();
+            foreach ($pkRecords as $pkRecord) {
+                $key = $pkRecord[$fkName];
+                if (isset($pkValues[$key])) {
+                    $pkValues[$key][] = $pkRecord;
+                }
+            }
+        }
+    }
+
+    private function setPkValues(ReflectedTable $t1, ReflectedTable $t2, array &$records, array $pkValues)/*: void*/
+    {
+        $pkName = $t1->getPk()->getName();
+        $t2Name = $t2->getName();
+
+        foreach ($records as $i => $record) {
+            $key = $record[$pkName];
+            $records[$i][$t2Name] = $pkValues[$key];
+        }
+    }
+
+    private function getHabtmEmptyValues(ReflectedTable $t1, ReflectedTable $t2, ReflectedTable $t3, GenericDB $db, array $records): HabtmValues
+    {
+        $pkValues = $this->getPkEmptyValues($t1, $records);
+        $fkValues = array();
+
+        $fk1 = $t3->getFksTo($t1->getName())[0];
+        $fk2 = $t3->getFksTo($t2->getName())[0];
+
+        $fk1Name = $fk1->getName();
+        $fk2Name = $fk2->getName();
+
+        $columnNames = array($fk1Name, $fk2Name);
+
+        $pkIds = implode(',', array_keys($pkValues));
+        $condition = new ColumnCondition($t3->get($fk1Name), 'in', $pkIds);
+
+        $records = $db->selectAllUnordered($t3, $columnNames, $condition);
+        foreach ($records as $record) {
+            $val1 = $record[$fk1Name];
+            $val2 = $record[$fk2Name];
+            $pkValues[$val1][] = $val2;
+            $fkValues[$val2] = null;
+        }
+
+        return new HabtmValues($pkValues, $fkValues);
+    }
+
+    private function setHabtmValues(ReflectedTable $t1, ReflectedTable $t3, array &$records, HabtmValues $habtmValues)/*: void*/
+    {
+        $pkName = $t1->getPk()->getName();
+        $t3Name = $t3->getName();
+        foreach ($records as $i => $record) {
+            $key = $record[$pkName];
+            $val = array();
+            $fks = $habtmValues->pkValues[$key];
+            foreach ($fks as $fk) {
+                $val[] = $habtmValues->fkValues[$fk];
+            }
+            $records[$i][$t3Name] = $val;
+        }
+    }
+}
+
+// file: src/Tqdev/PhpCrudApi/Api.php
+
+class Api
+{
+    private $router;
+    private $responder;
+    private $debug;
+
+    public function __construct(Config $config)
+    {
+        $db = new GenericDB(
+            $config->getDriver(),
+            $config->getAddress(),
+            $config->getPort(),
+            $config->getDatabase(),
+            $config->getUsername(),
+            $config->getPassword()
+        );
+        $cache = CacheFactory::create($config);
+        $reflection = new ReflectionService($db, $cache, $config->getCacheTime());
+        $definition = new DefinitionService($db, $reflection);
+        $responder = new Responder();
+        $router = new SimpleRouter($responder);
+        foreach ($config->getMiddlewares() as $middleware => $properties) {
+            switch ($middleware) {
+                case 'cors':
+                    new CorsMiddleware($router, $responder, $properties);
+                    break;
+                case 'firewall':
+                    new FirewallMiddleware($router, $responder, $properties);
+                    break;
+                case 'basicAuth':
+                    new BasicAuthMiddleware($router, $responder, $properties);
+                    break;
+                case 'validation':
+                    new ValidationMiddleware($router, $responder, $properties, $reflection);
+                    break;
+                case 'sanitation':
+                    new SanitationMiddleware($router, $responder, $properties, $reflection);
+                    break;
+            }
+        }
+        $data = new RecordService($db, $reflection);
+        $openApi = new OpenApiService($reflection);
+        foreach ($config->getControllers() as $controller) {
+            switch ($controller) {
+                case 'records':
+                    new RecordController($router, $responder, $data);
+                    break;
+                case 'columns':
+                    new ColumnController($router, $responder, $reflection, $definition);
+                    break;
+                case 'cache':
+                    new CacheController($router, $responder, $cache);
+                    break;
+                case 'openapi':
+                    new OpenApiController($router, $responder, $openApi);
+                    break;
+            }
+        }
+        $this->router = $router;
+        $this->responder = $responder;
+        $this->debug = $config->getDebug();
+    }
+
+    public function handle(Request $request): Response
+    {
+        $response = null;
+        try {
+            $response = $this->router->route($request);
+        } catch (\Throwable $e) {
+            if ($e instanceof \PDOException) {
+                if (strpos(strtolower($e->getMessage()), 'duplicate') !== false) {
+                    return $this->responder->error(ErrorCode::DUPLICATE_KEY_EXCEPTION, '');
+                }
+                if (strpos(strtolower($e->getMessage()), 'default value') !== false) {
+                    return $this->responder->error(ErrorCode::DATA_INTEGRITY_VIOLATION, '');
+                }
+                if (strpos(strtolower($e->getMessage()), 'allow nulls') !== false) {
+                    return $this->responder->error(ErrorCode::DATA_INTEGRITY_VIOLATION, '');
+                }
+                if (strpos(strtolower($e->getMessage()), 'constraint') !== false) {
+                    return $this->responder->error(ErrorCode::DATA_INTEGRITY_VIOLATION, '');
+                }
+            }
+            $response = $this->responder->error(ErrorCode::ERROR_NOT_FOUND, $e->getMessage());
+            if ($this->debug) {
+                $response->addHeader('X-Debug-Info', 'Exception in ' . $e->getFile() . ' on line ' . $e->getLine());
+            }
+        }
+        return $response;
+    }
+}
+
+// file: src/Tqdev/PhpCrudApi/Config.php
+
+class Config
+{
+    private $values = [
+        'driver' => null,
+        'address' => 'localhost',
+        'port' => null,
+        'username' => null,
+        'password' => null,
+        'database' => null,
+        'middlewares' => 'cors',
+        'controllers' => 'records,columns,cache,openapi',
+        'cacheType' => 'TempFile',
+        'cachePath' => '',
+        'cacheTime' => 10,
+        'debug' => false,
+    ];
+
+    private function getDefaultDriver(array $values): String
+    {
+        if (isset($values['driver'])) {
+            return $values['driver'];
+        }
+        return 'mysql';
+    }
+
+    private function getDefaultPort(String $driver): int
+    {
+        switch ($driver) {
+            case 'mysql':return 3306;
+            case 'pgsql':return 5432;
+            case 'sqlsrv':return 1433;
+        }
+    }
+
+    private function getDefaultAddress(String $driver): String
+    {
+        switch ($driver) {
+            case 'mysql':return 'localhost';
+            case 'pgsql':return 'localhost';
+            case 'sqlsrv':return 'localhost';
+        }
+    }
+
+    private function getDriverDefaults(String $driver): array
+    {
+        return [
+            'driver' => $driver,
+            'address' => $this->getDefaultAddress($driver),
+            'port' => $this->getDefaultPort($driver),
+        ];
+    }
+
+    public function __construct(array $values)
+    {
+        $driver = $this->getDefaultDriver($values);
+        $defaults = $this->getDriverDefaults($driver);
+        $newValues = array_merge($this->values, $defaults, $values);
+        $newValues = $this->parseMiddlewares($newValues);
+        $diff = array_diff_key($newValues, $this->values);
+        if (!empty($diff)) {
+            $key = array_keys($diff)[0];
+            throw new \Exception("Config has invalid value '$key'");
+        }
+        $this->values = $newValues;
+    }
+
+    private function parseMiddlewares(array $values): array
+    {
+        $newValues = array();
+        $properties = array();
+        $middlewares = array_map('trim', explode(',', $values['middlewares']));
+        foreach ($middlewares as $middleware) {
+            $properties[$middleware] = [];
+        }
+        foreach ($values as $key => $value) {
+            if (strpos($key, '.') === false) {
+                $newValues[$key] = $value;
+            } else {
+                list($middleware, $key2) = explode('.', $key, 2);
+                if (isset($properties[$middleware])) {
+                    $properties[$middleware][$key2] = $value;
+                } else {
+                    throw new \Exception("Config has invalid value '$key'");
+                }
+            }
+        }
+        $newValues['middlewares'] = $properties;
+        return $newValues;
+    }
+
+    public function getDriver(): String
+    {
+        return $this->values['driver'];
+    }
+
+    public function getAddress(): String
+    {
+        return $this->values['address'];
+    }
+
+    public function getPort(): int
+    {
+        return $this->values['port'];
+    }
+
+    public function getUsername(): String
+    {
+        return $this->values['username'];
+    }
+
+    public function getPassword(): String
+    {
+        return $this->values['password'];
+    }
+
+    public function getDatabase(): String
+    {
+        return $this->values['database'];
+    }
+
+    public function getMiddlewares(): array
+    {
+        return $this->values['middlewares'];
+    }
+
+    public function getControllers(): array
+    {
+        return array_map('trim', explode(',', $this->values['controllers']));
+    }
+
+    public function getCacheType(): String
+    {
+        return $this->values['cacheType'];
+    }
+
+    public function getCachePath(): String
+    {
+        return $this->values['cachePath'];
+    }
+
+    public function getCacheTime(): int
+    {
+        return $this->values['cacheTime'];
+    }
+
+    public function getDebug(): String
+    {
+        return $this->values['debug'];
+    }
+}
+
+// file: src/Tqdev/PhpCrudApi/Request.php
+
+class Request
+{
+    private $method;
+    private $path;
+    private $pathSegments;
+    private $params;
+    private $body;
+    private $headers;
+
+    public function __construct(String $method = null, String $path = null, String $query = null, array $headers = null, String $body = null)
+    {
+        $this->parseMethod($method);
+        $this->parsePath($path);
+        $this->parseParams($query);
+        $this->parseHeaders($headers);
+        $this->parseBody($body);
+    }
+
+    private function parseMethod(String $method = null)
+    {
+        if (!$method) {
+            if (isset($_SERVER['REQUEST_METHOD'])) {
+                $method = $_SERVER['REQUEST_METHOD'];
+            } else {
+                $method = 'GET';
+            }
+        }
+        $this->method = $method;
+    }
+
+    private function parsePath(String $path = null)
+    {
+        if (!$path) {
+            if (isset($_SERVER['PATH_INFO'])) {
+                $path = $_SERVER['PATH_INFO'];
+            } else {
+                $path = '/';
+            }
+        }
+        $this->path = $path;
+        $this->pathSegments = explode('/', $path);
+    }
+
+    private function parseParams(String $query = null)
+    {
+        if (!$query) {
+            if (isset($_SERVER['QUERY_STRING'])) {
+                $query = $_SERVER['QUERY_STRING'];
+            } else {
+                $query = '';
+            }
+        }
+        $query = str_replace('][]=', ']=', str_replace('=', '[]=', $query));
+        parse_str($query, $this->params);
+    }
+
+    private function parseHeaders(array $headers = null)
+    {
+        if (!$headers) {
+            $headers = array();
+            foreach ($_SERVER as $name => $value) {
+                if (substr($name, 0, 5) == 'HTTP_') {
+                    $key = str_replace(' ', '-', ucwords(strtolower(str_replace('_', ' ', substr($name, 5)))));
+                    $headers[$key] = $value;
+                }
+            }
+        }
+        $this->headers = $headers;
+    }
+
+    private function parseBody(String $body = null)
+    {
+        if (!$body) {
+            $body = file_get_contents('php://input');
+        }
+        $this->body = $body;
+    }
+
+    public function getMethod(): String
+    {
+        return $this->method;
+    }
+
+    public function getPath(): String
+    {
+        return $this->path;
+    }
+
+    public function getPathSegment(int $part): String
+    {
+        if ($part < 0 || $part >= count($this->pathSegments)) {
+            return '';
+        }
+        return $this->pathSegments[$part];
+    }
+
+    public function getParams(): array
+    {
+        return $this->params;
+    }
+
+    public function getBody() /*: ?array*/
+    {
+        $body = $this->body;
+        $first = substr($body, 0, 1);
+        if ($first == '[' || $first == '{') {
+            $body = json_decode($body);
+            $causeCode = json_last_error();
+            if ($causeCode !== JSON_ERROR_NONE) {
+                return null;
+            }
+        } else {
+            parse_str($body, $input);
+            foreach ($input as $key => $value) {
+                if (substr($key, -9) == '__is_null') {
+                    $input[substr($key, 0, -9)] = null;
+                    unset($input[$key]);
+                }
+            }
+            $body = (object) $input;
+        }
+        return $body;
+    }
+
+    public function addHeader(String $key, String $value)
+    {
+        $this->headers[$key] = $value;
+    }
+
+    public function getHeader(String $key): String
+    {
+        if (isset($this->headers[$key])) {
+            return $this->headers[$key];
+        }
+        return '';
+    }
+
+    public function getHeaders(): array
+    {
+        return $this->headers;
+    }
+
+    public static function fromString(String $request): Request
+    {
+        $parts = explode("\n\n", trim($request), 2);
+        $head = $parts[0];
+        $body = isset($parts[1]) ? $parts[1] : null;
+        $lines = explode("\n", $head);
+        $line = explode(' ', trim(array_shift($lines)), 2);
+        $method = $line[0];
+        $url = isset($line[1]) ? $line[1] : '';
+        $path = parse_url($url, PHP_URL_PATH);
+        $query = parse_url($url, PHP_URL_QUERY);
+        $headers = array();
+        foreach ($lines as $line) {
+            list($key, $value) = explode(':', $line, 2);
+            $headers[$key] = trim($value);
+        }
+        return new Request($method, $path, $query, $headers, $body);
+    }
+}
+
+// file: src/Tqdev/PhpCrudApi/Response.php
+
+class Response
+{
+    const OK = 200;
+    const UNAUTHORIZED = 401;
+    const FORBIDDEN = 403;
+    const NOT_FOUND = 404;
+    const CONFLICT = 409;
+    const UNPROCESSABLE_ENTITY = 422;
+    const INTERNAL_SERVER_ERROR = 500;
+
+    private $status;
+    private $headers;
+    private $body;
+
+    public function __construct(int $status, $body)
+    {
+        $this->status = $status;
+        $this->headers = array();
+        $this->parseBody($body);
+    }
+
+    private function parseBody($body)
+    {
+        if ($body === '') {
+            $this->body = '';
+        } else {
+            $data = json_encode($body, JSON_UNESCAPED_UNICODE);
+            $this->addHeader('Content-Type', 'application/json');
+            $this->addHeader('Content-Length', strlen($data));
+            $this->body = $data;
+        }
+    }
+
+    public function getStatus(): int
+    {
+        return $this->status;
+    }
+
+    public function getBody(): String
+    {
+        return $this->body;
+    }
+
+    public function addHeader(String $key, String $value)
+    {
+        $this->headers[$key] = $value;
+    }
+
+    public function getHeader(String $key): String
+    {
+        if (isset($this->headers[$key])) {
+            return $this->headers[$key];
+        }
+        return null;
+    }
+
+    public function getHeaders(): array
+    {
+        return $this->headers;
+    }
+
+    public function output()
+    {
+        http_response_code($this->getStatus());
+        foreach ($this->headers as $key => $value) {
+            header("$key: $value");
+        }
+        echo $this->getBody();
+    }
+
+    public function __toString(): String
+    {
+        $str = "$this->status\n";
+        foreach ($this->headers as $key => $value) {
+            $str .= "$key: $value\n";
+        }
+        if ($this->body !== '') {
+            $str .= "\n";
+            $str .= "$this->body\n";
+        }
+        return $str;
+    }
+}
+
+// file: src/index.php
+
+$config = new Config([
+    'username' => 'php-crud-api',
+    'password' => 'php-crud-api',
+    'database' => 'php-crud-api',
+]);
+$request = new Request();
+$api = new Api($config);
+$response = $api->handle($request);
+$response->output();

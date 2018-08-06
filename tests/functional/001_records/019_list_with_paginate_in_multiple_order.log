@@ -1,0 +1,7 @@
+GET /records/posts?page=1,2&order=category_id,asc&order=id,desc
+===
+200
+Content-Type: application/json
+Content-Length: 133
+
+{"records":[{"id":14,"user_id":1,"category_id":1,"content":"#10"},{"id":13,"user_id":1,"category_id":1,"content":"#9"}],"results":12}

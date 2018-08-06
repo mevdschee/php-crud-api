@@ -1,0 +1,10 @@
+POST /records/posts
+Content-Type: application/json
+
+{"}
+===
+422
+Content-Type: application/json
+Content-Length: 50
+
+{"code":1008,"message":"Cannot read HTTP message"}

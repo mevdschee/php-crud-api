@@ -1,0 +1,7 @@
+GET /records/posts?include=categories&include=tags&include=comments&filter=id,eq,1
+===
+200
+Content-Type: application/json
+Content-Length: 318
+
+{"records":[{"id":1,"user_id":1,"category_id":{"id":1,"name":"announcement","icon":null},"content":"blog started","post_tags":[{"id":1,"name":"funny","is_important":false},{"id":2,"name":"important","is_important":true}],"comments":[{"id":1,"post_id":1,"message":"great"},{"id":2,"post_id":1,"message":"fantastic"}]}]}

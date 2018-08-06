@@ -1,0 +1,7 @@
+GET /records/categories
+===
+200
+Content-Type: application/json
+Content-Length: 112
+
+{"records":[{"id":1,"name":"announcement","icon":null},{"id":2,"name":"article","icon":"4oKsIABhYmMACg1cYgA="}]}

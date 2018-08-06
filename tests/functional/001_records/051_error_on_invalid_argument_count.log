@@ -1,0 +1,9 @@
+PUT /records/posts/1
+
+[{"id":1},{"id":2}]
+===
+422
+Content-Type: application/json
+Content-Length: 56
+
+{"code":1002,"message":"Argument count mismatch in '1'"}

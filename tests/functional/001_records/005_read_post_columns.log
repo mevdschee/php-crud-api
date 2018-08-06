@@ -1,0 +1,7 @@
+GET /records/posts/2?columns=id,content
+===
+200
+Content-Type: application/json
+Content-Length: 30
+
+{"id":2,"content":"It works!"}

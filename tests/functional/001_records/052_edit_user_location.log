@@ -1,0 +1,17 @@
+PUT /records/users/1
+
+{"location":"POINT(30 20)"}
+===
+200
+Content-Type: application/json
+Content-Length: 1
+
+1
+===
+GET /records/users/1?columns=id,location
+===
+200
+Content-Type: application/json
+Content-Length: 34
+
+{"id":1,"location":"POINT(30 20)"}

@@ -1,0 +1,10 @@
+POST /records/kunsthåndværk
+Content-Type: application/json
+
+{"id":"23587850-8738-437e-8c41-466627ca6094","Umlauts ä_ö_ü-COUNT":1}
+===
+409
+Content-Type: application/json
+Content-Length: 49
+
+{"code":1009,"message":"Duplicate key exception"}
