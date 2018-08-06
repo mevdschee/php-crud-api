@@ -2,7 +2,7 @@
 
 Single file PHP 7 script that adds a REST API to a MySQL 5.5 InnoDB database. PostgreSQL 9.1 and MS SQL Server 2012 are fully supported.
 
-NB: If you are looking for the stable version, check out branch "v1".
+**NB: If you are looking for the stable version, check out branch "v1".**
 
 Related projects:
 
