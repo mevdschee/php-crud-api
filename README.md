@@ -2,6 +2,8 @@
 
 Single file PHP 7 script that adds a REST API to a MySQL 5.5 InnoDB database. PostgreSQL 9.1 and MS SQL Server 2012 are fully supported.
 
+NB: If you are looking for the stable version, check out branch "v1".
+
 Related projects:
 
   - [PHP-API-AUTH](https://github.com/mevdschee/php-api-auth): Authentication add-on (for v1) supporting JWT or username/password.
@@ -11,8 +13,8 @@ Related projects:
   
 There are also ports of this script in:
 
-- [Java JDBC by Ivan Kolchagov (v1)](https://github.com/kolchagov/java-crud-api)
-- [Java Spring Boot + jOOQ (v2)](https://github.com/mevdschee/java-crud-api/tree/master/full) (work in progress)
+- [Java JDBC by Ivan Kolchagov](https://github.com/kolchagov/java-crud-api) (v1)
+- [Java Spring Boot + jOOQ](https://github.com/mevdschee/java-crud-api/tree/master/full) (v2: work in progress)
 
 There are also proof-of-concept ports of this script that only support basic REST CRUD functionality in:
 [PHP](https://github.com/mevdschee/php-crud-api/blob/master/extras/core.php),
