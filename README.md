@@ -2,7 +2,7 @@
 [![Percentage of issues still open](http://isitmaintained.com/badge/open/mevdschee/php-crud-api.svg)](http://isitmaintained.com/project/mevdschee/php-crud-api "Percentage of issues still open")
 [![Build Status](https://travis-ci.org/mevdschee/php-crud-api.svg?branch=master)](https://travis-ci.org/mevdschee/php-crud-api)
 
-# PHP-CRUD-API
+# PHP-CRUD-API (v1)
 
 Single file PHP script that adds a REST API to a MySQL 5.5 InnoDB database. PostgreSQL 9.1 and MS SQL Server 2012 are fully supported. There is even limited support for SQLite 3.
 
