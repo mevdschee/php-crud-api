@@ -1,4 +1,4 @@
-# php-crud-api
+# PHP-CRUD-API (v2)
 
 Single file PHP 7 script that adds a REST API to a MySQL 5.5 InnoDB database. PostgreSQL 9.1 and MS SQL Server 2012 are fully supported.
 
@@ -93,7 +93,7 @@ These limitation were also present in v1:
 
 ## Features
 
-These features match features in v1:
+These features match features in v1 (see branch "v1"):
 
   - [x] Single PHP file, easy to deploy.
   - [x] Very little code, easy to adapt and maintain
