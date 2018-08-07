@@ -114,12 +114,13 @@ These features match features in v1 (see branch "v1"):
   - [x] Pagination, seeking, sorting and column selection
   - [x] Relation detection nested results (belongsTo, hasMany and HABTM)
   - [ ] ~~Relation "transforms" (of condensed JSON) for PHP and JavaScript~~
-  - [x] Atomic increment support via PATCH (for counters)
+  - [ ] Atomic increment support via PATCH (for counters)
   - [x] Binary fields supported with base64 encoding
   - [x] Spatial/GIS fields and filters supported with WKT
   - [ ] Unstructured data support through JSON/JSONB
   - [ ] Generate API documentation using OpenAPI tools
   - [ ] Authentication via JWT token or username/password
+  - [ ] ~~SQLite support~~
 
  NB: No checkmark means: not yet implemented. Striken means: will not be implemented.
 
