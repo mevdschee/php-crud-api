@@ -1,9 +1,9 @@
 <?php
 namespace Tqdev\PhpCrudApi\Database;
 
+use Tqdev\PhpCrudApi\Column\Reflection\ReflectedTable;
 use Tqdev\PhpCrudApi\Record\Condition\ColumnCondition;
 use Tqdev\PhpCrudApi\Record\Condition\Condition;
-use Tqdev\PhpCrudApi\Column\Reflection\ReflectedTable;
 
 class GenericDB
 {
@@ -214,6 +214,22 @@ class GenericDB
         $parameters = array();
         $whereClause = $this->conditions->getWhereClause($condition, $parameters);
         $sql = 'DELETE FROM "' . $tableName . '" ' . $whereClause;
+        $stmt = $this->query($sql, $parameters);
+        return $stmt->rowCount();
+    }
+
+    public function incrementSingle(ReflectedTable $table, array $columnValues, String $id)
+    {
+        if (count($columnValues) == 0) {
+            return 0;
+        }
+        $this->converter->convertColumnValues($table, $columnValues);
+        $updateColumns = $this->columns->getIncrement($table, $columnValues);
+        $tableName = $table->getName();
+        $condition = new ColumnCondition($table->getPk(), 'eq', $id);
+        $parameters = array_values($columnValues);
+        $whereClause = $this->conditions->getWhereClause($condition, $parameters);
+        $sql = 'UPDATE "' . $tableName . '" SET ' . $updateColumns . $whereClause;
         $stmt = $this->query($sql, $parameters);
         return $stmt->rowCount();
     }

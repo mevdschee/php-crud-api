@@ -1,11 +1,11 @@
 <?php
 namespace Tqdev\PhpCrudApi\Controller;
 
+use Tqdev\PhpCrudApi\Middleware\Router\Router;
 use Tqdev\PhpCrudApi\Record\ErrorCode;
 use Tqdev\PhpCrudApi\Record\RecordService;
 use Tqdev\PhpCrudApi\Request;
 use Tqdev\PhpCrudApi\Response;
-use Tqdev\PhpCrudApi\Middleware\Router\Router;
 
 class RecordController
 {
@@ -127,6 +127,36 @@ class RecordController
             return $this->responder->success($result);
         } else {
             return $this->responder->success($this->service->delete($table, $id, $params));
+        }
+    }
+
+    public function increment(Request $request): Response
+    {
+        $table = $request->getPathSegment(2);
+        $id = $request->getPathSegment(3);
+        $record = $request->getBody();
+        if ($record === null) {
+            return $this->responder->error(ErrorCode::HTTP_MESSAGE_NOT_READABLE, '');
+        }
+        $params = $request->getParams();
+        if (!$this->service->exists($table)) {
+            return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $table);
+        }
+        $ids = explode(',', $id);
+        if (is_array($record)) {
+            if (count($ids) != count($record)) {
+                return $this->responder->error(ErrorCode::ARGUMENT_COUNT_MISMATCH, $id);
+            }
+            $result = array();
+            for ($i = 0; $i < count($ids); $i++) {
+                $result[] = $this->service->increment($table, $ids[$i], $record[$i], $params);
+            }
+            return $this->responder->success($result);
+        } else {
+            if (count($ids) != 1) {
+                return $this->responder->error(ErrorCode::ARGUMENT_COUNT_MISMATCH, $id);
+            }
+            return $this->responder->success($this->service->increment($table, $id, $record, $params));
         }
     }
 

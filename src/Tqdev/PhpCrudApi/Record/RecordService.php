@@ -1,9 +1,9 @@
 <?php
 namespace Tqdev\PhpCrudApi\Record;
 
+use Tqdev\PhpCrudApi\Column\ReflectionService;
 use Tqdev\PhpCrudApi\Database\GenericDB;
 use Tqdev\PhpCrudApi\Record\Document\ListDocument;
-use Tqdev\PhpCrudApi\Column\ReflectionService;
 
 class RecordService
 {
@@ -84,6 +84,14 @@ class RecordService
     {
         $table = $this->tables->get($tableName);
         return $this->db->deleteSingle($table, $id);
+    }
+
+    public function increment(String $tableName, String $id, /* object */ $record, array $params)
+    {
+        $this->sanitizeRecord($tableName, $record, $id);
+        $table = $this->tables->get($tableName);
+        $columnValues = $this->columns->getValues($table, true, $record, $params);
+        return $this->db->incrementSingle($table, $columnValues, $id);
     }
 
     public function _list(String $tableName, array $params): ListDocument
