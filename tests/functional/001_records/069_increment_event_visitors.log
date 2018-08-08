@@ -16,6 +16,16 @@ Content-Length: 1
 
 1
 ===
+PATCH /records/events/1
+
+{"visitors":1}
+===
+200
+Content-Type: application/json
+Content-Length: 1
+
+1
+===
 PATCH /records/events/1,1
 
 [{"visitors":1},{"visitors":1}]
@@ -32,11 +42,11 @@ GET /records/events/1?columns=visitors
 Content-Type: application/json
 Content-Length: 14
 
-{"visitors":3}
+{"visitors":4}
 ===
 PATCH /records/events/1
 
-{"visitors":-3}
+{"visitors":-4}
 ===
 200
 Content-Type: application/json
