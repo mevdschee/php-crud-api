@@ -2,17 +2,32 @@
 namespace Tqdev\PhpCrudApi\Middleware;
 
 use Tqdev\PhpCrudApi\Controller\Responder;
+use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
 use Tqdev\PhpCrudApi\Record\ErrorCode;
 use Tqdev\PhpCrudApi\Request;
 use Tqdev\PhpCrudApi\Response;
-use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
 
 class FirewallMiddleware extends Middleware
 {
+    private function ipMatch(String $ip, String $cidr): bool
+    {
+        if (strpos($cidr, '/') !== false) {
+            list($subnet, $mask) = explode('/', trim($cidr));
+            if ((ip2long($ip) & ~((1 << (32 - $mask)) - 1)) == ip2long($subnet)) {
+                return true;
+            }
+        } else {
+            if (ip2long($ip) == ip2long($cidr)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private function isIpAllowed(String $ipAddress, String $allowedIpAddresses): bool
     {
         foreach (explode(',', $allowedIpAddresses) as $allowedIp) {
-            if ($ipAddress == trim($allowedIp)) {
+            if ($this->ipMatch($ipAddress, $allowedIp)) {
                 return true;
             }
         }
