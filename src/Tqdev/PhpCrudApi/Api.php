@@ -57,6 +57,9 @@ class Api
                 case 'sanitation':
                     new SanitationMiddleware($router, $responder, $properties, $reflection);
                     break;
+                case 'authorization':
+                    new AuthorizationMiddleware($router, $responder, $properties, $reflection);
+                    break;
             }
         }
         $data = new RecordService($db, $reflection);

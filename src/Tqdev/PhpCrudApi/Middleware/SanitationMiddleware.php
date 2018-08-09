@@ -1,13 +1,13 @@
 <?php
 namespace Tqdev\PhpCrudApi\Middleware;
 
-use Tqdev\PhpCrudApi\Controller\Responder;
 use Tqdev\PhpCrudApi\Column\ReflectionService;
 use Tqdev\PhpCrudApi\Column\Reflection\ReflectedTable;
-use Tqdev\PhpCrudApi\Request;
-use Tqdev\PhpCrudApi\Response;
+use Tqdev\PhpCrudApi\Controller\Responder;
 use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
 use Tqdev\PhpCrudApi\Middleware\Router\Router;
+use Tqdev\PhpCrudApi\Request;
+use Tqdev\PhpCrudApi\Response;
 
 class SanitationMiddleware extends Middleware
 {

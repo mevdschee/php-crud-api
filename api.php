@@ -667,7 +667,7 @@ class DefinitionService
 
     public function updateTable(String $tableName, /* object */ $changes): bool
     {
-        $table = $this->reflection->getTable($tableName);
+        $table = $database->get($tableName);
         $newTable = ReflectedTable::fromJson((object) array_merge((array) $table->jsonSerialize(), (array) $changes));
         if ($table->getName() != $newTable->getName()) {
             if (!$this->db->definition()->renameTable($table->getName(), $newTable->getName())) {
@@ -679,7 +679,7 @@ class DefinitionService
 
     public function updateColumn(String $tableName, String $columnName, /* object */ $changes): bool
     {
-        $table = $this->reflection->getTable($tableName);
+        $table = $database->get($tableName);
         $column = $table->get($columnName);
 
         $newColumn = ReflectedColumn::fromJson((object) array_merge((array) $column->jsonSerialize(), (array) $changes));
@@ -780,7 +780,7 @@ class DefinitionService
 
     public function removeColumn(String $tableName, String $columnName)
     {
-        $table = $this->reflection->getTable($tableName);
+        $table = $database->get($tableName);
         $newColumn = $table->get($columnName);
         if ($newColumn->getPk()) {
             $newColumn->setPk(false);
@@ -901,10 +901,11 @@ class ColumnController
     public function getTable(Request $request): Response
     {
         $tableName = $request->getPathSegment(2);
-        if (!$this->reflection->hasTable($tableName)) {
+        $database = $this->reflection->getDatabase();
+        if (!$database->exists($tableName)) {
             return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $tableName);
         }
-        $table = $this->reflection->getTable($tableName);
+        $table = $database->get($tableName);
         return $this->responder->success($table);
     }
 
@@ -912,10 +913,11 @@ class ColumnController
     {
         $tableName = $request->getPathSegment(2);
         $columnName = $request->getPathSegment(3);
-        if (!$this->reflection->hasTable($tableName)) {
+        $database = $this->reflection->getDatabase();
+        if (!$database->exists($tableName)) {
             return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $tableName);
         }
-        $table = $this->reflection->getTable($tableName);
+        $table = $database->get($tableName);
         if (!$table->exists($columnName)) {
             return $this->responder->error(ErrorCode::COLUMN_NOT_FOUND, $columnName);
         }
@@ -926,7 +928,8 @@ class ColumnController
     public function updateTable(Request $request): Response
     {
         $tableName = $request->getPathSegment(2);
-        if (!$this->reflection->hasTable($tableName)) {
+        $database = $this->reflection->getDatabase();
+        if (!$database->exists($tableName)) {
             return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $tableName);
         }
         $success = $this->definition->updateTable($tableName, $request->getBody());
@@ -940,10 +943,11 @@ class ColumnController
     {
         $tableName = $request->getPathSegment(2);
         $columnName = $request->getPathSegment(3);
-        if (!$this->reflection->hasTable($tableName)) {
+        $database = $this->reflection->getDatabase();
+        if (!$database->exists($tableName)) {
             return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $tableName);
         }
-        $table = $this->reflection->getTable($tableName);
+        $table = $database->get($tableName);
         if (!$table->exists($columnName)) {
             return $this->responder->error(ErrorCode::COLUMN_NOT_FOUND, $columnName);
         }
@@ -970,11 +974,12 @@ class ColumnController
     public function addColumn(Request $request): Response
     {
         $tableName = $request->getPathSegment(2);
-        if (!$this->reflection->hasTable($tableName)) {
+        $database = $this->reflection->getDatabase();
+        if (!$database->exists($tableName)) {
             return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $tableName);
         }
         $columnName = $request->getBody()->name;
-        $table = $this->reflection->getTable($tableName);
+        $table = $database->get($tableName);
         if ($table->exists($columnName)) {
             return $this->responder->error(ErrorCode::COLUMN_ALREADY_EXISTS, $columnName);
         }
@@ -988,7 +993,8 @@ class ColumnController
     public function removeTable(Request $request): Response
     {
         $tableName = $request->getPathSegment(2);
-        if (!$this->reflection->hasTable($tableName)) {
+        $database = $this->reflection->getDatabase();
+        if (!$database->exists($tableName)) {
             return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $tableName);
         }
         $success = $this->definition->removeTable($tableName);
@@ -1002,10 +1008,11 @@ class ColumnController
     {
         $tableName = $request->getPathSegment(2);
         $columnName = $request->getPathSegment(3);
-        if (!$this->reflection->hasTable($tableName)) {
+        $database = $this->reflection->getDatabase();
+        if (!$database->exists($tableName)) {
             return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $tableName);
         }
-        $table = $this->reflection->getTable($tableName);
+        $table = $database->get($tableName);
         if (!$table->exists($columnName)) {
             return $this->responder->error(ErrorCode::COLUMN_NOT_FOUND, $columnName);
         }

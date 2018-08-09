@@ -1,9 +1,9 @@
 <?php
 namespace Tqdev\PhpCrudApi\Column;
 
-use Tqdev\PhpCrudApi\Database\GenericDB;
 use Tqdev\PhpCrudApi\Column\Reflection\ReflectedColumn;
 use Tqdev\PhpCrudApi\Column\Reflection\ReflectedTable;
+use Tqdev\PhpCrudApi\Database\GenericDB;
 
 class DefinitionService
 {

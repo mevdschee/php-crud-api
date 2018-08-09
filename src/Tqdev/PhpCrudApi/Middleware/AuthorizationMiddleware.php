@@ -19,24 +19,33 @@ class AuthorizationMiddleware extends Middleware
         $this->reflection = $reflection;
     }
 
+    private function getIncludes($all, $list)
+    {
+        $result = array_fill_keys($all, false);
+        foreach ($lists as $items) {
+            foreach (explode(',', $items) as $item) {
+                if (isset($result[$item])) {
+                    $result[$item] = true;
+                }
+            }
+        }
+        return $result;
+    }
+
     public function handle(Request $request): Response
     {
         $path = $request->getPathSegment(1);
         $tableName = $request->getPathSegment(2);
         $database = $this->reflection->getDatabase();
-        if ($path == 'records' && $database->exists($tableName)) {
-            $table = $database->get($tableName);
+        $handler = $this->getProperty('handler', '');
+        if ($handler !== '' && $path == 'records' && $database->exists($tableName)) {
             $method = $request->getMethod();
-            $tableHandler = $this->getProperty('tableHandler', '');
-            if ($tableHandler !== '') {
-                $valid = call_user_func($handler, $method, $tableName);
-                if ($valid !== true && $valid !== '') {
-                    $details[$columnName] = $valid;
-                }
-                if (count($details) > 0) {
-                    return $this->responder->error(ErrorCode::INPUT_VALIDATION_FAILED, $tableName, $details);
-                }
-
+            $tableNames = $database->getTableNames();
+            $params = $request->getParams();
+            $includes = $this->getIncludes($tableNames, $params['include']);
+            $allowed = call_user_func($handler, $method, $tableName, $includes);
+            if (!$allowed) {
+                return $this->responder->error(ErrorCode::OPERATION_FORBIDDEN, '');
             }
         }
         return $this->next->handle($request);

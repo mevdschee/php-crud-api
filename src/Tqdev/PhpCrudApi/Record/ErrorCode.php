@@ -25,6 +25,7 @@ class ErrorCode
     const AUTHORIZATION_REQUIRED = 1011;
     const ACCESS_DENIED = 1012;
     const INPUT_VALIDATION_FAILED = 1013;
+    const OPERATION_FORBIDDEN = 1014;
 
     private $values = [
         9999 => ["%s", Response::INTERNAL_SERVER_ERROR],
@@ -42,6 +43,7 @@ class ErrorCode
         1011 => ["Authorization required", Response::UNAUTHORIZED],
         1012 => ["Access denied for '%s'", Response::FORBIDDEN],
         1013 => ["Input validation failed for '%s'", Response::UNPROCESSABLE_ENTITY],
+        1014 => ["Operation forbidden", Response::FORBIDDEN],
     ];
 
     public function __construct(int $code)
