@@ -1,4 +1,4 @@
-GET /records/posts/1?include=users
+GET /records/posts/1?join=users
 ===
 200
 Content-Type: application/json

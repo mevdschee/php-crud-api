@@ -19,7 +19,7 @@ class AuthorizationMiddleware extends Middleware
         $this->reflection = $reflection;
     }
 
-    private function getIncludes($all, $list)
+    private function getJoins($all, $list)
     {
         $result = array_fill_keys($all, false);
         foreach ($lists as $items) {
@@ -42,8 +42,8 @@ class AuthorizationMiddleware extends Middleware
             $method = $request->getMethod();
             $tableNames = $database->getTableNames();
             $params = $request->getParams();
-            $includes = $this->getIncludes($tableNames, $params['include']);
-            $allowed = call_user_func($handler, $method, $tableName, $includes);
+            $joins = $this->getJoins($tableNames, $params['join']);
+            $allowed = call_user_func($handler, $method, $tableName, $joins);
             if (!$allowed) {
                 return $this->responder->error(ErrorCode::OPERATION_FORBIDDEN, '');
             }

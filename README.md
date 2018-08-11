@@ -109,10 +109,10 @@ These features match features in v1 (see branch "v1"):
   - [ ] Permission system for databases, tables, columns and records
   - [ ] Multi-tenant database layouts are supported
   - [x] Multi-domain CORS support for cross-domain requests
-  - [x] Combined requests with support for multiple table names
+  - [x] Support for reading joined results from multiple tables
   - [x] Search support on multiple criteria
   - [x] Pagination, seeking, sorting and column selection
-  - [x] Relation detection nested results (belongsTo, hasMany and HABTM)
+  - [x] Relation detection with nested results (belongsTo, hasMany and HABTM)
   - [ ] ~~Relation "transforms" (of condensed JSON) for PHP and JavaScript~~
   - [x] Atomic increment support via PATCH (for counters)
   - [x] Binary fields supported with base64 encoding
@@ -215,7 +215,7 @@ Where "1" is the value of the primary key of the record that you want to read. I
         "created": "2018-03-05T20:12:56Z"
     }
 
-On read operations you may apply includes.
+On read operations you may apply joins.
 
 #### Update
 
@@ -262,7 +262,7 @@ It will return:
         ]
     }
 
-On list operations you may apply filters and includes.
+On list operations you may apply filters and joins.
 
 ### Filters
 
@@ -319,7 +319,7 @@ by adding a letter (a-f) you can create almost any reasonably complex condition 
 
 NB: You can only filter on the requested table (not on it's included) and filters are only applied on list calls.
 
-### Includes
+### Joins
 
 Let's say that you have a posts table that has comments (made by users) and the posts can have tags.
 
@@ -337,7 +337,7 @@ When you want to list posts with their comments users and tags you can ask for t
 
 These paths have the same root and this request can be written in URL format as:
 
-    GET /records/posts?include=comments,users&include=tags
+    GET /records/posts?join=comments,users&join=tags
 
 Here you are allowed to leave out the intermediate table that binds posts to tags. In this example
 you see all three table relation types (hasMany, belongsTo and hasAndBelongsToMany) in effect:

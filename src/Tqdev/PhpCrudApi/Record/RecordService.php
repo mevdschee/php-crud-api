@@ -10,7 +10,7 @@ class RecordService
     private $db;
     private $tables;
     private $columns;
-    private $includer;
+    private $joiner;
     private $filters;
     private $ordering;
     private $pagination;
@@ -20,7 +20,7 @@ class RecordService
         $this->db = $db;
         $this->tables = $reflection->getDatabase();
         $this->columns = new ColumnSelector();
-        $this->includer = new RelationIncluder($this->columns);
+        $this->joiner = new RelationJoiner($this->columns);
         $this->filters = new FilterInfo();
         $this->ordering = new OrderingInfo();
         $this->pagination = new PaginationInfo();
@@ -61,14 +61,14 @@ class RecordService
     public function read(String $tableName, String $id, array $params) /*: ?object*/
     {
         $table = $this->tables->get($tableName);
-        $this->includer->addMandatoryColumns($table, $this->tables, $params);
+        $this->joiner->addMandatoryColumns($table, $this->tables, $params);
         $columnNames = $this->columns->getNames($table, true, $params);
         $record = $this->db->selectSingle($table, $columnNames, $id);
         if ($record == null) {
             return null;
         }
         $records = array($record);
-        $this->includer->addIncludes($table, $records, $this->tables, $params, $this->db);
+        $this->joiner->addJoins($table, $records, $this->tables, $params, $this->db);
         return $records[0];
     }
 
@@ -97,7 +97,7 @@ class RecordService
     public function _list(String $tableName, array $params): ListDocument
     {
         $table = $this->tables->get($tableName);
-        $this->includer->addMandatoryColumns($table, $this->tables, $params);
+        $this->joiner->addMandatoryColumns($table, $this->tables, $params);
         $columnNames = $this->columns->getNames($table, true, $params);
         $condition = $this->filters->getCombinedConditions($table, $params);
         $columnOrdering = $this->ordering->getColumnOrdering($table, $params);
@@ -111,7 +111,7 @@ class RecordService
             $count = $this->db->selectCount($table, $condition);
         }
         $records = $this->db->selectAll($table, $columnNames, $condition, $columnOrdering, $offset, $limit);
-        $this->includer->addIncludes($table, $records, $this->tables, $params, $this->db);
+        $this->joiner->addJoins($table, $records, $this->tables, $params, $this->db);
         return new ListDocument($records, $count);
     }
 }

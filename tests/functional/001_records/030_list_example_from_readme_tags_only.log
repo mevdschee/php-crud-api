@@ -1,4 +1,4 @@
-GET /records/posts?include=tags&filter=id,eq,1
+GET /records/posts?join=tags&filter=id,eq,1
 ===
 200
 Content-Type: application/json

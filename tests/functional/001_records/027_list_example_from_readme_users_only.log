@@ -1,4 +1,4 @@
-GET /records/posts?include=users&filter=id,eq,1
+GET /records/posts?join=users&filter=id,eq,1
 ===
 200
 Content-Type: application/json

@@ -667,7 +667,7 @@ class DefinitionService
 
     public function updateTable(String $tableName, /* object */ $changes): bool
     {
-        $table = $database->get($tableName);
+        $table = $this->reflection->getTable($tableName);
         $newTable = ReflectedTable::fromJson((object) array_merge((array) $table->jsonSerialize(), (array) $changes));
         if ($table->getName() != $newTable->getName()) {
             if (!$this->db->definition()->renameTable($table->getName(), $newTable->getName())) {
@@ -679,7 +679,7 @@ class DefinitionService
 
     public function updateColumn(String $tableName, String $columnName, /* object */ $changes): bool
     {
-        $table = $database->get($tableName);
+        $table = $this->reflection->getTable($tableName);
         $column = $table->get($columnName);
 
         $newColumn = ReflectedColumn::fromJson((object) array_merge((array) $column->jsonSerialize(), (array) $changes));
@@ -780,7 +780,7 @@ class DefinitionService
 
     public function removeColumn(String $tableName, String $columnName)
     {
-        $table = $database->get($tableName);
+        $table = $this->reflection->getTable($tableName);
         $newColumn = $table->get($columnName);
         if ($newColumn->getPk()) {
             $newColumn->setPk(false);
@@ -816,19 +816,25 @@ class ReflectionService
         $this->db = $db;
         $this->cache = $cache;
         $this->ttl = $ttl;
-        $data = $this->cache->get('ReflectedDatabase');
+        $this->tables = $this->loadTables(true);
+    }
+
+    private function loadTables(bool $useCache): ReflectedDatabase
+    {
+        $data = $useCache ? $this->cache->get('ReflectedDatabase') : '';
         if ($data != '') {
-            $this->tables = ReflectedDatabase::fromJson(json_decode(gzuncompress($data)));
+            $tables = ReflectedDatabase::fromJson(json_decode(gzuncompress($data)));
         } else {
-            $this->refresh();
+            $tables = ReflectedDatabase::fromReflection($this->db->reflection());
+            $data = gzcompress(json_encode($tables, JSON_UNESCAPED_UNICODE));
+            $this->cache->set('ReflectedDatabase', $data, $this->ttl);
         }
+        return $tables;
     }
 
     public function refresh()
     {
-        $this->tables = ReflectedDatabase::fromReflection($this->db->reflection());
-        $data = gzcompress(json_encode($this->tables, JSON_UNESCAPED_UNICODE));
-        $this->cache->set('ReflectedDatabase', $data, $this->ttl);
+        $this->tables = $this->loadTables(false);
     }
 
     public function hasTable(String $table): bool
@@ -901,11 +907,10 @@ class ColumnController
     public function getTable(Request $request): Response
     {
         $tableName = $request->getPathSegment(2);
-        $database = $this->reflection->getDatabase();
-        if (!$database->exists($tableName)) {
+        if (!$this->reflection->hasTable($tableName)) {
             return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $tableName);
         }
-        $table = $database->get($tableName);
+        $table = $this->reflection->getTable($tableName);
         return $this->responder->success($table);
     }
 
@@ -913,11 +918,10 @@ class ColumnController
     {
         $tableName = $request->getPathSegment(2);
         $columnName = $request->getPathSegment(3);
-        $database = $this->reflection->getDatabase();
-        if (!$database->exists($tableName)) {
+        if (!$this->reflection->hasTable($tableName)) {
             return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $tableName);
         }
-        $table = $database->get($tableName);
+        $table = $this->reflection->getTable($tableName);
         if (!$table->exists($columnName)) {
             return $this->responder->error(ErrorCode::COLUMN_NOT_FOUND, $columnName);
         }
@@ -928,8 +932,7 @@ class ColumnController
     public function updateTable(Request $request): Response
     {
         $tableName = $request->getPathSegment(2);
-        $database = $this->reflection->getDatabase();
-        if (!$database->exists($tableName)) {
+        if (!$this->reflection->hasTable($tableName)) {
             return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $tableName);
         }
         $success = $this->definition->updateTable($tableName, $request->getBody());
@@ -943,11 +946,10 @@ class ColumnController
     {
         $tableName = $request->getPathSegment(2);
         $columnName = $request->getPathSegment(3);
-        $database = $this->reflection->getDatabase();
-        if (!$database->exists($tableName)) {
+        if (!$this->reflection->hasTable($tableName)) {
             return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $tableName);
         }
-        $table = $database->get($tableName);
+        $table = $this->reflection->getTable($tableName);
         if (!$table->exists($columnName)) {
             return $this->responder->error(ErrorCode::COLUMN_NOT_FOUND, $columnName);
         }
@@ -974,12 +976,11 @@ class ColumnController
     public function addColumn(Request $request): Response
     {
         $tableName = $request->getPathSegment(2);
-        $database = $this->reflection->getDatabase();
-        if (!$database->exists($tableName)) {
+        if (!$this->reflection->hasTable($tableName)) {
             return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $tableName);
         }
         $columnName = $request->getBody()->name;
-        $table = $database->get($tableName);
+        $table = $this->reflection->getTable($tableName);
         if ($table->exists($columnName)) {
             return $this->responder->error(ErrorCode::COLUMN_ALREADY_EXISTS, $columnName);
         }
@@ -993,8 +994,7 @@ class ColumnController
     public function removeTable(Request $request): Response
     {
         $tableName = $request->getPathSegment(2);
-        $database = $this->reflection->getDatabase();
-        if (!$database->exists($tableName)) {
+        if (!$this->reflection->hasTable($tableName)) {
             return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $tableName);
         }
         $success = $this->definition->removeTable($tableName);
@@ -1008,11 +1008,10 @@ class ColumnController
     {
         $tableName = $request->getPathSegment(2);
         $columnName = $request->getPathSegment(3);
-        $database = $this->reflection->getDatabase();
-        if (!$database->exists($tableName)) {
+        if (!$this->reflection->hasTable($tableName)) {
             return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $tableName);
         }
-        $table = $database->get($tableName);
+        $table = $this->reflection->getTable($tableName);
         if (!$table->exists($columnName)) {
             return $this->responder->error(ErrorCode::COLUMN_NOT_FOUND, $columnName);
         }
@@ -1167,6 +1166,36 @@ class RecordController
             return $this->responder->success($result);
         } else {
             return $this->responder->success($this->service->delete($table, $id, $params));
+        }
+    }
+
+    public function increment(Request $request): Response
+    {
+        $table = $request->getPathSegment(2);
+        $id = $request->getPathSegment(3);
+        $record = $request->getBody();
+        if ($record === null) {
+            return $this->responder->error(ErrorCode::HTTP_MESSAGE_NOT_READABLE, '');
+        }
+        $params = $request->getParams();
+        if (!$this->service->exists($table)) {
+            return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $table);
+        }
+        $ids = explode(',', $id);
+        if (is_array($record)) {
+            if (count($ids) != count($record)) {
+                return $this->responder->error(ErrorCode::ARGUMENT_COUNT_MISMATCH, $id);
+            }
+            $result = array();
+            for ($i = 0; $i < count($ids); $i++) {
+                $result[] = $this->service->increment($table, $ids[$i], $record[$i], $params);
+            }
+            return $this->responder->success($result);
+        } else {
+            if (count($ids) != 1) {
+                return $this->responder->error(ErrorCode::ARGUMENT_COUNT_MISMATCH, $id);
+            }
+            return $this->responder->success($this->service->increment($table, $id, $record, $params));
         }
     }
 
@@ -1836,6 +1865,22 @@ class GenericDB
         $parameters = array();
         $whereClause = $this->conditions->getWhereClause($condition, $parameters);
         $sql = 'DELETE FROM "' . $tableName . '" ' . $whereClause;
+        $stmt = $this->query($sql, $parameters);
+        return $stmt->rowCount();
+    }
+
+    public function incrementSingle(ReflectedTable $table, array $columnValues, String $id)
+    {
+        if (count($columnValues) == 0) {
+            return 0;
+        }
+        $this->converter->convertColumnValues($table, $columnValues);
+        $updateColumns = $this->columns->getIncrement($table, $columnValues);
+        $tableName = $table->getName();
+        $condition = new ColumnCondition($table->getPk(), 'eq', $id);
+        $parameters = array_values($columnValues);
+        $whereClause = $this->conditions->getWhereClause($condition, $parameters);
+        $sql = 'UPDATE "' . $tableName . '" SET ' . $updateColumns . $whereClause;
         $stmt = $this->query($sql, $parameters);
         return $stmt->rowCount();
     }
@@ -2662,6 +2707,51 @@ class SimpleRouter implements Router
     }
 }
 
+// file: src/Tqdev/PhpCrudApi/Middleware/AuthorizationMiddleware.php
+
+class AuthorizationMiddleware extends Middleware
+{
+    private $reflection;
+
+    public function __construct(Router $router, Responder $responder, array $properties, ReflectionService $reflection)
+    {
+        parent::__construct($router, $responder, $properties);
+        $this->reflection = $reflection;
+    }
+
+    private function getJoins($all, $list)
+    {
+        $result = array_fill_keys($all, false);
+        foreach ($lists as $items) {
+            foreach (explode(',', $items) as $item) {
+                if (isset($result[$item])) {
+                    $result[$item] = true;
+                }
+            }
+        }
+        return $result;
+    }
+
+    public function handle(Request $request): Response
+    {
+        $path = $request->getPathSegment(1);
+        $tableName = $request->getPathSegment(2);
+        $database = $this->reflection->getDatabase();
+        $handler = $this->getProperty('handler', '');
+        if ($handler !== '' && $path == 'records' && $database->exists($tableName)) {
+            $method = $request->getMethod();
+            $tableNames = $database->getTableNames();
+            $params = $request->getParams();
+            $joins = $this->getJoins($tableNames, $params['join']);
+            $allowed = call_user_func($handler, $method, $tableName, $joins);
+            if (!$allowed) {
+                return $this->responder->error(ErrorCode::OPERATION_FORBIDDEN, '');
+            }
+        }
+        return $this->next->handle($request);
+    }
+}
+
 // file: src/Tqdev/PhpCrudApi/Middleware/BasicAuthMiddleware.php
 
 class BasicAuthMiddleware extends Middleware
@@ -2793,10 +2883,25 @@ class CorsMiddleware extends Middleware
 
 class FirewallMiddleware extends Middleware
 {
+    private function ipMatch(String $ip, String $cidr): bool
+    {
+        if (strpos($cidr, '/') !== false) {
+            list($subnet, $mask) = explode('/', trim($cidr));
+            if ((ip2long($ip) & ~((1 << (32 - $mask)) - 1)) == ip2long($subnet)) {
+                return true;
+            }
+        } else {
+            if (ip2long($ip) == ip2long($cidr)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private function isIpAllowed(String $ipAddress, String $allowedIpAddresses): bool
     {
         foreach (explode(',', $allowedIpAddresses) as $allowedIp) {
-            if ($ipAddress == trim($allowedIp)) {
+            if ($this->ipMatch($ipAddress, $allowedIp)) {
                 return true;
             }
         }
@@ -3411,6 +3516,7 @@ class ErrorCode
     const AUTHORIZATION_REQUIRED = 1011;
     const ACCESS_DENIED = 1012;
     const INPUT_VALIDATION_FAILED = 1013;
+    const OPERATION_FORBIDDEN = 1014;
 
     private $values = [
         9999 => ["%s", Response::INTERNAL_SERVER_ERROR],
@@ -3428,6 +3534,7 @@ class ErrorCode
         1011 => ["Authorization required", Response::UNAUTHORIZED],
         1012 => ["Access denied for '%s'", Response::FORBIDDEN],
         1013 => ["Input validation failed for '%s'", Response::UNPROCESSABLE_ENTITY],
+        1014 => ["Operation forbidden", Response::FORBIDDEN],
     ];
 
     public function __construct(int $code)
@@ -3656,7 +3763,7 @@ class RecordService
     private $db;
     private $tables;
     private $columns;
-    private $includer;
+    private $joiner;
     private $filters;
     private $ordering;
     private $pagination;
@@ -3666,7 +3773,7 @@ class RecordService
         $this->db = $db;
         $this->tables = $reflection->getDatabase();
         $this->columns = new ColumnSelector();
-        $this->includer = new RelationIncluder($this->columns);
+        $this->joiner = new RelationJoiner($this->columns);
         $this->filters = new FilterInfo();
         $this->ordering = new OrderingInfo();
         $this->pagination = new PaginationInfo();
@@ -3707,14 +3814,14 @@ class RecordService
     public function read(String $tableName, String $id, array $params) /*: ?object*/
     {
         $table = $this->tables->get($tableName);
-        $this->includer->addMandatoryColumns($table, $this->tables, $params);
+        $this->joiner->addMandatoryColumns($table, $this->tables, $params);
         $columnNames = $this->columns->getNames($table, true, $params);
         $record = $this->db->selectSingle($table, $columnNames, $id);
         if ($record == null) {
             return null;
         }
         $records = array($record);
-        $this->includer->addIncludes($table, $records, $this->tables, $params, $this->db);
+        $this->joiner->addJoins($table, $records, $this->tables, $params, $this->db);
         return $records[0];
     }
 
@@ -3732,10 +3839,18 @@ class RecordService
         return $this->db->deleteSingle($table, $id);
     }
 
+    public function increment(String $tableName, String $id, /* object */ $record, array $params)
+    {
+        $this->sanitizeRecord($tableName, $record, $id);
+        $table = $this->tables->get($tableName);
+        $columnValues = $this->columns->getValues($table, true, $record, $params);
+        return $this->db->incrementSingle($table, $columnValues, $id);
+    }
+
     public function _list(String $tableName, array $params): ListDocument
     {
         $table = $this->tables->get($tableName);
-        $this->includer->addMandatoryColumns($table, $this->tables, $params);
+        $this->joiner->addMandatoryColumns($table, $this->tables, $params);
         $columnNames = $this->columns->getNames($table, true, $params);
         $condition = $this->filters->getCombinedConditions($table, $params);
         $columnOrdering = $this->ordering->getColumnOrdering($table, $params);
@@ -3749,14 +3864,14 @@ class RecordService
             $count = $this->db->selectCount($table, $condition);
         }
         $records = $this->db->selectAll($table, $columnNames, $condition, $columnOrdering, $offset, $limit);
-        $this->includer->addIncludes($table, $records, $this->tables, $params, $this->db);
+        $this->joiner->addJoins($table, $records, $this->tables, $params, $this->db);
         return new ListDocument($records, $count);
     }
 }
 
-// file: src/Tqdev/PhpCrudApi/Record/RelationIncluder.php
+// file: src/Tqdev/PhpCrudApi/Record/RelationJoiner.php
 
-class RelationIncluder
+class RelationJoiner
 {
 
     private $columns;
@@ -3768,11 +3883,11 @@ class RelationIncluder
 
     public function addMandatoryColumns(ReflectedTable $table, ReflectedDatabase $tables, array &$params)/*: void*/
     {
-        if (!isset($params['include']) || !isset($params['columns'])) {
+        if (!isset($params['join']) || !isset($params['columns'])) {
             return;
         }
         $params['mandatory'] = array();
-        foreach ($params['include'] as $tableNames) {
+        foreach ($params['join'] as $tableNames) {
             $t1 = $table;
             foreach (explode(',', $tableNames) as $tableName) {
                 if (!$tables->exists($tableName)) {
@@ -3799,11 +3914,11 @@ class RelationIncluder
         }
     }
 
-    private function getIncludesAsPathTree(ReflectedDatabase $tables, array $params): PathTree
+    private function getJoinsAsPathTree(ReflectedDatabase $tables, array $params): PathTree
     {
-        $includes = new PathTree();
-        if (isset($params['include'])) {
-            foreach ($params['include'] as $tableNames) {
+        $joins = new PathTree();
+        if (isset($params['join'])) {
+            foreach ($params['join'] as $tableNames) {
                 $path = array();
                 foreach (explode(',', $tableNames) as $tableName) {
                     $t = $tables->get($tableName);
@@ -3811,17 +3926,17 @@ class RelationIncluder
                         $path[] = $t->getName();
                     }
                 }
-                $includes->put($path, true);
+                $joins->put($path, true);
             }
         }
-        return $includes;
+        return $joins;
     }
 
-    public function addIncludes(ReflectedTable $table, array &$records, ReflectedDatabase $tables, array $params,
+    public function addJoins(ReflectedTable $table, array &$records, ReflectedDatabase $tables, array $params,
         GenericDB $db)/*: void*/{
 
-        $includes = $this->getIncludesAsPathTree($tables, $params);
-        $this->addIncludesForTables($table, $includes, $records, $tables, $params, $db);
+        $joins = $this->getJoinsAsPathTree($tables, $params);
+        $this->addJoinsForTables($table, $joins, $records, $tables, $params, $db);
     }
 
     private function hasAndBelongsToMany(ReflectedTable $t1, ReflectedTable $t2, ReflectedDatabase $tables) /*: ?ReflectedTable*/
@@ -3835,10 +3950,10 @@ class RelationIncluder
         return null;
     }
 
-    private function addIncludesForTables(ReflectedTable $t1, PathTree $includes, array &$records,
+    private function addJoinsForTables(ReflectedTable $t1, PathTree $joins, array &$records,
         ReflectedDatabase $tables, array $params, GenericDB $db) {
 
-        foreach ($includes->getKeys() as $t2Name) {
+        foreach ($joins->getKeys() as $t2Name) {
 
             $t2 = $tables->get($t2Name);
 
@@ -3865,7 +3980,7 @@ class RelationIncluder
                 $this->addFkRecords($t2, $habtmValues->fkValues, $params, $db, $newRecords);
             }
 
-            $this->addIncludesForTables($t2, $includes->get($t2Name), $newRecords, $tables, $params, $db);
+            $this->addJoinsForTables($t2, $joins->get($t2Name), $newRecords, $tables, $params, $db);
 
             if ($fkValues != null) {
                 $this->fillFkValues($t2, $newRecords, $fkValues);
@@ -4065,6 +4180,9 @@ class Api
                     break;
                 case 'sanitation':
                     new SanitationMiddleware($router, $responder, $properties, $reflection);
+                    break;
+                case 'authorization':
+                    new AuthorizationMiddleware($router, $responder, $properties, $reflection);
                     break;
             }
         }

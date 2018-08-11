@@ -7,7 +7,7 @@ use Tqdev\PhpCrudApi\Record\Condition\OrCondition;
 use Tqdev\PhpCrudApi\Column\Reflection\ReflectedDatabase;
 use Tqdev\PhpCrudApi\Column\Reflection\ReflectedTable;
 
-class RelationIncluder
+class RelationJoiner
 {
 
     private $columns;
@@ -19,11 +19,11 @@ class RelationIncluder
 
     public function addMandatoryColumns(ReflectedTable $table, ReflectedDatabase $tables, array &$params)/*: void*/
     {
-        if (!isset($params['include']) || !isset($params['columns'])) {
+        if (!isset($params['join']) || !isset($params['columns'])) {
             return;
         }
         $params['mandatory'] = array();
-        foreach ($params['include'] as $tableNames) {
+        foreach ($params['join'] as $tableNames) {
             $t1 = $table;
             foreach (explode(',', $tableNames) as $tableName) {
                 if (!$tables->exists($tableName)) {
@@ -50,11 +50,11 @@ class RelationIncluder
         }
     }
 
-    private function getIncludesAsPathTree(ReflectedDatabase $tables, array $params): PathTree
+    private function getJoinsAsPathTree(ReflectedDatabase $tables, array $params): PathTree
     {
-        $includes = new PathTree();
-        if (isset($params['include'])) {
-            foreach ($params['include'] as $tableNames) {
+        $joins = new PathTree();
+        if (isset($params['join'])) {
+            foreach ($params['join'] as $tableNames) {
                 $path = array();
                 foreach (explode(',', $tableNames) as $tableName) {
                     $t = $tables->get($tableName);
@@ -62,17 +62,17 @@ class RelationIncluder
                         $path[] = $t->getName();
                     }
                 }
-                $includes->put($path, true);
+                $joins->put($path, true);
             }
         }
-        return $includes;
+        return $joins;
     }
 
-    public function addIncludes(ReflectedTable $table, array &$records, ReflectedDatabase $tables, array $params,
+    public function addJoins(ReflectedTable $table, array &$records, ReflectedDatabase $tables, array $params,
         GenericDB $db)/*: void*/{
 
-        $includes = $this->getIncludesAsPathTree($tables, $params);
-        $this->addIncludesForTables($table, $includes, $records, $tables, $params, $db);
+        $joins = $this->getJoinsAsPathTree($tables, $params);
+        $this->addJoinsForTables($table, $joins, $records, $tables, $params, $db);
     }
 
     private function hasAndBelongsToMany(ReflectedTable $t1, ReflectedTable $t2, ReflectedDatabase $tables) /*: ?ReflectedTable*/
@@ -86,10 +86,10 @@ class RelationIncluder
         return null;
     }
 
-    private function addIncludesForTables(ReflectedTable $t1, PathTree $includes, array &$records,
+    private function addJoinsForTables(ReflectedTable $t1, PathTree $joins, array &$records,
         ReflectedDatabase $tables, array $params, GenericDB $db) {
 
-        foreach ($includes->getKeys() as $t2Name) {
+        foreach ($joins->getKeys() as $t2Name) {
 
             $t2 = $tables->get($t2Name);
 
@@ -116,7 +116,7 @@ class RelationIncluder
                 $this->addFkRecords($t2, $habtmValues->fkValues, $params, $db, $newRecords);
             }
 
-            $this->addIncludesForTables($t2, $includes->get($t2Name), $newRecords, $tables, $params, $db);
+            $this->addJoinsForTables($t2, $joins->get($t2Name), $newRecords, $tables, $params, $db);
 
             if ($fkValues != null) {
                 $this->fillFkValues($t2, $newRecords, $fkValues);

@@ -1,4 +1,4 @@
-GET /records/posts?include=comments&filter=id,eq,1
+GET /records/posts?join=comments&filter=id,eq,1
 ===
 200
 Content-Type: application/json
