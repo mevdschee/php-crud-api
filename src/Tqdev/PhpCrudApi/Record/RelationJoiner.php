@@ -1,25 +1,25 @@
 <?php
 namespace Tqdev\PhpCrudApi\Record;
 
+use Tqdev\PhpCrudApi\Column\Reflection\ReflectedDatabase;
+use Tqdev\PhpCrudApi\Column\Reflection\ReflectedTable;
 use Tqdev\PhpCrudApi\Database\GenericDB;
 use Tqdev\PhpCrudApi\Record\Condition\ColumnCondition;
 use Tqdev\PhpCrudApi\Record\Condition\OrCondition;
-use Tqdev\PhpCrudApi\Column\Reflection\ReflectedDatabase;
-use Tqdev\PhpCrudApi\Column\Reflection\ReflectedTable;
 
 class RelationJoiner
 {
 
     private $columns;
 
-    public function __construct(ColumnSelector $columns)
+    public function __construct(ColumnIncluder $columns)
     {
         $this->columns = $columns;
     }
 
-    public function addMandatoryColumns(ReflectedTable $table, ReflectedDatabase $tables, array &$params)/*: void*/
+    public function addMandatoryColumns(ReflectedTable $table, ReflectedDatabase $tables, array &$params) /*: void*/
     {
-        if (!isset($params['join']) || !isset($params['columns'])) {
+        if (!isset($params['join']) || !isset($params['include'])) {
             return;
         }
         $params['mandatory'] = array();
@@ -69,7 +69,7 @@ class RelationJoiner
     }
 
     public function addJoins(ReflectedTable $table, array &$records, ReflectedDatabase $tables, array $params,
-        GenericDB $db)/*: void*/{
+        GenericDB $db) /*: void*/ {
 
         $joins = $this->getJoinsAsPathTree($tables, $params);
         $this->addJoinsForTables($table, $joins, $records, $tables, $params, $db);
@@ -149,7 +149,7 @@ class RelationJoiner
         return $fkValues;
     }
 
-    private function addFkRecords(ReflectedTable $t2, array $fkValues, array $params, GenericDB $db, array &$records)/*: void*/
+    private function addFkRecords(ReflectedTable $t2, array $fkValues, array $params, GenericDB $db, array &$records) /*: void*/
     {
         $pk = $t2->getPk();
         $columnNames = $this->columns->getNames($t2, false, $params);
@@ -160,7 +160,7 @@ class RelationJoiner
         }
     }
 
-    private function fillFkValues(ReflectedTable $t2, array $fkRecords, array &$fkValues)/*: void*/
+    private function fillFkValues(ReflectedTable $t2, array $fkRecords, array &$fkValues) /*: void*/
     {
         $pkName = $t2->getPk()->getName();
         foreach ($fkRecords as $fkRecord) {
@@ -169,7 +169,7 @@ class RelationJoiner
         }
     }
 
-    private function setFkValues(ReflectedTable $t1, ReflectedTable $t2, array &$records, array $fkValues)/*: void*/
+    private function setFkValues(ReflectedTable $t1, ReflectedTable $t2, array &$records, array $fkValues) /*: void*/
     {
         $fks = $t1->getFksTo($t2->getName());
         foreach ($fks as $fk) {
@@ -194,7 +194,7 @@ class RelationJoiner
         return $pkValues;
     }
 
-    private function addPkRecords(ReflectedTable $t1, ReflectedTable $t2, array $pkValues, array $params, GenericDB $db, array &$records)/*: void*/
+    private function addPkRecords(ReflectedTable $t1, ReflectedTable $t2, array $pkValues, array $params, GenericDB $db, array &$records) /*: void*/
     {
         $fks = $t2->getFksTo($t1->getName());
         $columnNames = $this->columns->getNames($t2, false, $params);
@@ -209,7 +209,7 @@ class RelationJoiner
         }
     }
 
-    private function fillPkValues(ReflectedTable $t1, ReflectedTable $t2, array $pkRecords, array &$pkValues)/*: void*/
+    private function fillPkValues(ReflectedTable $t1, ReflectedTable $t2, array $pkRecords, array &$pkValues) /*: void*/
     {
         $fks = $t2->getFksTo($t1->getName());
         foreach ($fks as $fk) {
@@ -223,7 +223,7 @@ class RelationJoiner
         }
     }
 
-    private function setPkValues(ReflectedTable $t1, ReflectedTable $t2, array &$records, array $pkValues)/*: void*/
+    private function setPkValues(ReflectedTable $t1, ReflectedTable $t2, array &$records, array $pkValues) /*: void*/
     {
         $pkName = $t1->getPk()->getName();
         $t2Name = $t2->getName();
@@ -261,7 +261,7 @@ class RelationJoiner
         return new HabtmValues($pkValues, $fkValues);
     }
 
-    private function setHabtmValues(ReflectedTable $t1, ReflectedTable $t3, array &$records, HabtmValues $habtmValues)/*: void*/
+    private function setHabtmValues(ReflectedTable $t1, ReflectedTable $t3, array &$records, HabtmValues $habtmValues) /*: void*/
     {
         $pkName = $t1->getPk()->getName();
         $t3Name = $t3->getName();

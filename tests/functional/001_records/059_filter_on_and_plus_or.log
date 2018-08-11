@@ -1,4 +1,4 @@
-GET /records/posts?columns=id&filter1=id,eq,1&filter2=id,gt,1&filter2=id,lt,3
+GET /records/posts?include=id&filter1=id,eq,1&filter2=id,gt,1&filter2=id,lt,3
 ===
 200
 Content-Type: application/json

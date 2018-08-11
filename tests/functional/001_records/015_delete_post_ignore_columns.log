@@ -1,4 +1,4 @@
-DELETE /records/posts/4?columns=id,content
+DELETE /records/posts/4?include=id,content
 ===
 200
 Content-Type: application/json

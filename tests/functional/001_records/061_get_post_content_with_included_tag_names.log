@@ -1,4 +1,4 @@
-GET /records/posts/1?columns=content,tags.name&join=tags
+GET /records/posts/1?include=content,tags.name&join=tags
 ===
 200
 Content-Type: application/json

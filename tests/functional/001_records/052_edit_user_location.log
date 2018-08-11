@@ -8,7 +8,7 @@ Content-Length: 1
 
 1
 ===
-GET /records/users/1?columns=id,location
+GET /records/users/1?include=id,location
 ===
 200
 Content-Type: application/json

@@ -19,7 +19,7 @@ class RecordService
     {
         $this->db = $db;
         $this->tables = $reflection->getDatabase();
-        $this->columns = new ColumnSelector();
+        $this->columns = new ColumnIncluder();
         $this->joiner = new RelationJoiner($this->columns);
         $this->filters = new FilterInfo();
         $this->ordering = new OrderingInfo();

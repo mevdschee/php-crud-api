@@ -1,4 +1,4 @@
-GET /records/posts?columns=id,content
+GET /records/posts?include=id,content
 ===
 200
 Content-Type: application/json

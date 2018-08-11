@@ -1,4 +1,4 @@
-PUT /records/posts/3?columns=id,content
+PUT /records/posts/3?include=id,content
 
 {"content":"test (edited 2)"}
 ===

@@ -1,4 +1,4 @@
-GET /records/users?columns=id,location
+GET /records/users?include=id,location
 ===
 200
 Content-Type: application/json

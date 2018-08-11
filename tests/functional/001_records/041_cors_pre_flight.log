@@ -1,4 +1,4 @@
-OPTIONS /records/posts/1?columns=id
+OPTIONS /records/posts/1?include=id
 Origin: http://example.com
 Access-Control-Request-Method: POST
 Access-Control-Request-Headers: X-XSRF-TOKEN, X-Requested-With

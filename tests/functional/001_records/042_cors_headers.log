@@ -1,4 +1,4 @@
-GET /records/posts/1?columns=id
+GET /records/posts/1?include=id
 Origin: http://example.com
 ===
 200

@@ -1,4 +1,4 @@
-GET /records/events/1?columns=visitors
+GET /records/events/1?include=visitors
 ===
 200
 Content-Type: application/json
@@ -36,7 +36,7 @@ Content-Length: 5
 
 [1,1]
 ===
-GET /records/events/1?columns=visitors
+GET /records/events/1?include=visitors
 ===
 200
 Content-Type: application/json
@@ -54,7 +54,7 @@ Content-Length: 1
 
 1
 ===
-GET /records/events/1?columns=visitors
+GET /records/events/1?include=visitors
 ===
 200
 Content-Type: application/json
