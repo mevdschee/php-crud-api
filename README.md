@@ -322,7 +322,7 @@ NB: You can only filter on the requested table (not on it's included) and filter
 ### Column selection
 
 By default all columns are selected. With the "include" parameter you can select specific columns. 
-You may use a "dot character" to separate the table name from the column name. Multiple columns should be comma separated. 
+You may use a dot to separate the table name from the column name. Multiple columns should be comma separated. 
 An asterisk ("*") may be used as a wildcard to indicate "all columns". Similar to "include" you may use the "exclude" parameter to remove certain columns:
 
 ```
