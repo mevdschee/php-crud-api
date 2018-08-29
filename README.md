@@ -249,7 +249,7 @@ With the "order" parameter you can sort. By default the sort is in ascending ord
 
 ```
 GET http://localhost/api.php/categories?order=name,desc
-GET http://localhost/api.php/posts?order[]=icon,desc&order[]=name
+GET http://localhost/api.php/categories?order[]=icon,desc&order[]=name
 ```
 
 Output:
