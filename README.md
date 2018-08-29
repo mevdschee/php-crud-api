@@ -321,7 +321,8 @@ NB: You can only filter on the requested table (not on it's included) and filter
 
 ### Column selection
 
-By default all columns are selected. With the "include" parameter you can select specific columns. Multiple columns should be comma separated. 
+By default all columns are selected. With the "include" parameter you can select specific columns. 
+You may use a "dot character" to separate the table name from the column name. Multiple columns should be comma separated. 
 An asterisk ("*") may be used as a wildcard to indicate "all columns". Similar to "include" you may use the "exclude" parameter to remove certain columns:
 
 ```
@@ -366,7 +367,7 @@ Output:
     }
 ```
 
-NB: You may sort on multiple fields by using multiple "order" parameters.
+NB: You may sort on multiple fields by using multiple "order" parameters. You can not order on "joined" columns.
 
 ### Pagination
 
