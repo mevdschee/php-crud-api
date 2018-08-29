@@ -319,6 +319,59 @@ by adding a letter (a-f) you can create almost any reasonably complex condition 
 
 NB: You can only filter on the requested table (not on it's included) and filters are only applied on list calls.
 
+### Column selection
+
+By default all columns are selected. With the "include" parameter you can select specific columns. Multiple columns should be comma separated. 
+An asterisk ("*") may be used as a wildcard to indicate "all columns". Similar to "include" you may use the "exclude" parameter to remove certain columns:
+
+```
+GET /records/categories?include=name
+GET /records/categories?include=categories.name
+GET /records/categories?exclude=categories.id
+```
+
+Output:
+
+```
+{"categories":{"columns":["name"],"records":[["Web development"],["Internet"]]}}
+```
+
+NB: Columns that are used to include related entities are automatically added and cannot be left out of the output.
+
+### Ordering
+
+With the "order" parameter you can sort. By default the sort is in ascending order, but by specifying "desc" this can be reversed:
+
+```
+GET /records/categories?order=name,desc
+GET /records/categories?order[]=icon,desc&order[]=name
+```
+
+Output:
+
+```
+{"categories":{"columns":["id","name"],"records":[[3,"Web development"],[1,"Internet"]]}}
+```
+
+NB: You may sort on multiple fields by using multiple "order" parameters.
+
+### Pagination
+
+The "page" parameter holds the requested page. The default page size is 20, but can be adjusted (e.g. to 50):
+
+```
+GET /records/categories?order=id&page=1
+GET /records/categories?order=id&page=1,50
+```
+
+Output:
+
+```
+{"categories":{"columns":["id","name"],"records":[[1,"Internet"],[3,"Web development"]],"results":2}}
+```
+
+NB: Pages that are not ordered cannot be paginated.
+
 ### Joins
 
 Let's say that you have a posts table that has comments (made by users) and the posts can have tags.
