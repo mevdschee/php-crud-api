@@ -346,7 +346,7 @@ With the "order" parameter you can sort. By default the sort is in ascending ord
 
 ```
 GET /records/categories?order=name,desc
-GET /records/categories?order=icon,desc&order=name
+GET /records/categories?order=id,desc&order=name
 ```
 
 Output:
