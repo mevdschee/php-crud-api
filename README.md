@@ -325,15 +325,17 @@ By default all columns are selected. With the "include" parameter you can select
 An asterisk ("*") may be used as a wildcard to indicate "all columns". Similar to "include" you may use the "exclude" parameter to remove certain columns:
 
 ```
-GET /records/categories?include=name
-GET /records/categories?include=categories.name
-GET /records/categories?exclude=categories.id
+GET /records/categories/1?include=name
+GET /records/categories/1?include=categories.name
+GET /records/categories/1?exclude=categories.id
 ```
 
 Output:
 
 ```
-{"categories":{"columns":["name"],"records":[["Web development"],["Internet"]]}}
+    {
+        "name": "Internet"
+    }
 ```
 
 NB: Columns that are used to include related entities are automatically added and cannot be left out of the output.
@@ -344,13 +346,24 @@ With the "order" parameter you can sort. By default the sort is in ascending ord
 
 ```
 GET /records/categories?order=name,desc
-GET /records/categories?order[]=icon,desc&order[]=name
+GET /records/categories?order=icon,desc&order=name
 ```
 
 Output:
 
 ```
-{"categories":{"columns":["id","name"],"records":[[3,"Web development"],[1,"Internet"]]}}
+    {
+        "records":[
+            {
+                "id": 3
+                "name": "Web development"
+            },
+            {
+                "id": 1
+                "name": "Internet"
+            }
+        ]
+    }
 ```
 
 NB: You may sort on multiple fields by using multiple "order" parameters.
@@ -367,7 +380,19 @@ GET /records/categories?order=id&page=1,50
 Output:
 
 ```
-{"categories":{"columns":["id","name"],"records":[[1,"Internet"],[3,"Web development"]],"results":2}}
+    {
+        "records":[
+            {
+                "id": 3
+                "name": "Web development"
+            },
+            {
+                "id": 1
+                "name": "Internet"
+            }
+        ],
+        "results": 2
+    }
 ```
 
 NB: Pages that are not ordered cannot be paginated.
