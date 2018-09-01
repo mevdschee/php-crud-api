@@ -823,15 +823,15 @@ class ReflectionService
         return $tables;
     }
 
-    private function loadTable(String $name, bool $useCache): ReflectedTable
+    private function loadTable(String $tableName, bool $useCache): ReflectedTable
     {
-        $data = $useCache ? $this->cache->get("ReflectedTable($name)") : '';
+        $data = $useCache ? $this->cache->get("ReflectedTable($tableName)") : '';
         if ($data != '') {
             $table = ReflectedTable::fromJson(json_decode(gzuncompress($data)));
         } else {
-            $table = ReflectedTable::fromReflection($this->db->reflection(), $name);
+            $table = ReflectedTable::fromReflection($this->db->reflection(), $tableName);
             $data = gzcompress(json_encode($table, JSON_UNESCAPED_UNICODE));
-            $this->cache->set("ReflectedTable($name)", $data, $this->ttl);
+            $this->cache->set("ReflectedTable($tableName)", $data, $this->ttl);
         }
         return $table;
     }
@@ -846,17 +846,17 @@ class ReflectionService
         $this->tables[$tableName] = $this->loadTable($tableName, false);
     }
 
-    public function hasTable(String $table): bool
+    public function hasTable(String $tableName): bool
     {
-        return $this->database->exists($table);
+        return $this->database->exists($tableName);
     }
 
-    public function getTable(String $table): ReflectedTable
+    public function getTable(String $tableName): ReflectedTable
     {
-        if (!isset($this->tables[$table])) {
-            $this->tables[$table] = $this->loadTable($table, true);
+        if (!isset($this->tables[$tableName])) {
+            $this->tables[$tableName] = $this->loadTable($tableName, true);
         }
-        return $this->tables[$table];
+        return $this->tables[$tableName];
     }
 
     public function getTableNames(): array
