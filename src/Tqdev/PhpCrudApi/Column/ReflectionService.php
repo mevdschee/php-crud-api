@@ -12,7 +12,7 @@ class ReflectionService
     private $cache;
     private $ttl;
     private $database;
-    private $tableCache;
+    private $tables;
 
     public function __construct(GenericDB $db, Cache $cache, int $ttl)
     {
@@ -20,7 +20,7 @@ class ReflectionService
         $this->cache = $cache;
         $this->ttl = $ttl;
         $this->database = $this->loadTables(true);
-        $this->tableCache = [];
+        $this->tables = [];
     }
 
     private function loadTables(bool $useCache): ReflectedDatabase
@@ -56,7 +56,7 @@ class ReflectionService
 
     public function refreshTable(String $tableName)
     {
-        $this->tableCache[$tableName] = $this->loadTable($tableName, false);
+        $this->tables[$tableName] = $this->loadTable($tableName, false);
     }
 
     public function hasTable(String $table): bool
@@ -66,10 +66,10 @@ class ReflectionService
 
     public function getTable(String $table): ReflectedTable
     {
-        if (!isset($this->tableCache[$table])) {
-            $this->tableCache[$table] = $this->loadTable($table, true);
+        if (!isset($this->tables[$table])) {
+            $this->tables[$table] = $this->loadTable($table, true);
         }
-        return $this->tableCache[$table];
+        return $this->tables[$table];
     }
 
     public function getTableNames(): array
