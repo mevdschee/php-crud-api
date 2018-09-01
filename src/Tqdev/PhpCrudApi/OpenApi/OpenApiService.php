@@ -5,11 +5,11 @@ use Tqdev\PhpCrudApi\Column\ReflectionService;
 
 class OpenApiService
 {
-    private $tables;
+    private $reflection;
 
     public function __construct(ReflectionService $reflection)
     {
-        $this->tables = $reflection->getDatabase();
+        $this->reflection = $reflection;
     }
 
 }

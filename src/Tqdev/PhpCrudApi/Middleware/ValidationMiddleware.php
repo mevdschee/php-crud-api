@@ -5,10 +5,10 @@ use Tqdev\PhpCrudApi\Column\ReflectionService;
 use Tqdev\PhpCrudApi\Column\Reflection\ReflectedTable;
 use Tqdev\PhpCrudApi\Controller\Responder;
 use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
+use Tqdev\PhpCrudApi\Middleware\Router\Router;
 use Tqdev\PhpCrudApi\Record\ErrorCode;
 use Tqdev\PhpCrudApi\Request;
 use Tqdev\PhpCrudApi\Response;
-use Tqdev\PhpCrudApi\Middleware\Router\Router;
 
 class ValidationMiddleware extends Middleware
 {
@@ -45,9 +45,8 @@ class ValidationMiddleware extends Middleware
         $path = $request->getPathSegment(1);
         $tableName = $request->getPathSegment(2);
         $record = $request->getBody();
-        $database = $this->reflection->getDatabase();
-        if ($path == 'records' && $database->exists($tableName) && $record !== null) {
-            $table = $database->get($tableName);
+        if ($path == 'records' && $this->reflection->hasTable($tableName) && $record !== null) {
+            $table = $this->reflection->getTable($tableName);
             $method = $request->getMethod();
             $handler = $this->getProperty('handler', '');
             if ($handler !== '') {

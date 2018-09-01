@@ -37,9 +37,8 @@ class SanitationMiddleware extends Middleware
         $path = $request->getPathSegment(1);
         $tableName = $request->getPathSegment(2);
         $record = $request->getBody();
-        $database = $this->reflection->getDatabase();
-        if ($path == 'records' && $database->exists($tableName) && $record !== null) {
-            $table = $database->get($tableName);
+        if ($path == 'records' && $this->reflection->hasTable($tableName) && $record !== null) {
+            $table = $this->reflection->getTable($tableName);
             $method = $request->getMethod();
             $handler = $this->getProperty('handler', '');
             if ($handler !== '') {

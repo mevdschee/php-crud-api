@@ -465,7 +465,7 @@ class ReflectedDatabase implements \JsonSerializable
         $this->name = $name;
         $this->tables = [];
         foreach ($tables as $table) {
-            $this->tables[$table->getName()] = $table;
+            $this->tables[$table] = true;
         }
     }
 
@@ -473,25 +473,20 @@ class ReflectedDatabase implements \JsonSerializable
     {
         $name = $reflection->getDatabaseName();
         $tables = [];
-        foreach ($reflection->getTables() as $tableName) {
-            if (in_array($tableName['TABLE_NAME'], $reflection->getIgnoredTables())) {
+        foreach ($reflection->getTables() as $table) {
+            $tableName = $table['TABLE_NAME'];
+            if (in_array($tableName, $reflection->getIgnoredTables())) {
                 continue;
             }
-            $table = ReflectedTable::fromReflection($reflection, $tableName);
-            $tables[$table->getName()] = $table;
+            $tables[$tableName] = true;
         }
-        return new ReflectedDatabase($name, array_values($tables));
+        return new ReflectedDatabase($name, array_keys($tables));
     }
 
     public static function fromJson( /* object */$json): ReflectedDatabase
     {
         $name = $json->name;
-        $tables = [];
-        if (isset($json->tables) && is_array($json->tables)) {
-            foreach ($json->tables as $table) {
-                $tables[] = ReflectedTable::fromJson($table);
-            }
-        }
+        $tables = $json->tables;
         return new ReflectedDatabase($name, $tables);
     }
 
@@ -505,12 +500,7 @@ class ReflectedDatabase implements \JsonSerializable
         return isset($this->tables[$tableName]);
     }
 
-    public function get(String $tableName): ReflectedTable
-    {
-        return $this->tables[$tableName];
-    }
-
-    public function getTableNames(): array
+    public function getTables(): array
     {
         return array_keys($this->tables);
     }
@@ -519,7 +509,7 @@ class ReflectedDatabase implements \JsonSerializable
     {
         return [
             'name' => $this->name,
-            'tables' => array_values($this->tables),
+            'tables' => array_keys($this->tables),
         ];
     }
 
@@ -562,9 +552,8 @@ class ReflectedTable implements \JsonSerializable
         }
     }
 
-    public static function fromReflection(GenericReflection $reflection, array $tableResult): ReflectedTable
+    public static function fromReflection(GenericReflection $reflection, String $name): ReflectedTable
     {
-        $name = $tableResult['TABLE_NAME'];
         $columns = [];
         foreach ($reflection->getTableColumns($name) as $tableColumn) {
             $column = ReflectedColumn::fromReflection($reflection, $tableColumn);
@@ -817,6 +806,7 @@ class ReflectionService
         $this->cache = $cache;
         $this->ttl = $ttl;
         $this->tables = $this->loadTables(true);
+        $this->tableCache = [];
     }
 
     private function loadTables(bool $useCache): ReflectedDatabase
@@ -832,9 +822,27 @@ class ReflectionService
         return $tables;
     }
 
-    public function refresh()
+    private function loadTable(String $name, bool $useCache): ReflectedTable
+    {
+        $data = $useCache ? $this->cache->get("ReflectedTable($name)") : '';
+        if ($data != '') {
+            $table = ReflectedTable::fromJson(json_decode(gzuncompress($data)));
+        } else {
+            $table = ReflectedTable::fromReflection($this->db->reflection(), $name);
+            $data = gzcompress(json_encode($table, JSON_UNESCAPED_UNICODE));
+            $this->cache->set("ReflectedTable($name)", $data, $this->ttl);
+        }
+        return $table;
+    }
+
+    public function refreshTables()
     {
         $this->tables = $this->loadTables(false);
+    }
+
+    public function refreshTable(String $tableName)
+    {
+        $this->tableCache[$tableName] = $this->loadTable($tableName, false);
     }
 
     public function hasTable(String $table): bool
@@ -844,12 +852,20 @@ class ReflectionService
 
     public function getTable(String $table): ReflectedTable
     {
-        return $this->tables->get($table);
+        if (!isset($this->tableCache[$table])) {
+            $this->tableCache[$table] = $this->loadTable($table, true);
+        }
+        return $this->tableCache[$table];
     }
 
-    public function getDatabase(): ReflectedDatabase
+    public function getTableNames(): array
     {
-        return $this->tables;
+        return $this->tables->getTables();
+    }
+
+    public function getDatabaseName(): String
+    {
+        return $this->tables->getName();
     }
 }
 
@@ -900,7 +916,12 @@ class ColumnController
 
     public function getDatabase(Request $request): Response
     {
-        $database = $this->reflection->getDatabase();
+        $name = $this->reflection->getDatabaseName();
+        $tables = [];
+        foreach ($this->reflection->getTableNames() as $table) {
+            $tables[] = $this->reflection->getTable($table);
+        }
+        $database = ['name' => $name, 'tables' => $tables];
         return $this->responder->success($database);
     }
 
@@ -937,7 +958,7 @@ class ColumnController
         }
         $success = $this->definition->updateTable($tableName, $request->getBody());
         if ($success) {
-            $this->reflection->refresh();
+            $this->reflection->refreshTables();
         }
         return $this->responder->success($success);
     }
@@ -955,7 +976,7 @@ class ColumnController
         }
         $success = $this->definition->updateColumn($tableName, $columnName, $request->getBody());
         if ($success) {
-            $this->reflection->refresh();
+            $this->reflection->refreshTable($tableName);
         }
         return $this->responder->success($success);
     }
@@ -968,7 +989,7 @@ class ColumnController
         }
         $success = $this->definition->addTable($request->getBody());
         if ($success) {
-            $this->reflection->refresh();
+            $this->reflection->refreshTables();
         }
         return $this->responder->success($success);
     }
@@ -986,7 +1007,7 @@ class ColumnController
         }
         $success = $this->definition->addColumn($tableName, $request->getBody());
         if ($success) {
-            $this->reflection->refresh();
+            $this->reflection->refreshTable($tableName);
         }
         return $this->responder->success($success);
     }
@@ -999,7 +1020,7 @@ class ColumnController
         }
         $success = $this->definition->removeTable($tableName);
         if ($success) {
-            $this->reflection->refresh();
+            $this->reflection->refreshTables();
         }
         return $this->responder->success($success);
     }
@@ -1017,7 +1038,7 @@ class ColumnController
         }
         $success = $this->definition->removeColumn($tableName, $columnName);
         if ($success) {
-            $this->reflection->refresh();
+            $this->reflection->refreshTable($tableName);
         }
         return $this->responder->success($success);
     }
@@ -2958,9 +2979,8 @@ class SanitationMiddleware extends Middleware
         $path = $request->getPathSegment(1);
         $tableName = $request->getPathSegment(2);
         $record = $request->getBody();
-        $database = $this->reflection->getDatabase();
-        if ($path == 'records' && $database->exists($tableName) && $record !== null) {
-            $table = $database->get($tableName);
+        if ($path == 'records' && $this->reflection->hasTable($tableName) && $record !== null) {
+            $table = $this->reflection->getTable($tableName);
             $method = $request->getMethod();
             $handler = $this->getProperty('handler', '');
             if ($handler !== '') {
@@ -3019,9 +3039,8 @@ class ValidationMiddleware extends Middleware
         $path = $request->getPathSegment(1);
         $tableName = $request->getPathSegment(2);
         $record = $request->getBody();
-        $database = $this->reflection->getDatabase();
-        if ($path == 'records' && $database->exists($tableName) && $record !== null) {
-            $table = $database->get($tableName);
+        if ($path == 'records' && $this->reflection->hasTable($tableName) && $record !== null) {
+            $table = $this->reflection->getTable($tableName);
             $method = $request->getMethod();
             $handler = $this->getProperty('handler', '');
             if ($handler !== '') {
@@ -3128,11 +3147,11 @@ class OpenApiDefinition extends DefaultOpenApiDefinition
 
 class OpenApiService
 {
-    private $tables;
+    private $reflection;
 
     public function __construct(ReflectionService $reflection)
     {
-        $this->tables = $reflection->getDatabase();
+        $this->reflection = $reflection;
     }
 
 }
@@ -3761,7 +3780,7 @@ class PathTree
 class RecordService
 {
     private $db;
-    private $tables;
+    private $reflection;
     private $columns;
     private $joiner;
     private $filters;
@@ -3771,9 +3790,9 @@ class RecordService
     public function __construct(GenericDB $db, ReflectionService $reflection)
     {
         $this->db = $db;
-        $this->tables = $reflection->getDatabase();
+        $this->reflection = $reflection;
         $this->columns = new ColumnIncluder();
-        $this->joiner = new RelationJoiner($this->columns);
+        $this->joiner = new RelationJoiner($reflection, $this->columns);
         $this->filters = new FilterInfo();
         $this->ordering = new OrderingInfo();
         $this->pagination = new PaginationInfo();
@@ -3783,14 +3802,14 @@ class RecordService
     {
         $keyset = array_keys((array) $record);
         foreach ($keyset as $key) {
-            if (!$this->tables->get($tableName)->exists($key)) {
+            if (!$this->reflection->getTable($tableName)->exists($key)) {
                 unset($record->$key);
             }
         }
         if ($id != '') {
-            $pk = $this->tables->get($tableName)->getPk();
-            foreach ($this->tables->get($tableName)->columnNames() as $key) {
-                $field = $this->tables->get($tableName)->get($key);
+            $pk = $this->reflection->getTable($tableName)->getPk();
+            foreach ($this->reflection->getTable($tableName)->columnNames() as $key) {
+                $field = $this->reflection->getTable($tableName)->get($key);
                 if ($field->getName() == $pk->getName()) {
                     unset($record->$key);
                 }
@@ -3800,57 +3819,57 @@ class RecordService
 
     public function exists(String $table): bool
     {
-        return $this->tables->exists($table);
+        return $this->reflection->hasTable($table);
     }
 
     public function create(String $tableName, /* object */ $record, array $params)
     {
         $this->sanitizeRecord($tableName, $record, '');
-        $table = $this->tables->get($tableName);
+        $table = $this->reflection->getTable($tableName);
         $columnValues = $this->columns->getValues($table, true, $record, $params);
         return $this->db->createSingle($table, $columnValues);
     }
 
     public function read(String $tableName, String $id, array $params) /*: ?object*/
     {
-        $table = $this->tables->get($tableName);
-        $this->joiner->addMandatoryColumns($table, $this->tables, $params);
+        $table = $this->reflection->getTable($tableName);
+        $this->joiner->addMandatoryColumns($table, $params);
         $columnNames = $this->columns->getNames($table, true, $params);
         $record = $this->db->selectSingle($table, $columnNames, $id);
         if ($record == null) {
             return null;
         }
         $records = array($record);
-        $this->joiner->addJoins($table, $records, $this->tables, $params, $this->db);
+        $this->joiner->addJoins($table, $records, $params, $this->db);
         return $records[0];
     }
 
     public function update(String $tableName, String $id, /* object */ $record, array $params)
     {
         $this->sanitizeRecord($tableName, $record, $id);
-        $table = $this->tables->get($tableName);
+        $table = $this->reflection->getTable($tableName);
         $columnValues = $this->columns->getValues($table, true, $record, $params);
         return $this->db->updateSingle($table, $columnValues, $id);
     }
 
     public function delete(String $tableName, String $id, array $params)
     {
-        $table = $this->tables->get($tableName);
+        $table = $this->reflection->getTable($tableName);
         return $this->db->deleteSingle($table, $id);
     }
 
     public function increment(String $tableName, String $id, /* object */ $record, array $params)
     {
         $this->sanitizeRecord($tableName, $record, $id);
-        $table = $this->tables->get($tableName);
+        $table = $this->reflection->getTable($tableName);
         $columnValues = $this->columns->getValues($table, true, $record, $params);
         return $this->db->incrementSingle($table, $columnValues, $id);
     }
 
     public function _list(String $tableName, array $params): ListDocument
     {
-        $table = $this->tables->get($tableName);
-        $this->joiner->addMandatoryColumns($table, $this->tables, $params);
+        $table = $this->reflection->getTable($tableName);
+        $this->joiner->addMandatoryColumns($table, $params);
         $columnNames = $this->columns->getNames($table, true, $params);
         $condition = $this->filters->getCombinedConditions($table, $params);
         $columnOrdering = $this->ordering->getColumnOrdering($table, $params);
@@ -3864,7 +3883,7 @@ class RecordService
             $count = $this->db->selectCount($table, $condition);
         }
         $records = $this->db->selectAll($table, $columnNames, $condition, $columnOrdering, $offset, $limit);
-        $this->joiner->addJoins($table, $records, $this->tables, $params, $this->db);
+        $this->joiner->addJoins($table, $records, $params, $this->db);
         return new ListDocument($records, $count);
     }
 }
@@ -3874,14 +3893,16 @@ class RecordService
 class RelationJoiner
 {
 
+    private $reflection;
     private $columns;
 
-    public function __construct(ColumnIncluder $columns)
+    public function __construct(ReflectionService $reflection, ColumnIncluder $columns)
     {
+        $this->reflection = $reflection;
         $this->columns = $columns;
     }
 
-    public function addMandatoryColumns(ReflectedTable $table, ReflectedDatabase $tables, array &$params) /*: void*/
+    public function addMandatoryColumns(ReflectedTable $table, array &$params) /*: void*/
     {
         if (!isset($params['join']) || !isset($params['include'])) {
             return;
@@ -3890,12 +3911,12 @@ class RelationJoiner
         foreach ($params['join'] as $tableNames) {
             $t1 = $table;
             foreach (explode(',', $tableNames) as $tableName) {
-                if (!$tables->exists($tableName)) {
+                if (!$this->reflection->hasTable($tableName)) {
                     continue;
                 }
-                $t2 = $tables->get($tableName);
+                $t2 = $this->reflection->getTable($tableName);
                 $fks1 = $t1->getFksTo($t2->getName());
-                $t3 = $this->hasAndBelongsToMany($t1, $t2, $tables);
+                $t3 = $this->hasAndBelongsToMany($t1, $t2);
                 if ($t3 != null || count($fks1) > 0) {
                     $params['mandatory'][] = $t2->getName() . '.' . $t2->getPk()->getName();
                 }
@@ -3914,14 +3935,14 @@ class RelationJoiner
         }
     }
 
-    private function getJoinsAsPathTree(ReflectedDatabase $tables, array $params): PathTree
+    private function getJoinsAsPathTree(array $params): PathTree
     {
         $joins = new PathTree();
         if (isset($params['join'])) {
             foreach ($params['join'] as $tableNames) {
                 $path = array();
                 foreach (explode(',', $tableNames) as $tableName) {
-                    $t = $tables->get($tableName);
+                    $t = $this->reflection->getTable($tableName);
                     if ($t != null) {
                         $path[] = $t->getName();
                     }
@@ -3932,17 +3953,16 @@ class RelationJoiner
         return $joins;
     }
 
-    public function addJoins(ReflectedTable $table, array &$records, ReflectedDatabase $tables, array $params,
-        GenericDB $db) /*: void*/ {
-
-        $joins = $this->getJoinsAsPathTree($tables, $params);
-        $this->addJoinsForTables($table, $joins, $records, $tables, $params, $db);
+    public function addJoins(ReflectedTable $table, array &$records, array $params, GenericDB $db) /*: void*/
+    {
+        $joins = $this->getJoinsAsPathTree($params);
+        $this->addJoinsForTables($table, $joins, $records, $params, $db);
     }
 
-    private function hasAndBelongsToMany(ReflectedTable $t1, ReflectedTable $t2, ReflectedDatabase $tables) /*: ?ReflectedTable*/
+    private function hasAndBelongsToMany(ReflectedTable $t1, ReflectedTable $t2) /*: ?ReflectedTable*/
     {
-        foreach ($tables->getTableNames() as $tableName) {
-            $t3 = $tables->get($tableName);
+        foreach ($this->reflection->getTableNames() as $tableName) {
+            $t3 = $this->reflection->getTable($tableName);
             if (count($t3->getFksTo($t1->getName())) > 0 && count($t3->getFksTo($t2->getName())) > 0) {
                 return $t3;
             }
@@ -3950,16 +3970,16 @@ class RelationJoiner
         return null;
     }
 
-    private function addJoinsForTables(ReflectedTable $t1, PathTree $joins, array &$records,
-        ReflectedDatabase $tables, array $params, GenericDB $db) {
+    private function addJoinsForTables(ReflectedTable $t1, PathTree $joins, array &$records, array $params, GenericDB $db)
+    {
 
         foreach ($joins->getKeys() as $t2Name) {
 
-            $t2 = $tables->get($t2Name);
+            $t2 = $this->reflection->getTable($t2Name);
 
             $belongsTo = count($t1->getFksTo($t2->getName())) > 0;
             $hasMany = count($t2->getFksTo($t1->getName())) > 0;
-            $t3 = $this->hasAndBelongsToMany($t1, $t2, $tables);
+            $t3 = $this->hasAndBelongsToMany($t1, $t2);
             $hasAndBelongsToMany = ($t3 != null);
 
             $newRecords = array();
@@ -3980,7 +4000,7 @@ class RelationJoiner
                 $this->addFkRecords($t2, $habtmValues->fkValues, $params, $db, $newRecords);
             }
 
-            $this->addJoinsForTables($t2, $joins->get($t2Name), $newRecords, $tables, $params, $db);
+            $this->addJoinsForTables($t2, $joins->get($t2Name), $newRecords, $params, $db);
 
             if ($fkValues != null) {
                 $this->fillFkValues($t2, $newRecords, $fkValues);

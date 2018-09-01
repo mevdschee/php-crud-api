@@ -1,7 +1,7 @@
 <?php
 namespace Tqdev\PhpCrudApi\Record;
 
-use Tqdev\PhpCrudApi\Column\Reflection\ReflectedDatabase;
+use Tqdev\PhpCrudApi\Column\ReflectionService;
 use Tqdev\PhpCrudApi\Column\Reflection\ReflectedTable;
 use Tqdev\PhpCrudApi\Database\GenericDB;
 use Tqdev\PhpCrudApi\Record\Condition\ColumnCondition;
@@ -10,14 +10,16 @@ use Tqdev\PhpCrudApi\Record\Condition\OrCondition;
 class RelationJoiner
 {
 
+    private $reflection;
     private $columns;
 
-    public function __construct(ColumnIncluder $columns)
+    public function __construct(ReflectionService $reflection, ColumnIncluder $columns)
     {
+        $this->reflection = $reflection;
         $this->columns = $columns;
     }
 
-    public function addMandatoryColumns(ReflectedTable $table, ReflectedDatabase $tables, array &$params) /*: void*/
+    public function addMandatoryColumns(ReflectedTable $table, array &$params) /*: void*/
     {
         if (!isset($params['join']) || !isset($params['include'])) {
             return;
@@ -26,12 +28,12 @@ class RelationJoiner
         foreach ($params['join'] as $tableNames) {
             $t1 = $table;
             foreach (explode(',', $tableNames) as $tableName) {
-                if (!$tables->exists($tableName)) {
+                if (!$this->reflection->hasTable($tableName)) {
                     continue;
                 }
-                $t2 = $tables->get($tableName);
+                $t2 = $this->reflection->getTable($tableName);
                 $fks1 = $t1->getFksTo($t2->getName());
-                $t3 = $this->hasAndBelongsToMany($t1, $t2, $tables);
+                $t3 = $this->hasAndBelongsToMany($t1, $t2);
                 if ($t3 != null || count($fks1) > 0) {
                     $params['mandatory'][] = $t2->getName() . '.' . $t2->getPk()->getName();
                 }
@@ -50,14 +52,14 @@ class RelationJoiner
         }
     }
 
-    private function getJoinsAsPathTree(ReflectedDatabase $tables, array $params): PathTree
+    private function getJoinsAsPathTree(array $params): PathTree
     {
         $joins = new PathTree();
         if (isset($params['join'])) {
             foreach ($params['join'] as $tableNames) {
                 $path = array();
                 foreach (explode(',', $tableNames) as $tableName) {
-                    $t = $tables->get($tableName);
+                    $t = $this->reflection->getTable($tableName);
                     if ($t != null) {
                         $path[] = $t->getName();
                     }
@@ -68,17 +70,16 @@ class RelationJoiner
         return $joins;
     }
 
-    public function addJoins(ReflectedTable $table, array &$records, ReflectedDatabase $tables, array $params,
-        GenericDB $db) /*: void*/ {
-
-        $joins = $this->getJoinsAsPathTree($tables, $params);
-        $this->addJoinsForTables($table, $joins, $records, $tables, $params, $db);
+    public function addJoins(ReflectedTable $table, array &$records, array $params, GenericDB $db) /*: void*/
+    {
+        $joins = $this->getJoinsAsPathTree($params);
+        $this->addJoinsForTables($table, $joins, $records, $params, $db);
     }
 
-    private function hasAndBelongsToMany(ReflectedTable $t1, ReflectedTable $t2, ReflectedDatabase $tables) /*: ?ReflectedTable*/
+    private function hasAndBelongsToMany(ReflectedTable $t1, ReflectedTable $t2) /*: ?ReflectedTable*/
     {
-        foreach ($tables->getTableNames() as $tableName) {
-            $t3 = $tables->get($tableName);
+        foreach ($this->reflection->getTableNames() as $tableName) {
+            $t3 = $this->reflection->getTable($tableName);
             if (count($t3->getFksTo($t1->getName())) > 0 && count($t3->getFksTo($t2->getName())) > 0) {
                 return $t3;
             }
@@ -86,16 +87,16 @@ class RelationJoiner
         return null;
     }
 
-    private function addJoinsForTables(ReflectedTable $t1, PathTree $joins, array &$records,
-        ReflectedDatabase $tables, array $params, GenericDB $db) {
+    private function addJoinsForTables(ReflectedTable $t1, PathTree $joins, array &$records, array $params, GenericDB $db)
+    {
 
         foreach ($joins->getKeys() as $t2Name) {
 
-            $t2 = $tables->get($t2Name);
+            $t2 = $this->reflection->getTable($t2Name);
 
             $belongsTo = count($t1->getFksTo($t2->getName())) > 0;
             $hasMany = count($t2->getFksTo($t1->getName())) > 0;
-            $t3 = $this->hasAndBelongsToMany($t1, $t2, $tables);
+            $t3 = $this->hasAndBelongsToMany($t1, $t2);
             $hasAndBelongsToMany = ($t3 != null);
 
             $newRecords = array();
@@ -116,7 +117,7 @@ class RelationJoiner
                 $this->addFkRecords($t2, $habtmValues->fkValues, $params, $db, $newRecords);
             }
 
-            $this->addJoinsForTables($t2, $joins->get($t2Name), $newRecords, $tables, $params, $db);
+            $this->addJoinsForTables($t2, $joins->get($t2Name), $newRecords, $params, $db);
 
             if ($fkValues != null) {
                 $this->fillFkValues($t2, $newRecords, $fkValues);

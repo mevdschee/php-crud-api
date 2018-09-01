@@ -37,9 +37,8 @@ class ReflectedTable implements \JsonSerializable
         }
     }
 
-    public static function fromReflection(GenericReflection $reflection, array $tableResult): ReflectedTable
+    public static function fromReflection(GenericReflection $reflection, String $name): ReflectedTable
     {
-        $name = $tableResult['TABLE_NAME'];
         // set columns
         $columns = [];
         foreach ($reflection->getTableColumns($name) as $tableColumn) {

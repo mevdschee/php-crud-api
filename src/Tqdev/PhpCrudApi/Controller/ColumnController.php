@@ -1,12 +1,12 @@
 <?php
 namespace Tqdev\PhpCrudApi\Controller;
 
-use Tqdev\PhpCrudApi\Record\ErrorCode;
 use Tqdev\PhpCrudApi\Column\DefinitionService;
 use Tqdev\PhpCrudApi\Column\ReflectionService;
+use Tqdev\PhpCrudApi\Middleware\Router\Router;
+use Tqdev\PhpCrudApi\Record\ErrorCode;
 use Tqdev\PhpCrudApi\Request;
 use Tqdev\PhpCrudApi\Response;
-use Tqdev\PhpCrudApi\Middleware\Router\Router;
 
 class ColumnController
 {
@@ -32,7 +32,12 @@ class ColumnController
 
     public function getDatabase(Request $request): Response
     {
-        $database = $this->reflection->getDatabase();
+        $name = $this->reflection->getDatabaseName();
+        $tables = [];
+        foreach ($this->reflection->getTableNames() as $table) {
+            $tables[] = $this->reflection->getTable($table);
+        }
+        $database = ['name' => $name, 'tables' => $tables];
         return $this->responder->success($database);
     }
 
@@ -69,7 +74,7 @@ class ColumnController
         }
         $success = $this->definition->updateTable($tableName, $request->getBody());
         if ($success) {
-            $this->reflection->refresh();
+            $this->reflection->refreshTables();
         }
         return $this->responder->success($success);
     }
@@ -87,7 +92,7 @@ class ColumnController
         }
         $success = $this->definition->updateColumn($tableName, $columnName, $request->getBody());
         if ($success) {
-            $this->reflection->refresh();
+            $this->reflection->refreshTable($tableName);
         }
         return $this->responder->success($success);
     }
@@ -100,7 +105,7 @@ class ColumnController
         }
         $success = $this->definition->addTable($request->getBody());
         if ($success) {
-            $this->reflection->refresh();
+            $this->reflection->refreshTables();
         }
         return $this->responder->success($success);
     }
@@ -118,7 +123,7 @@ class ColumnController
         }
         $success = $this->definition->addColumn($tableName, $request->getBody());
         if ($success) {
-            $this->reflection->refresh();
+            $this->reflection->refreshTable($tableName);
         }
         return $this->responder->success($success);
     }
@@ -131,7 +136,7 @@ class ColumnController
         }
         $success = $this->definition->removeTable($tableName);
         if ($success) {
-            $this->reflection->refresh();
+            $this->reflection->refreshTables();
         }
         return $this->responder->success($success);
     }
@@ -149,7 +154,7 @@ class ColumnController
         }
         $success = $this->definition->removeColumn($tableName, $columnName);
         if ($success) {
-            $this->reflection->refresh();
+            $this->reflection->refreshTable($tableName);
         }
         return $this->responder->success($success);
     }

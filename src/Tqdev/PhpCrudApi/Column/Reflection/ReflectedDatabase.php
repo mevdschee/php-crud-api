@@ -13,7 +13,7 @@ class ReflectedDatabase implements \JsonSerializable
         $this->name = $name;
         $this->tables = [];
         foreach ($tables as $table) {
-            $this->tables[$table->getName()] = $table;
+            $this->tables[$table] = true;
         }
     }
 
@@ -21,25 +21,20 @@ class ReflectedDatabase implements \JsonSerializable
     {
         $name = $reflection->getDatabaseName();
         $tables = [];
-        foreach ($reflection->getTables() as $tableName) {
-            if (in_array($tableName['TABLE_NAME'], $reflection->getIgnoredTables())) {
+        foreach ($reflection->getTables() as $table) {
+            $tableName = $table['TABLE_NAME'];
+            if (in_array($tableName, $reflection->getIgnoredTables())) {
                 continue;
             }
-            $table = ReflectedTable::fromReflection($reflection, $tableName);
-            $tables[$table->getName()] = $table;
+            $tables[$tableName] = true;
         }
-        return new ReflectedDatabase($name, array_values($tables));
+        return new ReflectedDatabase($name, array_keys($tables));
     }
 
     public static function fromJson( /* object */$json): ReflectedDatabase
     {
         $name = $json->name;
-        $tables = [];
-        if (isset($json->tables) && is_array($json->tables)) {
-            foreach ($json->tables as $table) {
-                $tables[] = ReflectedTable::fromJson($table);
-            }
-        }
+        $tables = $json->tables;
         return new ReflectedDatabase($name, $tables);
     }
 
@@ -53,12 +48,7 @@ class ReflectedDatabase implements \JsonSerializable
         return isset($this->tables[$tableName]);
     }
 
-    public function get(String $tableName): ReflectedTable
-    {
-        return $this->tables[$tableName];
-    }
-
-    public function getTableNames(): array
+    public function getTables(): array
     {
         return array_keys($this->tables);
     }
@@ -67,7 +57,7 @@ class ReflectedDatabase implements \JsonSerializable
     {
         return [
             'name' => $this->name,
-            'tables' => array_values($this->tables),
+            'tables' => array_keys($this->tables),
         ];
     }
 

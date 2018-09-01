@@ -19,6 +19,7 @@ class ReflectionService
         $this->cache = $cache;
         $this->ttl = $ttl;
         $this->tables = $this->loadTables(true);
+        $this->tableCache = [];
     }
 
     private function loadTables(bool $useCache): ReflectedDatabase
@@ -34,9 +35,27 @@ class ReflectionService
         return $tables;
     }
 
-    public function refresh()
+    private function loadTable(String $name, bool $useCache): ReflectedTable
+    {
+        $data = $useCache ? $this->cache->get("ReflectedTable($name)") : '';
+        if ($data != '') {
+            $table = ReflectedTable::fromJson(json_decode(gzuncompress($data)));
+        } else {
+            $table = ReflectedTable::fromReflection($this->db->reflection(), $name);
+            $data = gzcompress(json_encode($table, JSON_UNESCAPED_UNICODE));
+            $this->cache->set("ReflectedTable($name)", $data, $this->ttl);
+        }
+        return $table;
+    }
+
+    public function refreshTables()
     {
         $this->tables = $this->loadTables(false);
+    }
+
+    public function refreshTable(String $tableName)
+    {
+        $this->tableCache[$tableName] = $this->loadTable($tableName, false);
     }
 
     public function hasTable(String $table): bool
@@ -46,11 +65,19 @@ class ReflectionService
 
     public function getTable(String $table): ReflectedTable
     {
-        return $this->tables->get($table);
+        if (!isset($this->tableCache[$table])) {
+            $this->tableCache[$table] = $this->loadTable($table, true);
+        }
+        return $this->tableCache[$table];
     }
 
-    public function getDatabase(): ReflectedDatabase
+    public function getTableNames(): array
     {
-        return $this->tables;
+        return $this->tables->getTables();
+    }
+
+    public function getDatabaseName(): String
+    {
+        return $this->tables->getName();
     }
 }
