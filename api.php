@@ -806,21 +806,21 @@ class ReflectionService
         $this->db = $db;
         $this->cache = $cache;
         $this->ttl = $ttl;
-        $this->database = $this->loadTables(true);
+        $this->database = $this->loadDatabase(true);
         $this->tables = [];
     }
 
-    private function loadTables(bool $useCache): ReflectedDatabase
+    private function loadDatabase(bool $useCache): ReflectedDatabase
     {
         $data = $useCache ? $this->cache->get('ReflectedDatabase') : '';
         if ($data != '') {
-            $tables = ReflectedDatabase::fromJson(json_decode(gzuncompress($data)));
+            $database = ReflectedDatabase::fromJson(json_decode(gzuncompress($data)));
         } else {
-            $tables = ReflectedDatabase::fromReflection($this->db->reflection());
-            $data = gzcompress(json_encode($tables, JSON_UNESCAPED_UNICODE));
+            $database = ReflectedDatabase::fromReflection($this->db->reflection());
+            $data = gzcompress(json_encode($database, JSON_UNESCAPED_UNICODE));
             $this->cache->set('ReflectedDatabase', $data, $this->ttl);
         }
-        return $tables;
+        return $database;
     }
 
     private function loadTable(String $tableName, bool $useCache): ReflectedTable
@@ -838,7 +838,7 @@ class ReflectionService
 
     public function refreshTables()
     {
-        $this->database = $this->loadTables(false);
+        $this->database = $this->loadDatabase(false);
     }
 
     public function refreshTable(String $tableName)
