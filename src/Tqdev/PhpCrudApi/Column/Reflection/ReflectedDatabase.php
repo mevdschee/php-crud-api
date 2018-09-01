@@ -6,36 +6,36 @@ use Tqdev\PhpCrudApi\Database\GenericReflection;
 class ReflectedDatabase implements \JsonSerializable
 {
     private $name;
-    private $tables;
+    private $tableNames;
 
-    public function __construct(String $name, array $tables)
+    public function __construct(String $name, array $tableNames)
     {
         $this->name = $name;
-        $this->tables = [];
-        foreach ($tables as $table) {
-            $this->tables[$table] = true;
+        $this->tableNames = [];
+        foreach ($tableNames as $tableName) {
+            $this->tableNames[$tableName] = true;
         }
     }
 
     public static function fromReflection(GenericReflection $reflection): ReflectedDatabase
     {
         $name = $reflection->getDatabaseName();
-        $tables = [];
+        $tableNames = [];
         foreach ($reflection->getTables() as $table) {
             $tableName = $table['TABLE_NAME'];
             if (in_array($tableName, $reflection->getIgnoredTables())) {
                 continue;
             }
-            $tables[$tableName] = true;
+            $tableNames[$tableName] = true;
         }
-        return new ReflectedDatabase($name, array_keys($tables));
+        return new ReflectedDatabase($name, array_keys($tableNames));
     }
 
     public static function fromJson( /* object */$json): ReflectedDatabase
     {
         $name = $json->name;
-        $tables = $json->tables;
-        return new ReflectedDatabase($name, $tables);
+        $tableNames = $json->tables;
+        return new ReflectedDatabase($name, $tableNames);
     }
 
     public function getName(): String
@@ -45,19 +45,19 @@ class ReflectedDatabase implements \JsonSerializable
 
     public function exists(String $tableName): bool
     {
-        return isset($this->tables[$tableName]);
+        return isset($this->tableNames[$tableName]);
     }
 
-    public function getTables(): array
+    public function getTableNames(): array
     {
-        return array_keys($this->tables);
+        return array_keys($this->tableNames);
     }
 
     public function serialize()
     {
         return [
             'name' => $this->name,
-            'tables' => array_keys($this->tables),
+            'tables' => array_keys($this->tableNames),
         ];
     }
 

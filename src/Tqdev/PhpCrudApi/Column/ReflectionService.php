@@ -74,7 +74,7 @@ class ReflectionService
 
     public function getTableNames(): array
     {
-        return $this->database->getTables();
+        return $this->database->getTableNames();
     }
 
     public function getDatabaseName(): String
