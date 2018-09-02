@@ -1,0 +1,66 @@
+<html>
+<head>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.0.5/handlebars.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/zepto/1.1.6/zepto.min.js"></script>
+<script id="PostListTemplate" type="text/mustache">
+<ul>
+	{{#records}}
+		<li>
+			<span class="id">{{id}}</span>, <span class="content">{{content}}</span>
+			<a href="javascript:void(0)" class="edit">edit</a>
+			<a href="javascript:void(0)" class="delete">del</a>
+		</li>
+	{{/records}}
+	<li>
+		<form>
+			<input name="content"/>
+		</form>
+	</li>
+</ul>
+</script>
+<script>
+function PostList(element, template) {
+	var self = this;
+	var url = '/api.php/records/posts';
+	self.edit = function() {
+		var li = $(this).parent('li');
+		var id = li.find('span.id').text();
+		var content = li.find('span.content').text();
+		content = prompt('Value',content);
+		if (content!==null) {
+			$.ajax({url:url+'/'+id, type: 'PUT', data: {content:content}, success:self.update});
+		}
+	};
+	self.delete = function() {
+		var li = $(this).parent('li');
+		var id = li.find('span.id').text();
+		if (confirm("Deleting #"+id+". Continue?")) {
+			$.ajax({url:url+'/'+id, type: 'DELETE', success:self.update});
+		}
+	};
+	self.submit = function(e) {
+		e.preventDefault();
+		var content = $(this).find('input[name="content"]').val();
+		$.post(url, {user_id:1,category_id:1,content:content}, self.update);
+	};
+	self.render = function(data) {
+		element.html(Handlebars.compile(template.html())(data));
+	};
+	self.update = function() {
+		$.get(url, self.render);
+	};
+	self.post = function() {
+		$.post(url, {user_id:1,category_id:1,content:"from handlebars"}, self.update);
+	};
+	element.on('submit','form',self.submit);
+	element.on('click','a.edit',self.edit)
+	element.on('click','a.delete',self.delete)
+	self.post();
+};
+$(function(){ new PostList($('#PostListDiv'),$('#PostListTemplate')); });
+</script>
+</head>
+<body>
+<div id="PostListDiv">Loading...</div>
+</body>
+</html>

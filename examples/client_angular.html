@@ -1,0 +1,24 @@
+<html>
+<head>
+<script src= "http://ajax.googleapis.com/ajax/libs/angularjs/1.3.14/angular.min.js"></script>
+<script>
+var app = angular.module('myApplication', []);
+app.controller('postController', function($scope, $http) {
+	var url = '/api.php/records/posts';
+	$http.post(url, {user_id: 1, category_id: 1, content: "from angular"}).success(function() {
+		$http.get(url).success(function(response) {
+			$scope.posts = response.records;
+		});
+	});
+});
+</script>
+</head>
+<body>
+<div ng-app="myApplication" ng-controller="postController">
+	<ul>
+		<li ng-repeat="x in posts">{{ x.id + ', ' + x.content }}</li>
+	</ul>
+</div>
+</body>
+</html>
+

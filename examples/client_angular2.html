@@ -1,0 +1,31 @@
+<html>
+<head>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/2.0.0-beta.14/angular2-polyfills.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/2.0.0-beta.14/Rx.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/2.0.0-beta.14/angular2-all.umd.min.js"></script>
+<script>
+AppComponent =
+  ng.core.Component({
+    selector: 'my-app',
+    providers: [ng.http.HTTP_PROVIDERS],
+    template: '<ul><li *ngFor="#x of posts">{{ x.id + ", " + x.content }}</li></ul>'
+  })
+  .Class({
+    constructor: [
+      ng.http.Http, function(http) {
+        var url = "/api.php/records/posts";
+        http.post(url,JSON.stringify({user_id:1,category_id:1,content:"from angular2"})).subscribe();
+        http.get(url).map(res => res.json()).subscribe(res => this.posts = res.records);
+      }
+    ]
+  });
+document.addEventListener("DOMContentLoaded", function(event) {
+  ng.core.enableProdMode();
+  ng.platform.browser.bootstrap(AppComponent);
+});
+</script>
+</head>
+<body>
+<my-app>Loading...</my-app>
+</body>
+</html>

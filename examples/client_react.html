@@ -1,0 +1,47 @@
+<html>
+<head>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/15.0.0/react.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/15.0.0/react-dom.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/zepto/1.1.6/zepto.min.js"></script>
+<script>
+var PostList = React.createClass({
+  displayName: 'PostList',
+  url: '/api.php/records/posts',
+  getInitialState: function() {
+    return { records: [] };
+  },
+  retrieveServerState: function() {
+    this.serverRequest = $.get(this.url, function (data) {
+      this.setState(data);
+    }.bind(this));
+  },
+  componentDidMount: function() {
+    $.post(this.url, {user_id:1,category_id:1,content:"from react"}, this.retrieveServerState);
+  },
+  componentWillUnmount: function() {
+    this.serverRequest.abort();
+  },
+  render: function render() {
+    var createPost = function(post) {
+      return React.createElement(
+        'li',
+        {key: post.id},
+        post.id,
+        ', ',
+        post.content
+      );
+    };
+    return React.createElement(
+      'ul',
+      null,
+      this.state.records.map(createPost)
+    );
+  }
+});
+$(function(){ ReactDOM.render(React.createElement(PostList, null), document.getElementById('myApplication')); });
+</script>
+</head>
+<body>
+<div id="myApplication">Loading...</div>
+</body>
+</html>
