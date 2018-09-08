@@ -225,9 +225,26 @@ class TempFileCache implements Cache
         return file_put_contents($filename, $string, LOCK_EX) !== false;
     }
 
+    private function fileGetContents($path)
+    {
+        $f = fopen($path, 'r');
+        if ($f === false) {
+            return false;
+        }
+        $locked = flock($f, LOCK_SH);
+        if (!$locked) {
+            fclose($f);
+            return false;
+        }
+        $data = file_get_contents($path);
+        flock($f, LOCK_UN);
+        fclose($f);
+        return $data;
+    }
+
     private function getString($filename): String
     {
-        $data = file_get_contents($filename);
+        $data = $this->fileGetContents($filename);
         if ($data === false) {
             return '';
         }
@@ -251,7 +268,7 @@ class TempFileCache implements Cache
         return $string;
     }
 
-    private function clean(String $path, array $segments, int $len, bool $all)/*: void*/
+    private function clean(String $path, array $segments, int $len, bool $all) /*: void*/
     {
         $entries = scandir($path);
         foreach ($entries as $entry) {
@@ -2653,21 +2670,44 @@ interface Router extends Handler
 class SimpleRouter implements Router
 {
     private $responder;
+    private $cache;
+    private $ttl;
+    private $registration;
     private $routes;
     private $midlewares;
 
-    public function __construct(Responder $responder)
+    public function __construct(Responder $responder, Cache $cache, int $ttl)
     {
         $this->responder = $responder;
-        $this->routes = new PathTree();
+        $this->cache = $cache;
+        $this->ttl = $ttl;
+        $this->registration = true;
+        $this->routes = $this->loadPathTree();
+        $this->routeHandlers = [];
         $this->middlewares = array();
+    }
+
+    private function loadPathTree(): PathTree
+    {
+        $data = $this->cache->get('PathTree');
+        if ($data != '') {
+            $tree = PathTree::fromJson(json_decode(gzuncompress($data)));
+            $this->registration = false;
+        } else {
+            $tree = new PathTree();
+        }
+        return $tree;
     }
 
     public function register(String $method, String $path, array $handler)
     {
-        $parts = explode('/', trim($path, '/'));
-        array_unshift($parts, $method);
-        $this->routes->put($parts, $handler);
+        $routeNumber = count($this->routeHandlers);
+        $this->routeHandlers[$routeNumber] = $handler;
+        if ($this->registration) {
+            $parts = explode('/', trim($path, '/'));
+            array_unshift($parts, $method);
+            $this->routes->put($parts, $routeNumber);
+        }
     }
 
     public function load(Middleware $middleware) /*: void*/
@@ -2683,6 +2723,10 @@ class SimpleRouter implements Router
 
     public function route(Request $request): Response
     {
+        if ($this->registration) {
+            $data = gzcompress(json_encode($this->routes, JSON_UNESCAPED_UNICODE));
+            $this->cache->set('PathTree', $data, $this->ttl);
+        }
         $obj = $this;
         if (count($this->middlewares) > 0) {
             $obj = $this->middlewares[0];
@@ -2690,43 +2734,23 @@ class SimpleRouter implements Router
         return $obj->handle($request);
     }
 
-    private function getHandlers(Request $request): array
+    private function getRouteNumbers(Request $request): array
     {
         $method = strtoupper($request->getMethod());
         $path = explode('/', trim($request->getPath(0), '/'));
         array_unshift($path, $method);
-
-        return $this->matchPath($path, $this->routes);
+        return $this->routes->match($path);
     }
 
     public function handle(Request $request): Response
     {
-        $handlers = $this->getHandlers($request);
-        if (count($handlers) == 0) {
+        $routeNumbers = $this->getRouteNumbers($request);
+        if (count($routeNumbers) == 0) {
             return $this->responder->error(ErrorCode::ROUTE_NOT_FOUND, $request->getPath());
         }
-        return call_user_func($handlers[0], $request);
+        return call_user_func($this->routeHandlers[$routeNumbers[0]], $request);
     }
 
-    private function matchPath(array $path, PathTree $tree): array
-    {
-        $values = array();
-        while (count($path) > 0) {
-            $key = array_shift($path);
-            if ($tree->has($key)) {
-                $tree = $tree->get($key);
-            } else if ($tree->has('*')) {
-                $tree = $tree->get('*');
-            } else {
-                $tree = null;
-                break;
-            }
-        }
-        if ($tree !== null) {
-            $values = $tree->getValues();
-        }
-        return $values;
-    }
 }
 
 // file: src/Tqdev/PhpCrudApi/Middleware/AuthorizationMiddleware.php
@@ -3734,45 +3758,80 @@ class PaginationInfo
 
 // file: src/Tqdev/PhpCrudApi/Record/PathTree.php
 
-class PathTree
+class PathTree implements \JsonSerializable
 {
+    const WILDCARD = '*';
 
-    private $values = array();
+    private $tree;
 
-    private $branches = array();
-
-    public function getValues(): array
+    public function __construct(object &$tree = null)
     {
-        return $this->values;
+        if (!$tree) {
+            $tree = $this->newTree();
+        }
+        $this->tree = &$tree;
     }
 
-    public function put(array $path, $value)
+    public function newTree()
     {
-        if (count($path) == 0) {
-            $this->values[] = $value;
-            return;
-        }
-        $key = array_shift($path);
-        if (!isset($this->branches[$key])) {
-            $this->branches[$key] = new PathTree();
-        }
-        $tree = $this->branches[$key];
-        $tree->put($path, $value);
+        return (object) ['values' => [], 'branches' => (object) []];
     }
 
     public function getKeys(): array
     {
-        return array_keys($this->branches);
+        $branches = (array) $this->tree->branches;
+        return array_keys($branches);
     }
 
-    public function has($key): bool
+    public function getValues(): array
     {
-        return isset($this->branches[$key]);
+        return $this->tree->values;
     }
 
-    public function get($key): PathTree
+    public function get(String $key): PathTree
     {
-        return $this->branches[$key];
+        if (!isset($this->tree->branches->$key)) {
+            return null;
+        }
+        return new PathTree($this->tree->branches->$key);
+    }
+
+    public function put(array $path, $value)
+    {
+        $tree = &$this->tree;
+        foreach ($path as $key) {
+            if (!isset($tree->branches->$key)) {
+                $tree->branches->$key = $this->newTree();
+            }
+            $tree = &$tree->branches->$key;
+        }
+        $tree->values[] = $value;
+    }
+
+    public function match(array $path): array
+    {
+        $star = self::WILDCARD;
+        $tree = &$this->tree;
+        foreach ($path as $key) {
+            if (isset($tree->branches->$key)) {
+                $tree = &$tree->branches->$key;
+            } else if (isset($tree->branches->$star)) {
+                $tree = &$tree->branches->$star;
+            } else {
+                return [];
+            }
+        }
+        return $tree->values;
+    }
+
+    public static function fromJson( /* object */$tree): PathTree
+    {
+        return new PathTree($tree);
+    }
+
+    public function jsonSerialize()
+    {
+        return $this->tree;
     }
 }
 
@@ -4184,7 +4243,7 @@ class Api
         $reflection = new ReflectionService($db, $cache, $config->getCacheTime());
         $definition = new DefinitionService($db, $reflection);
         $responder = new Responder();
-        $router = new SimpleRouter($responder);
+        $router = new SimpleRouter($responder, $cache, $config->getCacheTime());
         foreach ($config->getMiddlewares() as $middleware => $properties) {
             switch ($middleware) {
                 case 'cors':
@@ -4470,14 +4529,16 @@ class Request
         parse_str($query, $this->params);
     }
 
-    private function parseHeaders(array $headers = null)
+    private function parseHeaders(array $headers = null, bool $parse = false)
     {
         if (!$headers) {
             $headers = array();
-            foreach ($_SERVER as $name => $value) {
-                if (substr($name, 0, 5) == 'HTTP_') {
-                    $key = str_replace(' ', '-', ucwords(strtolower(str_replace('_', ' ', substr($name, 5)))));
-                    $headers[$key] = $value;
+            if ($parse) {
+                foreach ($_SERVER as $name => $value) {
+                    if (substr($name, 0, 5) == 'HTTP_') {
+                        $key = str_replace(' ', '-', ucwords(strtolower(str_replace('_', ' ', substr($name, 5)))));
+                        $headers[$key] = $value;
+                    }
                 }
             }
         }
@@ -4547,6 +4608,11 @@ class Request
     {
         if (isset($this->headers[$key])) {
             return $this->headers[$key];
+        } else {
+            $serverKey = 'HTTP_' . strtoupper(str_replace('_', '-', $key));
+            if (isset($_SERVER[$serverKey])) {
+                return $_SERVER[$serverKey];
+            }
         }
         return '';
     }

@@ -1,44 +1,79 @@
 <?php
 namespace Tqdev\PhpCrudApi\Record;
 
-class PathTree
+class PathTree implements \JsonSerializable
 {
+    const WILDCARD = '*';
 
-    private $values = array();
+    private $tree;
 
-    private $branches = array();
-
-    public function getValues(): array
+    public function __construct(object &$tree = null)
     {
-        return $this->values;
+        if (!$tree) {
+            $tree = $this->newTree();
+        }
+        $this->tree = &$tree;
     }
 
-    public function put(array $path, $value)
+    public function newTree()
     {
-        if (count($path) == 0) {
-            $this->values[] = $value;
-            return;
-        }
-        $key = array_shift($path);
-        if (!isset($this->branches[$key])) {
-            $this->branches[$key] = new PathTree();
-        }
-        $tree = $this->branches[$key];
-        $tree->put($path, $value);
+        return (object) ['values' => [], 'branches' => (object) []];
     }
 
     public function getKeys(): array
     {
-        return array_keys($this->branches);
+        $branches = (array) $this->tree->branches;
+        return array_keys($branches);
     }
 
-    public function has($key): bool
+    public function getValues(): array
     {
-        return isset($this->branches[$key]);
+        return $this->tree->values;
     }
 
-    public function get($key): PathTree
+    public function get(String $key): PathTree
     {
-        return $this->branches[$key];
+        if (!isset($this->tree->branches->$key)) {
+            return null;
+        }
+        return new PathTree($this->tree->branches->$key);
+    }
+
+    public function put(array $path, $value)
+    {
+        $tree = &$this->tree;
+        foreach ($path as $key) {
+            if (!isset($tree->branches->$key)) {
+                $tree->branches->$key = $this->newTree();
+            }
+            $tree = &$tree->branches->$key;
+        }
+        $tree->values[] = $value;
+    }
+
+    public function match(array $path): array
+    {
+        $star = self::WILDCARD;
+        $tree = &$this->tree;
+        foreach ($path as $key) {
+            if (isset($tree->branches->$key)) {
+                $tree = &$tree->branches->$key;
+            } else if (isset($tree->branches->$star)) {
+                $tree = &$tree->branches->$star;
+            } else {
+                return [];
+            }
+        }
+        return $tree->values;
+    }
+
+    public static function fromJson( /* object */$tree): PathTree
+    {
+        return new PathTree($tree);
+    }
+
+    public function jsonSerialize()
+    {
+        return $this->tree;
     }
 }

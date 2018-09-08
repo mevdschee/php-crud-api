@@ -39,7 +39,7 @@ class Api
         $reflection = new ReflectionService($db, $cache, $config->getCacheTime());
         $definition = new DefinitionService($db, $reflection);
         $responder = new Responder();
-        $router = new SimpleRouter($responder);
+        $router = new SimpleRouter($responder, $cache, $config->getCacheTime());
         foreach ($config->getMiddlewares() as $middleware => $properties) {
             switch ($middleware) {
                 case 'cors':

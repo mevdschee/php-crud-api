@@ -55,9 +55,26 @@ class TempFileCache implements Cache
         return file_put_contents($filename, $string, LOCK_EX) !== false;
     }
 
+    private function fileGetContents($path)
+    {
+        $f = fopen($path, 'r');
+        if ($f === false) {
+            return false;
+        }
+        $locked = flock($f, LOCK_SH);
+        if (!$locked) {
+            fclose($f);
+            return false;
+        }
+        $data = file_get_contents($path);
+        flock($f, LOCK_UN);
+        fclose($f);
+        return $data;
+    }
+
     private function getString($filename): String
     {
-        $data = file_get_contents($filename);
+        $data = $this->fileGetContents($filename);
         if ($data === false) {
             return '';
         }
@@ -81,7 +98,7 @@ class TempFileCache implements Cache
         return $string;
     }
 
-    private function clean(String $path, array $segments, int $len, bool $all)/*: void*/
+    private function clean(String $path, array $segments, int $len, bool $all) /*: void*/
     {
         $entries = scandir($path);
         foreach ($entries as $entry) {

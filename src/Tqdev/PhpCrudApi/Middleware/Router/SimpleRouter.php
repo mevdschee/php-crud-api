@@ -1,6 +1,7 @@
 <?php
 namespace Tqdev\PhpCrudApi\Middleware\Router;
 
+use Tqdev\PhpCrudApi\Cache\Cache;
 use Tqdev\PhpCrudApi\Controller\Responder;
 use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
 use Tqdev\PhpCrudApi\Record\ErrorCode;
@@ -11,21 +12,44 @@ use Tqdev\PhpCrudApi\Response;
 class SimpleRouter implements Router
 {
     private $responder;
+    private $cache;
+    private $ttl;
+    private $registration;
     private $routes;
     private $midlewares;
 
-    public function __construct(Responder $responder)
+    public function __construct(Responder $responder, Cache $cache, int $ttl)
     {
         $this->responder = $responder;
-        $this->routes = new PathTree();
+        $this->cache = $cache;
+        $this->ttl = $ttl;
+        $this->registration = true;
+        $this->routes = $this->loadPathTree();
+        $this->routeHandlers = [];
         $this->middlewares = array();
+    }
+
+    private function loadPathTree(): PathTree
+    {
+        $data = $this->cache->get('PathTree');
+        if ($data != '') {
+            $tree = PathTree::fromJson(json_decode(gzuncompress($data)));
+            $this->registration = false;
+        } else {
+            $tree = new PathTree();
+        }
+        return $tree;
     }
 
     public function register(String $method, String $path, array $handler)
     {
-        $parts = explode('/', trim($path, '/'));
-        array_unshift($parts, $method);
-        $this->routes->put($parts, $handler);
+        $routeNumber = count($this->routeHandlers);
+        $this->routeHandlers[$routeNumber] = $handler;
+        if ($this->registration) {
+            $parts = explode('/', trim($path, '/'));
+            array_unshift($parts, $method);
+            $this->routes->put($parts, $routeNumber);
+        }
     }
 
     public function load(Middleware $middleware) /*: void*/
@@ -41,6 +65,10 @@ class SimpleRouter implements Router
 
     public function route(Request $request): Response
     {
+        if ($this->registration) {
+            $data = gzcompress(json_encode($this->routes, JSON_UNESCAPED_UNICODE));
+            $this->cache->set('PathTree', $data, $this->ttl);
+        }
         $obj = $this;
         if (count($this->middlewares) > 0) {
             $obj = $this->middlewares[0];
@@ -48,41 +76,21 @@ class SimpleRouter implements Router
         return $obj->handle($request);
     }
 
-    private function getHandlers(Request $request): array
+    private function getRouteNumbers(Request $request): array
     {
         $method = strtoupper($request->getMethod());
         $path = explode('/', trim($request->getPath(0), '/'));
         array_unshift($path, $method);
-
-        return $this->matchPath($path, $this->routes);
+        return $this->routes->match($path);
     }
 
     public function handle(Request $request): Response
     {
-        $handlers = $this->getHandlers($request);
-        if (count($handlers) == 0) {
+        $routeNumbers = $this->getRouteNumbers($request);
+        if (count($routeNumbers) == 0) {
             return $this->responder->error(ErrorCode::ROUTE_NOT_FOUND, $request->getPath());
         }
-        return call_user_func($handlers[0], $request);
+        return call_user_func($this->routeHandlers[$routeNumbers[0]], $request);
     }
 
-    private function matchPath(array $path, PathTree $tree): array
-    {
-        $values = array();
-        while (count($path) > 0) {
-            $key = array_shift($path);
-            if ($tree->has($key)) {
-                $tree = $tree->get($key);
-            } else if ($tree->has('*')) {
-                $tree = $tree->get('*');
-            } else {
-                $tree = null;
-                break;
-            }
-        }
-        if ($tree !== null) {
-            $values = $tree->getValues();
-        }
-        return $values;
-    }
 }
