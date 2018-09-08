@@ -4529,16 +4529,14 @@ class Request
         parse_str($query, $this->params);
     }
 
-    private function parseHeaders(array $headers = null, bool $parse = false)
+    private function parseHeaders(array $headers = null)
     {
         if (!$headers) {
             $headers = array();
-            if ($parse) {
-                foreach ($_SERVER as $name => $value) {
-                    if (substr($name, 0, 5) == 'HTTP_') {
-                        $key = str_replace(' ', '-', ucwords(strtolower(str_replace('_', ' ', substr($name, 5)))));
-                        $headers[$key] = $value;
-                    }
+            foreach ($_SERVER as $name => $value) {
+                if (substr($name, 0, 5) == 'HTTP_') {
+                    $key = str_replace(' ', '-', ucwords(strtolower(str_replace('_', ' ', substr($name, 5)))));
+                    $headers[$key] = $value;
                 }
             }
         }
@@ -4608,11 +4606,6 @@ class Request
     {
         if (isset($this->headers[$key])) {
             return $this->headers[$key];
-        } else {
-            $serverKey = 'HTTP_' . strtoupper(str_replace('_', '-', $key));
-            if (isset($_SERVER[$serverKey])) {
-                return $_SERVER[$serverKey];
-            }
         }
         return '';
     }
