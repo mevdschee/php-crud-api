@@ -52,24 +52,29 @@ class TempFileCache implements Cache
             }
         }
         $string = $ttl . '|' . $value;
-        return file_put_contents($filename, $string, LOCK_EX) !== false;
+        return $this->filePutContents($filename, $string) !== false;
     }
 
-    private function fileGetContents($path)
+    private function filePutContents($filename, $string)
     {
-        $f = fopen($path, 'r');
-        if ($f === false) {
+        return file_put_contents($filename, $string, LOCK_EX);
+    }
+
+    private function fileGetContents($filename)
+    {
+        $file = fopen($filename, 'r');
+        if ($file === false) {
             return false;
         }
-        $locked = flock($f, LOCK_SH);
-        if (!$locked) {
-            fclose($f);
+        $lock = flock($file, LOCK_SH);
+        if (!$lock) {
+            fclose($file);
             return false;
         }
-        $data = file_get_contents($path);
-        flock($f, LOCK_UN);
-        fclose($f);
-        return $data;
+        $string = file_get_contents($filename);
+        flock($file, LOCK_UN);
+        fclose($file);
+        return $string;
     }
 
     private function getString($filename): String

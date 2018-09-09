@@ -222,24 +222,29 @@ class TempFileCache implements Cache
             }
         }
         $string = $ttl . '|' . $value;
-        return file_put_contents($filename, $string, LOCK_EX) !== false;
+        return $this->filePutContents($filename, $string) !== false;
     }
 
-    private function fileGetContents($path)
+    private function filePutContents($filename, $string)
     {
-        $f = fopen($path, 'r');
-        if ($f === false) {
+        return file_put_contents($filename, $string, LOCK_EX);
+    }
+
+    private function fileGetContents($filename)
+    {
+        $file = fopen($filename, 'r');
+        if ($file === false) {
             return false;
         }
-        $locked = flock($f, LOCK_SH);
-        if (!$locked) {
-            fclose($f);
+        $lock = flock($file, LOCK_SH);
+        if (!$lock) {
+            fclose($file);
             return false;
         }
-        $data = file_get_contents($path);
-        flock($f, LOCK_UN);
-        fclose($f);
-        return $data;
+        $string = file_get_contents($filename);
+        flock($file, LOCK_UN);
+        fclose($file);
+        return $string;
     }
 
     private function getString($filename): String
@@ -4482,14 +4487,16 @@ class Request
     private $params;
     private $body;
     private $headers;
+    private $highPerformance;
 
-    public function __construct(String $method = null, String $path = null, String $query = null, array $headers = null, String $body = null)
+    public function __construct(String $method = null, String $path = null, String $query = null, array $headers = null, String $body = null, bool $highPerformance = true)
     {
         $this->parseMethod($method);
         $this->parsePath($path);
         $this->parseParams($query);
         $this->parseHeaders($headers);
         $this->parseBody($body);
+        $this->highPerformance = $highPerformance;
     }
 
     private function parseMethod(String $method = null)
@@ -4534,10 +4541,12 @@ class Request
     {
         if (!$headers) {
             $headers = array();
-            foreach ($_SERVER as $name => $value) {
-                if (substr($name, 0, 5) == 'HTTP_') {
-                    $key = str_replace(' ', '-', ucwords(strtolower(str_replace('_', ' ', substr($name, 5)))));
-                    $headers[$key] = $value;
+            if (!$this->highPerformance) {
+                foreach ($_SERVER as $name => $value) {
+                    if (substr($name, 0, 5) == 'HTTP_') {
+                        $key = str_replace(' ', '-', ucwords(strtolower(str_replace('_', ' ', substr($name, 5)))));
+                        $headers[$key] = $value;
+                    }
                 }
             }
         }
@@ -4607,6 +4616,12 @@ class Request
     {
         if (isset($this->headers[$key])) {
             return $this->headers[$key];
+        }
+        if ($this->highPerformance) {
+            $serverKey = 'HTTP_' . strtoupper(str_replace('_', '-', $key));
+            if (isset($_SERVER[$serverKey])) {
+                return $_SERVER[$serverKey];
+            }
         }
         return '';
     }
