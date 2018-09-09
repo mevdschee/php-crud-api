@@ -37,7 +37,6 @@ class Api
         );
         $cache = CacheFactory::create($config);
         $reflection = new ReflectionService($db, $cache, $config->getCacheTime());
-        $definition = new DefinitionService($db, $reflection);
         $responder = new Responder();
         $router = new SimpleRouter($responder, $cache, $config->getCacheTime());
         foreach ($config->getMiddlewares() as $middleware => $properties) {
@@ -62,20 +61,21 @@ class Api
                     break;
             }
         }
-        $data = new RecordService($db, $reflection);
-        $openApi = new OpenApiService($reflection);
         foreach ($config->getControllers() as $controller) {
             switch ($controller) {
                 case 'records':
-                    new RecordController($router, $responder, $data);
+                    $records = new RecordService($db, $reflection);
+                    new RecordController($router, $responder, $records);
                     break;
                 case 'columns':
+                    $definition = new DefinitionService($db, $reflection);
                     new ColumnController($router, $responder, $reflection, $definition);
                     break;
                 case 'cache':
                     new CacheController($router, $responder, $cache);
                     break;
                 case 'openapi':
+                    $openApi = new OpenApiService($reflection);
                     new OpenApiController($router, $responder, $openApi);
                     break;
             }
