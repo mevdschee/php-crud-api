@@ -9,14 +9,16 @@ class Request
     private $params;
     private $body;
     private $headers;
+    private $highPerformance;
 
-    public function __construct(String $method = null, String $path = null, String $query = null, array $headers = null, String $body = null)
+    public function __construct(String $method = null, String $path = null, String $query = null, array $headers = null, String $body = null, bool $highPerformance = true)
     {
         $this->parseMethod($method);
         $this->parsePath($path);
         $this->parseParams($query);
         $this->parseHeaders($headers);
         $this->parseBody($body);
+        $this->highPerformance = $highPerformance;
     }
 
     private function parseMethod(String $method = null)
@@ -61,10 +63,12 @@ class Request
     {
         if (!$headers) {
             $headers = array();
-            foreach ($_SERVER as $name => $value) {
-                if (substr($name, 0, 5) == 'HTTP_') {
-                    $key = str_replace(' ', '-', ucwords(strtolower(str_replace('_', ' ', substr($name, 5)))));
-                    $headers[$key] = $value;
+            if (!$this->highPerformance) {
+                foreach ($_SERVER as $name => $value) {
+                    if (substr($name, 0, 5) == 'HTTP_') {
+                        $key = str_replace(' ', '-', ucwords(strtolower(str_replace('_', ' ', substr($name, 5)))));
+                        $headers[$key] = $value;
+                    }
                 }
             }
         }
@@ -134,6 +138,12 @@ class Request
     {
         if (isset($this->headers[$key])) {
             return $this->headers[$key];
+        }
+        if ($this->highPerformance) {
+            $serverKey = 'HTTP_' . strtoupper(str_replace('_', '-', $key));
+            if (isset($_SERVER[$serverKey])) {
+                return $_SERVER[$serverKey];
+            }
         }
         return '';
     }
