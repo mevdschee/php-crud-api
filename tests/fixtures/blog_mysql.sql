@@ -159,4 +159,6 @@ CREATE TABLE `kunsthåndværk` (
 INSERT INTO `kunsthåndværk` (`id`, `Umlauts ä_ö_ü-COUNT`) VALUES
 ('e42c77c6-06a4-4502-816c-d112c7142e6d', 1);
 
+SET foreign_key_checks = 1;
+
 -- 2016-11-05 13:11:47
