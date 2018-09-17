@@ -232,7 +232,7 @@ class TempFileCache implements Cache
 
     private function fileGetContents($filename)
     {
-        $file = fopen($filename, 'r');
+        $file = fopen($filename, 'rb');
         if ($file === false) {
             return false;
         }
@@ -241,7 +241,10 @@ class TempFileCache implements Cache
             fclose($file);
             return false;
         }
-        $string = file_get_contents($filename);
+        $string = '';
+        while (!feof($file)) {
+            $string .= fread($file, 8192);
+        }
         flock($file, LOCK_UN);
         fclose($file);
         return $string;
