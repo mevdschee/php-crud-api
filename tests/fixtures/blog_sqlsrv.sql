@@ -112,6 +112,12 @@ DROP TABLE [kunsthåndværk]
 END
 GO
 
+IF (OBJECT_ID('invisibles', 'U') IS NOT NULL)
+BEGIN
+DROP TABLE [kunsthåndværk]
+END
+GO
+
 CREATE TABLE [categories](
 	[id] [int] IDENTITY,
 	[name] [nvarchar](255) NOT NULL,
@@ -212,7 +218,15 @@ GO
 CREATE TABLE [kunsthåndværk](
 	[id] [nvarchar](36),
 	[Umlauts ä_ö_ü-COUNT] [int] NOT NULL,
+	[invisible] [nvarchar](36),
 	CONSTRAINT [PK_kunsthåndværk]
+	PRIMARY KEY CLUSTERED([id] ASC)
+)
+GO
+
+CREATE TABLE [invisibles](
+	[id] [nvarchar](36),
+	CONSTRAINT [PK_invisibles]
 	PRIMARY KEY CLUSTERED([id] ASC)
 )
 GO
@@ -269,7 +283,10 @@ GO
 INSERT [barcodes] ([product_id], [hex], [bin]) VALUES (1, N'00ff01', 0x00ff01)
 GO
 
-INSERT [kunsthåndværk] ([id], [Umlauts ä_ö_ü-COUNT]) VALUES ('e42c77c6-06a4-4502-816c-d112c7142e6d', 1)
+INSERT [kunsthåndværk] ([id], [Umlauts ä_ö_ü-COUNT], [invisible]) VALUES ('e42c77c6-06a4-4502-816c-d112c7142e6d', 1, NULL)
+GO
+
+INSERT [invisibles] ([id]) VALUES ('e42c77c6-06a4-4502-816c-d112c7142e6d')
 GO
 
 ALTER TABLE [comments]  WITH CHECK ADD 	CONSTRAINT [FK_comments_posts] FOREIGN KEY([post_id])
