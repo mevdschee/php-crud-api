@@ -31,6 +31,7 @@ DROP TABLE IF EXISTS products CASCADE;
 DROP TABLE IF EXISTS barcodes CASCADE;
 DROP TABLE IF EXISTS barcodes2 CASCADE;
 DROP TABLE IF EXISTS "kunsthåndværk" CASCADE;
+DROP TABLE IF EXISTS invisibles CASCADE;
 
 --
 -- Name: categories; Type: TABLE; Schema: public; Owner: postgres; Tablespace:
@@ -156,7 +157,16 @@ CREATE TABLE barcodes (
 
 CREATE TABLE "kunsthåndværk" (
   id character varying(36) NOT NULL,
-  "Umlauts ä_ö_ü-COUNT" integer NOT NULL
+  "Umlauts ä_ö_ü-COUNT" integer NOT NULL,
+  invisible character varying(36)
+);
+
+--
+-- Name: invisibles; Type: TABLE; Schema: public; Owner: postgres; Tablespace:
+--
+
+CREATE TABLE "invisibles" (
+  id character varying(36) NOT NULL
 );
 
 --
@@ -244,8 +254,15 @@ INSERT INTO "barcodes" ("product_id", "hex", "bin") VALUES
 -- Data for Name: kunsthåndværk; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-INSERT INTO "kunsthåndværk" ("id", "Umlauts ä_ö_ü-COUNT") VALUES
-('e42c77c6-06a4-4502-816c-d112c7142e6d', 1);
+INSERT INTO "kunsthåndværk" ("id", "Umlauts ä_ö_ü-COUNT", "invisible") VALUES
+('e42c77c6-06a4-4502-816c-d112c7142e6d', 1, NULL);
+
+--
+-- Data for Name: invisibles; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+INSERT INTO "invisibles" ("id") VALUES
+('e42c77c6-06a4-4502-816c-d112c7142e6d');
 
 --
 -- Name: categories_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres; Tablespace:
@@ -339,6 +356,13 @@ ALTER TABLE ONLY barcodes
 
 ALTER TABLE ONLY "kunsthåndværk"
     ADD CONSTRAINT "kunsthåndværk_pkey" PRIMARY KEY (id);
+
+--
+-- Name: invisibles_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres; Tablespace:
+--
+
+ALTER TABLE ONLY "invisibles"
+    ADD CONSTRAINT "invisibles_pkey" PRIMARY KEY (id);
 
 --
 -- Name: comments_post_id_idx; Type: INDEX; Schema: public; Owner: postgres; Tablespace:
