@@ -142,7 +142,7 @@ These features are new and were not included in v1.
 You can enable the following middleware using the "middlewares" config parameter:
 
 - "cors": Support for CORS requests (enabled by default)
-- "authorization": Hide or restrict access to certain tables or columns
+- "authorization": Restrict access to certain tables or columns
 - "basicAuth": Support for "Basic Authentication"
 - "firewall": Limit access to specific IP addresses
 - "validation": Return input validation errors for custom rules
@@ -554,23 +554,25 @@ These filters are based on OGC standards and so is the WKT specification in whic
 
 ### Authorizing tables and columns
 
-By default all tables are reflected. If you want to hide some tables you may add the 'authorization' middleware and define a 'authorization.tableHandler' function that returns 'false' for hidden tables.
+By default all tables are reflected. If you want to restrict access to some tables you may add the 'authorization' middleware 
+and define a 'authorization.tableHandler' function that returns 'false' for these tables.
 
     'authorization.tableHandler' => function ($method, $path, $databaseName, $tableName) {
         return $tableName != 'license_keys';
     },
 
-The above example will hide the table 'license_keys' in all API input and output.
+The above example will restrict access to the table 'license_keys' in all API calls.
 
     'authorization.columnHandler' => function ($method, $path, $databaseName, $tableName, $columnName) {
         return !($tableName == 'users' && $columnName == 'password');
     },
 
-The above example will hide the 'password' field from the 'users' table in all API input and output.
+The above example will restrict access to the 'password' field from the 'users' table in all API calls.
 
 ### Sanitizing input
 
-By default all input is accepted and sent to the database. If you want to strip (certain) HTML tags before storing you may add the 'sanitation' middleware and define a 'sanitation.handler' function that returns the adjusted value.
+By default all input is accepted and sent to the database. If you want to strip (certain) HTML tags before storing you may add 
+the 'sanitation' middleware and define a 'sanitation.handler' function that returns the adjusted value.
 
     'sanitation.handler' => function ($method, $tableName, $column, $value) {
         return is_string($value) ? strip_tags($value) : $value;
@@ -580,7 +582,8 @@ The above example will strip all HTML tags from strings in the input.
 
 ### Validating input
 
-By default all input is accepted. If you want to validate the input, you may add the 'validation' middleware and define a 'validation.handler' function that returns a boolean indicating whether or not the value is valid.
+By default all input is accepted. If you want to validate the input, you may add the 'validation' middleware and define a 
+'validation.handler' function that returns a boolean indicating whether or not the value is valid.
 
     'validation.handler' => function ($method, $tableName, $column, $value, $context) {
         return ($column['name'] == 'post_id' && !is_numeric($value)) ? 'must be numeric' : true;
