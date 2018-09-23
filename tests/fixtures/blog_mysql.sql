@@ -152,12 +152,22 @@ DROP TABLE IF EXISTS `kunsthåndværk`;
 CREATE TABLE `kunsthåndværk` (
   `id` varchar(36) NOT NULL,
   `Umlauts ä_ö_ü-COUNT` int(11) NOT NULL,
+  `invisible` varchar(36),
   PRIMARY KEY (`id`),
   CONSTRAINT `kunsthåndværk_Umlauts ä_ö_ü-COUNT_fkey` UNIQUE (`Umlauts ä_ö_ü-COUNT`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-INSERT INTO `kunsthåndværk` (`id`, `Umlauts ä_ö_ü-COUNT`) VALUES
-('e42c77c6-06a4-4502-816c-d112c7142e6d', 1);
+INSERT INTO `kunsthåndværk` (`id`, `Umlauts ä_ö_ü-COUNT`, `invisible`) VALUES
+('e42c77c6-06a4-4502-816c-d112c7142e6d', 1, NULL);
+
+DROP TABLE IF EXISTS `invisibles`;
+CREATE TABLE `invisibles` (
+  `id` varchar(36) NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+INSERT INTO `invisibles` (`id`) VALUES
+('e42c77c6-06a4-4502-816c-d112c7142e6d');
 
 SET foreign_key_checks = 1;
 

@@ -3,7 +3,13 @@ $settings = [
     'database' => 'php-crud-api',
     'username' => 'php-crud-api',
     'password' => 'php-crud-api',
-    'middlewares' => 'cors,validation,sanitation',
+    'middlewares' => 'cors,authorization,validation,sanitation',
+    'authorization.tableHandler' => function ($method, $path, $databaseName, $tableName) {
+        return !($tableName == 'invisibles');
+    },
+    'authorization.columnHandler' => function ($method, $path, $databaseName, $tableName, $columnName) {
+        return !($columnName == 'invisible');
+    },
     'sanitation.handler' => function ($method, $tableName, $column, $value) {
         return is_string($value) ? strip_tags($value) : $value;
     },

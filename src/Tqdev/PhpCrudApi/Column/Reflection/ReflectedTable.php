@@ -115,6 +115,15 @@ class ReflectedTable implements \JsonSerializable
         return $columns;
     }
 
+    public function removeColumn(String $columnName): bool
+    {
+        if (!isset($this->columns[$columnName])) {
+            return false;
+        }
+        unset($this->columns[$columnName]);
+        return true;
+    }
+
     public function serialize()
     {
         return [

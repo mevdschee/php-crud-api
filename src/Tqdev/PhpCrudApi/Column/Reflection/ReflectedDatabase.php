@@ -53,6 +53,15 @@ class ReflectedDatabase implements \JsonSerializable
         return array_keys($this->tableNames);
     }
 
+    public function removeTable(String $tableName): bool
+    {
+        if (!isset($this->tableNames[$tableName])) {
+            return false;
+        }
+        unset($this->tableNames[$tableName]);
+        return true;
+    }
+
     public function serialize()
     {
         return [

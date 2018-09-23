@@ -10,6 +10,7 @@ use Tqdev\PhpCrudApi\Controller\OpenApiController;
 use Tqdev\PhpCrudApi\Controller\RecordController;
 use Tqdev\PhpCrudApi\Controller\Responder;
 use Tqdev\PhpCrudApi\Database\GenericDB;
+use Tqdev\PhpCrudApi\Middleware\AuthorizationMiddleware;
 use Tqdev\PhpCrudApi\Middleware\CorsMiddleware;
 use Tqdev\PhpCrudApi\Middleware\FirewallMiddleware;
 use Tqdev\PhpCrudApi\Middleware\Router\SimpleRouter;

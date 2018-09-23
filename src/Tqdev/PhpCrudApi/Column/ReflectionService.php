@@ -81,4 +81,15 @@ class ReflectionService
     {
         return $this->database->getName();
     }
+
+    public function removeTable(String $tableName): bool
+    {
+        unset($this->tables[$tableName]);
+        return $this->database->removeTable($tableName);
+    }
+
+    public function removeColumn(String $tableName, String $columnName): bool
+    {
+        return $this->getTable($tableName)->removeColumn($columnName);
+    }
 }

@@ -549,6 +549,22 @@ For spatial support there is an extra set of filters that can be applied on geom
 
 These filters are based on OGC standards and so is the WKT specification in which the geometry columns are represented.
 
+### Authorizing tables and columns
+
+By default all tables are reflected. If you want to hide some tables you may add the 'authorization' middleware and define a 'authorization.tableHandler' function that returns 'false' for hidden tables.
+
+    'authorization.tableHandler' => function ($method, $path, $databaseName, $tableName) {
+        return $tableName != 'license_keys';
+    },
+
+The above example will hide the table 'license_keys' in all API input and output.
+
+    'authorization.columnHandler' => function ($method, $path, $databaseName, $tableName, $columnName) {
+        return !($tableName == 'users' && $columnName == 'password');
+    },
+
+The above example will hide the 'password' field from the 'users' table in all API input and output.
+
 ### Sanitizing input
 
 By default all input is accepted and sent to the database. If you want to strip (certain) HTML tags before storing you may add the 'sanitation' middleware and define a 'sanitation.handler' function that returns the adjusted value.
