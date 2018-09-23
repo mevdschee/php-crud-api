@@ -142,6 +142,7 @@ These features are new and were not included in v1.
 You can enable the following middleware using the "middlewares" config parameter:
 
 - "cors": Support for CORS requests (enabled by default)
+- "authorization": Hide or restrict access to certain tables or columns
 - "basicAuth": Support for "Basic Authentication"
 - "firewall": Limit access to specific IP addresses
 - "validation": Return input validation errors for custom rules
