@@ -155,6 +155,8 @@ You can tune the middleware behavior using middleware specific configuration par
 - "cors.allowMethods": The methods allowed in the CORS request ("OPTIONS, GET, PUT, POST, DELETE, PATCH")
 - "cors.allowCredentials": To allow credentials in the CORS request ("true")
 - "cors.maxAge": The time that the CORS grant is valid in seconds ("1728000")
+- "authorization.tableHandler": Handler to implement table authorization rules ("")
+- "authorization.columnHandler": Handler to implement column authorization rules ("")
 - "basicAuth.passwordFile": The file to read for username/password combinations (".htpasswd")
 - "basicAuth.realm": Message shown when asking for credentials ("Username and password required")
 - "firewall.reverseProxy": Set to "true" when a reverse proxy is used ("")
