@@ -7,7 +7,7 @@ class PathTree implements \JsonSerializable
 
     private $tree;
 
-    public function __construct(object &$tree = null)
+    public function __construct( /* object */&$tree = null)
     {
         if (!$tree) {
             $tree = $this->newTree();

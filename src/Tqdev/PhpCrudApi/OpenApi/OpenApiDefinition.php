@@ -17,7 +17,7 @@ class OpenApiDefinition extends DefaultOpenApiDefinition
         $current = $value;
     }
 
-    public function setPaths(DatabaseDefinition $database/*: void*/
+    public function setPaths(DatabaseDefinition $database) /*: void*/
     {
         $result = [];
         foreach ($database->getTables() as $database) {
