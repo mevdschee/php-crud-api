@@ -16,6 +16,9 @@ select f in "${options[@]}"; do
 	exit
     fi
 done
-dir=$(pwd)/..
+dir=$(dirname $0)
+dir=$(readlink -f $dir)
+dir=$(dirname $dir)
 docker rm "php-crud-api_$f" > /dev/null 2>&1
 docker run -ti -v $dir:/php-crud-api --name "php-crud-api_$f" "php-crud-api:$f" /bin/bash -c '/usr/sbin/docker-run && cd php-crud-api && /bin/bash'
+
