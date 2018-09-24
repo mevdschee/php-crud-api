@@ -114,7 +114,7 @@ GO
 
 IF (OBJECT_ID('invisibles', 'U') IS NOT NULL)
 BEGIN
-DROP TABLE [kunsthåndværk]
+DROP TABLE [invisibles]
 END
 GO
 
