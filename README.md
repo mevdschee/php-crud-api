@@ -779,5 +779,5 @@ The above test run (including starting up the databases) takes less than one min
     sqlsrv: skipped, driver not loaded
     root@b7ab9472e08f:/php-crud-api# 
 
-As you can see the "run.sh" script gives you access to a prompt in the docker environment where the
-local files are mounted. This allows for easy debugging on different environments.
+As you can see the "run.sh" script gives you access to a prompt in a chosen the docker environment.
+In this environment the local files are mounted. This allows for easy debugging on different environments.
