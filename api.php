@@ -2276,46 +2276,38 @@ class GenericDefinition
     public function renameTable(String $tableName, String $newTableName)
     {
         $sql = $this->getTableRenameSQL($tableName, $newTableName);
-        $stmt = $this->pdo->prepare($sql);
-        return $stmt->execute();
+        return $this->query($sql);
     }
 
     public function renameColumn(String $tableName, String $columnName, ReflectedColumn $newColumn)
     {
         $sql = $this->getColumnRenameSQL($tableName, $columnName, $newColumn);
-        $stmt = $this->pdo->prepare($sql);
-        return $stmt->execute();
+        return $this->query($sql);
     }
 
     public function retypeColumn(String $tableName, String $columnName, ReflectedColumn $newColumn)
     {
         $sql = $this->getColumnRetypeSQL($tableName, $columnName, $newColumn);
-        $stmt = $this->pdo->prepare($sql);
-        return $stmt->execute();
+        return $this->query($sql);
     }
 
     public function setColumnNullable(String $tableName, String $columnName, ReflectedColumn $newColumn)
     {
         $sql = $this->getSetColumnNullableSQL($tableName, $columnName, $newColumn);
-        $stmt = $this->pdo->prepare($sql);
-        return $stmt->execute();
+        return $this->query($sql);
     }
 
     public function addColumnPrimaryKey(String $tableName, String $columnName, ReflectedColumn $newColumn)
     {
         $sql = $this->getSetColumnPkConstraintSQL($tableName, $columnName, $newColumn);
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->execute();
+        $this->query($sql);
         if ($this->canAutoIncrement($newColumn)) {
             $sql = $this->getSetColumnPkSequenceSQL($tableName, $columnName, $newColumn);
-            $stmt = $this->pdo->prepare($sql);
-            $stmt->execute();
+            $this->query($sql);
             $sql = $this->getSetColumnPkSequenceStartSQL($tableName, $columnName, $newColumn);
-            $stmt = $this->pdo->prepare($sql);
-            $stmt->execute();
+            $this->query($sql);
             $sql = $this->getSetColumnPkDefaultSQL($tableName, $columnName, $newColumn);
-            $stmt = $this->pdo->prepare($sql);
-            $stmt->execute();
+            $this->query($sql);
         }
         return true;
     }
@@ -2324,56 +2316,53 @@ class GenericDefinition
     {
         if ($this->canAutoIncrement($newColumn)) {
             $sql = $this->getSetColumnPkDefaultSQL($tableName, $columnName, $newColumn);
-            $stmt = $this->pdo->prepare($sql);
-            $stmt->execute();
+            $this->query($sql);
             $sql = $this->getSetColumnPkSequenceSQL($tableName, $columnName, $newColumn);
-            $stmt = $this->pdo->prepare($sql);
-            $stmt->execute();
+            $this->query($sql);
         }
         $sql = $this->getSetColumnPkConstraintSQL($tableName, $columnName, $newColumn);
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->execute();
+        $this->query($sql);
         return true;
     }
 
     public function addColumnForeignKey(String $tableName, String $columnName, ReflectedColumn $newColumn)
     {
         $sql = $this->getAddColumnFkConstraintSQL($tableName, $columnName, $newColumn);
-        $stmt = $this->pdo->prepare($sql);
-        return $stmt->execute();
+        return $this->query($sql);
     }
 
     public function removeColumnForeignKey(String $tableName, String $columnName, ReflectedColumn $newColumn)
     {
         $sql = $this->getRemoveColumnFkConstraintSQL($tableName, $columnName, $newColumn);
-        $stmt = $this->pdo->prepare($sql);
-        return $stmt->execute();
+        return $this->query($sql);
     }
 
     public function addTable(ReflectedTable $newTable)
     {
         $sql = $this->getAddTableSQL($newTable);
-        $stmt = $this->pdo->prepare($sql);
-        return $stmt->execute();
+        return $this->query($sql);
     }
 
     public function addColumn(String $tableName, ReflectedColumn $newColumn)
     {
         $sql = $this->getAddColumnSQL($tableName, $newColumn);
-        $stmt = $this->pdo->prepare($sql);
-        return $stmt->execute();
+        return $this->query($sql);
     }
 
     public function removeTable(String $tableName)
     {
         $sql = $this->getRemoveTableSQL($tableName);
-        $stmt = $this->pdo->prepare($sql);
-        return $stmt->execute();
+        return $this->query($sql);
     }
 
     public function removeColumn(String $tableName, String $columnName)
     {
         $sql = $this->getRemoveColumnSQL($tableName, $columnName);
+        return $this->query($sql);
+    }
+
+    private function query(String $sql): bool
+    {
         $stmt = $this->pdo->prepare($sql);
         return $stmt->execute();
     }
@@ -2448,23 +2437,20 @@ class GenericReflection
 
     public function getTables(): array
     {
-        $stmt = $this->pdo->prepare($this->getTablesSQL());
-        $stmt->execute([$this->database]);
-        return $stmt->fetchAll();
+        $sql = $this->getTablesSQL();
+        return $this->query($sql, [$this->database]);
     }
 
     public function getTableColumns(String $tableName): array
     {
-        $stmt = $this->pdo->prepare($this->getTableColumnsSQL());
-        $stmt->execute([$tableName, $this->database]);
-        return $stmt->fetchAll();
+        $sql = $this->getTableColumnsSQL();
+        return $this->query($sql, [$tableName, $this->database]);
     }
 
     public function getTablePrimaryKeys(String $tableName): array
     {
-        $stmt = $this->pdo->prepare($this->getTablePrimaryKeysSQL());
-        $stmt->execute([$tableName, $this->database]);
-        $results = $stmt->fetchAll();
+        $sql = $this->getTablePrimaryKeysSQL();
+        $results = $this->query($sql, [$tableName, $this->database]);
         $primaryKeys = [];
         foreach ($results as $result) {
             $primaryKeys[] = $result['COLUMN_NAME'];
@@ -2474,9 +2460,8 @@ class GenericReflection
 
     public function getTableForeignKeys(String $tableName): array
     {
-        $stmt = $this->pdo->prepare($this->getTableForeignKeysSQL());
-        $stmt->execute([$tableName, $this->database]);
-        $results = $stmt->fetchAll();
+        $sql = $this->getTableForeignKeysSQL();
+        $results = $this->query($sql, [$tableName, $this->database]);
         $foreignKeys = [];
         foreach ($results as $result) {
             $foreignKeys[$result['COLUMN_NAME']] = $result['REFERENCED_TABLE_NAME'];
@@ -2487,6 +2472,13 @@ class GenericReflection
     public function toJdbcType(String $type, int $size): String
     {
         return $this->typeConverter->toJdbc($type, $size);
+    }
+
+    private function query(String $sql, array $parameters): array
+    {
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($parameters);
+        return $stmt->fetchAll();
     }
 }
 
