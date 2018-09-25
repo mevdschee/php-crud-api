@@ -1774,15 +1774,16 @@ class GenericDB
         $options = array(
             \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
             \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
-            \PDO::ATTR_PERSISTENT => true,
         );
         switch ($this->driver) {
             case 'mysql':return $options + [
                     \PDO::ATTR_EMULATE_PREPARES => false,
                     \PDO::MYSQL_ATTR_FOUND_ROWS => true,
+                    \PDO::ATTR_PERSISTENT => true,
                 ];
             case 'pgsql':return $options + [
                     \PDO::ATTR_EMULATE_PREPARES => false,
+                    \PDO::ATTR_PERSISTENT => true,
                 ];
             case 'sqlsrv':return $options + [
                     \PDO::SQLSRV_ATTR_FETCHES_NUMERIC_TYPE => true,
@@ -2803,7 +2804,7 @@ class AuthorizationMiddleware extends Middleware
         $this->reflection = $reflection;
     }
 
-    private function handleColumns(String $method, String $path, String $databaseName, String $tableName/*: void*/
+    private function handleColumns(String $method, String $path, String $databaseName, String $tableName) /*: void*/
     {
         $columnHandler = $this->getProperty('columnHandler', '');
         if ($columnHandler) {
@@ -2817,7 +2818,7 @@ class AuthorizationMiddleware extends Middleware
         }
     }
 
-    private function handleTable(String $method, String $path, String $databaseName, String $tableName/*: void*/
+    private function handleTable(String $method, String $path, String $databaseName, String $tableName) /*: void*/
     {
         if (!$this->reflection->hasTable($tableName)) {
             return;
@@ -2833,7 +2834,7 @@ class AuthorizationMiddleware extends Middleware
         }
     }
 
-    private function handleJoinTables(String $method, String $path, String $databaseName, array $joinParameters/*: void*/
+    private function handleJoinTables(String $method, String $path, String $databaseName, array $joinParameters) /*: void*/
     {
         $uniqueTableNames = array();
         foreach ($joinParameters as $joinParameter) {
@@ -2847,7 +2848,7 @@ class AuthorizationMiddleware extends Middleware
         }
     }
 
-    private function handleAllTables(String $method, String $path, String $databaseName/*: void*/
+    private function handleAllTables(String $method, String $path, String $databaseName) /*: void*/
     {
         $tableNames = $this->reflection->getTableNames();
         foreach ($tableNames as $tableName) {
@@ -3231,7 +3232,7 @@ class OpenApiDefinition extends DefaultOpenApiDefinition
         $current = $value;
     }
 
-    public function setPaths(DatabaseDefinition $database/*: void*/
+    public function setPaths(DatabaseDefinition $database) /*: void*/
     {
         $result = [];
         foreach ($database->getTables() as $database) {
@@ -3847,7 +3848,7 @@ class PathTree implements \JsonSerializable
 
     private $tree;
 
-    public function __construct(object &$tree = null)
+    public function __construct( /* object */&$tree = null)
     {
         if (!$tree) {
             $tree = $this->newTree();

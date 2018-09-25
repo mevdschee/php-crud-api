@@ -760,3 +760,25 @@ To run the docker tests run "build_all.sh" and "run_all.sh" from the docker dire
     sqlsrv: skipped, driver not loaded
 
 The above test run (including starting up the databases) takes less than one minute on my machine.
+
+    $ ./run.sh 
+    1) debian9
+    2) ubuntu16
+    3) ubuntu18
+    > 3
+    ================================================
+    Ubuntu 18.04
+    ================================================
+    [1/4] Starting MySQL 5.7 ........ done
+    [2/4] Starting PostgreSQL 10.4 .. done
+    [3/4] Starting SQLServer 2017 ... skipped
+    [4/4] Cloning PHP-CRUD-API v2 ... skipped
+    ------------------------------------------------
+    mysql: 84 tests ran in 2899 ms, 0 failed
+    pgsql: 84 tests ran in 380 ms, 0 failed
+    sqlsrv: skipped, driver not loaded
+    root@b7ab9472e08f:/php-crud-api# 
+
+As you can see the "run.sh" script gives you access to a prompt in a chosen the docker environment.
+In this environment the local files are mounted. This allows for easy debugging on different environments.
+You may type "exit" when you are done.
