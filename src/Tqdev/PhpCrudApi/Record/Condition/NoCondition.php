@@ -13,7 +13,7 @@ class NoCondition extends Condition
         return $condition;
     }
 
-    public function not(): Condition
+    public function _not(): Condition
     {
         return $this;
     }
