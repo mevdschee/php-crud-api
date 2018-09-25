@@ -781,3 +781,4 @@ The above test run (including starting up the databases) takes less than one min
 
 As you can see the "run.sh" script gives you access to a prompt in a chosen the docker environment.
 In this environment the local files are mounted. This allows for easy debugging on different environments.
+You may type "exit" when you are done.
