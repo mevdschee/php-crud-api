@@ -239,8 +239,8 @@ class GenericDB
     private function query(String $sql, array $parameters): \PDOStatement
     {
         $stmt = $this->pdo->prepare($sql);
-        $stmt->execute($parameters);
         //echo "- $sql -- " . json_encode($parameters, JSON_UNESCAPED_UNICODE) . "\n";
+        $stmt->execute($parameters);
         return $stmt;
     }
 }

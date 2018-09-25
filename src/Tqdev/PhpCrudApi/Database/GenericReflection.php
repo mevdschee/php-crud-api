@@ -68,23 +68,20 @@ class GenericReflection
 
     public function getTables(): array
     {
-        $stmt = $this->pdo->prepare($this->getTablesSQL());
-        $stmt->execute([$this->database]);
-        return $stmt->fetchAll();
+        $sql = $this->getTablesSQL();
+        return $this->query($sql, [$this->database]);
     }
 
     public function getTableColumns(String $tableName): array
     {
-        $stmt = $this->pdo->prepare($this->getTableColumnsSQL());
-        $stmt->execute([$tableName, $this->database]);
-        return $stmt->fetchAll();
+        $sql = $this->getTableColumnsSQL();
+        return $this->query($sql, [$tableName, $this->database]);
     }
 
     public function getTablePrimaryKeys(String $tableName): array
     {
-        $stmt = $this->pdo->prepare($this->getTablePrimaryKeysSQL());
-        $stmt->execute([$tableName, $this->database]);
-        $results = $stmt->fetchAll();
+        $sql = $this->getTablePrimaryKeysSQL();
+        $results = $this->query($sql, [$tableName, $this->database]);
         $primaryKeys = [];
         foreach ($results as $result) {
             $primaryKeys[] = $result['COLUMN_NAME'];
@@ -94,9 +91,8 @@ class GenericReflection
 
     public function getTableForeignKeys(String $tableName): array
     {
-        $stmt = $this->pdo->prepare($this->getTableForeignKeysSQL());
-        $stmt->execute([$tableName, $this->database]);
-        $results = $stmt->fetchAll();
+        $sql = $this->getTableForeignKeysSQL();
+        $results = $this->query($sql, [$tableName, $this->database]);
         $foreignKeys = [];
         foreach ($results as $result) {
             $foreignKeys[$result['COLUMN_NAME']] = $result['REFERENCED_TABLE_NAME'];
@@ -107,5 +103,13 @@ class GenericReflection
     public function toJdbcType(String $type, int $size): String
     {
         return $this->typeConverter->toJdbc($type, $size);
+    }
+
+    private function query(String $sql, array $parameters): array
+    {
+        $stmt = $this->pdo->prepare($sql);
+        //echo "- $sql -- " . json_encode($parameters, JSON_UNESCAPED_UNICODE) . "\n";
+        $stmt->execute($parameters);
+        return $stmt->fetchAll();
     }
 }
