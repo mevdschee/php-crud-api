@@ -348,10 +348,10 @@ class ReflectedColumn implements \JsonSerializable
     public static function fromReflection(GenericReflection $reflection, array $columnResult): ReflectedColumn
     {
         $name = $columnResult['COLUMN_NAME'];
-        $length = $columnResult['CHARACTER_MAXIMUM_LENGTH'] + 0;
+        $length = (int) $columnResult['CHARACTER_MAXIMUM_LENGTH'];
         $type = $reflection->toJdbcType($columnResult['DATA_TYPE'], $length);
-        $precision = $columnResult['NUMERIC_PRECISION'] + 0;
-        $scale = $columnResult['NUMERIC_SCALE'] + 0;
+        $precision = (int) $columnResult['NUMERIC_PRECISION'];
+        $scale = (int) $columnResult['NUMERIC_SCALE'];
         $nullable = in_array(strtoupper($columnResult['IS_NULLABLE']), ['TRUE', 'YES', 'T', 'Y', '1']);
         $pk = false;
         $fk = '';
@@ -1824,6 +1824,12 @@ class GenericDB
         return $this->definition;
     }
 
+    private function addAuthorizationCondition(Condition $condition2): Condition
+    {
+        $condition1 = VariableStore::get('authorization.condition');
+        return $condition1 ? AndCondition::fromArray([$condition1, $condition2]) : $condition2;
+    }
+
     public function createSingle(ReflectedTable $table, array $columnValues) /*: ?String*/
     {
         $this->converter->convertColumnValues($table, $columnValues);
@@ -1849,6 +1855,7 @@ class GenericDB
         $selectColumns = $this->columns->getSelect($table, $columnNames);
         $tableName = $table->getName();
         $condition = new ColumnCondition($table->getPk(), 'eq', $id);
+        $condition = $this->addAuthorizationCondition($condition);
         $parameters = array();
         $whereClause = $this->conditions->getWhereClause($condition, $parameters);
         $sql = 'SELECT ' . $selectColumns . ' FROM "' . $tableName . '" ' . $whereClause;
@@ -1870,6 +1877,7 @@ class GenericDB
         $selectColumns = $this->columns->getSelect($table, $columnNames);
         $tableName = $table->getName();
         $condition = new ColumnCondition($table->getPk(), 'in', implode(',', $ids));
+        $condition = $this->addAuthorizationCondition($condition);
         $parameters = array();
         $whereClause = $this->conditions->getWhereClause($condition, $parameters);
         $sql = 'SELECT ' . $selectColumns . ' FROM "' . $tableName . '" ' . $whereClause;
@@ -1882,6 +1890,7 @@ class GenericDB
     public function selectCount(ReflectedTable $table, Condition $condition): int
     {
         $tableName = $table->getName();
+        $condition = $this->addAuthorizationCondition($condition);
         $parameters = array();
         $whereClause = $this->conditions->getWhereClause($condition, $parameters);
         $sql = 'SELECT COUNT(*) FROM "' . $tableName . '"' . $whereClause;
@@ -1893,6 +1902,7 @@ class GenericDB
     {
         $selectColumns = $this->columns->getSelect($table, $columnNames);
         $tableName = $table->getName();
+        $condition = $this->addAuthorizationCondition($condition);
         $parameters = array();
         $whereClause = $this->conditions->getWhereClause($condition, $parameters);
         $sql = 'SELECT ' . $selectColumns . ' FROM "' . $tableName . '"' . $whereClause;
@@ -1909,6 +1919,7 @@ class GenericDB
         }
         $selectColumns = $this->columns->getSelect($table, $columnNames);
         $tableName = $table->getName();
+        $condition = $this->addAuthorizationCondition($condition);
         $parameters = array();
         $whereClause = $this->conditions->getWhereClause($condition, $parameters);
         $orderBy = $this->columns->getOrderBy($table, $columnOrdering);
@@ -1929,6 +1940,7 @@ class GenericDB
         $updateColumns = $this->columns->getUpdate($table, $columnValues);
         $tableName = $table->getName();
         $condition = new ColumnCondition($table->getPk(), 'eq', $id);
+        $condition = $this->addAuthorizationCondition($condition);
         $parameters = array_values($columnValues);
         $whereClause = $this->conditions->getWhereClause($condition, $parameters);
         $sql = 'UPDATE "' . $tableName . '" SET ' . $updateColumns . $whereClause;
@@ -1940,6 +1952,7 @@ class GenericDB
     {
         $tableName = $table->getName();
         $condition = new ColumnCondition($table->getPk(), 'eq', $id);
+        $condition = $this->addAuthorizationCondition($condition);
         $parameters = array();
         $whereClause = $this->conditions->getWhereClause($condition, $parameters);
         $sql = 'DELETE FROM "' . $tableName . '" ' . $whereClause;
@@ -1956,6 +1969,7 @@ class GenericDB
         $updateColumns = $this->columns->getIncrement($table, $columnValues);
         $tableName = $table->getName();
         $condition = new ColumnCondition($table->getPk(), 'eq', $id);
+        $condition = $this->addAuthorizationCondition($condition);
         $parameters = array_values($columnValues);
         $whereClause = $this->conditions->getWhereClause($condition, $parameters);
         $sql = 'UPDATE "' . $tableName . '" SET ' . $updateColumns . $whereClause;
@@ -2685,6 +2699,26 @@ abstract class Middleware implements Handler
     }
 }
 
+// file: src/Tqdev/PhpCrudApi/Middleware/Communication/VariableStore.php
+
+class VariableStore
+{
+    static $values = array();
+
+    public static function get(String $key)
+    {
+        if (isset(self::$values[$key])) {
+            return self::$values[$key];
+        }
+        return null;
+    }
+
+    public static function set(String $key, /* object */ $value)
+    {
+        self::$values[$key] = $value;
+    }
+}
+
 // file: src/Tqdev/PhpCrudApi/Middleware/Router/Router.php
 
 interface Router extends Handler
@@ -2848,6 +2882,23 @@ class AuthorizationMiddleware extends Middleware
         }
     }
 
+    private function handleRecords(String $method, String $path, String $databaseName, String $tableName) /*: void*/
+    {
+        if (!$this->reflection->hasTable($tableName)) {
+            return;
+        }
+        $recordHandler = $this->getProperty('recordHandler', '');
+        if ($recordHandler) {
+            $query = call_user_func($recordHandler, $method, $path, $databaseName, $tableName);
+            $filters = new FilterInfo();
+            $table = $this->reflection->getTable($tableName);
+            $query = str_replace('][]=', ']=', str_replace('=', '[]=', $query));
+            parse_str($query, $params);
+            $condition = $filters->getCombinedConditions($table, $params);
+            VariableStore::set('authorization.condition', $condition);
+        }
+    }
+
     public function handle(Request $request): Response
     {
         $method = $request->getMethod();
@@ -2860,6 +2911,7 @@ class AuthorizationMiddleware extends Middleware
             if (isset($params['join'])) {
                 $this->handleJoinTables($method, $path, $databaseName, $params['join']);
             }
+            $this->handleRecords($method, $path, $databaseName, $tableName);
         } elseif ($path == 'columns') {
             $tableName = $request->getPathSegment(2);
             if ($tableName) {
@@ -3402,7 +3454,7 @@ class NoCondition extends Condition
         return $condition;
     }
 
-    public function not(): Condition
+    public function _not(): Condition
     {
         return $this;
     }
