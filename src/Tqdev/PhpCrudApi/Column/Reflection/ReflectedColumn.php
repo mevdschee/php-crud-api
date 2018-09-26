@@ -34,10 +34,10 @@ class ReflectedColumn implements \JsonSerializable
     public static function fromReflection(GenericReflection $reflection, array $columnResult): ReflectedColumn
     {
         $name = $columnResult['COLUMN_NAME'];
-        $length = $columnResult['CHARACTER_MAXIMUM_LENGTH'] + 0;
+        $length = (int) $columnResult['CHARACTER_MAXIMUM_LENGTH'];
         $type = $reflection->toJdbcType($columnResult['DATA_TYPE'], $length);
-        $precision = $columnResult['NUMERIC_PRECISION'] + 0;
-        $scale = $columnResult['NUMERIC_SCALE'] + 0;
+        $precision = (int) $columnResult['NUMERIC_PRECISION'];
+        $scale = (int) $columnResult['NUMERIC_SCALE'];
         $nullable = in_array(strtoupper($columnResult['IS_NULLABLE']), ['TRUE', 'YES', 'T', 'Y', '1']);
         $pk = false;
         $fk = '';
