@@ -2,6 +2,8 @@
 namespace Tqdev\PhpCrudApi\Database;
 
 use Tqdev\PhpCrudApi\Column\Reflection\ReflectedTable;
+use Tqdev\PhpCrudApi\Middleware\Communication\VariableStore;
+use Tqdev\PhpCrudApi\Record\Condition\AndCondition;
 use Tqdev\PhpCrudApi\Record\Condition\ColumnCondition;
 use Tqdev\PhpCrudApi\Record\Condition\Condition;
 
@@ -95,6 +97,12 @@ class GenericDB
         return $this->definition;
     }
 
+    private function addAuthorizationCondition(Condition $condition2): Condition
+    {
+        $condition1 = VariableStore::get('authorization.condition');
+        return $condition1 ? AndCondition::fromArray([$condition1, $condition2]) : $condition2;
+    }
+
     public function createSingle(ReflectedTable $table, array $columnValues) /*: ?String*/
     {
         $this->converter->convertColumnValues($table, $columnValues);
@@ -122,6 +130,7 @@ class GenericDB
         $selectColumns = $this->columns->getSelect($table, $columnNames);
         $tableName = $table->getName();
         $condition = new ColumnCondition($table->getPk(), 'eq', $id);
+        $condition = $this->addAuthorizationCondition($condition);
         $parameters = array();
         $whereClause = $this->conditions->getWhereClause($condition, $parameters);
         $sql = 'SELECT ' . $selectColumns . ' FROM "' . $tableName . '" ' . $whereClause;
@@ -143,6 +152,7 @@ class GenericDB
         $selectColumns = $this->columns->getSelect($table, $columnNames);
         $tableName = $table->getName();
         $condition = new ColumnCondition($table->getPk(), 'in', implode(',', $ids));
+        $condition = $this->addAuthorizationCondition($condition);
         $parameters = array();
         $whereClause = $this->conditions->getWhereClause($condition, $parameters);
         $sql = 'SELECT ' . $selectColumns . ' FROM "' . $tableName . '" ' . $whereClause;
@@ -155,6 +165,7 @@ class GenericDB
     public function selectCount(ReflectedTable $table, Condition $condition): int
     {
         $tableName = $table->getName();
+        $condition = $this->addAuthorizationCondition($condition);
         $parameters = array();
         $whereClause = $this->conditions->getWhereClause($condition, $parameters);
         $sql = 'SELECT COUNT(*) FROM "' . $tableName . '"' . $whereClause;
@@ -166,6 +177,7 @@ class GenericDB
     {
         $selectColumns = $this->columns->getSelect($table, $columnNames);
         $tableName = $table->getName();
+        $condition = $this->addAuthorizationCondition($condition);
         $parameters = array();
         $whereClause = $this->conditions->getWhereClause($condition, $parameters);
         $sql = 'SELECT ' . $selectColumns . ' FROM "' . $tableName . '"' . $whereClause;
@@ -182,6 +194,7 @@ class GenericDB
         }
         $selectColumns = $this->columns->getSelect($table, $columnNames);
         $tableName = $table->getName();
+        $condition = $this->addAuthorizationCondition($condition);
         $parameters = array();
         $whereClause = $this->conditions->getWhereClause($condition, $parameters);
         $orderBy = $this->columns->getOrderBy($table, $columnOrdering);
@@ -202,6 +215,7 @@ class GenericDB
         $updateColumns = $this->columns->getUpdate($table, $columnValues);
         $tableName = $table->getName();
         $condition = new ColumnCondition($table->getPk(), 'eq', $id);
+        $condition = $this->addAuthorizationCondition($condition);
         $parameters = array_values($columnValues);
         $whereClause = $this->conditions->getWhereClause($condition, $parameters);
         $sql = 'UPDATE "' . $tableName . '" SET ' . $updateColumns . $whereClause;
@@ -213,6 +227,7 @@ class GenericDB
     {
         $tableName = $table->getName();
         $condition = new ColumnCondition($table->getPk(), 'eq', $id);
+        $condition = $this->addAuthorizationCondition($condition);
         $parameters = array();
         $whereClause = $this->conditions->getWhereClause($condition, $parameters);
         $sql = 'DELETE FROM "' . $tableName . '" ' . $whereClause;
@@ -229,6 +244,7 @@ class GenericDB
         $updateColumns = $this->columns->getIncrement($table, $columnValues);
         $tableName = $table->getName();
         $condition = new ColumnCondition($table->getPk(), 'eq', $id);
+        $condition = $this->addAuthorizationCondition($condition);
         $parameters = array_values($columnValues);
         $whereClause = $this->conditions->getWhereClause($condition, $parameters);
         $sql = 'UPDATE "' . $tableName . '" SET ' . $updateColumns . $whereClause;

@@ -10,6 +10,9 @@ $settings = [
     'authorization.columnHandler' => function ($method, $path, $databaseName, $tableName, $columnName) {
         return !($columnName == 'invisible');
     },
+    'authorization.recordHandler' => function ($method, $path, $databaseName, $tableName) {
+        return ($tableName == 'comments') ? 'filter=id,neq,3' : '';
+    },
     'sanitation.handler' => function ($method, $tableName, $column, $value) {
         return is_string($value) ? strip_tags($value) : $value;
     },

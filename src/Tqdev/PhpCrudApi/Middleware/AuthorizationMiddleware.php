@@ -4,7 +4,9 @@ namespace Tqdev\PhpCrudApi\Middleware;
 use Tqdev\PhpCrudApi\Column\ReflectionService;
 use Tqdev\PhpCrudApi\Controller\Responder;
 use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
+use Tqdev\PhpCrudApi\Middleware\Communication\VariableStore;
 use Tqdev\PhpCrudApi\Middleware\Router\Router;
+use Tqdev\PhpCrudApi\Record\FilterInfo;
 use Tqdev\PhpCrudApi\Request;
 use Tqdev\PhpCrudApi\Response;
 
@@ -70,6 +72,23 @@ class AuthorizationMiddleware extends Middleware
         }
     }
 
+    private function handleRecords(String $method, String $path, String $databaseName, String $tableName) /*: void*/
+    {
+        if (!$this->reflection->hasTable($tableName)) {
+            return;
+        }
+        $recordHandler = $this->getProperty('recordHandler', '');
+        if ($recordHandler) {
+            $query = call_user_func($recordHandler, $method, $path, $databaseName, $tableName);
+            $filters = new FilterInfo();
+            $table = $this->reflection->getTable($tableName);
+            $query = str_replace('][]=', ']=', str_replace('=', '[]=', $query));
+            parse_str($query, $params);
+            $condition = $filters->getCombinedConditions($table, $params);
+            VariableStore::set('authorization.condition', $condition);
+        }
+    }
+
     public function handle(Request $request): Response
     {
         $method = $request->getMethod();
@@ -82,6 +101,7 @@ class AuthorizationMiddleware extends Middleware
             if (isset($params['join'])) {
                 $this->handleJoinTables($method, $path, $databaseName, $params['join']);
             }
+            $this->handleRecords($method, $path, $databaseName, $tableName);
         } elseif ($path == 'columns') {
             $tableName = $request->getPathSegment(2);
             if ($tableName) {
