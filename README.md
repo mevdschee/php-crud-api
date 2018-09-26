@@ -107,7 +107,7 @@ These features match features in v1 (see branch "v1"):
   - [ ] Supports file upload from web forms (multipart/form-data)
   - [ ] ~~Condensed JSON output: first row contains field names~~
   - [x] Sanitize and validate input using callbacks
-  - [ ] Permission system for databases, tables, columns and records
+  - [x] Permission system for databases, tables, columns and records
   - [ ] Multi-tenant database layouts are supported
   - [x] Multi-domain CORS support for cross-domain requests
   - [x] Support for reading joined results from multiple tables
@@ -158,6 +158,7 @@ You can tune the middleware behavior using middleware specific configuration par
 - "cors.maxAge": The time that the CORS grant is valid in seconds ("1728000")
 - "authorization.tableHandler": Handler to implement table authorization rules ("")
 - "authorization.columnHandler": Handler to implement column authorization rules ("")
+- "authorization.recordHandler": Handler to implement record authorization filter rules ("")
 - "basicAuth.passwordFile": The file to read for username/password combinations (".htpasswd")
 - "basicAuth.realm": Message shown when asking for credentials ("Username and password required")
 - "firewall.reverseProxy": Set to "true" when a reverse proxy is used ("")
@@ -568,6 +569,12 @@ The above example will restrict access to the table 'license_keys' in all API ca
     },
 
 The above example will restrict access to the 'password' field from the 'users' table in all API calls.
+
+    'authorization.recordHandler' => function ($method, $path, $databaseName, $tableName, $columnName) {
+        return ($tableName == 'users') ? 'filter=username,neq,admin' : '';
+    },
+
+This will disallow viewing the user records where the username is 'admin'. It allows you to add a filter to every query.
 
 ### Sanitizing input
 

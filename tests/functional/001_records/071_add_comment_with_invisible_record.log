@@ -1,0 +1,17 @@
+POST /records/comments
+
+{"user_id":1,"post_id":2,"message":"invisible"}
+===
+200
+Content-Type: application/json
+Content-Length: 1
+
+6
+===
+GET /records/comments/6
+===
+404
+Content-Type: application/json
+Content-Length: 46
+
+{"code":1003,"message":"Record '6' not found"}
