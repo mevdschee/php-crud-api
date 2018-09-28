@@ -14,7 +14,6 @@ class TempFileCache implements Cache
         $s = DIRECTORY_SEPARATOR;
         $ps = PATH_SEPARATOR;
         if ($config == '') {
-            $id = substr(md5(__FILE__), 0, 8);
             $this->path = sys_get_temp_dir() . $s . $prefix . self::SUFFIX;
         } elseif (strpos($config, $ps) === false) {
             $this->path = $config;
