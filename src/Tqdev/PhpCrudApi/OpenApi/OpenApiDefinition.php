@@ -17,18 +17,17 @@ class OpenApiDefinition extends DefaultOpenApiDefinition
         $current = $value;
     }
 
-    public function setPaths(DatabaseDefinition $database) /*: void*/
+    public function setPaths(ReflectedDatabase $database) /*: void*/
     {
-        $result = [];
-        foreach ($database->getTables() as $table) {
-            $path = sprintf('/records/%s', $table->getName());
+        foreach ($database->getTableNames() as $tableName) {
+            $path = sprintf('/records/%s', $tableName);
             foreach (['get', 'post', 'put', 'patch', 'delete'] as $method) {
                 $this->set("/paths/$path/$method/description", "$method operation");
             }
         }
     }
 
-    private function fillParametersWithPrimaryKey(String $method, TableDefinition $table) /*: void*/
+    private function fillParametersWithPrimaryKey(String $method, ReflectedTable $table) /*: void*/
     {
         if ($table->getPk() != null) {
             $pathWithId = sprintf('/records/%s/{%s}', $table->getName(), $table->getPk()->getName());

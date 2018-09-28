@@ -32,7 +32,15 @@
       }
     ],
     "require": {
-      "php": ">=7.0.0"
+      "php": ">=7.0.0",
+      "ext-zlib": "*",
+      "ext-json": "*",
+      "ext-pdo": "*"
+    },
+    "suggest": {
+      "ext-memcache": "*",
+      "ext-memcached": "*",
+      "ext-redis": "*"
     },
     "autoload": {
         "psr-4": { "Tqdev\\PhpCrudApi\\": "src/Tqdev/PhpCrudApi" }

@@ -31,7 +31,7 @@ class GenericDefinition
         if ($this->driver == 'pgsql' && !$update && $column->getPk() && $this->canAutoIncrement($column)) {
             return 'serial';
         }
-        $type = $this->typeConverter->fromJdbc($column->getType(), $column->getPk());
+        $type = $this->typeConverter->fromJdbc($column->getType());
         if ($column->hasPrecision() && $column->hasScale()) {
             $size = '(' . $column->getPrecision() . ',' . $column->getScale() . ')';
         } else if ($column->hasPrecision()) {

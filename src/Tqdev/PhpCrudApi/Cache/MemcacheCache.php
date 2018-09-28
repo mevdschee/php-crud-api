@@ -22,7 +22,7 @@ class MemcacheCache implements Cache
         $this->memcache->addServer($address, $port);
     }
 
-    protected function create(): object
+    protected function create(): stdClass
     {
         return new \Memcache();
     }

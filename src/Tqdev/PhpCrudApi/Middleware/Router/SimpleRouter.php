@@ -16,7 +16,8 @@ class SimpleRouter implements Router
     private $ttl;
     private $registration;
     private $routes;
-    private $midlewares;
+    private $routeHandlers;
+    private $middlewares;
 
     public function __construct(Responder $responder, Cache $cache, int $ttl)
     {

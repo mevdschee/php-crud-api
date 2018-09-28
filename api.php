@@ -72,7 +72,7 @@ class MemcacheCache implements Cache
         $this->memcache->addServer($address, $port);
     }
 
-    protected function create(): object
+    protected function create(): stdClass
     {
         return new \Memcache();
     }
@@ -97,7 +97,7 @@ class MemcacheCache implements Cache
 
 class MemcachedCache extends MemcacheCache
 {
-    protected function create(): object
+    protected function create(): stdClass
     {
         return new \Memcached();
     }
@@ -2014,7 +2014,7 @@ class GenericDefinition
         if ($this->driver == 'pgsql' && !$update && $column->getPk() && $this->canAutoIncrement($column)) {
             return 'serial';
         }
-        $type = $this->typeConverter->fromJdbc($column->getType(), $column->getPk());
+        $type = $this->typeConverter->fromJdbc($column->getType());
         if ($column->hasPrecision() && $column->hasScale()) {
             $size = '(' . $column->getPrecision() . ',' . $column->getScale() . ')';
         } else if ($column->hasPrecision()) {
@@ -2739,7 +2739,8 @@ class SimpleRouter implements Router
     private $ttl;
     private $registration;
     private $routes;
-    private $midlewares;
+    private $routeHandlers;
+    private $middlewares;
 
     public function __construct(Responder $responder, Cache $cache, int $ttl)
     {
@@ -3276,18 +3277,17 @@ class OpenApiDefinition extends DefaultOpenApiDefinition
         $current = $value;
     }
 
-    public function setPaths(DatabaseDefinition $database) /*: void*/
+    public function setPaths(ReflectedDatabase $database) /*: void*/
     {
-        $result = [];
-        foreach ($database->getTables() as $table) {
-            $path = sprintf('/records/%s', $table->getName());
+        foreach ($database->getTableNames() as $tableName) {
+            $path = sprintf('/records/%s', $tableName);
             foreach (['get', 'post', 'put', 'patch', 'delete'] as $method) {
                 $this->set("/paths/$path/$method/description", "$method operation");
             }
         }
     }
 
-    private function fillParametersWithPrimaryKey(String $method, TableDefinition $table) /*: void*/
+    private function fillParametersWithPrimaryKey(String $method, ReflectedTable $table) /*: void*/
     {
         if ($table->getPk() != null) {
             $pathWithId = sprintf('/records/%s/{%s}', $table->getName(), $table->getPk()->getName());
@@ -4231,7 +4231,6 @@ class RelationJoiner
 
     private function addFkRecords(ReflectedTable $t2, array $fkValues, array $params, GenericDB $db, array &$records) /*: void*/
     {
-        $pk = $t2->getPk();
         $columnNames = $this->columns->getNames($t2, false, $params);
         $fkIds = array_keys($fkValues);
 

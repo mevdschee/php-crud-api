@@ -152,7 +152,6 @@ class RelationJoiner
 
     private function addFkRecords(ReflectedTable $t2, array $fkValues, array $params, GenericDB $db, array &$records) /*: void*/
     {
-        $pk = $t2->getPk();
         $columnNames = $this->columns->getNames($t2, false, $params);
         $fkIds = array_keys($fkValues);
 
