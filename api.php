@@ -1614,7 +1614,7 @@ class ConditionsBuilder
 
     private function hasSpatialArgument(String $operator): bool
     {
-        return in_array($opertor, ['ic', 'is', 'iv']) ? false : true;
+        return in_array($operator, ['ic', 'is', 'iv']) ? false : true;
     }
 
     private function getSpatialFunctionCall(String $functionName, String $column, bool $hasArgument): String
