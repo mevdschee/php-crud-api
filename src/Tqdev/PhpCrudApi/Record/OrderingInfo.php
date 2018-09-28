@@ -29,6 +29,11 @@ class OrderingInfo
             $pk = $table->getPk();
             if ($pk) {
                 $fields[] = [$pk->getName(), 'ASC'];
+            } else {
+                foreach ($table->columnNames() as $columnName) {
+                    $fields[] = [$columnName, 'ASC'];
+                }
+
             }
         }
         return $fields;
