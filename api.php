@@ -1739,8 +1739,9 @@ class GenericDB
     private $database;
     private $pdo;
     private $reflection;
-    private $columns;
+    private $definition;
     private $conditions;
+    private $columns;
     private $converter;
 
     private function getDsn(String $address, String $port = null, String $database = null): String
@@ -1915,9 +1916,6 @@ class GenericDB
     {
         if ($limit == 0) {
             return array();
-        }
-        if (!$columnOrdering) {
-            return $this->selectAllUnordered($table, $columnNames, $condition);
         }
         $selectColumns = $this->columns->getSelect($table, $columnNames);
         $tableName = $table->getName();
@@ -3222,7 +3220,7 @@ class ValidationMiddleware extends Middleware
 
 class DefaultOpenApiDefinition
 {
-    private $root = [
+    protected $root = [
         "openapi" => "3.0.0",
         "info" => [
             "title" => "JAVA-CRUD-API",
@@ -3281,7 +3279,7 @@ class OpenApiDefinition extends DefaultOpenApiDefinition
     public function setPaths(DatabaseDefinition $database) /*: void*/
     {
         $result = [];
-        foreach ($database->getTables() as $database) {
+        foreach ($database->getTables() as $table) {
             $path = sprintf('/records/%s', $table->getName());
             foreach (['get', 'post', 'put', 'patch', 'delete'] as $method) {
                 $this->set("/paths/$path/$method/description", "$method operation");
@@ -3830,6 +3828,11 @@ class OrderingInfo
             $pk = $table->getPk();
             if ($pk) {
                 $fields[] = [$pk->getName(), 'ASC'];
+            } else {
+                foreach ($table->columnNames() as $columnName) {
+                    $fields[] = [$columnName, 'ASC'];
+                }
+
             }
         }
         return $fields;

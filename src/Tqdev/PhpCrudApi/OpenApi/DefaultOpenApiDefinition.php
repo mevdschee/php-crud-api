@@ -3,7 +3,7 @@ namespace Tqdev\PhpCrudApi\OpenApi;
 
 class DefaultOpenApiDefinition
 {
-    private $root = [
+    protected $root = [
         "openapi" => "3.0.0",
         "info" => [
             "title" => "JAVA-CRUD-API",

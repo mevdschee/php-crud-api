@@ -20,7 +20,7 @@ class OpenApiDefinition extends DefaultOpenApiDefinition
     public function setPaths(DatabaseDefinition $database) /*: void*/
     {
         $result = [];
-        foreach ($database->getTables() as $database) {
+        foreach ($database->getTables() as $table) {
             $path = sprintf('/records/%s', $table->getName());
             foreach (['get', 'post', 'put', 'patch', 'delete'] as $method) {
                 $this->set("/paths/$path/$method/description", "$method operation");

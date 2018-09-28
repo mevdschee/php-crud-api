@@ -13,8 +13,9 @@ class GenericDB
     private $database;
     private $pdo;
     private $reflection;
-    private $columns;
+    private $definition;
     private $conditions;
+    private $columns;
     private $converter;
 
     private function getDsn(String $address, String $port = null, String $database = null): String
