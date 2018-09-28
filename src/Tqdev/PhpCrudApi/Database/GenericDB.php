@@ -192,9 +192,6 @@ class GenericDB
         if ($limit == 0) {
             return array();
         }
-        if (!$columnOrdering) {
-            return $this->selectAllUnordered($table, $columnNames, $condition);
-        }
         $selectColumns = $this->columns->getSelect($table, $columnNames);
         $tableName = $table->getName();
         $condition = $this->addAuthorizationCondition($condition);
