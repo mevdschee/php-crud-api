@@ -26,7 +26,10 @@ class OrderingInfo
             }
         }
         if (count($fields) == 0) {
-            $fields[] = [$table->getPk()->getName(), 'ASC'];
+            $pk = $table->getPk();
+            if ($pk) {
+                $fields[] = [$pk->getName(), 'ASC'];
+            }
         }
         return $fields;
     }

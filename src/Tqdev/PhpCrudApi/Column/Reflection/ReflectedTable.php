@@ -84,7 +84,7 @@ class ReflectedTable implements \JsonSerializable
         return $this->pk != null;
     }
 
-    public function getPk(): ReflectedColumn
+    public function getPk() /*: ?ReflectedColumn */
     {
         return $this->pk;
     }

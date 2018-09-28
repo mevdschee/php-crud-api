@@ -169,6 +169,14 @@ CREATE TABLE `invisibles` (
 INSERT INTO `invisibles` (`id`) VALUES
 ('e42c77c6-06a4-4502-816c-d112c7142e6d');
 
+DROP TABLE IF EXISTS `nopk`;
+CREATE TABLE `nopk` (
+  `id` varchar(36) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+INSERT INTO `nopk` (`id`) VALUES
+('e42c77c6-06a4-4502-816c-d112c7142e6d');
+
 SET foreign_key_checks = 1;
 
 -- 2016-11-05 13:11:47

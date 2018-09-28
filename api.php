@@ -184,7 +184,6 @@ class TempFileCache implements Cache
         $s = DIRECTORY_SEPARATOR;
         $ps = PATH_SEPARATOR;
         if ($config == '') {
-            $id = substr(md5(__FILE__), 0, 8);
             $this->path = sys_get_temp_dir() . $s . $prefix . self::SUFFIX;
         } elseif (strpos($config, $ps) === false) {
             $this->path = $config;
@@ -630,7 +629,7 @@ class ReflectedTable implements \JsonSerializable
         return $this->pk != null;
     }
 
-    public function getPk(): ReflectedColumn
+    public function getPk() /*: ?ReflectedColumn */
     {
         return $this->pk;
     }
@@ -1916,6 +1915,9 @@ class GenericDB
     {
         if ($limit == 0) {
             return array();
+        }
+        if (!$columnOrdering) {
+            return $this->selectAllUnordered($table, $columnNames, $condition);
         }
         $selectColumns = $this->columns->getSelect($table, $columnNames);
         $tableName = $table->getName();
@@ -3825,7 +3827,10 @@ class OrderingInfo
             }
         }
         if (count($fields) == 0) {
-            $fields[] = [$table->getPk()->getName(), 'ASC'];
+            $pk = $table->getPk();
+            if ($pk) {
+                $fields[] = [$pk->getName(), 'ASC'];
+            }
         }
         return $fields;
     }

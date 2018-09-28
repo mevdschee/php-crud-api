@@ -1,0 +1,7 @@
+GET /records/nopk
+===
+200
+Content-Type: application/json
+Content-Length: 59
+
+{"records":[{"id":"e42c77c6-06a4-4502-816c-d112c7142e6d"}]}

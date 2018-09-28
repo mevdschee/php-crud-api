@@ -32,6 +32,7 @@ DROP TABLE IF EXISTS barcodes CASCADE;
 DROP TABLE IF EXISTS barcodes2 CASCADE;
 DROP TABLE IF EXISTS "kunsthåndværk" CASCADE;
 DROP TABLE IF EXISTS invisibles CASCADE;
+DROP TABLE IF EXISTS nopk CASCADE;
 
 --
 -- Name: categories; Type: TABLE; Schema: public; Owner: postgres; Tablespace:
@@ -170,6 +171,14 @@ CREATE TABLE "invisibles" (
 );
 
 --
+-- Name: nopk; Type: TABLE; Schema: public; Owner: postgres; Tablespace:
+--
+
+CREATE TABLE "nopk" (
+  id character varying(36) NOT NULL
+);
+
+--
 -- Data for Name: categories; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
@@ -262,6 +271,13 @@ INSERT INTO "kunsthåndværk" ("id", "Umlauts ä_ö_ü-COUNT", "invisible") VALU
 --
 
 INSERT INTO "invisibles" ("id") VALUES
+('e42c77c6-06a4-4502-816c-d112c7142e6d');
+
+--
+-- Data for Name: nopk; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+INSERT INTO "nopk" ("id") VALUES
 ('e42c77c6-06a4-4502-816c-d112c7142e6d');
 
 --

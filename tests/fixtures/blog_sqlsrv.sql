@@ -118,6 +118,12 @@ DROP TABLE [invisibles]
 END
 GO
 
+IF (OBJECT_ID('nopk', 'U') IS NOT NULL)
+BEGIN
+DROP TABLE [nopk]
+END
+GO
+
 CREATE TABLE [categories](
 	[id] [int] IDENTITY,
 	[name] [nvarchar](255) NOT NULL,
@@ -231,6 +237,11 @@ CREATE TABLE [invisibles](
 )
 GO
 
+CREATE TABLE [nopk](
+	[id] [nvarchar](36)
+)
+GO
+
 INSERT [categories] ([name], [icon]) VALUES (N'announcement', NULL)
 GO
 INSERT [categories] ([name], [icon]) VALUES (N'article', NULL)
@@ -287,6 +298,9 @@ INSERT [kunsthåndværk] ([id], [Umlauts ä_ö_ü-COUNT], [invisible]) VALUES ('
 GO
 
 INSERT [invisibles] ([id]) VALUES ('e42c77c6-06a4-4502-816c-d112c7142e6d')
+GO
+
+INSERT [nopk] ([id]) VALUES ('e42c77c6-06a4-4502-816c-d112c7142e6d')
 GO
 
 ALTER TABLE [comments]  WITH CHECK ADD 	CONSTRAINT [FK_comments_posts] FOREIGN KEY([post_id])
