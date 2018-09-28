@@ -553,7 +553,7 @@ For spatial support there is an extra set of filters that can be applied on geom
 
 These filters are based on OGC standards and so is the WKT specification in which the geometry columns are represented.
 
-### Authorizing tables and columns
+### Authorizing tables, columns and records
 
 By default all tables are reflected. If you want to restrict access to some tables you may add the 'authorization' middleware 
 and define a 'authorization.tableHandler' function that returns 'false' for these tables.
@@ -574,7 +574,7 @@ The above example will restrict access to the 'password' field from the 'users' 
         return ($tableName == 'users') ? 'filter=username,neq,admin' : '';
     },
 
-This will disallow viewing the user records where the username is 'admin'. It allows you to add a filter to every query.
+The above example will disallow viewing the user records where the username is 'admin'. This construct adds a filter to every executed query.
 
 ### Sanitizing input
 
