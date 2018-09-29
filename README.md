@@ -91,9 +91,8 @@ These limitation were also present in v1:
   - Composite primary or foreign keys are not supported
   - Complex writes (transactions) are not supported
   - Complex queries calling functions (like "concat" or "sum") are not supported
-  - MySQL storage engine must be either InnoDB or XtraDB
-  - Only MySQL, PostgreSQL and SQLServer support spatial/GIS functionality
-
+  - Database must support and define foreign key constraints
+  
 ## Features
 
 These features match features in v1 (see branch "v1"):
@@ -120,7 +119,7 @@ These features match features in v1 (see branch "v1"):
   - [x] Spatial/GIS fields and filters supported with WKT
   - [ ] Unstructured data support through JSON/JSONB
   - [ ] Generate API documentation using OpenAPI tools
-  - [ ] Authentication via JWT token or username/password
+  - [x] Authentication via JWT token or username/password
   - [ ] ~~SQLite support~~
 
  NB: No checkmark means: not yet implemented. Striken means: will not be implemented.
@@ -141,28 +140,31 @@ These features are new and were not included in v1.
 
 You can enable the following middleware using the "middlewares" config parameter:
 
-- "cors": Support for CORS requests (enabled by default)
-- "authorization": Restrict access to certain tables or columns
-- "basicAuth": Support for "Basic Authentication"
 - "firewall": Limit access to specific IP addresses
+- "cors": Support for CORS requests (enabled by default)
+- "jwtAuth": Support for "Basic Authentication"
+- "basicAuth": Support for "Basic Authentication"
+- "authorization": Restrict access to certain tables or columns
 - "validation": Return input validation errors for custom rules
 - "sanitation": Apply input sanitation on create and update
 
 The "middlewares" config parameter is a comma separated list of enabled middlewares.
 You can tune the middleware behavior using middleware specific configuration parameters:
 
+- "firewall.reverseProxy": Set to "true" when a reverse proxy is used ("")
+- "firewall.allowedIpAddresses": List of IP addresses that are allowed to connect ("")
 - "cors.allowedOrigins": The origins allowed in the CORS headers ("*")
 - "cors.allowHeaders": The headers allowed in the CORS request ("Content-Type, X-XSRF-TOKEN")
 - "cors.allowMethods": The methods allowed in the CORS request ("OPTIONS, GET, PUT, POST, DELETE, PATCH")
 - "cors.allowCredentials": To allow credentials in the CORS request ("true")
 - "cors.maxAge": The time that the CORS grant is valid in seconds ("1728000")
+- "jwtAuth.leeway": The acceptable number of seconds of clock skew ("5")
+- "jwtAuth.ttl": The number of seconds the token is valid ("30")
+- "jwtAuth.secret": The shared secret used to sign the JWT token with ("")
+- "basicAuth.passwordFile": The file to read for username/password combinations (".htpasswd")
 - "authorization.tableHandler": Handler to implement table authorization rules ("")
 - "authorization.columnHandler": Handler to implement column authorization rules ("")
 - "authorization.recordHandler": Handler to implement record authorization filter rules ("")
-- "basicAuth.passwordFile": The file to read for username/password combinations (".htpasswd")
-- "basicAuth.realm": Message shown when asking for credentials ("Username and password required")
-- "firewall.reverseProxy": Set to "true" when a reverse proxy is used ("")
-- "firewall.allowedIpAddresses": List of IP addresses that are allowed to connect ("")
 - "validation.handler": Handler to implement validation rules for input values ("")
 - "sanitation.handler": Handler to implement sanitation rules for input values ("")
 
@@ -552,6 +554,44 @@ For spatial support there is an extra set of filters that can be applied on geom
   - "siv": spatial is valid (geometry is valid)
 
 These filters are based on OGC standards and so is the WKT specification in which the geometry columns are represented.
+
+### Authentication
+
+Authentication is done by means of sending a "Authorization" header. It identifies the user and stores this in the `$_SESSION` super global. 
+This variable can be used in the authorization handlers to decide wether or not sombeody should have read or write access to certain tables, columns or records.
+Currently there are two types of authentication supported: "Basic" and "JWT". 
+
+#### Basic authentication
+
+The Basic type supports a file that holds the users and their (hashed) passwords separated by a colon (':'). 
+When the passwords are entered in plain text they fill be automatically hashed.
+The authenticated username will be stored in the `$_SESSION['username']` variable.
+You need to send an "Authorization" header containing a base64 url encoded and colon separated username and password after the word "Basic".
+
+    Authorization: Basic dXNlcm5hbWUxOnBhc3N3b3JkMQ
+
+This example sends the string "username1:password1".
+
+#### JWT authentication
+
+The JWT type requires another (SSO/Identity) server to sign a token that contains claims. 
+Both servers share a secret so that they can either sign or verify that the signature is valid.
+Claims are stored in the `$_SESSION['claims']` variable.
+You need to send an "Authorization" header containing a base64 url encoded and dot separated token header, body and signature after the word "Bearer" (read more abou).
+
+    Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6IjE1MzgyMDc2MDUiLCJleHAiOjE1MzgyMDc2MzV9.Z5px_GT15TRKhJCTHhDt5Z6K6LRDSFnLj8U5ok9l7gw
+
+This example sends the signed string:
+
+    {
+      "sub": "1234567890",
+      "name": "John Doe",
+      "admin": true,
+      "iat": "1538207605",
+      "exp": 1538207635
+    }
+
+NB: The JWT implementation only supports the hash based algorithms HS256, HS384 and HS512.
 
 ### Authorizing tables, columns and records
 

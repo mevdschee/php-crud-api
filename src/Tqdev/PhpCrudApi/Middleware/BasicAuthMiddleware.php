@@ -9,7 +9,7 @@ use Tqdev\PhpCrudApi\Response;
 
 class BasicAuthMiddleware extends Middleware
 {
-    private function isAllowed(String $username, String $password, array &$passwords): bool
+    private function hasCorrectPassword(String $username, String $password, array &$passwords): bool
     {
         $hash = isset($passwords[$username]) ? $passwords[$username] : false;
         if ($hash && password_verify($password, $hash)) {
@@ -21,21 +21,12 @@ class BasicAuthMiddleware extends Middleware
         return false;
     }
 
-    private function authenticate(String $username, String $password, String $passwordFile): bool
+    private function getValidUsername(String $username, String $password, String $passwordFile): String
     {
-        if (session_status() == PHP_SESSION_NONE) {
-            session_start();
-        }
-        if (isset($_SESSION['user']) && $_SESSION['user'] == $username) {
-            return true;
-        }
         $passwords = $this->readPasswords($passwordFile);
-        $allowed = $this->isAllowed($username, $password, $passwords);
-        if ($allowed) {
-            $_SESSION['user'] = $username;
-        }
+        $valid = $this->hasCorrectPassword($username, $password, $passwords);
         $this->writePasswords($passwordFile, $passwords);
-        return $allowed;
+        return $valid ? $username : '';
     }
 
     private function readPasswords(String $passwordFile): array
@@ -67,20 +58,36 @@ class BasicAuthMiddleware extends Middleware
         return $success;
     }
 
+    private function getAuthorizationCredentials(Request $request): String
+    {
+        $parts = explode(' ', trim($request->getHeader('Authorization')), 2);
+        if (count($parts) != 2) {
+            return '';
+        }
+        if ($parts[0] != 'Basic') {
+            return '';
+        }
+        return base64_decode(strtr($parts[1], '-_', '+/'));
+    }
+
     public function handle(Request $request): Response
     {
-        $username = isset($_SERVER['PHP_AUTH_USER']) ? $_SERVER['PHP_AUTH_USER'] : '';
-        $password = isset($_SERVER['PHP_AUTH_PW']) ? $_SERVER['PHP_AUTH_PW'] : '';
-        $passwordFile = $this->getProperty('passwordFile', '.htpasswd');
-        if (!$username) {
-            $response = $this->responder->error(ErrorCode::AUTHORIZATION_REQUIRED, $username);
-            $realm = $this->getProperty('realm', 'Username and password required');
-            $response->addHeader('WWW-Authenticate', "Basic realm=\"$realm\"");
-        } elseif (!$this->authenticate($username, $password, $passwordFile)) {
-            $response = $this->responder->error(ErrorCode::ACCESS_DENIED, $username);
-        } else {
-            $response = $this->next->handle($request);
+        if (session_status() == PHP_SESSION_NONE) {
+            session_start();
         }
-        return $response;
+        $credentials = $this->getAuthorizationCredentials($request);
+        if ($credentials) {
+            list($username, $password) = array('', '');
+            if (strpos($credentials, ':') !== false) {
+                list($username, $password) = explode(':', $credentials, 2);
+            }
+            $passwordFile = $this->getProperty('passwordFile', '.htpasswd');
+            $validUser = $this->getValidUsername($username, $password, $passwordFile);
+            $_SESSION['username'] = $validUser;
+            if (!$validUser) {
+                return $this->responder->error(ErrorCode::ACCESS_DENIED, $username);
+            }
+        }
+        return $this->next->handle($request);
     }
 }

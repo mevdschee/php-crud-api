@@ -8,7 +8,7 @@ spl_autoload_register(function ($class) {
     include str_replace('\\', '/', "src\\$class.php");
 });
 
-function runDir(Api $api, String $dir, array $matches, String $category): array
+function runDir(Config $config, String $dir, array $matches, String $category): array
 {
     $success = 0;
     $total = 0;
@@ -27,10 +27,10 @@ function runDir(Api $api, String $dir, array $matches, String $category): array
             if (substr($entry, -4) != '.log') {
                 continue;
             }
-            $success += runTest($api, $file, $category);
+            $success += runTest($config, $file, $category);
             $total += 1;
         } elseif (is_dir($file)) {
-            $statistics = runDir($api, $file, array_slice($matches, 1), "$category/$entry");
+            $statistics = runDir($config, $file, array_slice($matches, 1), "$category/$entry");
             $total += $statistics['total'];
             $success += $statistics['success'];
         }
@@ -39,7 +39,7 @@ function runDir(Api $api, String $dir, array $matches, String $category): array
     return compact('total', 'success', 'failed');
 }
 
-function runTest(Api $api, String $file, String $category): int
+function runTest(Config $config, String $file, String $category): int
 {
     $title = ucwords(str_replace('_', ' ', $category)) . '/';
     $title .= ucwords(str_replace('_', ' ', substr(basename($file), 0, -4)));
@@ -61,6 +61,7 @@ function runTest(Api $api, String $file, String $category): int
         }
         $in = $parts[$i];
         $exp = $parts[$i + 1];
+        $api = new Api($config);
         $out = $api->handle(Request::fromString($in));
         if ($recording) {
             $parts[$i + 1] = $out;
@@ -123,8 +124,7 @@ function run(array $drivers, String $dir, array $matches)
         $config = new Config($settings);
         loadFixture($dir, $config);
         $start = microtime(true);
-        $api = new Api($config);
-        $stats = runDir($api, "$dir/functional", $matches, '');
+        $stats = runDir($config, "$dir/functional", $matches, '');
         $end = microtime(true);
         $time = ($end - $start) * 1000;
         $total = $stats['total'];

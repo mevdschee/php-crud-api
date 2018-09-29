@@ -87,7 +87,7 @@ class Config
                 }
             }
         }
-        $newValues['middlewares'] = $properties;
+        $newValues['middlewares'] = array_reverse($properties, true);
         return $newValues;
     }
 

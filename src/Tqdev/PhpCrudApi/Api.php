@@ -11,8 +11,10 @@ use Tqdev\PhpCrudApi\Controller\RecordController;
 use Tqdev\PhpCrudApi\Controller\Responder;
 use Tqdev\PhpCrudApi\Database\GenericDB;
 use Tqdev\PhpCrudApi\Middleware\AuthorizationMiddleware;
+use Tqdev\PhpCrudApi\Middleware\BasicAuthMiddleware;
 use Tqdev\PhpCrudApi\Middleware\CorsMiddleware;
 use Tqdev\PhpCrudApi\Middleware\FirewallMiddleware;
+use Tqdev\PhpCrudApi\Middleware\JwtAuthMiddleware;
 use Tqdev\PhpCrudApi\Middleware\Router\SimpleRouter;
 use Tqdev\PhpCrudApi\Middleware\SanitationMiddleware;
 use Tqdev\PhpCrudApi\Middleware\ValidationMiddleware;
@@ -50,6 +52,9 @@ class Api
                     break;
                 case 'basicAuth':
                     new BasicAuthMiddleware($router, $responder, $properties);
+                    break;
+                case 'jwtAuth':
+                    new JwtAuthMiddleware($router, $responder, $properties);
                     break;
                 case 'validation':
                     new ValidationMiddleware($router, $responder, $properties, $reflection);

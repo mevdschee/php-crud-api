@@ -1,0 +1,33 @@
+GET /records/invisibles/e42c77c6-06a4-4502-816c-d112c7142e6d
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6IjE1MzgyMDc2MDUiLCJleHAiOjE1MzgyMDc2MzV9.Z5px_GT15TRKhJCTHhDt5Z6K6LRDSFnLj8U5ok9l7gw
+===
+200
+Content-Type: application/json
+Content-Length: 45
+
+{"id":"e42c77c6-06a4-4502-816c-d112c7142e6d"}
+===
+GET /records/invisibles/e42c77c6-06a4-4502-816c-d112c7142e6d
+===
+200
+Content-Type: application/json
+Content-Length: 45
+
+{"id":"e42c77c6-06a4-4502-816c-d112c7142e6d"}
+===
+GET /records/invisibles/e42c77c6-06a4-4502-816c-d112c7142e6d
+Authorization: Bearer invalid
+===
+403
+Content-Type: application/json
+Content-Length: 49
+
+{"code":1012,"message":"Access denied for 'JWT'"}
+===
+GET /records/invisibles/e42c77c6-06a4-4502-816c-d112c7142e6d
+===
+404
+Content-Type: application/json
+Content-Length: 54
+
+{"code":1001,"message":"Table 'invisibles' not found"}
