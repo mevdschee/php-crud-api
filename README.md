@@ -780,8 +780,8 @@ To run the docker tests run "build_all.sh" and "run_all.sh" from the docker dire
     [3/4] Starting SQLServer 2017 ... skipped
     [4/4] Cloning PHP-CRUD-API v2 ... done
     ------------------------------------------------
-    mysql: 80 tests ran in 2470 ms, 0 failed
-    pgsql: 80 tests ran in 680 ms, 0 failed
+    mysql: 88 tests ran in 2470 ms, 0 failed
+    pgsql: 88 tests ran in 680 ms, 0 failed
     sqlsrv: skipped, driver not loaded
     ================================================
     Ubuntu 16.04
@@ -791,9 +791,9 @@ To run the docker tests run "build_all.sh" and "run_all.sh" from the docker dire
     [3/4] Starting SQLServer 2017 ... done
     [4/4] Cloning PHP-CRUD-API v2 ... done
     ------------------------------------------------
-    mysql: 80 tests ran in 2490 ms, 0 failed
-    pgsql: 80 tests ran in 710 ms, 0 failed
-    sqlsrv: 80 tests ran in 4204 ms, 0 failed
+    mysql: 88 tests ran in 2490 ms, 0 failed
+    pgsql: 88 tests ran in 710 ms, 0 failed
+    sqlsrv: 88 tests ran in 4204 ms, 0 failed
     ================================================
     Ubuntu 18.04
     ================================================
@@ -802,8 +802,8 @@ To run the docker tests run "build_all.sh" and "run_all.sh" from the docker dire
     [3/4] Starting SQLServer 2017 ... skipped
     [4/4] Cloning PHP-CRUD-API v2 ... done
     ------------------------------------------------
-    mysql: 80 tests ran in 2882 ms, 0 failed
-    pgsql: 80 tests ran in 668 ms, 0 failed
+    mysql: 88 tests ran in 2882 ms, 0 failed
+    pgsql: 88 tests ran in 668 ms, 0 failed
     sqlsrv: skipped, driver not loaded
 
 The above test run (including starting up the databases) takes less than one minute on my machine.
@@ -821,8 +821,8 @@ The above test run (including starting up the databases) takes less than one min
     [3/4] Starting SQLServer 2017 ... skipped
     [4/4] Cloning PHP-CRUD-API v2 ... skipped
     ------------------------------------------------
-    mysql: 84 tests ran in 2899 ms, 0 failed
-    pgsql: 84 tests ran in 380 ms, 0 failed
+    mysql: 88 tests ran in 2899 ms, 0 failed
+    pgsql: 88 tests ran in 380 ms, 0 failed
     sqlsrv: skipped, driver not loaded
     root@b7ab9472e08f:/php-crud-api# 
 
