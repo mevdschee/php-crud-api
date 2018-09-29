@@ -577,7 +577,7 @@ This example sends the string "username1:password1".
 The JWT type requires another (SSO/Identity) server to sign a token that contains claims. 
 Both servers share a secret so that they can either sign or verify that the signature is valid.
 Claims are stored in the `$_SESSION['claims']` variable.
-You need to send an "Authorization" header containing a base64 url encoded and dot separated token header, body and signature after the word "Bearer" (read more abou).
+You need to send an "Authorization" header containing a base64 url encoded and dot separated token header, body and signature after the word "Bearer" ([read more about JWT here](https://jwt.io/)).
 
     Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6IjE1MzgyMDc2MDUiLCJleHAiOjE1MzgyMDc2MzV9.Z5px_GT15TRKhJCTHhDt5Z6K6LRDSFnLj8U5ok9l7gw
 
