@@ -63,6 +63,7 @@ class OpenApiBuilder
                 }
                 $path = sprintf('/records/%s/{%s}', $tableName, $pkName);
             }
+            $this->openapi->set("$prefix|$path|$method|tags|0", "$tableName");
             $this->openapi->set("$prefix|$path|$method|description", "$operation $tableName");
             $this->openapi->set("$prefix|$path|$method|responses|200|description", "$operation $tableName succeeded");
         }
