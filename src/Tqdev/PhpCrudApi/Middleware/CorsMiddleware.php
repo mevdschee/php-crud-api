@@ -2,10 +2,10 @@
 namespace Tqdev\PhpCrudApi\Middleware;
 
 use Tqdev\PhpCrudApi\Controller\Responder;
+use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
 use Tqdev\PhpCrudApi\Record\ErrorCode;
 use Tqdev\PhpCrudApi\Request;
 use Tqdev\PhpCrudApi\Response;
-use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
 
 class CorsMiddleware extends Middleware
 {
