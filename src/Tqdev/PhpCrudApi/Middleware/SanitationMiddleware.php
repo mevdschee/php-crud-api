@@ -6,6 +6,7 @@ use Tqdev\PhpCrudApi\Column\Reflection\ReflectedTable;
 use Tqdev\PhpCrudApi\Controller\Responder;
 use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
 use Tqdev\PhpCrudApi\Middleware\Router\Router;
+use Tqdev\PhpCrudApi\Record\RequestUtils;
 use Tqdev\PhpCrudApi\Request;
 use Tqdev\PhpCrudApi\Response;
 
@@ -17,16 +18,17 @@ class SanitationMiddleware extends Middleware
     {
         parent::__construct($router, $responder, $properties);
         $this->reflection = $reflection;
+        $this->utils = new RequestUtils($reflection);
     }
 
-    private function callHandler($handler, $record, String $method, ReflectedTable $table) /*: object */
+    private function callHandler($handler, $record, String $operation, ReflectedTable $table) /*: object */
     {
         $context = (array) $record;
         $tableName = $table->getName();
         foreach ($context as $columnName => &$value) {
             if ($table->exists($columnName)) {
                 $column = $table->get($columnName);
-                $value = call_user_func($handler, $method, $tableName, $column->serialize(), $value);
+                $value = call_user_func($handler, $operation, $tableName, $column->serialize(), $value);
             }
         }
         return (object) $context;
@@ -34,26 +36,25 @@ class SanitationMiddleware extends Middleware
 
     public function handle(Request $request): Response
     {
-        $path = $request->getPathSegment(1);
-        $tableName = $request->getPathSegment(2);
-        $record = $request->getBody();
-        if ($path == 'records' && $this->reflection->hasTable($tableName) && $record !== null) {
-            $table = $this->reflection->getTable($tableName);
-            $method = $request->getMethod();
-            $handler = $this->getProperty('handler', '');
-            if ($handler !== '') {
-                if (is_array($record)) {
-                    foreach ($record as &$r) {
-                        $r = $this->callHandler($handler, $r, $method, $table);
+        $operation = $this->utils->getOperation($request);
+        if (in_array($operation, ['create', 'update', 'increment'])) {
+            $tableName = $request->getPathSegment(2);
+            if ($this->reflection->hasTable($tableName)) {
+                $record = $request->getBody();
+                if ($record !== null) {
+                    $handler = $this->getProperty('handler', '');
+                    if ($handler !== '') {
+                        $table = $this->reflection->getTable($tableName);
+                        if (is_array($record)) {
+                            foreach ($record as &$r) {
+                                $r = $this->callHandler($handler, $r, $operation, $table);
+                            }
+                        } else {
+                            $record = $this->callHandler($handler, $record, $operation, $table);
+                        }
+                        $request->setBody($record);
                     }
-                } else {
-                    $record = $this->callHandler($handler, $record, $method, $table);
                 }
-                $path = $request->getPath();
-                $query = urldecode(http_build_query($request->getParams()));
-                $headers = $request->getHeaders();
-                $body = json_encode($record);
-                $request = new Request($method, $path, $query, $headers, $body);
             }
         }
         return $this->next->handle($request);

@@ -11,7 +11,7 @@ class Config
         'password' => null,
         'database' => null,
         'middlewares' => 'cors',
-        'controllers' => 'records,columns,cache,openapi',
+        'controllers' => 'records,openapi',
         'cacheType' => 'TempFile',
         'cachePath' => '',
         'cacheTime' => 10,

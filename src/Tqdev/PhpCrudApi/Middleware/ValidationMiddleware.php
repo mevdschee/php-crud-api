@@ -7,6 +7,7 @@ use Tqdev\PhpCrudApi\Controller\Responder;
 use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
 use Tqdev\PhpCrudApi\Middleware\Router\Router;
 use Tqdev\PhpCrudApi\Record\ErrorCode;
+use Tqdev\PhpCrudApi\Record\RequestUtils;
 use Tqdev\PhpCrudApi\Request;
 use Tqdev\PhpCrudApi\Response;
 
@@ -18,9 +19,10 @@ class ValidationMiddleware extends Middleware
     {
         parent::__construct($router, $responder, $properties);
         $this->reflection = $reflection;
+        $this->utils = new RequestUtils($reflection);
     }
 
-    private function callHandler($handler, $record, String $method, ReflectedTable $table) /*: Response?*/
+    private function callHandler($handler, $record, String $operation, ReflectedTable $table) /*: Response?*/
     {
         $context = (array) $record;
         $details = array();
@@ -28,7 +30,7 @@ class ValidationMiddleware extends Middleware
         foreach ($context as $columnName => $value) {
             if ($table->exists($columnName)) {
                 $column = $table->get($columnName);
-                $valid = call_user_func($handler, $method, $tableName, $column->serialize(), $value, $context);
+                $valid = call_user_func($handler, $operation, $tableName, $column->serialize(), $value, $context);
                 if ($valid !== true && $valid !== '') {
                     $details[$columnName] = $valid;
                 }
@@ -42,25 +44,28 @@ class ValidationMiddleware extends Middleware
 
     public function handle(Request $request): Response
     {
-        $path = $request->getPathSegment(1);
-        $tableName = $request->getPathSegment(2);
-        $record = $request->getBody();
-        if ($path == 'records' && $this->reflection->hasTable($tableName) && $record !== null) {
-            $table = $this->reflection->getTable($tableName);
-            $method = $request->getMethod();
-            $handler = $this->getProperty('handler', '');
-            if ($handler !== '') {
-                if (is_array($record)) {
-                    foreach ($record as $r) {
-                        $response = $this->callHandler($handler, $r, $method, $table);
-                        if ($response !== null) {
-                            return $response;
+        $operation = $this->utils->getOperation($request);
+        if (in_array($operation, ['create', 'update', 'increment'])) {
+            $tableName = $request->getPathSegment(2);
+            if ($this->reflection->hasTable($tableName)) {
+                $record = $request->getBody();
+                if ($record !== null) {
+                    $handler = $this->getProperty('handler', '');
+                    if ($handler !== '') {
+                        $table = $this->reflection->getTable($tableName);
+                        if (is_array($record)) {
+                            foreach ($record as $r) {
+                                $response = $this->callHandler($handler, $r, $operation, $table);
+                                if ($response !== null) {
+                                    return $response;
+                                }
+                            }
+                        } else {
+                            $response = $this->callHandler($handler, $record, $operation, $table);
+                            if ($response !== null) {
+                                return $response;
+                            }
                         }
-                    }
-                } else {
-                    $response = $this->callHandler($handler, $record, $method, $table);
-                    if ($response !== null) {
-                        return $response;
                     }
                 }
             }

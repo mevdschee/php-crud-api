@@ -594,35 +594,56 @@ This example sends the signed claims:
 
 NB: The JWT implementation only supports the hash based algorithms HS256, HS384 and HS512.
 
+## Authorizing operations
+
+The Authorization model acts on "operations". The most important ones are listed here:
+
+    GET /records/{table} - list - lists records
+    POST /records/{table} - create - creates records
+    GET /records/{table}/{id} - read - reads a record by primary key
+    PUT /records/{table}/{id} - update - updates columns of a record by primary key
+    DELETE /records/{table}/{id} - delete - deletes a record by primary key
+    PATCH /records/{table}/{id} - increment - increments columns of a record by primary key
+
+The "`/openapi`" endpoint has a special "document" operation to allow you to hide tables and columns from the documentation. The OpenAPI specification will show what is allowed in your session.
+    
+For endpoints that start with "`/columns`" there are the operations "reflect" and "remodel". 
+These operations can display or change the definition of the database, table or column. 
+This functionality is disabled by default and for good reason (be careful!). 
+Add the "columns" controller in the configuration to enable this functionality.
+
 ### Authorizing tables, columns and records
 
-By default all tables are reflected. If you want to restrict access to some tables you may add the 'authorization' middleware 
+By default all tables and columns are accessible. If you want to restrict access to some tables you may add the 'authorization' middleware 
 and define a 'authorization.tableHandler' function that returns 'false' for these tables.
 
-    'authorization.tableHandler' => function ($method, $path, $databaseName, $tableName) {
+    'authorization.tableHandler' => function ($operation, $tableName) {
         return $tableName != 'license_keys';
     },
 
-The above example will restrict access to the table 'license_keys' in all API calls.
+The above example will restrict access to the table 'license_keys' for all operations.
 
-    'authorization.columnHandler' => function ($method, $path, $databaseName, $tableName, $columnName) {
+    'authorization.columnHandler' => function ($operation, $tableName, $columnName) {
         return !($tableName == 'users' && $columnName == 'password');
     },
 
-The above example will restrict access to the 'password' field from the 'users' table in all API calls.
+The above example will restrict access to the 'password' field of the 'users' table for all operations.
 
-    'authorization.recordHandler' => function ($method, $path, $databaseName, $tableName, $columnName) {
+    'authorization.recordHandler' => function ($operation, $tableName, $columnName) {
         return ($tableName == 'users') ? 'filter=username,neq,admin' : '';
     },
 
-The above example will disallow viewing the user records where the username is 'admin'. This construct adds a filter to every executed query.
+The above example will disallow access to user records where the username is 'admin'. 
+This construct adds a filter to every executed query. 
+
+NB: You need to handle the creation of invalid records with a validation (or sanitation) handler.
 
 ### Sanitizing input
 
 By default all input is accepted and sent to the database. If you want to strip (certain) HTML tags before storing you may add 
 the 'sanitation' middleware and define a 'sanitation.handler' function that returns the adjusted value.
 
-    'sanitation.handler' => function ($method, $tableName, $column, $value) {
+    'sanitation.handler' => function ($operation, $tableName, $column, $value) {
         return is_string($value) ? strip_tags($value) : $value;
     },
 
@@ -633,7 +654,7 @@ The above example will strip all HTML tags from strings in the input.
 By default all input is accepted. If you want to validate the input, you may add the 'validation' middleware and define a 
 'validation.handler' function that returns a boolean indicating whether or not the value is valid.
 
-    'validation.handler' => function ($method, $tableName, $column, $value, $context) {
+    'validation.handler' => function ($operation, $tableName, $column, $value, $context) {
         return ($column['name'] == 'post_id' && !is_numeric($value)) ? 'must be numeric' : true;
     },
 

@@ -1824,9 +1824,9 @@ class GenericDB
         return $this->definition;
     }
 
-    private function addAuthorizationCondition(Condition $condition2): Condition
+    private function addAuthorizationCondition(String $tableName, Condition $condition2): Condition
     {
-        $condition1 = VariableStore::get('authorization.condition');
+        $condition1 = VariableStore::get("authorization.conditions.$tableName");
         return $condition1 ? AndCondition::fromArray([$condition1, $condition2]) : $condition2;
     }
 
@@ -1855,7 +1855,7 @@ class GenericDB
         $selectColumns = $this->columns->getSelect($table, $columnNames);
         $tableName = $table->getName();
         $condition = new ColumnCondition($table->getPk(), 'eq', $id);
-        $condition = $this->addAuthorizationCondition($condition);
+        $condition = $this->addAuthorizationCondition($tableName, $condition);
         $parameters = array();
         $whereClause = $this->conditions->getWhereClause($condition, $parameters);
         $sql = 'SELECT ' . $selectColumns . ' FROM "' . $tableName . '" ' . $whereClause;
@@ -1877,7 +1877,7 @@ class GenericDB
         $selectColumns = $this->columns->getSelect($table, $columnNames);
         $tableName = $table->getName();
         $condition = new ColumnCondition($table->getPk(), 'in', implode(',', $ids));
-        $condition = $this->addAuthorizationCondition($condition);
+        $condition = $this->addAuthorizationCondition($tableName, $condition);
         $parameters = array();
         $whereClause = $this->conditions->getWhereClause($condition, $parameters);
         $sql = 'SELECT ' . $selectColumns . ' FROM "' . $tableName . '" ' . $whereClause;
@@ -1890,7 +1890,7 @@ class GenericDB
     public function selectCount(ReflectedTable $table, Condition $condition): int
     {
         $tableName = $table->getName();
-        $condition = $this->addAuthorizationCondition($condition);
+        $condition = $this->addAuthorizationCondition($tableName, $condition);
         $parameters = array();
         $whereClause = $this->conditions->getWhereClause($condition, $parameters);
         $sql = 'SELECT COUNT(*) FROM "' . $tableName . '"' . $whereClause;
@@ -1902,7 +1902,7 @@ class GenericDB
     {
         $selectColumns = $this->columns->getSelect($table, $columnNames);
         $tableName = $table->getName();
-        $condition = $this->addAuthorizationCondition($condition);
+        $condition = $this->addAuthorizationCondition($tableName, $condition);
         $parameters = array();
         $whereClause = $this->conditions->getWhereClause($condition, $parameters);
         $sql = 'SELECT ' . $selectColumns . ' FROM "' . $tableName . '"' . $whereClause;
@@ -1919,7 +1919,7 @@ class GenericDB
         }
         $selectColumns = $this->columns->getSelect($table, $columnNames);
         $tableName = $table->getName();
-        $condition = $this->addAuthorizationCondition($condition);
+        $condition = $this->addAuthorizationCondition($tableName, $condition);
         $parameters = array();
         $whereClause = $this->conditions->getWhereClause($condition, $parameters);
         $orderBy = $this->columns->getOrderBy($table, $columnOrdering);
@@ -1940,7 +1940,7 @@ class GenericDB
         $updateColumns = $this->columns->getUpdate($table, $columnValues);
         $tableName = $table->getName();
         $condition = new ColumnCondition($table->getPk(), 'eq', $id);
-        $condition = $this->addAuthorizationCondition($condition);
+        $condition = $this->addAuthorizationCondition($tableName, $condition);
         $parameters = array_values($columnValues);
         $whereClause = $this->conditions->getWhereClause($condition, $parameters);
         $sql = 'UPDATE "' . $tableName . '" SET ' . $updateColumns . $whereClause;
@@ -1952,7 +1952,7 @@ class GenericDB
     {
         $tableName = $table->getName();
         $condition = new ColumnCondition($table->getPk(), 'eq', $id);
-        $condition = $this->addAuthorizationCondition($condition);
+        $condition = $this->addAuthorizationCondition($tableName, $condition);
         $parameters = array();
         $whereClause = $this->conditions->getWhereClause($condition, $parameters);
         $sql = 'DELETE FROM "' . $tableName . '" ' . $whereClause;
@@ -1969,7 +1969,7 @@ class GenericDB
         $updateColumns = $this->columns->getIncrement($table, $columnValues);
         $tableName = $table->getName();
         $condition = new ColumnCondition($table->getPk(), 'eq', $id);
-        $condition = $this->addAuthorizationCondition($condition);
+        $condition = $this->addAuthorizationCondition($tableName, $condition);
         $parameters = array_values($columnValues);
         $whereClause = $this->conditions->getWhereClause($condition, $parameters);
         $sql = 'UPDATE "' . $tableName . '" SET ' . $updateColumns . $whereClause;
@@ -2829,15 +2829,16 @@ class AuthorizationMiddleware extends Middleware
     {
         parent::__construct($router, $responder, $properties);
         $this->reflection = $reflection;
+        $this->utils = new RequestUtils($reflection);
     }
 
-    private function handleColumns(String $method, String $path, String $databaseName, String $tableName) /*: void*/
+    private function handleColumns(String $operation, String $tableName) /*: void*/
     {
         $columnHandler = $this->getProperty('columnHandler', '');
         if ($columnHandler) {
             $table = $this->reflection->getTable($tableName);
             foreach ($table->columnNames() as $columnName) {
-                $allowed = call_user_func($columnHandler, $method, $path, $databaseName, $tableName, $columnName);
+                $allowed = call_user_func($columnHandler, $operation, $tableName, $columnName);
                 if (!$allowed) {
                     $this->reflection->removeColumn($tableName, $columnName);
                 }
@@ -2845,83 +2846,53 @@ class AuthorizationMiddleware extends Middleware
         }
     }
 
-    private function handleTable(String $method, String $path, String $databaseName, String $tableName) /*: void*/
+    private function handleTable(String $operation, String $tableName) /*: void*/
     {
         if (!$this->reflection->hasTable($tableName)) {
             return;
         }
         $tableHandler = $this->getProperty('tableHandler', '');
         if ($tableHandler) {
-            $allowed = call_user_func($tableHandler, $method, $path, $databaseName, $tableName);
+            $allowed = call_user_func($tableHandler, $operation, $tableName);
             if (!$allowed) {
                 $this->reflection->removeTable($tableName);
             } else {
-                $this->handleColumns($method, $path, $databaseName, $tableName);
+                $this->handleColumns($operation, $tableName);
             }
         }
     }
 
-    private function handleJoinTables(String $method, String $path, String $databaseName, array $joinParameters) /*: void*/
-    {
-        $uniqueTableNames = array();
-        foreach ($joinParameters as $joinParameter) {
-            $tableNames = explode(',', trim($joinParameter));
-            foreach ($tableNames as $tableName) {
-                $uniqueTableNames[$tableName] = true;
-            }
-        }
-        foreach (array_keys($uniqueTableNames) as $tableName) {
-            $this->handleTable($method, $path, $databaseName, trim($tableName));
-        }
-    }
-
-    private function handleAllTables(String $method, String $path, String $databaseName) /*: void*/
-    {
-        $tableNames = $this->reflection->getTableNames();
-        foreach ($tableNames as $tableName) {
-            $this->handleTable($method, $path, $databaseName, $tableName);
-        }
-    }
-
-    private function handleRecords(String $method, String $path, String $databaseName, String $tableName) /*: void*/
+    private function handleRecords(String $operation, String $tableName) /*: void*/
     {
         if (!$this->reflection->hasTable($tableName)) {
             return;
         }
         $recordHandler = $this->getProperty('recordHandler', '');
         if ($recordHandler) {
-            $query = call_user_func($recordHandler, $method, $path, $databaseName, $tableName);
+            $query = call_user_func($recordHandler, $operation, $tableName);
             $filters = new FilterInfo();
             $table = $this->reflection->getTable($tableName);
             $query = str_replace('][]=', ']=', str_replace('=', '[]=', $query));
             parse_str($query, $params);
             $condition = $filters->getCombinedConditions($table, $params);
-            VariableStore::set('authorization.condition', $condition);
+            VariableStore::set("authorization.conditions.$tableName", $condition);
         }
     }
 
     public function handle(Request $request): Response
     {
-        $method = $request->getMethod();
         $path = $request->getPathSegment(1);
-        $databaseName = $this->reflection->getDatabaseName();
-        if ($path == 'records') {
-            $tableName = $request->getPathSegment(2);
-            $this->handleTable($method, $path, $databaseName, $tableName);
-            $params = $request->getParams();
-            if (isset($params['join'])) {
-                $this->handleJoinTables($method, $path, $databaseName, $params['join']);
+        $operation = $this->utils->getOperation($request);
+        $tableNames = $this->utils->getTableNames($request);
+        foreach ($tableNames as $tableName) {
+            $this->handleTable($operation, $tableName);
+            if ($path == 'records') {
+                $this->handleRecords($operation, $tableName);
             }
-            $this->handleRecords($method, $path, $databaseName, $tableName);
-        } elseif ($path == 'columns') {
-            $tableName = $request->getPathSegment(2);
-            if ($tableName) {
-                $this->handleTable($method, $path, $databaseName, $tableName);
-            } else {
-                $this->handleAllTables($method, $path, $databaseName);
-            }
-        } elseif ($path == 'openapi') {
-            $this->handleAllTables($method, $path, $databaseName);
+        }
+        if ($path == 'openapi') {
+            VariableStore::set('authorization.tableHandler', $this->getProperty('tableHandler', ''));
+            VariableStore::set('authorization.columnHandler', $this->getProperty('columnHandler', ''));
         }
         return $this->next->handle($request);
     }
@@ -3209,16 +3180,17 @@ class SanitationMiddleware extends Middleware
     {
         parent::__construct($router, $responder, $properties);
         $this->reflection = $reflection;
+        $this->utils = new RequestUtils($reflection);
     }
 
-    private function callHandler($handler, $record, String $method, ReflectedTable $table) /*: object */
+    private function callHandler($handler, $record, String $operation, ReflectedTable $table) /*: object */
     {
         $context = (array) $record;
         $tableName = $table->getName();
         foreach ($context as $columnName => &$value) {
             if ($table->exists($columnName)) {
                 $column = $table->get($columnName);
-                $value = call_user_func($handler, $method, $tableName, $column->serialize(), $value);
+                $value = call_user_func($handler, $operation, $tableName, $column->serialize(), $value);
             }
         }
         return (object) $context;
@@ -3226,26 +3198,25 @@ class SanitationMiddleware extends Middleware
 
     public function handle(Request $request): Response
     {
-        $path = $request->getPathSegment(1);
-        $tableName = $request->getPathSegment(2);
-        $record = $request->getBody();
-        if ($path == 'records' && $this->reflection->hasTable($tableName) && $record !== null) {
-            $table = $this->reflection->getTable($tableName);
-            $method = $request->getMethod();
-            $handler = $this->getProperty('handler', '');
-            if ($handler !== '') {
-                if (is_array($record)) {
-                    foreach ($record as &$r) {
-                        $r = $this->callHandler($handler, $r, $method, $table);
+        $operation = $this->utils->getOperation($request);
+        if (in_array($operation, ['create', 'update', 'increment'])) {
+            $tableName = $request->getPathSegment(2);
+            if ($this->reflection->hasTable($tableName)) {
+                $record = $request->getBody();
+                if ($record !== null) {
+                    $handler = $this->getProperty('handler', '');
+                    if ($handler !== '') {
+                        $table = $this->reflection->getTable($tableName);
+                        if (is_array($record)) {
+                            foreach ($record as &$r) {
+                                $r = $this->callHandler($handler, $r, $operation, $table);
+                            }
+                        } else {
+                            $record = $this->callHandler($handler, $record, $operation, $table);
+                        }
+                        $request->setBody($record);
                     }
-                } else {
-                    $record = $this->callHandler($handler, $record, $method, $table);
                 }
-                $path = $request->getPath();
-                $query = urldecode(http_build_query($request->getParams()));
-                $headers = $request->getHeaders();
-                $body = json_encode($record);
-                $request = new Request($method, $path, $query, $headers, $body);
             }
         }
         return $this->next->handle($request);
@@ -3262,9 +3233,10 @@ class ValidationMiddleware extends Middleware
     {
         parent::__construct($router, $responder, $properties);
         $this->reflection = $reflection;
+        $this->utils = new RequestUtils($reflection);
     }
 
-    private function callHandler($handler, $record, String $method, ReflectedTable $table) /*: Response?*/
+    private function callHandler($handler, $record, String $operation, ReflectedTable $table) /*: Response?*/
     {
         $context = (array) $record;
         $details = array();
@@ -3272,7 +3244,7 @@ class ValidationMiddleware extends Middleware
         foreach ($context as $columnName => $value) {
             if ($table->exists($columnName)) {
                 $column = $table->get($columnName);
-                $valid = call_user_func($handler, $method, $tableName, $column->serialize(), $value, $context);
+                $valid = call_user_func($handler, $operation, $tableName, $column->serialize(), $value, $context);
                 if ($valid !== true && $valid !== '') {
                     $details[$columnName] = $valid;
                 }
@@ -3286,25 +3258,28 @@ class ValidationMiddleware extends Middleware
 
     public function handle(Request $request): Response
     {
-        $path = $request->getPathSegment(1);
-        $tableName = $request->getPathSegment(2);
-        $record = $request->getBody();
-        if ($path == 'records' && $this->reflection->hasTable($tableName) && $record !== null) {
-            $table = $this->reflection->getTable($tableName);
-            $method = $request->getMethod();
-            $handler = $this->getProperty('handler', '');
-            if ($handler !== '') {
-                if (is_array($record)) {
-                    foreach ($record as $r) {
-                        $response = $this->callHandler($handler, $r, $method, $table);
-                        if ($response !== null) {
-                            return $response;
+        $operation = $this->utils->getOperation($request);
+        if (in_array($operation, ['create', 'update', 'increment'])) {
+            $tableName = $request->getPathSegment(2);
+            if ($this->reflection->hasTable($tableName)) {
+                $record = $request->getBody();
+                if ($record !== null) {
+                    $handler = $this->getProperty('handler', '');
+                    if ($handler !== '') {
+                        $table = $this->reflection->getTable($tableName);
+                        if (is_array($record)) {
+                            foreach ($record as $r) {
+                                $response = $this->callHandler($handler, $r, $operation, $table);
+                                if ($response !== null) {
+                                    return $response;
+                                }
+                            }
+                        } else {
+                            $response = $this->callHandler($handler, $record, $operation, $table);
+                            if ($response !== null) {
+                                return $response;
+                            }
                         }
-                    }
-                } else {
-                    $response = $this->callHandler($handler, $record, $method, $table);
-                    if ($response !== null) {
-                        return $response;
                     }
                 }
             }
@@ -3377,6 +3352,24 @@ class OpenApiBuilder
         return $this->openapi;
     }
 
+    private function isOperationOnTableAllowed(String $operation, String $tableName): bool
+    {
+        $tableHandler = VariableStore::get('authorization.tableHandler');
+        if (!$tableHandler) {
+            return true;
+        }
+        return (bool) call_user_func($tableHandler, $operation, $tableName);
+    }
+
+    private function isOperationOnColumnAllowed(String $operation, String $tableName, String $columnName): bool
+    {
+        $columnHandler = VariableStore::get('authorization.columnHandler');
+        if (!$columnHandler) {
+            return true;
+        }
+        return (bool) call_user_func($columnHandler, $operation, $tableName, $columnName);
+    }
+
     private function setPath(String $tableName) /*: void*/
     {
         $table = $this->reflection->getTable($tableName);
@@ -3386,20 +3379,23 @@ class OpenApiBuilder
             if (!$pkName && $operation != 'list') {
                 continue;
             }
+            if (!$this->isOperationOnTableAllowed($operation, $tableName)) {
+                continue;
+            }
             if (in_array($operation, ['list', 'create'])) {
                 $path = sprintf('/records/%s', $tableName);
             } else {
                 $path = sprintf('/records/%s/{%s}', $tableName, $pkName);
                 $this->openapi->set("paths|$path|$method|parameters|0|\$ref", "#/components/parameters/pk");
             }
-            if (in_array($operation, ['create', 'update'])) {
-                $this->openapi->set("paths|$path|$method|requestBody|\$ref", "#/components/requestBodies/single_" . urlencode($tableName));
+            if (in_array($operation, ['create', 'update', 'increment'])) {
+                $this->openapi->set("paths|$path|$method|requestBody|\$ref", "#/components/requestBodies/$operation-" . urlencode($tableName));
             }
             $this->openapi->set("paths|$path|$method|tags|0", "$tableName");
             $this->openapi->set("paths|$path|$method|description", "$operation $tableName");
             switch ($operation) {
                 case 'list':
-                    $this->openapi->set("paths|$path|$method|responses|200|\$ref", "#/components/responses/list_of_" . urlencode($tableName));
+                    $this->openapi->set("paths|$path|$method|responses|200|\$ref", "#/components/responses/$operation-" . urlencode($tableName));
                     break;
                 case 'create':
                     if ($pk->getType() == 'integer') {
@@ -3409,7 +3405,7 @@ class OpenApiBuilder
                     }
                     break;
                 case 'read':
-                    $this->openapi->set("paths|$path|$method|responses|200|\$ref", "#/components/responses/single_" . urlencode($tableName));
+                    $this->openapi->set("paths|$path|$method|responses|200|\$ref", "#/components/responses/$operation-" . urlencode($tableName));
                     break;
                 case 'update':
                 case 'delete':
@@ -3417,40 +3413,66 @@ class OpenApiBuilder
                     $this->openapi->set("paths|$path|$method|responses|200|\$ref", "#/components/responses/rows_affected");
                     break;
             }
-
         }
     }
 
     private function setComponentSchema(String $tableName) /*: void*/
     {
-        $this->openapi->set("components|schemas|single_$tableName|type", "object");
         $table = $this->reflection->getTable($tableName);
-        foreach ($table->columnNames() as $columnName) {
-            $column = $table->get($columnName);
-            $properties = $this->types[$column->getType()];
-            foreach ($properties as $key => $value) {
-                $this->openapi->set("components|schemas|single_$tableName|properties|$columnName|$key", $value);
+        foreach ($this->operations as $operation => $method) {
+            if ($operation == 'delete') {
+                continue;
+            }
+            if (!$this->isOperationOnTableAllowed($operation, $tableName)) {
+                continue;
+            }
+            if ($operation == 'list') {
+                $this->openapi->set("components|schemas|$operation-$tableName|type", "object");
+                $this->openapi->set("components|schemas|$operation-$tableName|properties|results|type", "integer");
+                $this->openapi->set("components|schemas|$operation-$tableName|properties|results|format", "int64");
+                $this->openapi->set("components|schemas|$operation-$tableName|properties|records|type", "array");
+                $prefix = "components|schemas|$operation-$tableName|properties|records|items";
+            } else {
+                $prefix = "components|schemas|$operation-$tableName";
+            }
+            $this->openapi->set("$prefix|type", "object");
+            foreach ($table->columnNames() as $columnName) {
+                if (!$this->isOperationOnColumnAllowed($operation, $tableName, $columnName)) {
+                    continue;
+                }
+                $column = $table->get($columnName);
+                $properties = $this->types[$column->getType()];
+                foreach ($properties as $key => $value) {
+                    $this->openapi->set("$prefix|properties|$columnName|$key", $value);
+                }
             }
         }
-        $this->openapi->set("components|schemas|list_of_$tableName|type", "object");
-        $this->openapi->set("components|schemas|list_of_$tableName|properties|results|type", "integer");
-        $this->openapi->set("components|schemas|list_of_$tableName|properties|results|format", "int64");
-        $this->openapi->set("components|schemas|list_of_$tableName|properties|records|type", "array");
-        $this->openapi->set("components|schemas|list_of_$tableName|properties|records|items|\$ref", "#/components/schemas/single_" . urlencode($tableName));
     }
 
     private function setComponentResponse(String $tableName) /*: void*/
     {
-        $this->openapi->set("components|responses|single_$tableName|description", "single $tableName record");
-        $this->openapi->set("components|responses|single_$tableName|content|application/json|schema|\$ref", "#/components/schemas/single_" . urlencode($tableName));
-        $this->openapi->set("components|responses|list_of_$tableName|description", "list of $tableName records");
-        $this->openapi->set("components|responses|list_of_$tableName|content|application/json|schema|\$ref", "#/components/schemas/list_of_" . urlencode($tableName));
+        foreach (['list', 'read'] as $operation) {
+            if (!$this->isOperationOnTableAllowed($operation, $tableName)) {
+                continue;
+            }
+            if ($operation == 'list') {
+                $this->openapi->set("components|responses|$operation-$tableName|description", "list of $tableName records");
+            } else {
+                $this->openapi->set("components|responses|$operation-$tableName|description", "single $tableName record");
+            }
+            $this->openapi->set("components|responses|$operation-$tableName|content|application/json|schema|\$ref", "#/components/schemas/$operation-" . urlencode($tableName));
+        }
     }
 
     private function setComponentRequestBody(String $tableName) /*: void*/
     {
-        $this->openapi->set("components|requestBodies|single_$tableName|description", "single $tableName record");
-        $this->openapi->set("components|requestBodies|single_$tableName|content|application/json|schema|\$ref", "#/components/schemas/single_" . urlencode($tableName));
+        foreach (['create', 'update', 'increment'] as $operation) {
+            if (!$this->isOperationOnTableAllowed($operation, $tableName)) {
+                continue;
+            }
+            $this->openapi->set("components|requestBodies|$operation-$tableName|description", "single $tableName record");
+            $this->openapi->set("components|requestBodies|$operation-$tableName|content|application/json|schema|\$ref", "#/components/schemas/$operation-" . urlencode($tableName));
+        }
     }
 
     private function setComponentParameters() /*: void*/
@@ -4565,6 +4587,77 @@ class RelationJoiner
     }
 }
 
+// file: src/Tqdev/PhpCrudApi/Record/RequestUtils.php
+
+class RequestUtils
+{
+    private $reflection;
+
+    public function __construct(ReflectionService $reflection)
+    {
+        $this->reflection = $reflection;
+    }
+
+    public function getOperation(Request $request): String
+    {
+        $method = $request->getMethod();
+        $path = $request->getPathSegment(1);
+        $hasPk = $request->getPathSegment(3) != '';
+        switch ($path) {
+            case 'openapi':
+                return 'document';
+            case 'columns':
+                return $method == 'get' ? 'reflect' : 'remodel';
+            case 'records':
+                switch ($method) {
+                    case 'POST':
+                        return 'create';
+                    case 'GET':
+                        return $hasPk ? 'read' : 'list';
+                    case 'PUT':
+                        return 'update';
+                    case 'DELETE':
+                        return 'delete';
+                    case 'PATCH':
+                        return 'increment';
+                }
+        }
+        return 'unknown';
+    }
+
+    private function getJoinTables(String $tableName, array $parameters): array
+    {
+        $uniqueTableNames = array();
+        $uniqueTableNames[$tableName] = true;
+        if (isset($parameters['join'])) {
+            foreach ($parameters['join'] as $parameter) {
+                $tableNames = explode(',', trim($parameter));
+                foreach ($tableNames as $tableName) {
+                    $uniqueTableNames[$tableName] = true;
+                }
+            }
+        }
+        return array_keys($uniqueTableNames);
+    }
+
+    public function getTableNames(Request $request): array
+    {
+        $path = $request->getPathSegment(1);
+        $tableName = $request->getPathSegment(2);
+        $allTableNames = $this->reflection->getTableNames();
+        switch ($path) {
+            case 'openapi':
+                return $allTableNames;
+            case 'columns':
+                return $tableName ? [$tableName] : $allTableNames;
+            case 'records':
+                return $this->getJoinTables($tableName, $request->getParams());
+        }
+        return $allTableNames;
+    }
+
+}
+
 // file: src/Tqdev/PhpCrudApi/Api.php
 
 class Api
@@ -4677,7 +4770,7 @@ class Config
         'password' => null,
         'database' => null,
         'middlewares' => 'cors',
-        'controllers' => 'records,columns,cache,openapi',
+        'controllers' => 'records,openapi',
         'cacheType' => 'TempFile',
         'cachePath' => '',
         'cacheTime' => 10,
@@ -4952,6 +5045,11 @@ class Request
             $body = (object) $input;
         }
         return $body;
+    }
+
+    public function setBody($body) /*: void*/
+    {
+        $this->body = json_encode($body);
     }
 
     public function addHeader(String $key, String $value)

@@ -7,6 +7,7 @@ use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
 use Tqdev\PhpCrudApi\Middleware\Communication\VariableStore;
 use Tqdev\PhpCrudApi\Middleware\Router\Router;
 use Tqdev\PhpCrudApi\Record\FilterInfo;
+use Tqdev\PhpCrudApi\Record\RequestUtils;
 use Tqdev\PhpCrudApi\Request;
 use Tqdev\PhpCrudApi\Response;
 
@@ -18,15 +19,16 @@ class AuthorizationMiddleware extends Middleware
     {
         parent::__construct($router, $responder, $properties);
         $this->reflection = $reflection;
+        $this->utils = new RequestUtils($reflection);
     }
 
-    private function handleColumns(String $method, String $path, String $databaseName, String $tableName) /*: void*/
+    private function handleColumns(String $operation, String $tableName) /*: void*/
     {
         $columnHandler = $this->getProperty('columnHandler', '');
         if ($columnHandler) {
             $table = $this->reflection->getTable($tableName);
             foreach ($table->columnNames() as $columnName) {
-                $allowed = call_user_func($columnHandler, $method, $path, $databaseName, $tableName, $columnName);
+                $allowed = call_user_func($columnHandler, $operation, $tableName, $columnName);
                 if (!$allowed) {
                     $this->reflection->removeColumn($tableName, $columnName);
                 }
@@ -34,83 +36,53 @@ class AuthorizationMiddleware extends Middleware
         }
     }
 
-    private function handleTable(String $method, String $path, String $databaseName, String $tableName) /*: void*/
+    private function handleTable(String $operation, String $tableName) /*: void*/
     {
         if (!$this->reflection->hasTable($tableName)) {
             return;
         }
         $tableHandler = $this->getProperty('tableHandler', '');
         if ($tableHandler) {
-            $allowed = call_user_func($tableHandler, $method, $path, $databaseName, $tableName);
+            $allowed = call_user_func($tableHandler, $operation, $tableName);
             if (!$allowed) {
                 $this->reflection->removeTable($tableName);
             } else {
-                $this->handleColumns($method, $path, $databaseName, $tableName);
+                $this->handleColumns($operation, $tableName);
             }
         }
     }
 
-    private function handleJoinTables(String $method, String $path, String $databaseName, array $joinParameters) /*: void*/
-    {
-        $uniqueTableNames = array();
-        foreach ($joinParameters as $joinParameter) {
-            $tableNames = explode(',', trim($joinParameter));
-            foreach ($tableNames as $tableName) {
-                $uniqueTableNames[$tableName] = true;
-            }
-        }
-        foreach (array_keys($uniqueTableNames) as $tableName) {
-            $this->handleTable($method, $path, $databaseName, trim($tableName));
-        }
-    }
-
-    private function handleAllTables(String $method, String $path, String $databaseName) /*: void*/
-    {
-        $tableNames = $this->reflection->getTableNames();
-        foreach ($tableNames as $tableName) {
-            $this->handleTable($method, $path, $databaseName, $tableName);
-        }
-    }
-
-    private function handleRecords(String $method, String $path, String $databaseName, String $tableName) /*: void*/
+    private function handleRecords(String $operation, String $tableName) /*: void*/
     {
         if (!$this->reflection->hasTable($tableName)) {
             return;
         }
         $recordHandler = $this->getProperty('recordHandler', '');
         if ($recordHandler) {
-            $query = call_user_func($recordHandler, $method, $path, $databaseName, $tableName);
+            $query = call_user_func($recordHandler, $operation, $tableName);
             $filters = new FilterInfo();
             $table = $this->reflection->getTable($tableName);
             $query = str_replace('][]=', ']=', str_replace('=', '[]=', $query));
             parse_str($query, $params);
             $condition = $filters->getCombinedConditions($table, $params);
-            VariableStore::set('authorization.condition', $condition);
+            VariableStore::set("authorization.conditions.$tableName", $condition);
         }
     }
 
     public function handle(Request $request): Response
     {
-        $method = $request->getMethod();
         $path = $request->getPathSegment(1);
-        $databaseName = $this->reflection->getDatabaseName();
-        if ($path == 'records') {
-            $tableName = $request->getPathSegment(2);
-            $this->handleTable($method, $path, $databaseName, $tableName);
-            $params = $request->getParams();
-            if (isset($params['join'])) {
-                $this->handleJoinTables($method, $path, $databaseName, $params['join']);
+        $operation = $this->utils->getOperation($request);
+        $tableNames = $this->utils->getTableNames($request);
+        foreach ($tableNames as $tableName) {
+            $this->handleTable($operation, $tableName);
+            if ($path == 'records') {
+                $this->handleRecords($operation, $tableName);
             }
-            $this->handleRecords($method, $path, $databaseName, $tableName);
-        } elseif ($path == 'columns') {
-            $tableName = $request->getPathSegment(2);
-            if ($tableName) {
-                $this->handleTable($method, $path, $databaseName, $tableName);
-            } else {
-                $this->handleAllTables($method, $path, $databaseName);
-            }
-        } elseif ($path == 'openapi') {
-            $this->handleAllTables($method, $path, $databaseName);
+        }
+        if ($path == 'openapi') {
+            VariableStore::set('authorization.tableHandler', $this->getProperty('tableHandler', ''));
+            VariableStore::set('authorization.columnHandler', $this->getProperty('columnHandler', ''));
         }
         return $this->next->handle($request);
     }

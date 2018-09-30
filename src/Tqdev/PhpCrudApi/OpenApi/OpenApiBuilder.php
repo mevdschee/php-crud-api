@@ -66,6 +66,24 @@ class OpenApiBuilder
         return $this->openapi;
     }
 
+    private function isOperationOnTableAllowed(String $operation, String $tableName): bool
+    {
+        $tableHandler = VariableStore::get('authorization.tableHandler');
+        if (!$tableHandler) {
+            return true;
+        }
+        return (bool) call_user_func($tableHandler, $operation, $tableName);
+    }
+
+    private function isOperationOnColumnAllowed(String $operation, String $tableName, String $columnName): bool
+    {
+        $columnHandler = VariableStore::get('authorization.columnHandler');
+        if (!$columnHandler) {
+            return true;
+        }
+        return (bool) call_user_func($columnHandler, $operation, $tableName, $columnName);
+    }
+
     private function setPath(String $tableName) /*: void*/
     {
         $table = $this->reflection->getTable($tableName);
@@ -75,20 +93,23 @@ class OpenApiBuilder
             if (!$pkName && $operation != 'list') {
                 continue;
             }
+            if (!$this->isOperationOnTableAllowed($operation, $tableName)) {
+                continue;
+            }
             if (in_array($operation, ['list', 'create'])) {
                 $path = sprintf('/records/%s', $tableName);
             } else {
                 $path = sprintf('/records/%s/{%s}', $tableName, $pkName);
                 $this->openapi->set("paths|$path|$method|parameters|0|\$ref", "#/components/parameters/pk");
             }
-            if (in_array($operation, ['create', 'update'])) {
-                $this->openapi->set("paths|$path|$method|requestBody|\$ref", "#/components/requestBodies/single_" . urlencode($tableName));
+            if (in_array($operation, ['create', 'update', 'increment'])) {
+                $this->openapi->set("paths|$path|$method|requestBody|\$ref", "#/components/requestBodies/$operation-" . urlencode($tableName));
             }
             $this->openapi->set("paths|$path|$method|tags|0", "$tableName");
             $this->openapi->set("paths|$path|$method|description", "$operation $tableName");
             switch ($operation) {
                 case 'list':
-                    $this->openapi->set("paths|$path|$method|responses|200|\$ref", "#/components/responses/list_of_" . urlencode($tableName));
+                    $this->openapi->set("paths|$path|$method|responses|200|\$ref", "#/components/responses/$operation-" . urlencode($tableName));
                     break;
                 case 'create':
                     if ($pk->getType() == 'integer') {
@@ -98,7 +119,7 @@ class OpenApiBuilder
                     }
                     break;
                 case 'read':
-                    $this->openapi->set("paths|$path|$method|responses|200|\$ref", "#/components/responses/single_" . urlencode($tableName));
+                    $this->openapi->set("paths|$path|$method|responses|200|\$ref", "#/components/responses/$operation-" . urlencode($tableName));
                     break;
                 case 'update':
                 case 'delete':
@@ -106,40 +127,66 @@ class OpenApiBuilder
                     $this->openapi->set("paths|$path|$method|responses|200|\$ref", "#/components/responses/rows_affected");
                     break;
             }
-
         }
     }
 
     private function setComponentSchema(String $tableName) /*: void*/
     {
-        $this->openapi->set("components|schemas|single_$tableName|type", "object");
         $table = $this->reflection->getTable($tableName);
-        foreach ($table->columnNames() as $columnName) {
-            $column = $table->get($columnName);
-            $properties = $this->types[$column->getType()];
-            foreach ($properties as $key => $value) {
-                $this->openapi->set("components|schemas|single_$tableName|properties|$columnName|$key", $value);
+        foreach ($this->operations as $operation => $method) {
+            if ($operation == 'delete') {
+                continue;
+            }
+            if (!$this->isOperationOnTableAllowed($operation, $tableName)) {
+                continue;
+            }
+            if ($operation == 'list') {
+                $this->openapi->set("components|schemas|$operation-$tableName|type", "object");
+                $this->openapi->set("components|schemas|$operation-$tableName|properties|results|type", "integer");
+                $this->openapi->set("components|schemas|$operation-$tableName|properties|results|format", "int64");
+                $this->openapi->set("components|schemas|$operation-$tableName|properties|records|type", "array");
+                $prefix = "components|schemas|$operation-$tableName|properties|records|items";
+            } else {
+                $prefix = "components|schemas|$operation-$tableName";
+            }
+            $this->openapi->set("$prefix|type", "object");
+            foreach ($table->columnNames() as $columnName) {
+                if (!$this->isOperationOnColumnAllowed($operation, $tableName, $columnName)) {
+                    continue;
+                }
+                $column = $table->get($columnName);
+                $properties = $this->types[$column->getType()];
+                foreach ($properties as $key => $value) {
+                    $this->openapi->set("$prefix|properties|$columnName|$key", $value);
+                }
             }
         }
-        $this->openapi->set("components|schemas|list_of_$tableName|type", "object");
-        $this->openapi->set("components|schemas|list_of_$tableName|properties|results|type", "integer");
-        $this->openapi->set("components|schemas|list_of_$tableName|properties|results|format", "int64");
-        $this->openapi->set("components|schemas|list_of_$tableName|properties|records|type", "array");
-        $this->openapi->set("components|schemas|list_of_$tableName|properties|records|items|\$ref", "#/components/schemas/single_" . urlencode($tableName));
     }
 
     private function setComponentResponse(String $tableName) /*: void*/
     {
-        $this->openapi->set("components|responses|single_$tableName|description", "single $tableName record");
-        $this->openapi->set("components|responses|single_$tableName|content|application/json|schema|\$ref", "#/components/schemas/single_" . urlencode($tableName));
-        $this->openapi->set("components|responses|list_of_$tableName|description", "list of $tableName records");
-        $this->openapi->set("components|responses|list_of_$tableName|content|application/json|schema|\$ref", "#/components/schemas/list_of_" . urlencode($tableName));
+        foreach (['list', 'read'] as $operation) {
+            if (!$this->isOperationOnTableAllowed($operation, $tableName)) {
+                continue;
+            }
+            if ($operation == 'list') {
+                $this->openapi->set("components|responses|$operation-$tableName|description", "list of $tableName records");
+            } else {
+                $this->openapi->set("components|responses|$operation-$tableName|description", "single $tableName record");
+            }
+            $this->openapi->set("components|responses|$operation-$tableName|content|application/json|schema|\$ref", "#/components/schemas/$operation-" . urlencode($tableName));
+        }
     }
 
     private function setComponentRequestBody(String $tableName) /*: void*/
     {
-        $this->openapi->set("components|requestBodies|single_$tableName|description", "single $tableName record");
-        $this->openapi->set("components|requestBodies|single_$tableName|content|application/json|schema|\$ref", "#/components/schemas/single_" . urlencode($tableName));
+        foreach (['create', 'update', 'increment'] as $operation) {
+            if (!$this->isOperationOnTableAllowed($operation, $tableName)) {
+                continue;
+            }
+            $this->openapi->set("components|requestBodies|$operation-$tableName|description", "single $tableName record");
+            $this->openapi->set("components|requestBodies|$operation-$tableName|content|application/json|schema|\$ref", "#/components/schemas/$operation-" . urlencode($tableName));
+        }
     }
 
     private function setComponentParameters() /*: void*/

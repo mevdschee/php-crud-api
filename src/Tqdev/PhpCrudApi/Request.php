@@ -129,6 +129,11 @@ class Request
         return $body;
     }
 
+    public function setBody($body) /*: void*/
+    {
+        $this->body = json_encode($body);
+    }
+
     public function addHeader(String $key, String $value)
     {
         $this->headers[$key] = $value;
