@@ -3373,6 +3373,10 @@ class OpenApiBuilder
                     continue;
                 }
                 $path = sprintf('/records/%s/{%s}', $tableName, $pkName);
+                $this->openapi->set("$prefix|$path|$method|parameters|0|name", "id");
+                $this->openapi->set("$prefix|$path|$method|parameters|0|in", "path");
+                $this->openapi->set("$prefix|$path|$method|parameters|0|schema|type", "string");
+                $this->openapi->set("$prefix|$path|$method|parameters|0|required", true);
             }
             $this->openapi->set("$prefix|$path|$method|tags|0", "$tableName");
             $this->openapi->set("$prefix|$path|$method|description", "$operation $tableName");
@@ -3409,7 +3413,7 @@ class OpenApiDefinition implements \JsonSerializable
         $this->root = $base;
     }
 
-    public function set(String $path, String $value) /*: void*/
+    public function set(String $path, $value) /*: void*/
     {
         $parts = explode('|', trim($path, '|'));
         $current = &$this->root;
