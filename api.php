@@ -3328,14 +3328,14 @@ class OpenApiBuilder
         'increment' => 'patch',
     ];
     private $types = [
-        'integer' => 'integer',
-        'varchar' => 'string',
-        'blob' => 'string',
-        'clob' => 'string',
-        'decimal' => 'string',
-        'timestamp' => 'string',
-        'geometry' => 'string',
-        'boolean' => 'boolean',
+        'integer' => ['type' => 'integer', 'format' => 'int64'],
+        'varchar' => ['type' => 'string'],
+        'blob' => ['type' => 'string'],
+        'clob' => ['type' => 'string'],
+        'decimal' => ['type' => 'string'],
+        'timestamp' => ['type' => 'string'],
+        'geometry' => ['type' => 'string'],
+        'boolean' => ['type' => 'boolean'],
     ];
 
     public function __construct(ReflectionService $reflection, $base)
@@ -3349,18 +3349,18 @@ class OpenApiBuilder
         $this->openapi->set("openapi", "3.0.0");
         $tableNames = $this->reflection->getTableNames();
         foreach ($tableNames as $tableName) {
-            $this->setPath("paths", $tableName);
+            $this->setPath($tableName);
         }
         foreach ($tableNames as $tableName) {
-            $this->setComponentSchema("components|schemas", $tableName);
+            $this->setComponentSchema($tableName);
         }
         foreach ($tableNames as $index => $tableName) {
-            $this->setTag("tags", $index, $tableName);
+            $this->setTag($index, $tableName);
         }
         return $this->openapi;
     }
 
-    private function setPath(String $prefix, String $tableName) /*: void*/
+    private function setPath(String $tableName) /*: void*/
     {
         $table = $this->reflection->getTable($tableName);
         $pk = $table->getPk();
@@ -3373,32 +3373,35 @@ class OpenApiBuilder
                     continue;
                 }
                 $path = sprintf('/records/%s/{%s}', $tableName, $pkName);
-                $this->openapi->set("$prefix|$path|$method|parameters|0|name", "id");
-                $this->openapi->set("$prefix|$path|$method|parameters|0|in", "path");
-                $this->openapi->set("$prefix|$path|$method|parameters|0|schema|type", "string");
-                $this->openapi->set("$prefix|$path|$method|parameters|0|required", true);
+                $this->openapi->set("paths|$path|$method|parameters|0|name", "id");
+                $this->openapi->set("paths|$path|$method|parameters|0|in", "path");
+                $this->openapi->set("paths|$path|$method|parameters|0|schema|type", "string");
+                $this->openapi->set("paths|$path|$method|parameters|0|required", true);
             }
-            $this->openapi->set("$prefix|$path|$method|tags|0", "$tableName");
-            $this->openapi->set("$prefix|$path|$method|description", "$operation $tableName");
-            $this->openapi->set("$prefix|$path|$method|responses|200|description", "$operation $tableName succeeded");
+            $this->openapi->set("paths|$path|$method|tags|0", "$tableName");
+            $this->openapi->set("paths|$path|$method|description", "$operation $tableName");
+            $this->openapi->set("paths|$path|$method|responses|200|description", "$operation $tableName succeeded");
         }
     }
 
-    private function setComponentSchema(String $prefix, String $tableName) /*: void*/
+    private function setComponentSchema(String $tableName) /*: void*/
     {
-        $this->openapi->set("$prefix|$tableName|type", "object");
+        $this->openapi->set("components|schemas|$tableName|type", "object");
         $table = $this->reflection->getTable($tableName);
         foreach ($table->columnNames() as $columnName) {
             $column = $table->get($columnName);
-            $type = $this->types[$column->getType()];
-            $this->openapi->set("$prefix|$tableName|properties|$columnName|type", $type);
+            $properties = $this->types[$column->getType()];
+            foreach ($properties as $key => $value) {
+                $this->openapi->set("components|schemas|$tableName|properties|$columnName|$key", $type);
+            }
+
         }
     }
 
-    private function setTag(String $prefix, int $index, String $tableName) /*: void*/
+    private function setTag(int $index, String $tableName) /*: void*/
     {
-        $this->openapi->set("$prefix|$index|name", "$tableName");
-        $this->openapi->set("$prefix|$index|description", "$tableName operations");
+        $this->openapi->set("tags|$index|name", "$tableName");
+        $this->openapi->set("tags|$index|description", "$tableName operations");
     }
 }
 

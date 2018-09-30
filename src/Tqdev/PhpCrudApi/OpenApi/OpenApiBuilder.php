@@ -17,14 +17,14 @@ class OpenApiBuilder
         'increment' => 'patch',
     ];
     private $types = [
-        'integer' => 'integer',
-        'varchar' => 'string',
-        'blob' => 'string',
-        'clob' => 'string',
-        'decimal' => 'string',
-        'timestamp' => 'string',
-        'geometry' => 'string',
-        'boolean' => 'boolean',
+        'integer' => ['type' => 'integer', 'format' => 'int64'],
+        'varchar' => ['type' => 'string'],
+        'blob' => ['type' => 'string'],
+        'clob' => ['type' => 'string'],
+        'decimal' => ['type' => 'string'],
+        'timestamp' => ['type' => 'string'],
+        'geometry' => ['type' => 'string'],
+        'boolean' => ['type' => 'boolean'],
     ];
 
     public function __construct(ReflectionService $reflection, $base)
@@ -75,12 +75,15 @@ class OpenApiBuilder
 
     private function setComponentSchema(String $tableName) /*: void*/
     {
-        $this->openapi->set("$prefix|$tableName|type", "object");
+        $this->openapi->set("components|schemas|$tableName|type", "object");
         $table = $this->reflection->getTable($tableName);
         foreach ($table->columnNames() as $columnName) {
             $column = $table->get($columnName);
-            $type = $this->types[$column->getType()];
-            $this->openapi->set("components|schemas|$tableName|properties|$columnName|type", $type);
+            $properties = $this->types[$column->getType()];
+            foreach ($properties as $key => $value) {
+                $this->openapi->set("components|schemas|$tableName|properties|$columnName|$key", $type);
+            }
+
         }
     }
 
