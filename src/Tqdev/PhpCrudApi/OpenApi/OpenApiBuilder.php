@@ -17,12 +17,17 @@ class OpenApiBuilder
         'increment' => 'patch',
     ];
     private $types = [
-        'integer' => ['type' => 'integer', 'format' => 'int64'],
+        'integer' => ['type' => 'integer', 'format' => 'int32'],
+        'bigint' => ['type' => 'integer', 'format' => 'int64'],
         'varchar' => ['type' => 'string'],
-        'blob' => ['type' => 'string'],
         'clob' => ['type' => 'string'],
+        'varbinary' => ['type' => 'string', 'format' => 'binary'],
+        'blob' => ['type' => 'string', 'format' => 'binary'],
         'decimal' => ['type' => 'string'],
-        'timestamp' => ['type' => 'string'],
+        'float' => ['type' => 'number', 'format' => 'float'],
+        'double' => ['type' => 'number', 'format' => 'double'],
+        'time' => ['type' => 'string', 'format' => 'date-time'],
+        'timestamp' => ['type' => 'string', 'format' => 'date-time'],
         'geometry' => ['type' => 'string'],
         'boolean' => ['type' => 'boolean'],
     ];
