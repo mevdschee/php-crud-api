@@ -1114,7 +1114,7 @@ class OpenApiController
 
     public function openapi(Request $request): Response
     {
-        return $this->responder->success(false);
+        return $this->responder->success($this->openApi->get());
     }
 
 }
@@ -2931,7 +2931,7 @@ class AuthorizationMiddleware extends Middleware
 
 class BasicAuthMiddleware extends Middleware
 {
-    private function isAllowed(String $username, String $password, array &$passwords): bool
+    private function hasCorrectPassword(String $username, String $password, array &$passwords): bool
     {
         $hash = isset($passwords[$username]) ? $passwords[$username] : false;
         if ($hash && password_verify($password, $hash)) {
@@ -2943,21 +2943,12 @@ class BasicAuthMiddleware extends Middleware
         return false;
     }
 
-    private function authenticate(String $username, String $password, String $passwordFile): bool
+    private function getValidUsername(String $username, String $password, String $passwordFile): String
     {
-        if (session_status() == PHP_SESSION_NONE) {
-            session_start();
-        }
-        if (isset($_SESSION['user']) && $_SESSION['user'] == $username) {
-            return true;
-        }
         $passwords = $this->readPasswords($passwordFile);
-        $allowed = $this->isAllowed($username, $password, $passwords);
-        if ($allowed) {
-            $_SESSION['user'] = $username;
-        }
+        $valid = $this->hasCorrectPassword($username, $password, $passwords);
         $this->writePasswords($passwordFile, $passwords);
-        return $allowed;
+        return $valid ? $username : '';
     }
 
     private function readPasswords(String $passwordFile): array
@@ -2989,21 +2980,37 @@ class BasicAuthMiddleware extends Middleware
         return $success;
     }
 
+    private function getAuthorizationCredentials(Request $request): String
+    {
+        $parts = explode(' ', trim($request->getHeader('Authorization')), 2);
+        if (count($parts) != 2) {
+            return '';
+        }
+        if ($parts[0] != 'Basic') {
+            return '';
+        }
+        return base64_decode(strtr($parts[1], '-_', '+/'));
+    }
+
     public function handle(Request $request): Response
     {
-        $username = isset($_SERVER['PHP_AUTH_USER']) ? $_SERVER['PHP_AUTH_USER'] : '';
-        $password = isset($_SERVER['PHP_AUTH_PW']) ? $_SERVER['PHP_AUTH_PW'] : '';
-        $passwordFile = $this->getProperty('passwordFile', '.htpasswd');
-        if (!$username) {
-            $response = $this->responder->error(ErrorCode::AUTHORIZATION_REQUIRED, $username);
-            $realm = $this->getProperty('realm', 'Username and password required');
-            $response->addHeader('WWW-Authenticate', "Basic realm=\"$realm\"");
-        } elseif (!$this->authenticate($username, $password, $passwordFile)) {
-            $response = $this->responder->error(ErrorCode::ACCESS_DENIED, $username);
-        } else {
-            $response = $this->next->handle($request);
+        if (session_status() == PHP_SESSION_NONE) {
+            session_start();
         }
-        return $response;
+        $credentials = $this->getAuthorizationCredentials($request);
+        if ($credentials) {
+            list($username, $password) = array('', '');
+            if (strpos($credentials, ':') !== false) {
+                list($username, $password) = explode(':', $credentials, 2);
+            }
+            $passwordFile = $this->getProperty('passwordFile', '.htpasswd');
+            $validUser = $this->getValidUsername($username, $password, $passwordFile);
+            $_SESSION['username'] = $validUser;
+            if (!$validUser) {
+                return $this->responder->error(ErrorCode::ACCESS_DENIED, $username);
+            }
+        }
+        return $this->next->handle($request);
     }
 }
 
@@ -3100,6 +3107,95 @@ class FirewallMiddleware extends Middleware
             $response = $this->next->handle($request);
         }
         return $response;
+    }
+}
+
+// file: src/Tqdev/PhpCrudApi/Middleware/JwtAuthMiddleware.php
+
+class JwtAuthMiddleware extends Middleware
+{
+    private function getVerifiedClaims(String $token, int $time, int $leeway, int $ttl, String $secret): array
+    {
+        $algorithms = array('HS256' => 'sha256', 'HS384' => 'sha384', 'HS512' => 'sha512');
+        $token = explode('.', $token);
+        if (count($token) < 3) {
+            return array();
+        }
+        $header = json_decode(base64_decode(strtr($token[0], '-_', '+/')), true);
+        if (!$secret) {
+            return array();
+        }
+        if ($header['typ'] != 'JWT') {
+            return array();
+        }
+        $algorithm = $header['alg'];
+        if (!isset($algorithms[$algorithm])) {
+            return array();
+        }
+        $hmac = $algorithms[$algorithm];
+        $signature = bin2hex(base64_decode(strtr($token[2], '-_', '+/')));
+        if ($signature != hash_hmac($hmac, "$token[0].$token[1]", $secret)) {
+            return array();
+        }
+        $claims = json_decode(base64_decode(strtr($token[1], '-_', '+/')), true);
+        if (!$claims) {
+            return array();
+        }
+        if (isset($claims['nbf']) && $time + $leeway < $claims['nbf']) {
+            return array();
+        }
+        if (isset($claims['iat']) && $time + $leeway < $claims['iat']) {
+            return array();
+        }
+        if (isset($claims['exp']) && $time - $leeway > $claims['exp']) {
+            return array();
+        }
+        if (isset($claims['iat']) && !isset($claims['exp'])) {
+            if ($time - $leeway > $claims['iat'] + $ttl) {
+                return array();
+            }
+        }
+        return $claims;
+    }
+
+    private function getClaims(String $token): array
+    {
+        $time = (int) $this->getProperty('time', time());
+        $leeway = (int) $this->getProperty('leeway', '5');
+        $ttl = (int) $this->getProperty('ttl', '30');
+        $secret = $this->getProperty('secret', '');
+        if (!$secret) {
+            return array();
+        }
+        return $this->getVerifiedClaims($token, $time, $leeway, $ttl, $secret);
+    }
+
+    private function getAuthorizationToken(Request $request): String
+    {
+        $parts = explode(' ', trim($request->getHeader('Authorization')), 2);
+        if (count($parts) != 2) {
+            return '';
+        }
+        if ($parts[0] != 'Bearer') {
+            return '';
+        }
+        return $parts[1];
+    }
+
+    public function handle(Request $request): Response
+    {
+        if (session_status() == PHP_SESSION_NONE) {
+            session_start();
+        }
+        $token = $this->getAuthorizationToken($request);
+        if ($token) {
+            $claims = $this->getClaims($token);
+            $_SESSION['claims'] = $claims;
+            if (empty($claims)) {
+                return $this->responder->error(ErrorCode::ACCESS_DENIED, 'JWT');
+            }
+        }
+        return $this->next->handle($request);
     }
 }
 
@@ -3217,55 +3313,95 @@ class ValidationMiddleware extends Middleware
     }
 }
 
-// file: src/Tqdev/PhpCrudApi/OpenApi/DefaultOpenApiDefinition.php
+// file: src/Tqdev/PhpCrudApi/OpenApi/OpenApiBuilder.php
 
-class DefaultOpenApiDefinition
+class OpenApiBuilder
 {
-    protected $root = [
-        "openapi" => "3.0.0",
-        "info" => [
-            "title" => "JAVA-CRUD-API",
-            "version" => "1.0.0",
-        ],
-        "paths" => [],
-        "components" => [
-            "schemas" => [
-                "Category" => [
-                    "type" => "object",
-                    "properties" => [
-                        "id" => [
-                            "type" => "integer",
-                            "format" => "int64",
-                        ],
-                        "name" => [
-                            "type" => "string",
-                        ],
-                    ],
-                ],
-                "Tag" => [
-                    "type" => "object",
-                    "properties" => [
-                        "id" => [
-                            "type" => "integer",
-                            "format" => "int64",
-                        ],
-                        "name" => [
-                            "type" => "string",
-                        ],
-                    ],
-                ],
-            ],
-        ],
+    private $openapi;
+    private $reflection;
+    private $operations = [
+        'list' => 'get',
+        'create' => 'post',
+        'read' => 'get',
+        'update' => 'put',
+        'delete' => 'delete',
+        'increment' => 'patch',
     ];
+    private $types = [
+        'integer' => 'integer',
+        'varchar' => 'string',
+        'blob' => 'string',
+        'clob' => 'string',
+        'decimal' => 'string',
+        'timestamp' => 'string',
+        'geometry' => 'string',
+        'boolean' => 'boolean',
+    ];
+
+    public function __construct(ReflectionService $reflection, $base)
+    {
+        $this->reflection = $reflection;
+        $this->openapi = new OpenApiDefinition($base);
+    }
+
+    public function build(): OpenApiDefinition
+    {
+        $this->openapi->set("openapi", "3.0.0");
+        $tableNames = $this->reflection->getTableNames();
+        foreach ($tableNames as $tableName) {
+            $this->setPath("paths", $tableName);
+        }
+        foreach ($tableNames as $tableName) {
+            $this->setComponentSchema("components|schemas", $tableName);
+        }
+        return $this->openapi;
+    }
+
+    private function setPath(String $prefix, String $tableName) /*: void*/
+    {
+        $table = $this->reflection->getTable($tableName);
+        $pk = $table->getPk();
+        $pkName = $pk ? $pk->getName() : '';
+        foreach ($this->operations as $operation => $method) {
+            if (in_array($operation, ['list', 'create'])) {
+                $path = sprintf('/records/%s', $tableName);
+            } else {
+                if (!$pkName) {
+                    continue;
+                }
+                $path = sprintf('/records/%s/{%s}', $tableName, $pkName);
+            }
+            $this->openapi->set("$prefix|$path|$method|description", "$operation $tableName");
+            $this->openapi->set("$prefix|$path|$method|responses|200|description", "$operation $tableName succeeded");
+        }
+    }
+
+    private function setComponentSchema(String $prefix, String $tableName) /*: void*/
+    {
+        $this->openapi->set("$prefix|$tableName|type", "object");
+        $table = $this->reflection->getTable($tableName);
+        foreach ($table->columnNames() as $columnName) {
+            $column = $table->get($columnName);
+            $type = $this->types[$column->getType()];
+            $this->openapi->set("$prefix|$tableName|properties|$columnName|type", $type);
+        }
+    }
 }
 
 // file: src/Tqdev/PhpCrudApi/OpenApi/OpenApiDefinition.php
 
-class OpenApiDefinition extends DefaultOpenApiDefinition
+class OpenApiDefinition implements \JsonSerializable
 {
-    private function set(String $path, String $value) /*: void*/
+    private $root;
+
+    public function __construct($base)
     {
-        $parts = explode('/', trim($path, '/'));
+        $this->root = $base;
+    }
+
+    public function set(String $path, String $value) /*: void*/
+    {
+        $parts = explode('|', trim($path, '|'));
         $current = &$this->root;
         while (count($parts) > 0) {
             $part = array_shift($parts);
@@ -3277,22 +3413,9 @@ class OpenApiDefinition extends DefaultOpenApiDefinition
         $current = $value;
     }
 
-    public function setPaths(ReflectedDatabase $database) /*: void*/
+    public function jsonSerialize()
     {
-        foreach ($database->getTableNames() as $tableName) {
-            $path = sprintf('/records/%s', $tableName);
-            foreach (['get', 'post', 'put', 'patch', 'delete'] as $method) {
-                $this->set("/paths/$path/$method/description", "$method operation");
-            }
-        }
-    }
-
-    private function fillParametersWithPrimaryKey(String $method, ReflectedTable $table) /*: void*/
-    {
-        if ($table->getPk() != null) {
-            $pathWithId = sprintf('/records/%s/{%s}', $table->getName(), $table->getPk()->getName());
-            $this->set("/paths/$pathWithId/$method/responses/200/description", "$method operation");
-        }
+        return $this->root;
     }
 }
 
@@ -3300,11 +3423,16 @@ class OpenApiDefinition extends DefaultOpenApiDefinition
 
 class OpenApiService
 {
-    private $reflection;
+    private $builder;
 
-    public function __construct(ReflectionService $reflection)
+    public function __construct(ReflectionService $reflection, array $base)
     {
-        $this->reflection = $reflection;
+        $this->builder = new OpenApiBuilder($reflection, $base);
+    }
+
+    public function get(): OpenApiDefinition
+    {
+        return $this->builder->build();
     }
 
 }
@@ -4389,6 +4517,9 @@ class Api
                 case 'basicAuth':
                     new BasicAuthMiddleware($router, $responder, $properties);
                     break;
+                case 'jwtAuth':
+                    new JwtAuthMiddleware($router, $responder, $properties);
+                    break;
                 case 'validation':
                     new ValidationMiddleware($router, $responder, $properties, $reflection);
                     break;
@@ -4414,7 +4545,7 @@ class Api
                     new CacheController($router, $responder, $cache);
                     break;
                 case 'openapi':
-                    $openApi = new OpenApiService($reflection);
+                    $openApi = new OpenApiService($reflection, $config->getOpenApiBase());
                     new OpenApiController($router, $responder, $openApi);
                     break;
             }
@@ -4470,6 +4601,7 @@ class Config
         'cachePath' => '',
         'cacheTime' => 10,
         'debug' => false,
+        'openApiBase' => '{"info":{"title":"JAVA-CRUD-API","version":"1.0.0"}}',
     ];
 
     private function getDefaultDriver(array $values): String
@@ -4541,7 +4673,7 @@ class Config
                 }
             }
         }
-        $newValues['middlewares'] = $properties;
+        $newValues['middlewares'] = array_reverse($properties, true);
         return $newValues;
     }
 
@@ -4603,6 +4735,11 @@ class Config
     public function getDebug(): String
     {
         return $this->values['debug'];
+    }
+
+    public function getOpenApiBase(): array
+    {
+        return json_decode($this->values['openApiBase'], true);
     }
 }
 

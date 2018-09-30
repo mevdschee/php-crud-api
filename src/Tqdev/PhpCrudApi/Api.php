@@ -81,7 +81,7 @@ class Api
                     new CacheController($router, $responder, $cache);
                     break;
                 case 'openapi':
-                    $openApi = new OpenApiService($reflection);
+                    $openApi = new OpenApiService($reflection, $config->getOpenApiBase());
                     new OpenApiController($router, $responder, $openApi);
                     break;
             }

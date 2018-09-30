@@ -16,6 +16,7 @@ class Config
         'cachePath' => '',
         'cacheTime' => 10,
         'debug' => false,
+        'openApiBase' => '{"info":{"title":"JAVA-CRUD-API","version":"1.0.0"}}',
     ];
 
     private function getDefaultDriver(array $values): String
@@ -149,5 +150,10 @@ class Config
     public function getDebug(): String
     {
         return $this->values['debug'];
+    }
+
+    public function getOpenApiBase(): array
+    {
+        return json_decode($this->values['openApiBase'], true);
     }
 }

@@ -1,11 +1,18 @@
 <?php
 namespace Tqdev\PhpCrudApi\OpenApi;
 
-class OpenApiDefinition extends DefaultOpenApiDefinition
+class OpenApiDefinition implements \JsonSerializable
 {
-    private function set(String $path, String $value) /*: void*/
+    private $root;
+
+    public function __construct($base)
     {
-        $parts = explode('/', trim($path, '/'));
+        $this->root = $base;
+    }
+
+    public function set(String $path, String $value) /*: void*/
+    {
+        $parts = explode('|', trim($path, '|'));
         $current = &$this->root;
         while (count($parts) > 0) {
             $part = array_shift($parts);
@@ -17,21 +24,8 @@ class OpenApiDefinition extends DefaultOpenApiDefinition
         $current = $value;
     }
 
-    public function setPaths(ReflectedDatabase $database) /*: void*/
+    public function jsonSerialize()
     {
-        foreach ($database->getTableNames() as $tableName) {
-            $path = sprintf('/records/%s', $tableName);
-            foreach (['get', 'post', 'put', 'patch', 'delete'] as $method) {
-                $this->set("/paths/$path/$method/description", "$method operation");
-            }
-        }
-    }
-
-    private function fillParametersWithPrimaryKey(String $method, ReflectedTable $table) /*: void*/
-    {
-        if ($table->getPk() != null) {
-            $pathWithId = sprintf('/records/%s/{%s}', $table->getName(), $table->getPk()->getName());
-            $this->set("/paths/$pathWithId/$method/responses/200/description", "$method operation");
-        }
+        return $this->root;
     }
 }

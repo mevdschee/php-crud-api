@@ -2,14 +2,20 @@
 namespace Tqdev\PhpCrudApi\OpenApi;
 
 use Tqdev\PhpCrudApi\Column\ReflectionService;
+use Tqdev\PhpCrudApi\OpenApi\OpenApiBuilder;
 
 class OpenApiService
 {
-    private $reflection;
+    private $builder;
 
-    public function __construct(ReflectionService $reflection)
+    public function __construct(ReflectionService $reflection, array $base)
     {
-        $this->reflection = $reflection;
+        $this->builder = new OpenApiBuilder($reflection, $base);
+    }
+
+    public function get(): OpenApiDefinition
+    {
+        return $this->builder->build();
     }
 
 }
