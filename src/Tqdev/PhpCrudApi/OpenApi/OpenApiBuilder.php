@@ -48,6 +48,7 @@ class OpenApiBuilder
         foreach ($tableNames as $tableName) {
             $this->setComponentSchema($tableName);
         }
+        $this->setComponentParameters();
         foreach ($tableNames as $index => $tableName) {
             $this->setTag($index, $tableName);
         }
@@ -67,10 +68,7 @@ class OpenApiBuilder
                     continue;
                 }
                 $path = sprintf('/records/%s/{%s}', $tableName, $pkName);
-                $this->openapi->set("paths|$path|$method|parameters|0|name", "id");
-                $this->openapi->set("paths|$path|$method|parameters|0|in", "path");
-                $this->openapi->set("paths|$path|$method|parameters|0|schema|type", "string");
-                $this->openapi->set("paths|$path|$method|parameters|0|required", true);
+                $this->openapi->set("paths|$path|$method|parameters|0|\$ref", "#/components/parameters/pk");
             }
             $this->openapi->set("paths|$path|$method|tags|0", "$tableName");
             $this->openapi->set("paths|$path|$method|description", "$operation $tableName");
@@ -90,6 +88,15 @@ class OpenApiBuilder
             }
 
         }
+    }
+
+    private function setComponentParameters() /*: void*/
+    {
+        $this->openapi->set("components|parameters|pk|name", "id");
+        $this->openapi->set("components|parameters|pk|in", "path");
+        $this->openapi->set("components|parameters|pk|schema|type", "string");
+        $this->openapi->set("components|parameters|pk|description", "primary key value");
+        $this->openapi->set("components|parameters|pk|required", true);
     }
 
     private function setTag(int $index, String $tableName) /*: void*/
