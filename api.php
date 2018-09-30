@@ -3354,6 +3354,9 @@ class OpenApiBuilder
         foreach ($tableNames as $tableName) {
             $this->setComponentSchema("components|schemas", $tableName);
         }
+        foreach ($tableNames as $index => $tableName) {
+            $this->setTag("tags", $index, $tableName);
+        }
         return $this->openapi;
     }
 
@@ -3385,6 +3388,12 @@ class OpenApiBuilder
             $type = $this->types[$column->getType()];
             $this->openapi->set("$prefix|$tableName|properties|$columnName|type", $type);
         }
+    }
+
+    private function setTag(String $prefix, int $index, String $tableName) /*: void*/
+    {
+        $this->openapi->set("$prefix|$index|name", "$tableName");
+        $this->openapi->set("$prefix|$index|description", "$tableName operations");
     }
 }
 
