@@ -122,8 +122,8 @@ class OpenApiBuilder
             }
         }
         $this->openapi->set("components|schemas|list_of_$tableName|type", "object");
-        $this->openapi->set("components|schemas|list_of_$tableName|properties|count|type", "integer");
-        $this->openapi->set("components|schemas|list_of_$tableName|properties|count|format", "int64");
+        $this->openapi->set("components|schemas|list_of_$tableName|properties|results|type", "integer");
+        $this->openapi->set("components|schemas|list_of_$tableName|properties|results|format", "int64");
         $this->openapi->set("components|schemas|list_of_$tableName|properties|records|type", "array");
         $this->openapi->set("components|schemas|list_of_$tableName|properties|records|items|\$ref", "#/components/schemas/single_" . urlencode($tableName));
     }
