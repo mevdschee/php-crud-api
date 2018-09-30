@@ -657,6 +657,15 @@ Then the server will return a '422' HTTP status code and nice error message:
 
 You can parse this output to make form fields show up with a red border and their appropriate error message.
 
+## OpenAPI 3.0
+
+On the "/openapi" end-point the OpenAPI 3.0 (formerly called "Swagger") specification is served. 
+It is a machine readable instant documentation of your API. To learn more, check out these links:
+
+- [Swagger Editor](https://editor.swagger.io/) can be used to view and debug the generated specification.
+- [OpenAPI specification](https://swagger.io/specification/) is a manual for creating an OpenAPI specification.
+- [Swagger Petstore](https://petstore.swagger.io/) is an example documentation that is generated using OpenAPI.
+
 ## Cache
 
 There are 4 cache engines that can be configured by the "cacheType" config parameter:
