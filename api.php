@@ -3392,7 +3392,7 @@ class OpenApiBuilder
             $column = $table->get($columnName);
             $properties = $this->types[$column->getType()];
             foreach ($properties as $key => $value) {
-                $this->openapi->set("components|schemas|$tableName|properties|$columnName|$key", $type);
+                $this->openapi->set("components|schemas|$tableName|properties|$columnName|$key", $value);
             }
 
         }
