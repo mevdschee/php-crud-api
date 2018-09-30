@@ -4588,7 +4588,6 @@ class Api
         $responder = new Responder();
         $router = new SimpleRouter($responder, $cache, $config->getCacheTime());
         foreach ($config->getMiddlewares() as $middleware => $properties) {
-            var_dump($middleware);
             switch ($middleware) {
                 case 'cors':
                     new CorsMiddleware($router, $responder, $properties);
