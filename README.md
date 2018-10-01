@@ -119,7 +119,7 @@ These features match features in v1 (see branch "v1"):
   - [x] Binary fields supported with base64 encoding
   - [x] Spatial/GIS fields and filters supported with WKT
   - [ ] Unstructured data support through JSON/JSONB
-  - [ ] Generate API documentation using OpenAPI tools
+  - [x] Generate API documentation using OpenAPI tools
   - [x] Authentication via JWT token or username/password
   - [ ] ~~SQLite support~~
 
