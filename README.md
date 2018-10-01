@@ -58,7 +58,7 @@ Edit the following lines in the bottom of the file "`api.php`":
 
 These are all the configuration options and their default value between brackets:
 
-- "driver": `mysql` (default), `pgsql` or `sqlsrv`
+- "driver": `mysql`, `pgsql` or `sqlsrv` (`mysql`)
 - "address": Hostname of the database server (`localhost`)
 - "port": TCP port of the database server (defaults to driver default)
 - "username": Username of the user connecting to the database (no default)
@@ -67,7 +67,7 @@ These are all the configuration options and their default value between brackets
 - "middlewares": List of middlewares to load (`cors`)
 - "controllers": List of controllers to load (`records,openapi`)
 - "openApiBase": OpenAPI info (`{"info":{"title":"PHP-CRUD-API","version":"1.0.0"}}`)
-- "cacheType": `TempFile` (default), `Redis`, `Memcache`, `Memcached` or `NoCache`
+- "cacheType": `TempFile`, `Redis`, `Memcache`, `Memcached` or `NoCache` (`TempFile`)
 - "cachePath": Path/address of the cache (defaults to system's temp directory)
 - "cacheTime": Number of seconds the cache is valid (`10`)
 - "debug": Show errors in the "X-Debug-Info" header (`false`)
