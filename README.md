@@ -66,7 +66,7 @@ These are all the configuration options and their default value between brackets
 - "database": Database the connecting is made to (no default)
 - "middlewares": List of middlewares to load ("cors")
 - "controllers": List of controllers to load ("records,columns,cache,openapi")
-- "openApiBase": OpenAPI info ("{"info":{"title":"JAVA-CRUD-API","version":"1.0.0"}}")
+- "openApiBase": OpenAPI info ("{"info":{"title":"PHP-CRUD-API","version":"1.0.0"}}")
 - "cacheType": "TempFile" (default), "Redis", "Memcache", "Memcached" or "NoCache"
 - "cachePath": Path/address of the cache (defaults to system's "temp" directory)
 - "cacheTime": Number of seconds the cache is valid (10)

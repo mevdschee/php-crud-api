@@ -16,7 +16,7 @@ class Config
         'cachePath' => '',
         'cacheTime' => 10,
         'debug' => false,
-        'openApiBase' => '{"info":{"title":"JAVA-CRUD-API","version":"1.0.0"}}',
+        'openApiBase' => '{"info":{"title":"PHP-CRUD-API","version":"1.0.0"}}',
     ];
 
     private function getDefaultDriver(array $values): String
