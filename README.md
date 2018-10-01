@@ -598,6 +598,8 @@ NB: The JWT implementation only supports the hash based algorithms HS256, HS384 
 
 The Authorization model acts on "operations". The most important ones are listed here:
 
+    [method] [path] - [operation] - [description]
+    ---------------------------------------------
     GET /records/{table} - list - lists records
     POST /records/{table} - create - creates records
     GET /records/{table}/{id} - read - reads a record by primary key
