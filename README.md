@@ -631,7 +631,7 @@ The above example will restrict access to the table 'license_keys' for all opera
 
 The above example will restrict access to the 'password' field of the 'users' table for all operations.
 
-    'authorization.recordHandler' => function ($operation, $tableName, $columnName) {
+    'authorization.recordHandler' => function ($operation, $tableName) {
         return ($tableName == 'users') ? 'filter=username,neq,admin' : '';
     },
 
