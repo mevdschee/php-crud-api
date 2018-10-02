@@ -53,10 +53,12 @@ class TypeConverter
             'mediumtext' => 'clob',
             'longtext' => 'clob',
             'text' => 'clob',
+            'mediumint' => 'integer',
             'int' => 'integer',
             'polygon' => 'geometry',
             'point' => 'geometry',
             'datetime' => 'timestamp',
+            // 'enum'
         ],
         'pgsql' => [
             'bigserial' => 'bigint',
