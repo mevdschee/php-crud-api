@@ -58,7 +58,7 @@ class TypeConverter
             'polygon' => 'geometry',
             'point' => 'geometry',
             'datetime' => 'timestamp',
-            // 'enum'
+            'enum' => 'varchar',
         ],
         'pgsql' => [
             'bigserial' => 'bigint',
