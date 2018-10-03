@@ -148,6 +148,7 @@ You can enable the following middleware using the "middlewares" config parameter
 - "authorization": Restrict access to certain tables or columns
 - "validation": Return input validation errors for custom rules
 - "sanitation": Apply input sanitation on create and update
+- "multiTenancy": Restricts tenants access in a multi-tenant scenario
 
 The "middlewares" config parameter is a comma separated list of enabled middlewares.
 You can tune the middleware behavior using middleware specific configuration parameters:
