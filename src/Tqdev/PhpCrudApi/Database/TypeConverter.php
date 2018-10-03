@@ -100,7 +100,7 @@ class TypeConverter
             'datetime' => 'timestamp',
             'datetime2' => 'timestamp',
             'float' => 'double',
-            'image' => 'blob',
+            'image' => 'varbinary',
             'int' => 'integer',
             'money' => 'decimal',
             'ntext' => 'longnvarchar',
