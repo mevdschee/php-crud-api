@@ -108,7 +108,7 @@ These features match features in v1 (see branch "v1"):
   - [ ] ~~Condensed JSON output: first row contains field names~~
   - [x] Sanitize and validate input using callbacks
   - [x] Permission system for databases, tables, columns and records
-  - [ ] Multi-tenant database layouts are supported
+  - [x] Multi-tenant database layouts are supported
   - [x] Multi-domain CORS support for cross-domain requests
   - [x] Support for reading joined results from multiple tables
   - [x] Search support on multiple criteria
