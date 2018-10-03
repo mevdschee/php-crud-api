@@ -917,10 +917,6 @@ class ReflectionService
         return $this->database->removeTable($tableName);
     }
 
-    public function removeColumn(String $tableName, String $columnName): bool
-    {
-        return $this->getTable($tableName)->removeColumn($columnName);
-    }
 }
 
 // file: src/Tqdev/PhpCrudApi/Controller/CacheController.php
@@ -1824,10 +1820,17 @@ class GenericDB
         return $this->definition;
     }
 
-    private function addAuthorizationCondition(String $tableName, Condition $condition2): Condition
+    private function addMiddlewareConditions(String $tableName, Condition $condition): Condition
     {
         $condition1 = VariableStore::get("authorization.conditions.$tableName");
-        return $condition1 ? AndCondition::fromArray([$condition1, $condition2]) : $condition2;
+        if ($condition1) {
+            $condition = $condition->_and($condition1);
+        }
+        $condition2 = VariableStore::get("multiTenancy.conditions.$tableName");
+        if ($condition2) {
+            $condition = $condition->_and($condition2);
+        }
+        return $condition;
     }
 
     public function createSingle(ReflectedTable $table, array $columnValues) /*: ?String*/
@@ -1855,7 +1858,7 @@ class GenericDB
         $selectColumns = $this->columns->getSelect($table, $columnNames);
         $tableName = $table->getName();
         $condition = new ColumnCondition($table->getPk(), 'eq', $id);
-        $condition = $this->addAuthorizationCondition($tableName, $condition);
+        $condition = $this->addMiddlewareConditions($tableName, $condition);
         $parameters = array();
         $whereClause = $this->conditions->getWhereClause($condition, $parameters);
         $sql = 'SELECT ' . $selectColumns . ' FROM "' . $tableName . '" ' . $whereClause;
@@ -1877,7 +1880,7 @@ class GenericDB
         $selectColumns = $this->columns->getSelect($table, $columnNames);
         $tableName = $table->getName();
         $condition = new ColumnCondition($table->getPk(), 'in', implode(',', $ids));
-        $condition = $this->addAuthorizationCondition($tableName, $condition);
+        $condition = $this->addMiddlewareConditions($tableName, $condition);
         $parameters = array();
         $whereClause = $this->conditions->getWhereClause($condition, $parameters);
         $sql = 'SELECT ' . $selectColumns . ' FROM "' . $tableName . '" ' . $whereClause;
@@ -1890,7 +1893,7 @@ class GenericDB
     public function selectCount(ReflectedTable $table, Condition $condition): int
     {
         $tableName = $table->getName();
-        $condition = $this->addAuthorizationCondition($tableName, $condition);
+        $condition = $this->addMiddlewareConditions($tableName, $condition);
         $parameters = array();
         $whereClause = $this->conditions->getWhereClause($condition, $parameters);
         $sql = 'SELECT COUNT(*) FROM "' . $tableName . '"' . $whereClause;
@@ -1902,7 +1905,7 @@ class GenericDB
     {
         $selectColumns = $this->columns->getSelect($table, $columnNames);
         $tableName = $table->getName();
-        $condition = $this->addAuthorizationCondition($tableName, $condition);
+        $condition = $this->addMiddlewareConditions($tableName, $condition);
         $parameters = array();
         $whereClause = $this->conditions->getWhereClause($condition, $parameters);
         $sql = 'SELECT ' . $selectColumns . ' FROM "' . $tableName . '"' . $whereClause;
@@ -1919,7 +1922,7 @@ class GenericDB
         }
         $selectColumns = $this->columns->getSelect($table, $columnNames);
         $tableName = $table->getName();
-        $condition = $this->addAuthorizationCondition($tableName, $condition);
+        $condition = $this->addMiddlewareConditions($tableName, $condition);
         $parameters = array();
         $whereClause = $this->conditions->getWhereClause($condition, $parameters);
         $orderBy = $this->columns->getOrderBy($table, $columnOrdering);
@@ -1940,7 +1943,7 @@ class GenericDB
         $updateColumns = $this->columns->getUpdate($table, $columnValues);
         $tableName = $table->getName();
         $condition = new ColumnCondition($table->getPk(), 'eq', $id);
-        $condition = $this->addAuthorizationCondition($tableName, $condition);
+        $condition = $this->addMiddlewareConditions($tableName, $condition);
         $parameters = array_values($columnValues);
         $whereClause = $this->conditions->getWhereClause($condition, $parameters);
         $sql = 'UPDATE "' . $tableName . '" SET ' . $updateColumns . $whereClause;
@@ -1952,7 +1955,7 @@ class GenericDB
     {
         $tableName = $table->getName();
         $condition = new ColumnCondition($table->getPk(), 'eq', $id);
-        $condition = $this->addAuthorizationCondition($tableName, $condition);
+        $condition = $this->addMiddlewareConditions($tableName, $condition);
         $parameters = array();
         $whereClause = $this->conditions->getWhereClause($condition, $parameters);
         $sql = 'DELETE FROM "' . $tableName . '" ' . $whereClause;
@@ -1969,7 +1972,7 @@ class GenericDB
         $updateColumns = $this->columns->getIncrement($table, $columnValues);
         $tableName = $table->getName();
         $condition = new ColumnCondition($table->getPk(), 'eq', $id);
-        $condition = $this->addAuthorizationCondition($tableName, $condition);
+        $condition = $this->addMiddlewareConditions($tableName, $condition);
         $parameters = array_values($columnValues);
         $whereClause = $this->conditions->getWhereClause($condition, $parameters);
         $sql = 'UPDATE "' . $tableName . '" SET ' . $updateColumns . $whereClause;
@@ -2842,7 +2845,7 @@ class AuthorizationMiddleware extends Middleware
             foreach ($table->columnNames() as $columnName) {
                 $allowed = call_user_func($columnHandler, $operation, $tableName, $columnName);
                 if (!$allowed) {
-                    $this->reflection->removeColumn($tableName, $columnName);
+                    $table->removeColumn($columnName);
                 }
             }
         }
@@ -3166,6 +3169,91 @@ class JwtAuthMiddleware extends Middleware
             $_SESSION['claims'] = $claims;
             if (empty($claims)) {
                 return $this->responder->error(ErrorCode::ACCESS_DENIED, 'JWT');
+            }
+        }
+        return $this->next->handle($request);
+    }
+}
+
+// file: src/Tqdev/PhpCrudApi/Middleware/MultiTenancyMiddleware.php
+
+class MultiTenancyMiddleware extends Middleware
+{
+    private $reflection;
+
+    public function __construct(Router $router, Responder $responder, array $properties, ReflectionService $reflection)
+    {
+        parent::__construct($router, $responder, $properties);
+        $this->reflection = $reflection;
+        $this->utils = new RequestUtils($reflection);
+    }
+
+    private function getCondition(String $tableName, array $pairs): Condition
+    {
+        $condition = new NoCondition();
+        $table = $this->reflection->getTable($tableName);
+        foreach ($pairs as $k => $v) {
+            $condition = $condition->_and(new ColumnCondition($table->get($k), 'eq', $v));
+        }
+        return $condition;
+    }
+
+    private function getPairs($handler, String $operation, String $tableName): array
+    {
+        $result = array();
+        $pairs = call_user_func($handler, $operation, $tableName);
+        $table = $this->reflection->getTable($tableName);
+        foreach ($pairs as $k => $v) {
+            if ($table->exists($k)) {
+                $result[$k] = $v;
+            }
+        }
+        return $result;
+    }
+
+    private function handleRecord(Request $request, String $operation, array $pairs) /*: void*/
+    {
+        $record = $request->getBody();
+        if ($record === null) {
+            return;
+        }
+        $multi = is_array($record);
+        $records = $multi ? $record : [$record];
+        foreach ($records as &$record) {
+            foreach ($pairs as $column => $value) {
+                if ($operation == 'create') {
+                    $record->$column = $value;
+                } else {
+                    if (isset($record->$column)) {
+                        unset($record->$column);
+                    }
+                }
+            }
+        }
+        $request->setBody($multi ? $records : $records[0]);
+    }
+
+    public function handle(Request $request): Response
+    {
+        $handler = $this->getProperty('handler', '');
+        if ($handler !== '') {
+            $path = $request->getPathSegment(1);
+            if ($path == 'records') {
+                $operation = $this->utils->getOperation($request);
+                $tableNames = $this->utils->getTableNames($request);
+                foreach ($tableNames as $i => $tableName) {
+                    if (!$this->reflection->hasTable($tableName)) {
+                        continue;
+                    }
+                    $pairs = $this->getPairs($handler, $operation, $tableName);
+                    if ($i == 0) {
+                        if (in_array($operation, ['create', 'update', 'increment'])) {
+                            $this->handleRecord($request, $operation, $pairs);
+                        }
+                    }
+                    $condition = $this->getCondition($tableName, $pairs);
+                    VariableStore::set("multiTenancy.conditions.$tableName", $condition);
+                }
             }
         }
         return $this->next->handle($request);
@@ -4701,6 +4789,9 @@ class Api
                     break;
                 case 'sanitation':
                     new SanitationMiddleware($router, $responder, $properties, $reflection);
+                    break;
+                case 'multiTenancy':
+                    new MultiTenancyMiddleware($router, $responder, $properties, $reflection);
                     break;
                 case 'authorization':
                     new AuthorizationMiddleware($router, $responder, $properties, $reflection);
