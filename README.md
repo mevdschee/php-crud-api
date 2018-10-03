@@ -598,14 +598,14 @@ NB: The JWT implementation only supports the hash based algorithms HS256, HS384 
 
 The Authorization model acts on "operations". The most important ones are listed here:
 
-    [method] [path] - [operation] - [description]
-    ---------------------------------------------
-    GET /records/{table} - list - lists records
-    POST /records/{table} - create - creates records
-    GET /records/{table}/{id} - read - reads a record by primary key
-    PUT /records/{table}/{id} - update - updates columns of a record by primary key
-    DELETE /records/{table}/{id} - delete - deletes a record by primary key
-    PATCH /records/{table}/{id} - increment - increments columns of a record by primary key
+    method path                  - operation - description
+    ----------------------------------------------------------------------------------------
+    GET    /records/{table}      - list      - lists records
+    POST   /records/{table}      - create    - creates records
+    GET    /records/{table}/{id} - read      - reads a record by primary key
+    PUT    /records/{table}/{id} - update    - updates columns of a record by primary key
+    DELETE /records/{table}/{id} - delete    - deletes a record by primary key
+    PATCH  /records/{table}/{id} - increment - increments columns of a record by primary key
 
 The "`/openapi`" endpoint has a special "document" operation to allow you to hide tables and columns from the documentation. The OpenAPI specification will show what is allowed in your session.
     
