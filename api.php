@@ -2592,7 +2592,7 @@ class TypeConverter
             'datetime' => 'timestamp',
             'datetime2' => 'timestamp',
             'float' => 'double',
-            'image' => 'longvarbinary',
+            'image' => 'blob',
             'int' => 'integer',
             'money' => 'decimal',
             'ntext' => 'longnvarchar',
