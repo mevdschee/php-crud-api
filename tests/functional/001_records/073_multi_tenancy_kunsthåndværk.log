@@ -1,0 +1,51 @@
+POST /records/kunsthåndværk
+
+{"id":"b55decba-8eb5-436b-af3e-148f7b4eacda","Umlauts ä_ö_ü-COUNT":4,"user_id":2}
+===
+200
+Content-Type: application/json
+Content-Length: 38
+
+"b55decba-8eb5-436b-af3e-148f7b4eacda"
+===
+GET /records/kunsthåndværk/b55decba-8eb5-436b-af3e-148f7b4eacda
+===
+200
+Content-Type: application/json
+Content-Length: 84
+
+{"id":"b55decba-8eb5-436b-af3e-148f7b4eacda","Umlauts ä_ö_ü-COUNT":4,"user_id":1}
+===
+PUT /records/kunsthåndværk/b55decba-8eb5-436b-af3e-148f7b4eacda
+
+{"id":"b55decba-8eb5-436b-af3e-148f7b4eacda","Umlauts ä_ö_ü-COUNT":4,"user_id":2}
+===
+200
+Content-Type: application/json
+Content-Length: 1
+
+1
+===
+GET /records/kunsthåndværk/b55decba-8eb5-436b-af3e-148f7b4eacda
+===
+200
+Content-Type: application/json
+Content-Length: 84
+
+{"id":"b55decba-8eb5-436b-af3e-148f7b4eacda","Umlauts ä_ö_ü-COUNT":4,"user_id":1}
+===
+DELETE /records/kunsthåndværk/e31ecfe6-591f-4660-9fbd-1a232083037f
+===
+200
+Content-Type: application/json
+Content-Length: 1
+
+0
+===
+DELETE /records/kunsthåndværk/b55decba-8eb5-436b-af3e-148f7b4eacda
+===
+200
+Content-Type: application/json
+Content-Length: 1
+
+1
