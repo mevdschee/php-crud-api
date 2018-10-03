@@ -607,8 +607,8 @@ The Authorization model acts on "operations". The most important ones are listed
     DELETE /records/{table}/{id} - delete    - deletes a record by primary key
     PATCH  /records/{table}/{id} - increment - increments columns of a record by primary key
 
-The "`/openapi`" endpoint has a special "document" operation to allow you to hide tables and
-columns from the documentation. The OpenAPI specification will only show what is allowed in your session.
+The "`/openapi`" endpoint will only show what is allowed in your session. It also has a special 
+"document" operation to allow you to hide tables and columns from the documentation.
     
 For endpoints that start with "`/columns`" there are the operations "reflect" and "remodel". 
 These operations can display or change the definition of the database, table or column. 
