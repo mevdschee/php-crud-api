@@ -88,8 +88,4 @@ class ReflectionService
         return $this->database->removeTable($tableName);
     }
 
-    public function removeColumn(String $tableName, String $columnName): bool
-    {
-        return $this->getTable($tableName)->removeColumn($columnName);
-    }
 }

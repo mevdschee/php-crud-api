@@ -30,7 +30,7 @@ class AuthorizationMiddleware extends Middleware
             foreach ($table->columnNames() as $columnName) {
                 $allowed = call_user_func($columnHandler, $operation, $tableName, $columnName);
                 if (!$allowed) {
-                    $this->reflection->removeColumn($tableName, $columnName);
+                    $table->removeColumn($columnName);
                 }
             }
         }

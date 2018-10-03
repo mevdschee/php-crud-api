@@ -159,6 +159,7 @@ CREATE TABLE barcodes (
 CREATE TABLE "kunsthåndværk" (
   id character varying(36) NOT NULL,
   "Umlauts ä_ö_ü-COUNT" integer NOT NULL,
+  user_id integer NOT NULL,
   invisible character varying(36)
 );
 
@@ -263,8 +264,9 @@ INSERT INTO "barcodes" ("product_id", "hex", "bin") VALUES
 -- Data for Name: kunsthåndværk; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-INSERT INTO "kunsthåndværk" ("id", "Umlauts ä_ö_ü-COUNT", "invisible") VALUES
-('e42c77c6-06a4-4502-816c-d112c7142e6d', 1, NULL);
+INSERT INTO "kunsthåndværk" ("id", "Umlauts ä_ö_ü-COUNT", "user_id", "invisible") VALUES
+('e42c77c6-06a4-4502-816c-d112c7142e6d', 1, 1, NULL),
+('e31ecfe6-591f-4660-9fbd-1a232083037f', 2, 2, NULL);
 
 --
 -- Data for Name: invisibles; Type: TABLE DATA; Schema: public; Owner: postgres
@@ -430,6 +432,13 @@ CREATE INDEX "kunsthåndværk_Umlauts ä_ö_ü-COUNT_idx" ON "kunsthåndværk" U
 
 
 --
+-- Name: kunsthåndværk_user_id_idx; Type: INDEX; Schema: public; Owner: postgres; Tablespace:
+--
+
+CREATE INDEX "kunsthåndværk_user_id_idx" ON "kunsthåndværk" USING btree (user_id);
+
+
+--
 -- Name: comments_post_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -483,6 +492,13 @@ ALTER TABLE ONLY barcodes
 
 ALTER TABLE ONLY "kunsthåndværk"
     ADD CONSTRAINT "kunsthåndværk_Umlauts ä_ö_ü-COUNT_uc" UNIQUE ("Umlauts ä_ö_ü-COUNT");
+
+--
+-- Name: kunsthåndværk_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY "kunsthåndværk"
+    ADD CONSTRAINT "kunsthåndværk_user_id_fkey" FOREIGN KEY (user_id) REFERENCES users(id);
 
 
 --

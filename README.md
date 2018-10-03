@@ -681,6 +681,18 @@ Then the server will return a '422' HTTP status code and nice error message:
 
 You can parse this output to make form fields show up with a red border and their appropriate error message.
 
+### Multi Tenancy support
+
+You may use the "multiTenancy" middleware when you have a multi-tenant database. 
+If your tenants are identified by the "customer_id" column you can use the following handler:
+
+    'multiTenancy.handler' => function ($operation, $tableName) {
+        return ['customer_id' => 12];
+    },
+
+This construct adds a filter requiring "customer_id" to be "12" to every operation (except for "create").
+It also sets the column "customer_id" on "create" to "12" and removes the column from any other write operation.
+
 ## OpenAPI specification
 
 On the "/openapi" end-point the OpenAPI 3.0 (formerly called "Swagger") specification is served. 

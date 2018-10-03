@@ -15,6 +15,7 @@ use Tqdev\PhpCrudApi\Middleware\BasicAuthMiddleware;
 use Tqdev\PhpCrudApi\Middleware\CorsMiddleware;
 use Tqdev\PhpCrudApi\Middleware\FirewallMiddleware;
 use Tqdev\PhpCrudApi\Middleware\JwtAuthMiddleware;
+use Tqdev\PhpCrudApi\Middleware\MultiTenancyMiddleware;
 use Tqdev\PhpCrudApi\Middleware\Router\SimpleRouter;
 use Tqdev\PhpCrudApi\Middleware\SanitationMiddleware;
 use Tqdev\PhpCrudApi\Middleware\ValidationMiddleware;
@@ -61,6 +62,9 @@ class Api
                     break;
                 case 'sanitation':
                     new SanitationMiddleware($router, $responder, $properties, $reflection);
+                    break;
+                case 'multiTenancy':
+                    new MultiTenancyMiddleware($router, $responder, $properties, $reflection);
                     break;
                 case 'authorization':
                     new AuthorizationMiddleware($router, $responder, $properties, $reflection);
