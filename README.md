@@ -683,7 +683,7 @@ Then the server will return a '422' HTTP status code and nice error message:
 
 You can parse this output to make form fields show up with a red border and their appropriate error message.
 
-### Multi Tenancy support
+### Multi-tenancy support
 
 You may use the "multiTenancy" middleware when you have a multi-tenant database. 
 If your tenants are identified by the "customer_id" column you can use the following handler:
