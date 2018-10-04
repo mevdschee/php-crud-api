@@ -3037,6 +3037,37 @@ class CorsMiddleware extends Middleware
     }
 }
 
+// file: src/Tqdev/PhpCrudApi/Middleware/CustomMiddleware.php
+
+class CustomMiddleware extends Middleware
+{
+    private $reflection;
+
+    public function __construct(Router $router, Responder $responder, array $properties, ReflectionService $reflection)
+    {
+        parent::__construct($router, $responder, $properties);
+        $this->reflection = $reflection;
+        $this->utils = new RequestUtils($reflection);
+    }
+
+    public function handle(Request $request): Response
+    {
+        $operation = $this->utils->getOperation($request);
+        $tableName = $request->getPathSegment(2);
+        $beforeHandler = $this->getProperty('beforeHandler', '');
+        $environment = (object) array();
+        if ($beforeHandler !== '') {
+            call_user_func($beforeHandler, $operation, $tableName, $request, $environment);
+        }
+        $response = $this->next->handle($request);
+        $afterHandler = $this->getProperty('afterHandler', '');
+        if ($afterHandler !== '') {
+            call_user_func($afterHandler, $operation, $tableName, $response, $environment);
+        }
+        return $response;
+    }
+}
+
 // file: src/Tqdev/PhpCrudApi/Middleware/FirewallMiddleware.php
 
 class FirewallMiddleware extends Middleware
@@ -4795,6 +4826,9 @@ class Api
                     break;
                 case 'authorization':
                     new AuthorizationMiddleware($router, $responder, $properties, $reflection);
+                    break;
+                case 'custom':
+                    new CustomMiddleware($router, $responder, $properties, $reflection);
                     break;
             }
         }
