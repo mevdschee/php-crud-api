@@ -169,6 +169,7 @@ You can tune the middleware behavior using middleware specific configuration par
 - "authorization.recordHandler": Handler to implement record authorization filter rules ("")
 - "validation.handler": Handler to implement validation rules for input values ("")
 - "sanitation.handler": Handler to implement sanitation rules for input values ("")
+- "multiTenancy.handler": Handler to implement simple multi-tenancy rules ("")
 
 If you don't specify these parameters in the configuration, then the default values (between brackets) are used.
 
