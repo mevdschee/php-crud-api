@@ -178,7 +178,7 @@ If you don't specify these parameters in the configuration, then the default val
 
 ## TreeQL, a pragmatic GraphQL
 
-TreeQL allow you to create a "tree" of JSON objects based on your SQL database structure (relations) and your query.
+TreeQL allows you to create a "tree" of JSON objects based on your SQL database structure (relations) and your query.
 
 It is loosely based on the REST standard and also inspired by json:api.
 
