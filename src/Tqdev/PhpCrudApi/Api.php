@@ -13,7 +13,7 @@ use Tqdev\PhpCrudApi\Database\GenericDB;
 use Tqdev\PhpCrudApi\Middleware\AuthorizationMiddleware;
 use Tqdev\PhpCrudApi\Middleware\BasicAuthMiddleware;
 use Tqdev\PhpCrudApi\Middleware\CorsMiddleware;
-use Tqdev\PhpCrudApi\Middleware\CustomMiddleware;
+use Tqdev\PhpCrudApi\Middleware\CustomizationMiddleware;
 use Tqdev\PhpCrudApi\Middleware\FirewallMiddleware;
 use Tqdev\PhpCrudApi\Middleware\JwtAuthMiddleware;
 use Tqdev\PhpCrudApi\Middleware\MultiTenancyMiddleware;
@@ -70,8 +70,8 @@ class Api
                 case 'authorization':
                     new AuthorizationMiddleware($router, $responder, $properties, $reflection);
                     break;
-                case 'custom':
-                    new CustomMiddleware($router, $responder, $properties, $reflection);
+                case 'customization':
+                    new CustomizationMiddleware($router, $responder, $properties, $reflection);
                     break;
             }
         }

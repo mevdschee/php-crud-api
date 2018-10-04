@@ -9,7 +9,7 @@ use Tqdev\PhpCrudApi\Record\RequestUtils;
 use Tqdev\PhpCrudApi\Request;
 use Tqdev\PhpCrudApi\Response;
 
-class CustomMiddleware extends Middleware
+class CustomizationMiddleware extends Middleware
 {
     private $reflection;
 

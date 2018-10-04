@@ -149,7 +149,7 @@ You can enable the following middleware using the "middlewares" config parameter
 - "validation": Return input validation errors for custom rules
 - "sanitation": Apply input sanitation on create and update
 - "multiTenancy": Restricts tenants access in a multi-tenant scenario
-- "custom": Provides handlers for request and response customization
+- "customization": Provides handlers for request and response customization
 
 The "middlewares" config parameter is a comma separated list of enabled middlewares.
 You can tune the middleware behavior using middleware specific configuration parameters:
@@ -171,8 +171,8 @@ You can tune the middleware behavior using middleware specific configuration par
 - "validation.handler": Handler to implement validation rules for input values ("")
 - "sanitation.handler": Handler to implement sanitation rules for input values ("")
 - "multiTenancy.handler": Handler to implement simple multi-tenancy rules ("")
-- "custom.beforeHandler": Handler to implement request customization ("")
-- "custom.afterHandler": Handler to implement response customization ("")
+- "customization.beforeHandler": Handler to implement request customization ("")
+- "customization.afterHandler": Handler to implement response customization ("")
 
 If you don't specify these parameters in the configuration, then the default values (between brackets) are used.
 
@@ -698,14 +698,14 @@ If your tenants are identified by the "customer_id" column you can use the follo
 This construct adds a filter requiring "customer_id" to be "12" to every operation (except for "create").
 It also sets the column "customer_id" on "create" to "12" and removes the column from any other write operation.
 
-### Custom handlers
+### Customization handlers
 
-You may use the "custom" middleware to implement any other functionality.
+You may use the "customization" middleware to implement any other functionality.
 
-    'custom.beforeHandler' => function ($operation, $tableName, $request, $environment) {
+    'customization.beforeHandler' => function ($operation, $tableName, $request, $environment) {
         $environment->start = microtime(true);
     },
-    'custom.afterHandler' => function ($operation, $tableName, $response, $environment) {
+    'customization.afterHandler' => function ($operation, $tableName, $response, $environment) {
         $response->addHeader('X-Time-Taken', microtime(true) - $environment->start);
     },
 

@@ -3037,9 +3037,9 @@ class CorsMiddleware extends Middleware
     }
 }
 
-// file: src/Tqdev/PhpCrudApi/Middleware/CustomMiddleware.php
+// file: src/Tqdev/PhpCrudApi/Middleware/CustomizationMiddleware.php
 
-class CustomMiddleware extends Middleware
+class CustomizationMiddleware extends Middleware
 {
     private $reflection;
 
@@ -4828,7 +4828,7 @@ class Api
                     new AuthorizationMiddleware($router, $responder, $properties, $reflection);
                     break;
                 case 'custom':
-                    new CustomMiddleware($router, $responder, $properties, $reflection);
+                    new CustomizationMiddleware($router, $responder, $properties, $reflection);
                     break;
             }
         }
