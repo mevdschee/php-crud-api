@@ -700,7 +700,7 @@ It also sets the column "customer_id" on "create" to "12" and removes the column
 
 ### Customization handlers
 
-You may use the "customization" middleware to implement any other functionality.
+You may use the "customization" middleware to modify request and response and implement any other functionality.
 
     'customization.beforeHandler' => function ($operation, $tableName, $request, $environment) {
         $environment->start = microtime(true);
