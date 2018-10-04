@@ -44,7 +44,7 @@ Test the script by opening the following URL:
 
     http://localhost:8080/api.php/records/posts/1
 
-Dont forget to modify the configuration at the bottom of the file.
+Don't forget to modify the configuration at the bottom of the file.
 
 ## Configuration
 
