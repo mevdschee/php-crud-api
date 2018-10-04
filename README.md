@@ -149,6 +149,7 @@ You can enable the following middleware using the "middlewares" config parameter
 - "validation": Return input validation errors for custom rules
 - "sanitation": Apply input sanitation on create and update
 - "multiTenancy": Restricts tenants access in a multi-tenant scenario
+- "custom": Provides handlers for request and response customization
 
 The "middlewares" config parameter is a comma separated list of enabled middlewares.
 You can tune the middleware behavior using middleware specific configuration parameters:
@@ -170,6 +171,8 @@ You can tune the middleware behavior using middleware specific configuration par
 - "validation.handler": Handler to implement validation rules for input values ("")
 - "sanitation.handler": Handler to implement sanitation rules for input values ("")
 - "multiTenancy.handler": Handler to implement simple multi-tenancy rules ("")
+- "custom.beforeHandler": Handler to implement request customization ("")
+- "custom.afterHandler": Handler to implement response customization ("")
 
 If you don't specify these parameters in the configuration, then the default values (between brackets) are used.
 
