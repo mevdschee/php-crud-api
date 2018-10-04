@@ -695,6 +695,19 @@ If your tenants are identified by the "customer_id" column you can use the follo
 This construct adds a filter requiring "customer_id" to be "12" to every operation (except for "create").
 It also sets the column "customer_id" on "create" to "12" and removes the column from any other write operation.
 
+### Custom handlers
+
+You may use the "custom" middleware to implement any other functionality.
+
+    'custom.beforeHandler' => function ($operation, $tableName, $request, $environment) {
+        $environment->start = microtime(true);
+    },
+    'custom.afterHandler' => function ($operation, $tableName, $response, $environment) {
+        $response->addHeader('X-Time-Taken', microtime(true) - $environment->start);
+    },
+
+The above example will add a header "X-Time-Taken" with the number of seconds the API call has taken.
+
 ## OpenAPI specification
 
 On the "/openapi" end-point the OpenAPI 3.0 (formerly called "Swagger") specification is served. 
