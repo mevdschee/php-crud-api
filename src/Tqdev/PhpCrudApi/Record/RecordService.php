@@ -30,14 +30,14 @@ class RecordService
     {
         $keyset = array_keys((array) $record);
         foreach ($keyset as $key) {
-            if (!$this->reflection->getTable($tableName)->exists($key)) {
+            if (!$this->reflection->getTable($tableName)->hasColumn($key)) {
                 unset($record->$key);
             }
         }
         if ($id != '') {
             $pk = $this->reflection->getTable($tableName)->getPk();
             foreach ($this->reflection->getTable($tableName)->columnNames() as $key) {
-                $field = $this->reflection->getTable($tableName)->get($key);
+                $field = $this->reflection->getTable($tableName)->getColumn($key);
                 if ($field->getName() == $pk->getName()) {
                     unset($record->$key);
                 }
@@ -45,7 +45,7 @@ class RecordService
         }
     }
 
-    public function exists(String $table): bool
+    public function hasTable(String $table): bool
     {
         return $this->reflection->hasTable($table);
     }

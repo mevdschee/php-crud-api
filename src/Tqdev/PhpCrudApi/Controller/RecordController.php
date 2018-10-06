@@ -28,7 +28,7 @@ class RecordController
     {
         $table = $request->getPathSegment(2);
         $params = $request->getParams();
-        if (!$this->service->exists($table)) {
+        if (!$this->service->hasTable($table)) {
             return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $table);
         }
         return $this->responder->success($this->service->_list($table, $params));
@@ -39,7 +39,7 @@ class RecordController
         $table = $request->getPathSegment(2);
         $id = $request->getPathSegment(3);
         $params = $request->getParams();
-        if (!$this->service->exists($table)) {
+        if (!$this->service->hasTable($table)) {
             return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $table);
         }
         if (strpos($id, ',') !== false) {
@@ -66,7 +66,7 @@ class RecordController
             return $this->responder->error(ErrorCode::HTTP_MESSAGE_NOT_READABLE, '');
         }
         $params = $request->getParams();
-        if (!$this->service->exists($table)) {
+        if (!$this->service->hasTable($table)) {
             return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $table);
         }
         if (is_array($record)) {
@@ -89,7 +89,7 @@ class RecordController
             return $this->responder->error(ErrorCode::HTTP_MESSAGE_NOT_READABLE, '');
         }
         $params = $request->getParams();
-        if (!$this->service->exists($table)) {
+        if (!$this->service->hasTable($table)) {
             return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $table);
         }
         $ids = explode(',', $id);
@@ -115,7 +115,7 @@ class RecordController
         $table = $request->getPathSegment(2);
         $id = $request->getPathSegment(3);
         $params = $request->getParams();
-        if (!$this->service->exists($table)) {
+        if (!$this->service->hasTable($table)) {
             return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $table);
         }
         $ids = explode(',', $id);
@@ -139,7 +139,7 @@ class RecordController
             return $this->responder->error(ErrorCode::HTTP_MESSAGE_NOT_READABLE, '');
         }
         $params = $request->getParams();
-        if (!$this->service->exists($table)) {
+        if (!$this->service->hasTable($table)) {
             return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $table);
         }
         $ids = explode(',', $id);

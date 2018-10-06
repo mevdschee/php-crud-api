@@ -74,7 +74,7 @@ class ReflectedTable implements \JsonSerializable
         return new ReflectedTable($name, $columns);
     }
 
-    public function exists(String $columnName): bool
+    public function hasColumn(String $columnName): bool
     {
         return isset($this->columns[$columnName]);
     }
@@ -99,7 +99,7 @@ class ReflectedTable implements \JsonSerializable
         return array_keys($this->columns);
     }
 
-    public function get($columnName): ReflectedColumn
+    public function getColumn($columnName): ReflectedColumn
     {
         return $this->columns[$columnName];
     }

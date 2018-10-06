@@ -36,7 +36,7 @@ class ColumnsBuilder
     {
         $results = array();
         foreach ($columnOrdering as $i => list($columnName, $ordering)) {
-            $column = $table->get($columnName);
+            $column = $table->getColumn($columnName);
             $quotedColumnName = $this->quoteColumnName($column);
             $results[] = $quotedColumnName . ' ' . $ordering;
         }
@@ -47,7 +47,7 @@ class ColumnsBuilder
     {
         $results = array();
         foreach ($columnNames as $columnName) {
-            $column = $table->get($columnName);
+            $column = $table->getColumn($columnName);
             $quotedColumnName = $this->quoteColumnName($column);
             $quotedColumnName = $this->converter->convertColumnName($column, $quotedColumnName);
             $results[] = $quotedColumnName;
@@ -60,7 +60,7 @@ class ColumnsBuilder
         $columns = array();
         $values = array();
         foreach ($columnValues as $columnName => $columnValue) {
-            $column = $table->get($columnName);
+            $column = $table->getColumn($columnName);
             $quotedColumnName = $this->quoteColumnName($column);
             $columns[] = $quotedColumnName;
             $columnValue = $this->converter->convertColumnValue($column);
@@ -80,7 +80,7 @@ class ColumnsBuilder
     {
         $results = array();
         foreach ($columnValues as $columnName => $columnValue) {
-            $column = $table->get($columnName);
+            $column = $table->getColumn($columnName);
             $quotedColumnName = $this->quoteColumnName($column);
             $columnValue = $this->converter->convertColumnValue($column);
             $results[] = $quotedColumnName . '=' . $columnValue;
@@ -95,7 +95,7 @@ class ColumnsBuilder
             if (!is_numeric($columnValue)) {
                 continue;
             }
-            $column = $table->get($columnName);
+            $column = $table->getColumn($columnName);
             $quotedColumnName = $this->quoteColumnName($column);
             $columnValue = $this->converter->convertColumnValue($column);
             $results[] = $quotedColumnName . '=' . $quotedColumnName . '+' . $columnValue;

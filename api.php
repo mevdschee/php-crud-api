@@ -519,7 +519,7 @@ class ReflectedDatabase implements \JsonSerializable
         return $this->name;
     }
 
-    public function exists(String $tableName): bool
+    public function hasTable(String $tableName): bool
     {
         return isset($this->tableNames[$tableName]);
     }
@@ -619,7 +619,7 @@ class ReflectedTable implements \JsonSerializable
         return new ReflectedTable($name, $columns);
     }
 
-    public function exists(String $columnName): bool
+    public function hasColumn(String $columnName): bool
     {
         return isset($this->columns[$columnName]);
     }
@@ -644,7 +644,7 @@ class ReflectedTable implements \JsonSerializable
         return array_keys($this->columns);
     }
 
-    public function get($columnName): ReflectedColumn
+    public function getColumn($columnName): ReflectedColumn
     {
         return $this->columns[$columnName];
     }
@@ -711,7 +711,7 @@ class DefinitionService
     public function updateColumn(String $tableName, String $columnName, /* object */ $changes): bool
     {
         $table = $this->reflection->getTable($tableName);
-        $column = $table->get($columnName);
+        $column = $table->getColumn($columnName);
 
         $newColumn = ReflectedColumn::fromJson((object) array_merge((array) $column->jsonSerialize(), (array) $changes));
         if ($newColumn->getPk() != $column->getPk() && $table->hasPk()) {
@@ -812,7 +812,7 @@ class DefinitionService
     public function removeColumn(String $tableName, String $columnName)
     {
         $table = $this->reflection->getTable($tableName);
-        $newColumn = $table->get($columnName);
+        $newColumn = $table->getColumn($columnName);
         if ($newColumn->getPk()) {
             $newColumn->setPk(false);
             if (!$this->db->definition()->removeColumnPrimaryKey($table->getName(), $newColumn->getName(), $newColumn)) {
@@ -890,7 +890,7 @@ class ReflectionService
 
     public function hasTable(String $tableName): bool
     {
-        return $this->database->exists($tableName);
+        return $this->database->hasTable($tableName);
     }
 
     public function getTable(String $tableName): ReflectedTable
@@ -993,10 +993,10 @@ class ColumnController
             return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $tableName);
         }
         $table = $this->reflection->getTable($tableName);
-        if (!$table->exists($columnName)) {
+        if (!$table->hasColumn($columnName)) {
             return $this->responder->error(ErrorCode::COLUMN_NOT_FOUND, $columnName);
         }
-        $column = $table->get($columnName);
+        $column = $table->getColumn($columnName);
         return $this->responder->success($column);
     }
 
@@ -1021,7 +1021,7 @@ class ColumnController
             return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $tableName);
         }
         $table = $this->reflection->getTable($tableName);
-        if (!$table->exists($columnName)) {
+        if (!$table->hasColumn($columnName)) {
             return $this->responder->error(ErrorCode::COLUMN_NOT_FOUND, $columnName);
         }
         $success = $this->definition->updateColumn($tableName, $columnName, $request->getBody());
@@ -1052,7 +1052,7 @@ class ColumnController
         }
         $columnName = $request->getBody()->name;
         $table = $this->reflection->getTable($tableName);
-        if ($table->exists($columnName)) {
+        if ($table->hasColumn($columnName)) {
             return $this->responder->error(ErrorCode::COLUMN_ALREADY_EXISTS, $columnName);
         }
         $success = $this->definition->addColumn($tableName, $request->getBody());
@@ -1083,7 +1083,7 @@ class ColumnController
             return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $tableName);
         }
         $table = $this->reflection->getTable($tableName);
-        if (!$table->exists($columnName)) {
+        if (!$table->hasColumn($columnName)) {
             return $this->responder->error(ErrorCode::COLUMN_NOT_FOUND, $columnName);
         }
         $success = $this->definition->removeColumn($tableName, $columnName);
@@ -1138,7 +1138,7 @@ class RecordController
     {
         $table = $request->getPathSegment(2);
         $params = $request->getParams();
-        if (!$this->service->exists($table)) {
+        if (!$this->service->hasTable($table)) {
             return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $table);
         }
         return $this->responder->success($this->service->_list($table, $params));
@@ -1149,7 +1149,7 @@ class RecordController
         $table = $request->getPathSegment(2);
         $id = $request->getPathSegment(3);
         $params = $request->getParams();
-        if (!$this->service->exists($table)) {
+        if (!$this->service->hasTable($table)) {
             return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $table);
         }
         if (strpos($id, ',') !== false) {
@@ -1176,7 +1176,7 @@ class RecordController
             return $this->responder->error(ErrorCode::HTTP_MESSAGE_NOT_READABLE, '');
         }
         $params = $request->getParams();
-        if (!$this->service->exists($table)) {
+        if (!$this->service->hasTable($table)) {
             return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $table);
         }
         if (is_array($record)) {
@@ -1199,7 +1199,7 @@ class RecordController
             return $this->responder->error(ErrorCode::HTTP_MESSAGE_NOT_READABLE, '');
         }
         $params = $request->getParams();
-        if (!$this->service->exists($table)) {
+        if (!$this->service->hasTable($table)) {
             return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $table);
         }
         $ids = explode(',', $id);
@@ -1225,7 +1225,7 @@ class RecordController
         $table = $request->getPathSegment(2);
         $id = $request->getPathSegment(3);
         $params = $request->getParams();
-        if (!$this->service->exists($table)) {
+        if (!$this->service->hasTable($table)) {
             return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $table);
         }
         $ids = explode(',', $id);
@@ -1249,7 +1249,7 @@ class RecordController
             return $this->responder->error(ErrorCode::HTTP_MESSAGE_NOT_READABLE, '');
         }
         $params = $request->getParams();
-        if (!$this->service->exists($table)) {
+        if (!$this->service->hasTable($table)) {
             return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $table);
         }
         $ids = explode(',', $id);
@@ -1387,7 +1387,7 @@ class ColumnsBuilder
     {
         $results = array();
         foreach ($columnOrdering as $i => list($columnName, $ordering)) {
-            $column = $table->get($columnName);
+            $column = $table->getColumn($columnName);
             $quotedColumnName = $this->quoteColumnName($column);
             $results[] = $quotedColumnName . ' ' . $ordering;
         }
@@ -1398,7 +1398,7 @@ class ColumnsBuilder
     {
         $results = array();
         foreach ($columnNames as $columnName) {
-            $column = $table->get($columnName);
+            $column = $table->getColumn($columnName);
             $quotedColumnName = $this->quoteColumnName($column);
             $quotedColumnName = $this->converter->convertColumnName($column, $quotedColumnName);
             $results[] = $quotedColumnName;
@@ -1411,7 +1411,7 @@ class ColumnsBuilder
         $columns = array();
         $values = array();
         foreach ($columnValues as $columnName => $columnValue) {
-            $column = $table->get($columnName);
+            $column = $table->getColumn($columnName);
             $quotedColumnName = $this->quoteColumnName($column);
             $columns[] = $quotedColumnName;
             $columnValue = $this->converter->convertColumnValue($column);
@@ -1431,7 +1431,7 @@ class ColumnsBuilder
     {
         $results = array();
         foreach ($columnValues as $columnName => $columnValue) {
-            $column = $table->get($columnName);
+            $column = $table->getColumn($columnName);
             $quotedColumnName = $this->quoteColumnName($column);
             $columnValue = $this->converter->convertColumnValue($column);
             $results[] = $quotedColumnName . '=' . $columnValue;
@@ -1446,7 +1446,7 @@ class ColumnsBuilder
             if (!is_numeric($columnValue)) {
                 continue;
             }
-            $column = $table->get($columnName);
+            $column = $table->getColumn($columnName);
             $quotedColumnName = $this->quoteColumnName($column);
             $columnValue = $this->converter->convertColumnValue($column);
             $results[] = $quotedColumnName . '=' . $quotedColumnName . '+' . $columnValue;
@@ -1680,7 +1680,7 @@ class DataConverter
     public function convertRecords(ReflectedTable $table, array $columnNames, array &$records) /*: void*/
     {
         foreach ($columnNames as $columnName) {
-            $column = $table->get($columnName);
+            $column = $table->getColumn($columnName);
             $conversion = $this->getRecordValueConversion($column);
             if ($conversion != 'none') {
                 foreach ($records as $i => $record) {
@@ -1715,7 +1715,7 @@ class DataConverter
     {
         $columnNames = array_keys($columnValues);
         foreach ($columnNames as $columnName) {
-            $column = $table->get($columnName);
+            $column = $table->getColumn($columnName);
             $conversion = $this->getInputValueConversion($column);
             if ($conversion != 'none') {
                 $value = $columnValues[$columnName];
@@ -2247,7 +2247,7 @@ class GenericDefinition
         $fields = [];
         $constraints = [];
         foreach ($newTable->columnNames() as $columnName) {
-            $newColumn = $newTable->get($columnName);
+            $newColumn = $newTable->getColumn($columnName);
             $f1 = $this->quote($columnName);
             $f2 = $this->getColumnType($newColumn, false);
             $f3 = $this->quote($tableName . '_' . $columnName . '_fkey');
@@ -3224,7 +3224,7 @@ class MultiTenancyMiddleware extends Middleware
         $condition = new NoCondition();
         $table = $this->reflection->getTable($tableName);
         foreach ($pairs as $k => $v) {
-            $condition = $condition->_and(new ColumnCondition($table->get($k), 'eq', $v));
+            $condition = $condition->_and(new ColumnCondition($table->getColumn($k), 'eq', $v));
         }
         return $condition;
     }
@@ -3235,7 +3235,7 @@ class MultiTenancyMiddleware extends Middleware
         $pairs = call_user_func($handler, $operation, $tableName);
         $table = $this->reflection->getTable($tableName);
         foreach ($pairs as $k => $v) {
-            if ($table->exists($k)) {
+            if ($table->hasColumn($k)) {
                 $result[$k] = $v;
             }
         }
@@ -3309,8 +3309,8 @@ class SanitationMiddleware extends Middleware
         $context = (array) $record;
         $tableName = $table->getName();
         foreach ($context as $columnName => &$value) {
-            if ($table->exists($columnName)) {
-                $column = $table->get($columnName);
+            if ($table->hasColumn($columnName)) {
+                $column = $table->getColumn($columnName);
                 $value = call_user_func($handler, $operation, $tableName, $column->serialize(), $value);
             }
         }
@@ -3363,8 +3363,8 @@ class ValidationMiddleware extends Middleware
         $details = array();
         $tableName = $table->getName();
         foreach ($context as $columnName => $value) {
-            if ($table->exists($columnName)) {
-                $column = $table->get($columnName);
+            if ($table->hasColumn($columnName)) {
+                $column = $table->getColumn($columnName);
                 $valid = call_user_func($handler, $operation, $tableName, $column->serialize(), $value, $context);
                 if ($valid !== true && $valid !== '') {
                     $details[$columnName] = $valid;
@@ -3561,7 +3561,7 @@ class OpenApiBuilder
                 if (!$this->isOperationOnColumnAllowed($operation, $tableName, $columnName)) {
                     continue;
                 }
-                $column = $table->get($columnName);
+                $column = $table->getColumn($columnName);
                 $properties = $this->types[$column->getType()];
                 foreach ($properties as $key => $value) {
                     $this->openapi->set("$prefix|properties|$columnName|$key", $value);
@@ -3759,7 +3759,7 @@ abstract class Condition
         if (count($parts) < 2) {
             return null;
         }
-        $field = $table->get($parts[0]);
+        $field = $table->getColumn($parts[0]);
         $command = $parts[1];
         $negate = false;
         $spatial = false;
@@ -4164,7 +4164,7 @@ class OrderingInfo
             foreach ($params['order'] as $order) {
                 $parts = explode(',', $order, 3);
                 $columnName = $parts[0];
-                if (!$table->exists($columnName)) {
+                if (!$table->hasColumn($columnName)) {
                     continue;
                 }
                 $ascending = 'ASC';
@@ -4350,14 +4350,14 @@ class RecordService
     {
         $keyset = array_keys((array) $record);
         foreach ($keyset as $key) {
-            if (!$this->reflection->getTable($tableName)->exists($key)) {
+            if (!$this->reflection->getTable($tableName)->hasColumn($key)) {
                 unset($record->$key);
             }
         }
         if ($id != '') {
             $pk = $this->reflection->getTable($tableName)->getPk();
             foreach ($this->reflection->getTable($tableName)->columnNames() as $key) {
-                $field = $this->reflection->getTable($tableName)->get($key);
+                $field = $this->reflection->getTable($tableName)->getColumn($key);
                 if ($field->getName() == $pk->getName()) {
                     unset($record->$key);
                 }
@@ -4365,7 +4365,7 @@ class RecordService
         }
     }
 
-    public function exists(String $table): bool
+    public function hasTable(String $table): bool
     {
         return $this->reflection->hasTable($table);
     }
@@ -4679,7 +4679,7 @@ class RelationJoiner
         $columnNames = array($fk1Name, $fk2Name);
 
         $pkIds = implode(',', array_keys($pkValues));
-        $condition = new ColumnCondition($t3->get($fk1Name), 'in', $pkIds);
+        $condition = new ColumnCondition($t3->getColumn($fk1Name), 'in', $pkIds);
 
         $records = $db->selectAllUnordered($t3, $columnNames, $condition);
         foreach ($records as $record) {
@@ -4827,7 +4827,7 @@ class Api
                 case 'authorization':
                     new AuthorizationMiddleware($router, $responder, $properties, $reflection);
                     break;
-                case 'custom':
+                case 'customization':
                     new CustomizationMiddleware($router, $responder, $properties, $reflection);
                     break;
             }

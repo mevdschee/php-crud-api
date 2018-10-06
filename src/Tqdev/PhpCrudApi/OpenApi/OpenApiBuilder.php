@@ -154,7 +154,7 @@ class OpenApiBuilder
                 if (!$this->isOperationOnColumnAllowed($operation, $tableName, $columnName)) {
                     continue;
                 }
-                $column = $table->get($columnName);
+                $column = $table->getColumn($columnName);
                 $properties = $this->types[$column->getType()];
                 foreach ($properties as $key => $value) {
                     $this->openapi->set("$prefix|properties|$columnName|$key", $value);

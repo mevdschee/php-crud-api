@@ -28,8 +28,8 @@ class ValidationMiddleware extends Middleware
         $details = array();
         $tableName = $table->getName();
         foreach ($context as $columnName => $value) {
-            if ($table->exists($columnName)) {
-                $column = $table->get($columnName);
+            if ($table->hasColumn($columnName)) {
+                $column = $table->getColumn($columnName);
                 $valid = call_user_func($handler, $operation, $tableName, $column->serialize(), $value, $context);
                 if ($valid !== true && $valid !== '') {
                     $details[$columnName] = $valid;

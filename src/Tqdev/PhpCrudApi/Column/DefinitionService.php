@@ -31,7 +31,7 @@ class DefinitionService
     public function updateColumn(String $tableName, String $columnName, /* object */ $changes): bool
     {
         $table = $this->reflection->getTable($tableName);
-        $column = $table->get($columnName);
+        $column = $table->getColumn($columnName);
 
         // remove constraints on other column
         $newColumn = ReflectedColumn::fromJson((object) array_merge((array) $column->jsonSerialize(), (array) $changes));
@@ -136,7 +136,7 @@ class DefinitionService
     public function removeColumn(String $tableName, String $columnName)
     {
         $table = $this->reflection->getTable($tableName);
-        $newColumn = $table->get($columnName);
+        $newColumn = $table->getColumn($columnName);
         if ($newColumn->getPk()) {
             $newColumn->setPk(false);
             if (!$this->db->definition()->removeColumnPrimaryKey($table->getName(), $newColumn->getName(), $newColumn)) {

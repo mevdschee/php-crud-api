@@ -33,7 +33,7 @@ abstract class Condition
         if (count($parts) < 2) {
             return null;
         }
-        $field = $table->get($parts[0]);
+        $field = $table->getColumn($parts[0]);
         $command = $parts[1];
         $negate = false;
         $spatial = false;

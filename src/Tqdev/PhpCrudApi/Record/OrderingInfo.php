@@ -13,7 +13,7 @@ class OrderingInfo
             foreach ($params['order'] as $order) {
                 $parts = explode(',', $order, 3);
                 $columnName = $parts[0];
-                if (!$table->exists($columnName)) {
+                if (!$table->hasColumn($columnName)) {
                     continue;
                 }
                 $ascending = 'ASC';

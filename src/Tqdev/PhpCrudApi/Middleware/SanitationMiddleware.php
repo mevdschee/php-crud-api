@@ -26,8 +26,8 @@ class SanitationMiddleware extends Middleware
         $context = (array) $record;
         $tableName = $table->getName();
         foreach ($context as $columnName => &$value) {
-            if ($table->exists($columnName)) {
-                $column = $table->get($columnName);
+            if ($table->hasColumn($columnName)) {
+                $column = $table->getColumn($columnName);
                 $value = call_user_func($handler, $operation, $tableName, $column->serialize(), $value);
             }
         }

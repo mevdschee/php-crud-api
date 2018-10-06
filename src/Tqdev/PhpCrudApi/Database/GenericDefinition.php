@@ -261,7 +261,7 @@ class GenericDefinition
         $fields = [];
         $constraints = [];
         foreach ($newTable->columnNames() as $columnName) {
-            $newColumn = $newTable->get($columnName);
+            $newColumn = $newTable->getColumn($columnName);
             $f1 = $this->quote($columnName);
             $f2 = $this->getColumnType($newColumn, false);
             $f3 = $this->quote($tableName . '_' . $columnName . '_fkey');

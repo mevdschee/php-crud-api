@@ -7,6 +7,7 @@ class ReflectedDatabase implements \JsonSerializable
 {
     private $name;
     private $tableNames;
+    private $viewNames;
 
     public function __construct(String $name, array $tableNames)
     {
@@ -43,7 +44,7 @@ class ReflectedDatabase implements \JsonSerializable
         return $this->name;
     }
 
-    public function exists(String $tableName): bool
+    public function hasTable(String $tableName): bool
     {
         return isset($this->tableNames[$tableName]);
     }

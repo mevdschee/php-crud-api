@@ -29,7 +29,7 @@ class MultiTenancyMiddleware extends Middleware
         $condition = new NoCondition();
         $table = $this->reflection->getTable($tableName);
         foreach ($pairs as $k => $v) {
-            $condition = $condition->_and(new ColumnCondition($table->get($k), 'eq', $v));
+            $condition = $condition->_and(new ColumnCondition($table->getColumn($k), 'eq', $v));
         }
         return $condition;
     }
@@ -40,7 +40,7 @@ class MultiTenancyMiddleware extends Middleware
         $pairs = call_user_func($handler, $operation, $tableName);
         $table = $this->reflection->getTable($tableName);
         foreach ($pairs as $k => $v) {
-            if ($table->exists($k)) {
+            if ($table->hasColumn($k)) {
                 $result[$k] = $v;
             }
         }

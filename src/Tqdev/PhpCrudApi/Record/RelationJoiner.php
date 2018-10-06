@@ -248,7 +248,7 @@ class RelationJoiner
         $columnNames = array($fk1Name, $fk2Name);
 
         $pkIds = implode(',', array_keys($pkValues));
-        $condition = new ColumnCondition($t3->get($fk1Name), 'in', $pkIds);
+        $condition = new ColumnCondition($t3->getColumn($fk1Name), 'in', $pkIds);
 
         $records = $db->selectAllUnordered($t3, $columnNames, $condition);
         foreach ($records as $record) {

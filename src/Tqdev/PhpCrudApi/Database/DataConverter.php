@@ -33,7 +33,7 @@ class DataConverter
     public function convertRecords(ReflectedTable $table, array $columnNames, array &$records) /*: void*/
     {
         foreach ($columnNames as $columnName) {
-            $column = $table->get($columnName);
+            $column = $table->getColumn($columnName);
             $conversion = $this->getRecordValueConversion($column);
             if ($conversion != 'none') {
                 foreach ($records as $i => $record) {
@@ -68,7 +68,7 @@ class DataConverter
     {
         $columnNames = array_keys($columnValues);
         foreach ($columnNames as $columnName) {
-            $column = $table->get($columnName);
+            $column = $table->getColumn($columnName);
             $conversion = $this->getInputValueConversion($column);
             if ($conversion != 'none') {
                 $value = $columnValues[$columnName];

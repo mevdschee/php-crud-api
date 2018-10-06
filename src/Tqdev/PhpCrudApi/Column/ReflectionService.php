@@ -61,7 +61,7 @@ class ReflectionService
 
     public function hasTable(String $tableName): bool
     {
-        return $this->database->exists($tableName);
+        return $this->database->hasTable($tableName);
     }
 
     public function getTable(String $tableName): ReflectedTable
