@@ -7,7 +7,6 @@ class ReflectedDatabase implements \JsonSerializable
 {
     private $name;
     private $tableNames;
-    private $viewNames;
 
     public function __construct(String $name, array $tableNames)
     {
