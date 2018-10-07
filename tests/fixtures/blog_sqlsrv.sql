@@ -202,7 +202,7 @@ GO
 
 CREATE VIEW [tag_usage]
 AS
-SELECT top 100 PERCENT name, COUNT(name) AS [count] FROM tags, post_tags WHERE tags.id = post_tags.tag_id GROUP BY name ORDER BY [count] DESC, name
+SELECT top 100 PERCENT name, COUNT_BIG(name) AS [count] FROM tags, post_tags WHERE tags.id = post_tags.tag_id GROUP BY name ORDER BY [count] DESC, name
 GO
 
 CREATE TABLE [products](
