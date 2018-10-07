@@ -1,6 +1,6 @@
 POST /columns
 
-{"name":"barcodes2","columns":[{"name":"id","type":"integer","pk":true},{"name":"product_id","type":"integer","fk":"products"},{"name":"hex","type":"varchar","length":255},{"name":"bin","type":"blob"}]}
+{"name":"barcodes2","type":"table","columns":[{"name":"id","type":"integer","pk":true},{"name":"product_id","type":"integer","fk":"products"},{"name":"hex","type":"varchar","length":255},{"name":"bin","type":"blob"}]}
 ===
 200
 Content-Type: application/json
@@ -12,9 +12,9 @@ GET /columns/barcodes2
 ===
 200
 Content-Type: application/json
-Content-Length: 202
+Content-Length: 217
 
-{"name":"barcodes2","columns":[{"name":"id","type":"integer","pk":true},{"name":"product_id","type":"integer","fk":"products"},{"name":"hex","type":"varchar","length":255},{"name":"bin","type":"blob"}]}
+{"name":"barcodes2","type":"table","columns":[{"name":"id","type":"integer","pk":true},{"name":"product_id","type":"integer","fk":"products"},{"name":"hex","type":"varchar","length":255},{"name":"bin","type":"blob"}]}
 ===
 DELETE /columns/barcodes2
 ===

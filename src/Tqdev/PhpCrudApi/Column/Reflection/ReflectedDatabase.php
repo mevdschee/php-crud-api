@@ -6,36 +6,34 @@ use Tqdev\PhpCrudApi\Database\GenericReflection;
 class ReflectedDatabase implements \JsonSerializable
 {
     private $name;
-    private $tableNames;
+    private $tableTypes;
 
-    public function __construct(String $name, array $tableNames)
+    public function __construct(String $name, array $tableTypes)
     {
         $this->name = $name;
-        $this->tableNames = [];
-        foreach ($tableNames as $tableName) {
-            $this->tableNames[$tableName] = true;
-        }
+        $this->tableTypes = $tableTypes;
     }
 
     public static function fromReflection(GenericReflection $reflection): ReflectedDatabase
     {
         $name = $reflection->getDatabaseName();
-        $tableNames = [];
+        $tableTypes = [];
         foreach ($reflection->getTables() as $table) {
             $tableName = $table['TABLE_NAME'];
+            $tableType = $table['TABLE_TYPE'];
             if (in_array($tableName, $reflection->getIgnoredTables())) {
                 continue;
             }
-            $tableNames[$tableName] = true;
+            $tableTypes[$tableName] = $tableType;
         }
-        return new ReflectedDatabase($name, array_keys($tableNames));
+        return new ReflectedDatabase($name, $tableTypes);
     }
 
     public static function fromJson( /* object */$json): ReflectedDatabase
     {
         $name = $json->name;
-        $tableNames = $json->tables;
-        return new ReflectedDatabase($name, $tableNames);
+        $tableTypes = (array) $json->tables;
+        return new ReflectedDatabase($name, $tableTypes);
     }
 
     public function getName(): String
@@ -45,20 +43,25 @@ class ReflectedDatabase implements \JsonSerializable
 
     public function hasTable(String $tableName): bool
     {
-        return isset($this->tableNames[$tableName]);
+        return isset($this->tableTypes[$tableName]);
+    }
+
+    public function getType(String $tableName): String
+    {
+        return isset($this->tableTypes[$tableName]) ? $this->tableTypes[$tableName] : '';
     }
 
     public function getTableNames(): array
     {
-        return array_keys($this->tableNames);
+        return array_keys($this->tableTypes);
     }
 
     public function removeTable(String $tableName): bool
     {
-        if (!isset($this->tableNames[$tableName])) {
+        if (!isset($this->tableTypes[$tableName])) {
             return false;
         }
-        unset($this->tableNames[$tableName]);
+        unset($this->tableTypes[$tableName]);
         return true;
     }
 
@@ -66,7 +69,7 @@ class ReflectedDatabase implements \JsonSerializable
     {
         return [
             'name' => $this->name,
-            'tables' => array_keys($this->tableNames),
+            'tables' => $this->tableTypes,
         ];
     }
 

@@ -37,11 +37,14 @@ class RecordController
     public function read(Request $request): Response
     {
         $table = $request->getPathSegment(2);
-        $id = $request->getPathSegment(3);
-        $params = $request->getParams();
         if (!$this->service->hasTable($table)) {
             return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $table);
         }
+        if ($this->service->getType($table) != 'table') {
+            return $this->responder->error(ErrorCode::OPERATION_NOT_SUPPORTED, __FUNCTION__);
+        }
+        $id = $request->getPathSegment(3);
+        $params = $request->getParams();
         if (strpos($id, ',') !== false) {
             $ids = explode(',', $id);
             $result = [];
@@ -61,14 +64,17 @@ class RecordController
     public function create(Request $request): Response
     {
         $table = $request->getPathSegment(2);
+        if (!$this->service->hasTable($table)) {
+            return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $table);
+        }
+        if ($this->service->getType($table) != 'table') {
+            return $this->responder->error(ErrorCode::OPERATION_NOT_SUPPORTED, __FUNCTION__);
+        }
         $record = $request->getBody();
         if ($record === null) {
             return $this->responder->error(ErrorCode::HTTP_MESSAGE_NOT_READABLE, '');
         }
         $params = $request->getParams();
-        if (!$this->service->hasTable($table)) {
-            return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $table);
-        }
         if (is_array($record)) {
             $result = array();
             foreach ($record as $r) {
@@ -83,14 +89,17 @@ class RecordController
     public function update(Request $request): Response
     {
         $table = $request->getPathSegment(2);
+        if (!$this->service->hasTable($table)) {
+            return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $table);
+        }
+        if ($this->service->getType($table) != 'table') {
+            return $this->responder->error(ErrorCode::OPERATION_NOT_SUPPORTED, __FUNCTION__);
+        }
         $id = $request->getPathSegment(3);
+        $params = $request->getParams();
         $record = $request->getBody();
         if ($record === null) {
             return $this->responder->error(ErrorCode::HTTP_MESSAGE_NOT_READABLE, '');
-        }
-        $params = $request->getParams();
-        if (!$this->service->hasTable($table)) {
-            return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $table);
         }
         $ids = explode(',', $id);
         if (is_array($record)) {
@@ -113,11 +122,14 @@ class RecordController
     public function delete(Request $request): Response
     {
         $table = $request->getPathSegment(2);
-        $id = $request->getPathSegment(3);
-        $params = $request->getParams();
         if (!$this->service->hasTable($table)) {
             return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $table);
         }
+        if ($this->service->getType($table) != 'table') {
+            return $this->responder->error(ErrorCode::OPERATION_NOT_SUPPORTED, __FUNCTION__);
+        }
+        $id = $request->getPathSegment(3);
+        $params = $request->getParams();
         $ids = explode(',', $id);
         if (count($ids) > 1) {
             $result = array();
@@ -133,15 +145,18 @@ class RecordController
     public function increment(Request $request): Response
     {
         $table = $request->getPathSegment(2);
+        if (!$this->service->hasTable($table)) {
+            return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $table);
+        }
+        if ($this->service->getType($table) != 'table') {
+            return $this->responder->error(ErrorCode::OPERATION_NOT_SUPPORTED, __FUNCTION__);
+        }
         $id = $request->getPathSegment(3);
         $record = $request->getBody();
         if ($record === null) {
             return $this->responder->error(ErrorCode::HTTP_MESSAGE_NOT_READABLE, '');
         }
         $params = $request->getParams();
-        if (!$this->service->hasTable($table)) {
-            return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $table);
-        }
         $ids = explode(',', $id);
         if (is_array($record)) {
             if (count($ids) != count($record)) {

@@ -87,10 +87,14 @@ class OpenApiBuilder
     private function setPath(String $tableName) /*: void*/
     {
         $table = $this->reflection->getTable($tableName);
+        $type = $table->getType($tableName);
         $pk = $table->getPk();
         $pkName = $pk ? $pk->getName() : '';
         foreach ($this->operations as $operation => $method) {
             if (!$pkName && $operation != 'list') {
+                continue;
+            }
+            if ($type != 'table' && $operation != 'list') {
                 continue;
             }
             if (!$this->isOperationOnTableAllowed($operation, $tableName)) {

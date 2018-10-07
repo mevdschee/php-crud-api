@@ -2,6 +2,6 @@ GET /columns/barcodes
 ===
 200
 Content-Type: application/json
-Content-Length: 201
+Content-Length: 216
 
-{"name":"barcodes","columns":[{"name":"id","type":"integer","pk":true},{"name":"product_id","type":"integer","fk":"products"},{"name":"hex","type":"varchar","length":255},{"name":"bin","type":"blob"}]}
+{"name":"barcodes","type":"table","columns":[{"name":"id","type":"integer","pk":true},{"name":"product_id","type":"integer","fk":"products"},{"name":"hex","type":"varchar","length":255},{"name":"bin","type":"blob"}]}

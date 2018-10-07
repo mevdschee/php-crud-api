@@ -1,3 +1,9 @@
+IF (OBJECT_ID('FK_kunsthåndværk_users', 'F') IS NOT NULL)
+BEGIN
+ALTER TABLE [kunsthåndværk] DROP	CONSTRAINT [FK_kunsthåndværk_users]
+END
+GO
+
 IF (OBJECT_ID('FK_barcodes_products', 'F') IS NOT NULL)
 BEGIN
 ALTER TABLE [barcodes] DROP	CONSTRAINT [FK_barcodes_products]
@@ -222,7 +228,7 @@ CREATE TABLE [barcodes](
 GO
 
 CREATE TABLE [kunsthåndværk](
-	[id] [nvarchar](36),
+	[id] [nvarchar](36) NOT NULL,
 	[Umlauts ä_ö_ü-COUNT] [int] NOT NULL,
 	[user_id] [int] NOT NULL,
 	[invisible] [nvarchar](36),
@@ -232,14 +238,14 @@ CREATE TABLE [kunsthåndværk](
 GO
 
 CREATE TABLE [invisibles](
-	[id] [nvarchar](36),
+	[id] [nvarchar](36) NOT NULL,
 	CONSTRAINT [PK_invisibles]
 	PRIMARY KEY CLUSTERED([id] ASC)
 )
 GO
 
 CREATE TABLE [nopk](
-	[id] [nvarchar](36)
+	[id] [nvarchar](36) NOT NULL
 )
 GO
 

@@ -42,7 +42,8 @@ class ReflectionService
         if ($data != '') {
             $table = ReflectedTable::fromJson(json_decode(gzuncompress($data)));
         } else {
-            $table = ReflectedTable::fromReflection($this->db->reflection(), $tableName);
+            $tableType = $this->database->getType($tableName);
+            $table = ReflectedTable::fromReflection($this->db->reflection(), $tableName, $tableType);
             $data = gzcompress(json_encode($table, JSON_UNESCAPED_UNICODE));
             $this->cache->set("ReflectedTable($tableName)", $data, $this->ttl);
         }
@@ -62,6 +63,11 @@ class ReflectionService
     public function hasTable(String $tableName): bool
     {
         return $this->database->hasTable($tableName);
+    }
+
+    public function getType(String $tableName): String
+    {
+        return $this->database->getType($tableName);
     }
 
     public function getTable(String $tableName): ReflectedTable

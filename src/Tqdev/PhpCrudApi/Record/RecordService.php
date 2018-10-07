@@ -50,6 +50,11 @@ class RecordService
         return $this->reflection->hasTable($table);
     }
 
+    public function getType(String $table): bool
+    {
+        return $this->reflection->getType($table);
+    }
+
     public function create(String $tableName, /* object */ $record, array $params)
     {
         $this->sanitizeRecord($tableName, $record, '');
