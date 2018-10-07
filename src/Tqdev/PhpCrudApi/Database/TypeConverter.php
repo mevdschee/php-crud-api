@@ -23,6 +23,9 @@ class TypeConverter
         ],
         'sqlsrv' => [
             'boolean' => 'bit',
+            'varchar' => 'nvarchar',
+            'clob' => 'ntext',
+            'blob' => 'image',
         ],
     ];
 
@@ -100,18 +103,17 @@ class TypeConverter
             'datetime' => 'timestamp',
             'datetime2' => 'timestamp',
             'float' => 'double',
-            'image' => 'varbinary',
+            'image' => 'blob',
             'int' => 'integer',
             'money' => 'decimal',
-            'ntext' => 'longnvarchar',
+            'ntext' => 'clob',
             'smalldatetime' => 'timestamp',
             'smallmoney' => 'decimal',
-            'text' => 'longvarchar',
+            'text' => 'clob',
             'timestamp' => 'binary',
-            'tinyint' => 'tinyint',
             'udt' => 'varbinary',
             'uniqueidentifier' => 'char',
-            'xml' => 'longnvarchar',
+            'xml' => 'clob',
         ],
     ];
 

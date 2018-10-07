@@ -45,7 +45,7 @@ class ColumnConverter
                 case 'pgsql':
                     return "encode($value::bytea, 'base64') as $value";
                 case 'sqlsrv':
-                    return "CAST(N'' AS XML).value('xs:base64Binary(xs:hexBinary(sql:column($value)))', 'VARCHAR(MAX)') as $value";
+                    return "CASE WHEN $value IS NULL THEN NULL ELSE (SELECT CAST($value as varbinary(max)) FOR XML PATH(''), BINARY BASE64) END as $value";
 
             }
         }

@@ -114,6 +114,11 @@ function loadFixture(String $dir, Config $config)
 function run(array $drivers, String $dir, array $matches)
 {
     foreach ($drivers as $driver) {
+        if (isset($matches[0])) {
+            if (!preg_match('/' . $matches[0] . '/', $driver)) {
+                continue;
+            }
+        }
         if (!extension_loaded("pdo_$driver")) {
             echo sprintf("%s: skipped, driver not loaded\n", $driver);
             continue;
@@ -124,7 +129,7 @@ function run(array $drivers, String $dir, array $matches)
         $config = new Config($settings);
         loadFixture($dir, $config);
         $start = microtime(true);
-        $stats = runDir($config, "$dir/functional", $matches, '');
+        $stats = runDir($config, "$dir/functional", array_slice($matches, 1), '');
         $end = microtime(true);
         $time = ($end - $start) * 1000;
         $total = $stats['total'];
