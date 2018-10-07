@@ -3605,7 +3605,16 @@ class OpenApiBuilder
     private function setComponentSchema(String $tableName) /*: void*/
     {
         $table = $this->reflection->getTable($tableName);
+        $type = $table->getType($tableName);
+        $pk = $table->getPk();
+        $pkName = $pk ? $pk->getName() : '';
         foreach ($this->operations as $operation => $method) {
+            if (!$pkName && $operation != 'list') {
+                continue;
+            }
+            if ($type != 'table' && $operation != 'list') {
+                continue;
+            }
             if ($operation == 'delete') {
                 continue;
             }
@@ -3637,7 +3646,17 @@ class OpenApiBuilder
 
     private function setComponentResponse(String $tableName) /*: void*/
     {
+        $table = $this->reflection->getTable($tableName);
+        $type = $table->getType($tableName);
+        $pk = $table->getPk();
+        $pkName = $pk ? $pk->getName() : '';
         foreach (['list', 'read'] as $operation) {
+            if (!$pkName && $operation != 'list') {
+                continue;
+            }
+            if ($type != 'table' && $operation != 'list') {
+                continue;
+            }
             if (!$this->isOperationOnTableAllowed($operation, $tableName)) {
                 continue;
             }
@@ -3652,12 +3671,18 @@ class OpenApiBuilder
 
     private function setComponentRequestBody(String $tableName) /*: void*/
     {
-        foreach (['create', 'update', 'increment'] as $operation) {
-            if (!$this->isOperationOnTableAllowed($operation, $tableName)) {
-                continue;
+        $table = $this->reflection->getTable($tableName);
+        $type = $table->getType($tableName);
+        $pk = $table->getPk();
+        $pkName = $pk ? $pk->getName() : '';
+        if ($pkName && $type == 'table') {
+            foreach (['create', 'update', 'increment'] as $operation) {
+                if (!$this->isOperationOnTableAllowed($operation, $tableName)) {
+                    continue;
+                }
+                $this->openapi->set("components|requestBodies|$operation-$tableName|description", "single $tableName record");
+                $this->openapi->set("components|requestBodies|$operation-$tableName|content|application/json|schema|\$ref", "#/components/schemas/$operation-" . urlencode($tableName));
             }
-            $this->openapi->set("components|requestBodies|$operation-$tableName|description", "single $tableName record");
-            $this->openapi->set("components|requestBodies|$operation-$tableName|content|application/json|schema|\$ref", "#/components/schemas/$operation-" . urlencode($tableName));
         }
     }
 
