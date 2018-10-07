@@ -50,7 +50,7 @@ class RecordService
         return $this->reflection->hasTable($table);
     }
 
-    public function getType(String $table): bool
+    public function getType(String $table): String
     {
         return $this->reflection->getType($table);
     }

@@ -482,36 +482,34 @@ class ReflectedColumn implements \JsonSerializable
 class ReflectedDatabase implements \JsonSerializable
 {
     private $name;
-    private $tableNames;
+    private $tableTypes;
 
-    public function __construct(String $name, array $tableNames)
+    public function __construct(String $name, array $tableTypes)
     {
         $this->name = $name;
-        $this->tableNames = [];
-        foreach ($tableNames as $tableName) {
-            $this->tableNames[$tableName] = true;
-        }
+        $this->tableTypes = $tableTypes;
     }
 
     public static function fromReflection(GenericReflection $reflection): ReflectedDatabase
     {
         $name = $reflection->getDatabaseName();
-        $tableNames = [];
+        $tableTypes = [];
         foreach ($reflection->getTables() as $table) {
             $tableName = $table['TABLE_NAME'];
+            $tableType = $table['TABLE_TYPE'];
             if (in_array($tableName, $reflection->getIgnoredTables())) {
                 continue;
             }
-            $tableNames[$tableName] = true;
+            $tableTypes[$tableName] = $tableType;
         }
-        return new ReflectedDatabase($name, array_keys($tableNames));
+        return new ReflectedDatabase($name, $tableTypes);
     }
 
     public static function fromJson( /* object */$json): ReflectedDatabase
     {
         $name = $json->name;
-        $tableNames = $json->tables;
-        return new ReflectedDatabase($name, $tableNames);
+        $tableTypes = (array) $json->tables;
+        return new ReflectedDatabase($name, $tableTypes);
     }
 
     public function getName(): String
@@ -521,20 +519,25 @@ class ReflectedDatabase implements \JsonSerializable
 
     public function hasTable(String $tableName): bool
     {
-        return isset($this->tableNames[$tableName]);
+        return isset($this->tableTypes[$tableName]);
+    }
+
+    public function getType(String $tableName): String
+    {
+        return isset($this->tableTypes[$tableName]) ? $this->tableTypes[$tableName] : '';
     }
 
     public function getTableNames(): array
     {
-        return array_keys($this->tableNames);
+        return array_keys($this->tableTypes);
     }
 
     public function removeTable(String $tableName): bool
     {
-        if (!isset($this->tableNames[$tableName])) {
+        if (!isset($this->tableTypes[$tableName])) {
             return false;
         }
-        unset($this->tableNames[$tableName]);
+        unset($this->tableTypes[$tableName]);
         return true;
     }
 
@@ -542,7 +545,7 @@ class ReflectedDatabase implements \JsonSerializable
     {
         return [
             'name' => $this->name,
-            'tables' => array_keys($this->tableNames),
+            'tables' => $this->tableTypes,
         ];
     }
 
@@ -557,13 +560,15 @@ class ReflectedDatabase implements \JsonSerializable
 class ReflectedTable implements \JsonSerializable
 {
     private $name;
+    private $type;
     private $columns;
     private $pk;
     private $fks;
 
-    public function __construct(String $name, array $columns)
+    public function __construct(String $name, String $type, array $columns)
     {
         $this->name = $name;
+        $this->type = $type;
         $this->columns = [];
         foreach ($columns as $column) {
             $columnName = $column->getName();
@@ -585,10 +590,10 @@ class ReflectedTable implements \JsonSerializable
         }
     }
 
-    public static function fromReflection(GenericReflection $reflection, String $name): ReflectedTable
+    public static function fromReflection(GenericReflection $reflection, String $name, String $type): ReflectedTable
     {
         $columns = [];
-        foreach ($reflection->getTableColumns($name) as $tableColumn) {
+        foreach ($reflection->getTableColumns($name, $type) as $tableColumn) {
             $column = ReflectedColumn::fromReflection($reflection, $tableColumn);
             $columns[$column->getName()] = $column;
         }
@@ -604,19 +609,20 @@ class ReflectedTable implements \JsonSerializable
         foreach ($fks as $columnName => $table) {
             $columns[$columnName]->setFk($table);
         }
-        return new ReflectedTable($name, array_values($columns));
+        return new ReflectedTable($name, $type, array_values($columns));
     }
 
     public static function fromJson( /* object */$json): ReflectedTable
     {
         $name = $json->name;
+        $type = $json->type;
         $columns = [];
         if (isset($json->columns) && is_array($json->columns)) {
             foreach ($json->columns as $column) {
                 $columns[] = ReflectedColumn::fromJson($column);
             }
         }
-        return new ReflectedTable($name, $columns);
+        return new ReflectedTable($name, $type, $columns);
     }
 
     public function hasColumn(String $columnName): bool
@@ -637,6 +643,11 @@ class ReflectedTable implements \JsonSerializable
     public function getName(): String
     {
         return $this->name;
+    }
+
+    public function getType(): String
+    {
+        return $this->type;
     }
 
     public function columnNames(): array
@@ -673,6 +684,7 @@ class ReflectedTable implements \JsonSerializable
     {
         return [
             'name' => $this->name,
+            'type' => $this->type,
             'columns' => array_values($this->columns),
         ];
     }
@@ -871,7 +883,8 @@ class ReflectionService
         if ($data != '') {
             $table = ReflectedTable::fromJson(json_decode(gzuncompress($data)));
         } else {
-            $table = ReflectedTable::fromReflection($this->db->reflection(), $tableName);
+            $tableType = $this->database->getType($tableName);
+            $table = ReflectedTable::fromReflection($this->db->reflection(), $tableName, $tableType);
             $data = gzcompress(json_encode($table, JSON_UNESCAPED_UNICODE));
             $this->cache->set("ReflectedTable($tableName)", $data, $this->ttl);
         }
@@ -891,6 +904,11 @@ class ReflectionService
     public function hasTable(String $tableName): bool
     {
         return $this->database->hasTable($tableName);
+    }
+
+    public function getType(String $tableName): String
+    {
+        return $this->database->getType($tableName);
     }
 
     public function getTable(String $tableName): ReflectedTable
@@ -1147,11 +1165,14 @@ class RecordController
     public function read(Request $request): Response
     {
         $table = $request->getPathSegment(2);
-        $id = $request->getPathSegment(3);
-        $params = $request->getParams();
         if (!$this->service->hasTable($table)) {
             return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $table);
         }
+        if ($this->service->getType($table) != 'table') {
+            return $this->responder->error(ErrorCode::OPERATION_NOT_SUPPORTED, __FUNCTION__);
+        }
+        $id = $request->getPathSegment(3);
+        $params = $request->getParams();
         if (strpos($id, ',') !== false) {
             $ids = explode(',', $id);
             $result = [];
@@ -1171,14 +1192,17 @@ class RecordController
     public function create(Request $request): Response
     {
         $table = $request->getPathSegment(2);
+        if (!$this->service->hasTable($table)) {
+            return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $table);
+        }
+        if ($this->service->getType($table) != 'table') {
+            return $this->responder->error(ErrorCode::OPERATION_NOT_SUPPORTED, __FUNCTION__);
+        }
         $record = $request->getBody();
         if ($record === null) {
             return $this->responder->error(ErrorCode::HTTP_MESSAGE_NOT_READABLE, '');
         }
         $params = $request->getParams();
-        if (!$this->service->hasTable($table)) {
-            return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $table);
-        }
         if (is_array($record)) {
             $result = array();
             foreach ($record as $r) {
@@ -1193,14 +1217,17 @@ class RecordController
     public function update(Request $request): Response
     {
         $table = $request->getPathSegment(2);
+        if (!$this->service->hasTable($table)) {
+            return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $table);
+        }
+        if ($this->service->getType($table) != 'table') {
+            return $this->responder->error(ErrorCode::OPERATION_NOT_SUPPORTED, __FUNCTION__);
+        }
         $id = $request->getPathSegment(3);
+        $params = $request->getParams();
         $record = $request->getBody();
         if ($record === null) {
             return $this->responder->error(ErrorCode::HTTP_MESSAGE_NOT_READABLE, '');
-        }
-        $params = $request->getParams();
-        if (!$this->service->hasTable($table)) {
-            return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $table);
         }
         $ids = explode(',', $id);
         if (is_array($record)) {
@@ -1223,11 +1250,14 @@ class RecordController
     public function delete(Request $request): Response
     {
         $table = $request->getPathSegment(2);
-        $id = $request->getPathSegment(3);
-        $params = $request->getParams();
         if (!$this->service->hasTable($table)) {
             return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $table);
         }
+        if ($this->service->getType($table) != 'table') {
+            return $this->responder->error(ErrorCode::OPERATION_NOT_SUPPORTED, __FUNCTION__);
+        }
+        $id = $request->getPathSegment(3);
+        $params = $request->getParams();
         $ids = explode(',', $id);
         if (count($ids) > 1) {
             $result = array();
@@ -1243,15 +1273,18 @@ class RecordController
     public function increment(Request $request): Response
     {
         $table = $request->getPathSegment(2);
+        if (!$this->service->hasTable($table)) {
+            return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $table);
+        }
+        if ($this->service->getType($table) != 'table') {
+            return $this->responder->error(ErrorCode::OPERATION_NOT_SUPPORTED, __FUNCTION__);
+        }
         $id = $request->getPathSegment(3);
         $record = $request->getBody();
         if ($record === null) {
             return $this->responder->error(ErrorCode::HTTP_MESSAGE_NOT_READABLE, '');
         }
         $params = $request->getParams();
-        if (!$this->service->hasTable($table)) {
-            return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $table);
-        }
         $ids = explode(',', $id);
         if (is_array($record)) {
             if (count($ids) != count($record)) {
@@ -2406,7 +2439,7 @@ class GenericReflection
     {
         switch ($this->driver) {
             case 'mysql':return [];
-            case 'pgsql':return ['spatial_ref_sys'];
+            case 'pgsql':return ['spatial_ref_sys', 'raster_columns', 'raster_overviews', 'geography_columns', 'geometry_columns'];
             case 'sqlsrv':return [];
         }
     }
@@ -2414,9 +2447,9 @@ class GenericReflection
     private function getTablesSQL(): String
     {
         switch ($this->driver) {
-            case 'mysql':return 'SELECT "TABLE_NAME" FROM "INFORMATION_SCHEMA"."TABLES" WHERE "TABLE_TYPE" IN (\'BASE TABLE\') AND "TABLE_SCHEMA" = ? ORDER BY BINARY "TABLE_NAME"';
-            case 'pgsql':return 'SELECT c.relname as "TABLE_NAME" FROM pg_catalog.pg_class c LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace WHERE c.relkind IN (\'r\') AND n.nspname <> \'pg_catalog\' AND n.nspname <> \'information_schema\' AND n.nspname !~ \'^pg_toast\' AND pg_catalog.pg_table_is_visible(c.oid) AND \'\' <> ? ORDER BY "TABLE_NAME";';
-            case 'sqlsrv':return 'SELECT o.name as "TABLE_NAME" FROM sysobjects o WHERE o.xtype = \'U\' ORDER BY "TABLE_NAME"';
+            case 'mysql':return 'SELECT "TABLE_NAME", "TABLE_TYPE" FROM "INFORMATION_SCHEMA"."TABLES" WHERE "TABLE_TYPE" IN (\'BASE TABLE\' , \'VIEW\') AND "TABLE_SCHEMA" = ? ORDER BY BINARY "TABLE_NAME"';
+            case 'pgsql':return 'SELECT c.relname as "TABLE_NAME", c.relkind as "TABLE_TYPE" FROM pg_catalog.pg_class c LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace WHERE c.relkind IN (\'r\', \'v\') AND n.nspname <> \'pg_catalog\' AND n.nspname <> \'information_schema\' AND n.nspname !~ \'^pg_toast\' AND pg_catalog.pg_table_is_visible(c.oid) AND \'\' <> ? ORDER BY "TABLE_NAME";';
+            case 'sqlsrv':return 'SELECT o.name as "TABLE_NAME", o.xtype as "TABLE_TYPE" FROM sysobjects o WHERE o.xtype IN (\'U\', \'V\') ORDER BY "TABLE_NAME"';
         }
     }
 
@@ -2455,13 +2488,36 @@ class GenericReflection
     public function getTables(): array
     {
         $sql = $this->getTablesSQL();
-        return $this->query($sql, [$this->database]);
+        $results = $this->query($sql, [$this->database]);
+        foreach ($results as &$result) {
+            switch ($this->driver) {
+                case 'mysql':
+                    $map = ['BASE TABLE' => 'table', 'VIEW' => 'view'];
+                    $result['TABLE_TYPE'] = $map[$result['TABLE_TYPE']];
+                    break;
+                case 'pgsql':
+                    $map = ['r' => 'table', 'v' => 'view'];
+                    $result['TABLE_TYPE'] = $map[$result['TABLE_TYPE']];
+                    break;
+                case 'sqlsrv':
+                    $map = ['U' => 'table', 'V' => 'view'];
+                    $result['TABLE_TYPE'] = $map[trim($result['TABLE_TYPE'])];
+                    break;
+            }
+        }
+        return $results;
     }
 
-    public function getTableColumns(String $tableName): array
+    public function getTableColumns(String $tableName, String $type): array
     {
         $sql = $this->getTableColumnsSQL();
-        return $this->query($sql, [$tableName, $this->database]);
+        $results = $this->query($sql, [$tableName, $this->database]);
+        if ($type == 'view') {
+            foreach ($results as &$result) {
+                $result['IS_NULLABLE'] = false;
+            }
+        }
+        return $results;
     }
 
     public function getTablePrimaryKeys(String $tableName): array
@@ -3494,10 +3550,14 @@ class OpenApiBuilder
     private function setPath(String $tableName) /*: void*/
     {
         $table = $this->reflection->getTable($tableName);
+        $type = $table->getType($tableName);
         $pk = $table->getPk();
         $pkName = $pk ? $pk->getName() : '';
         foreach ($this->operations as $operation => $method) {
             if (!$pkName && $operation != 'list') {
+                continue;
+            }
+            if ($type != 'table' && $operation != 'list') {
                 continue;
             }
             if (!$this->isOperationOnTableAllowed($operation, $tableName)) {
@@ -4041,6 +4101,7 @@ class ErrorCode
     const ACCESS_DENIED = 1012;
     const INPUT_VALIDATION_FAILED = 1013;
     const OPERATION_FORBIDDEN = 1014;
+    const OPERATION_NOT_SUPPORTED = 1015;
 
     private $values = [
         9999 => ["%s", Response::INTERNAL_SERVER_ERROR],
@@ -4059,6 +4120,7 @@ class ErrorCode
         1012 => ["Access denied for '%s'", Response::FORBIDDEN],
         1013 => ["Input validation failed for '%s'", Response::UNPROCESSABLE_ENTITY],
         1014 => ["Operation forbidden", Response::FORBIDDEN],
+        1015 => ["Operation '%s' not supported", Response::METHOD_NOT_ALLOWED],
     ];
 
     public function __construct(int $code)
@@ -4368,6 +4430,11 @@ class RecordService
     public function hasTable(String $table): bool
     {
         return $this->reflection->hasTable($table);
+    }
+
+    public function getType(String $table): String
+    {
+        return $this->reflection->getType($table);
     }
 
     public function create(String $tableName, /* object */ $record, array $params)
@@ -5231,10 +5298,10 @@ class Response
     const UNAUTHORIZED = 401;
     const FORBIDDEN = 403;
     const NOT_FOUND = 404;
+    const METHOD_NOT_ALLOWED = 405;
     const CONFLICT = 409;
     const UNPROCESSABLE_ENTITY = 422;
     const INTERNAL_SERVER_ERROR = 500;
-
     private $status;
     private $headers;
     private $body;

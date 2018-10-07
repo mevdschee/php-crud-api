@@ -1,0 +1,15 @@
+GET /records/tag_usage
+===
+200
+Content-Type: application/json
+Content-Length: 71
+
+{"records":[{"name":"funny","count":2},{"name":"important","count":2}]}
+===
+GET /records/tag_usage/1
+===
+405
+Content-Type: application/json
+Content-Length: 56
+
+{"code":1015,"message":"Operation 'read' not supported"}
