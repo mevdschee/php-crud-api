@@ -118,7 +118,7 @@ These features match features in v1 (see branch "v1"):
   - [x] Atomic increment support via PATCH (for counters)
   - [x] Binary fields supported with base64 encoding
   - [x] Spatial/GIS fields and filters supported with WKT
-  - [ ] Unstructured data support through JSON/JSONB
+  - [ ] ~~Unstructured data support through JSON/JSONB~~
   - [x] Generate API documentation using OpenAPI tools
   - [x] Authentication via JWT token or username/password
   - [ ] ~~SQLite support~~
@@ -796,7 +796,9 @@ The following errors may be reported:
 - 1011: Authorization required (401 UNAUTHORIZED)
 - 1012: Access denied (403 FORBIDDEN)
 - 1013: Input validation failed (422 UNPROCESSABLE ENTITY)
-- 9999: Unknown error (500: INTERNAL_SERVER_ERROR)
+- 1014: Operation forbidden (403 FORBIDDEN)
+- 1015: Operation not supported (405 METHOD NOT ALLOWED)
+- 9999: Unknown error (500: INTERNAL SERVER ERROR)
 
 The following JSON structure is used:
 
