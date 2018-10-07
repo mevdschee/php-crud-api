@@ -118,7 +118,7 @@ These features match features in v1 (see branch "v1"):
   - [x] Atomic increment support via PATCH (for counters)
   - [x] Binary fields supported with base64 encoding
   - [x] Spatial/GIS fields and filters supported with WKT
-  - [ ] ~~Unstructured data support through JSON/JSONB~~
+  - [ ] Unstructured data support through JSON/JSONB
   - [x] Generate API documentation using OpenAPI tools
   - [x] Authentication via JWT token or username/password
   - [ ] ~~SQLite support~~
