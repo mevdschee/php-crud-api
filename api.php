@@ -3019,6 +3019,9 @@ class BasicAuthMiddleware extends Middleware
 
     private function getAuthorizationCredentials(Request $request): String
     {
+        if (isset($_SERVER['PHP_AUTH_USER'])) {
+            return $_SERVER['PHP_AUTH_USER'] . ':' . $_SERVER['PHP_AUTH_PW'];
+        }
         $parts = explode(' ', trim($request->getHeader('Authorization')), 2);
         if (count($parts) != 2) {
             return '';
@@ -3044,7 +3047,16 @@ class BasicAuthMiddleware extends Middleware
             $validUser = $this->getValidUsername($username, $password, $passwordFile);
             $_SESSION['username'] = $validUser;
             if (!$validUser) {
-                return $this->responder->error(ErrorCode::ACCESS_DENIED, $username);
+                return $this->responder->error(ErrorCode::AUTHENTICATION_FAILED, $username);
+            }
+        }
+        if (!isset($_SESSION['username']) || !$_SESSION['username']) {
+            $authenticationMode = $this->getProperty('mode', 'required');
+            if ($authenticationMode == 'required') {
+                $response = $this->responder->error(ErrorCode::AUTHENTICATION_REQUIRED, '');
+                $realm = $this->getProperty('realm', 'Username and password required');
+                $response->addHeader('WWW-Authenticate', "Basic realm=\"$realm\"");
+                return $response;
             }
         }
         return $this->next->handle($request);
@@ -3170,7 +3182,7 @@ class FirewallMiddleware extends Middleware
         }
         $allowedIpAddresses = $this->getProperty('allowedIpAddresses', '');
         if (!$this->isIpAllowed($ipAddress, $allowedIpAddresses)) {
-            $response = $this->responder->error(ErrorCode::ACCESS_DENIED, $ipAddress);
+            $response = $this->responder->error(ErrorCode::TEMPORARY_OR_PERMANENTLY_BLOCKED, '');
         } else {
             $response = $this->next->handle($request);
         }
@@ -3260,7 +3272,13 @@ class JwtAuthMiddleware extends Middleware
             $claims = $this->getClaims($token);
             $_SESSION['claims'] = $claims;
             if (empty($claims)) {
-                return $this->responder->error(ErrorCode::ACCESS_DENIED, 'JWT');
+                return $this->responder->error(ErrorCode::AUTHENTICATION_FAILED, 'JWT');
+            }
+        }
+        if (empty($_SESSION['claims'])) {
+            $authenticationMode = $this->getProperty('mode', 'required');
+            if ($authenticationMode == 'required') {
+                return $this->responder->error(ErrorCode::AUTHENTICATION_REQUIRED, '');
             }
         }
         return $this->next->handle($request);
@@ -4127,11 +4145,12 @@ class ErrorCode
     const HTTP_MESSAGE_NOT_READABLE = 1008;
     const DUPLICATE_KEY_EXCEPTION = 1009;
     const DATA_INTEGRITY_VIOLATION = 1010;
-    const AUTHORIZATION_REQUIRED = 1011;
-    const ACCESS_DENIED = 1012;
+    const AUTHENTICATION_REQUIRED = 1011;
+    const AUTHENTICATION_FAILED = 1012;
     const INPUT_VALIDATION_FAILED = 1013;
     const OPERATION_FORBIDDEN = 1014;
     const OPERATION_NOT_SUPPORTED = 1015;
+    const TEMPORARY_OR_PERMANENTLY_BLOCKED = 1016;
 
     private $values = [
         9999 => ["%s", Response::INTERNAL_SERVER_ERROR],
@@ -4146,11 +4165,12 @@ class ErrorCode
         1008 => ["Cannot read HTTP message", Response::UNPROCESSABLE_ENTITY],
         1009 => ["Duplicate key exception", Response::CONFLICT],
         1010 => ["Data integrity violation", Response::CONFLICT],
-        1011 => ["Authorization required", Response::UNAUTHORIZED],
-        1012 => ["Access denied for '%s'", Response::FORBIDDEN],
+        1011 => ["Authentication required", Response::UNAUTHORIZED],
+        1012 => ["Authentication failed for '%s'", Response::FORBIDDEN],
         1013 => ["Input validation failed for '%s'", Response::UNPROCESSABLE_ENTITY],
         1014 => ["Operation forbidden", Response::FORBIDDEN],
         1015 => ["Operation '%s' not supported", Response::METHOD_NOT_ALLOWED],
+        1016 => ["Temporary or permanently blocked", Response::FORBIDDEN],
     ];
 
     public function __construct(int $code)
@@ -5412,6 +5432,7 @@ $config = new Config([
     'username' => 'php-crud-api',
     'password' => 'php-crud-api',
     'database' => 'php-crud-api',
+    'middlewares' => 'basicAuth',
 ]);
 $request = new Request();
 $api = new Api($config);
