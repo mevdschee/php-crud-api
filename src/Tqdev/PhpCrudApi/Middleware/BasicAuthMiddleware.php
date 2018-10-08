@@ -85,7 +85,16 @@ class BasicAuthMiddleware extends Middleware
             $validUser = $this->getValidUsername($username, $password, $passwordFile);
             $_SESSION['username'] = $validUser;
             if (!$validUser) {
-                return $this->responder->error(ErrorCode::ACCESS_DENIED, $username);
+                return $this->responder->error(ErrorCode::AUTHENTICATION_FAILED, $username);
+            }
+        }
+        if (!isset($_SESSION['username']) || !$_SESSION['username']) {
+            $authenticationMode = $this->getProperty('mode', 'required');
+            if ($authenticationMode == 'required') {
+                $response = $this->responder->error(ErrorCode::AUTHENTICATION_REQUIRED, '');
+                $realm = $this->getProperty('realm', 'Username and password required');
+                $response->addHeader('WWW-Authenticate', "Basic realm=\"$realm\"");
+                return $response;
             }
         }
         return $this->next->handle($request);

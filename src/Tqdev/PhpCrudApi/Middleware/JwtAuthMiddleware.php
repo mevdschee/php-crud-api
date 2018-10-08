@@ -87,7 +87,13 @@ class JwtAuthMiddleware extends Middleware
             $claims = $this->getClaims($token);
             $_SESSION['claims'] = $claims;
             if (empty($claims)) {
-                return $this->responder->error(ErrorCode::ACCESS_DENIED, 'JWT');
+                return $this->responder->error(ErrorCode::AUTHENTICATION_FAILED, 'JWT');
+            }
+        }
+        if (empty($_SESSION['claims'])) {
+            $authenticationMode = $this->getProperty('mode', 'required');
+            if ($authenticationMode == 'required') {
+                return $this->responder->error(ErrorCode::AUTHENTICATION_REQUIRED, '');
             }
         }
         return $this->next->handle($request);

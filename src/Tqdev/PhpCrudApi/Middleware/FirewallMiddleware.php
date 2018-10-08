@@ -46,7 +46,7 @@ class FirewallMiddleware extends Middleware
         }
         $allowedIpAddresses = $this->getProperty('allowedIpAddresses', '');
         if (!$this->isIpAllowed($ipAddress, $allowedIpAddresses)) {
-            $response = $this->responder->error(ErrorCode::ACCESS_DENIED, $ipAddress);
+            $response = $this->responder->error(ErrorCode::TEMPORARY_OR_PERMANENTLY_BLOCKED, '');
         } else {
             $response = $this->next->handle($request);
         }

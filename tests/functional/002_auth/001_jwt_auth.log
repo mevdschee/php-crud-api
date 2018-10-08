@@ -20,9 +20,9 @@ Authorization: Bearer invalid
 ===
 403
 Content-Type: application/json
-Content-Length: 49
+Content-Length: 57
 
-{"code":1012,"message":"Access denied for 'JWT'"}
+{"code":1012,"message":"Authentication failed for 'JWT'"}
 ===
 GET /records/invisibles/e42c77c6-06a4-4502-816c-d112c7142e6d
 ===

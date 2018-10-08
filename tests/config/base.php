@@ -5,8 +5,10 @@ $settings = [
     'password' => 'php-crud-api',
     'controllers' => 'records,columns,cache,openapi',
     'middlewares' => 'cors,jwtAuth,basicAuth,authorization,validation,sanitation,multiTenancy,customization',
+    'jwtAuth.mode' => 'optional',
     'jwtAuth.time' => '1538207605',
     'jwtAuth.secret' => 'axpIrCGNGqxzx2R9dtXLIPUSqPo778uhb8CA0F4Hx',
+    'basicAuth.mode' => 'optional',
     'basicAuth.passwordFile' => __DIR__ . DIRECTORY_SEPARATOR . '.htpasswd',
     'authorization.tableHandler' => function ($operation, $tableName) {
         return !($tableName == 'invisibles' && !isset($_SESSION['claims']['name']) && empty($_SESSION['username']));
