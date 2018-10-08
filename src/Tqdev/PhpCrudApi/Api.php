@@ -10,6 +10,7 @@ use Tqdev\PhpCrudApi\Controller\OpenApiController;
 use Tqdev\PhpCrudApi\Controller\RecordController;
 use Tqdev\PhpCrudApi\Controller\Responder;
 use Tqdev\PhpCrudApi\Database\GenericDB;
+use Tqdev\PhpCrudApi\Middleware\Auth0Middleware;
 use Tqdev\PhpCrudApi\Middleware\AuthorizationMiddleware;
 use Tqdev\PhpCrudApi\Middleware\BasicAuthMiddleware;
 use Tqdev\PhpCrudApi\Middleware\CorsMiddleware;
@@ -69,6 +70,9 @@ class Api
                     break;
                 case 'authorization':
                     new AuthorizationMiddleware($router, $responder, $properties, $reflection);
+                    break;
+                case 'auth0':
+                    new Auth0Middleware($router, $responder, $properties, $reflection);
                     break;
                 case 'customization':
                     new CustomizationMiddleware($router, $responder, $properties, $reflection);

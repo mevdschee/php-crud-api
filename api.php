@@ -1325,6 +1325,20 @@ class Responder
         return new Response(Response::OK, $result);
     }
 
+    public function redirect(String $url): Response
+    {
+        $response = new Response(Response::FOUND, '');
+        $response->addHeader('Location', $url);
+        return $response;
+    }
+
+    public function html(String $url): Response
+    {
+        $response = new Response(Response::FOUND, '');
+        $response->addHeader('Location', $url);
+        return $response;
+    }
+
 }
 
 // file: src/Tqdev/PhpCrudApi/Database/ColumnConverter.php
@@ -2883,6 +2897,59 @@ class SimpleRouter implements Router
         return call_user_func($this->routeHandlers[$routeNumbers[0]], $request);
     }
 
+}
+
+// file: src/Tqdev/PhpCrudApi/Middleware/Auth0Middleware.php
+
+class Auth0Middleware extends Middleware
+{
+
+    private function getFullUrl(String $path)
+    {
+        list($scheme, $default) = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == 'on') ? array('https', 443) : array('http', 80);
+        $port = ($_SERVER['SERVER_PORT'] == $default) ? '' : (':' . $_SERVER['SERVER_PORT']);
+        return $scheme . '://' . $_SERVER['HTTP_HOST'] . $_SERVER['SCRIPT_NAME'] . $path;
+    }
+
+    private function login(Request $request): Response
+    {
+        $domain = $this->getProperty('domain', '');
+        $clientId = $this->getProperty('clientId', '');
+        $redirectUri = $this->getFullUrl('/callback');
+        $url = "https://$domain/authorize?response_type=token&client_id=$clientId&redirect_uri=$redirectUri";
+        return $this->responder->redirect($url);
+    }
+
+    private function callback(Request $request): Response
+    {
+        $response = $this->responder->success('<h1>test</h1>');
+        $response->addHeader('Content-Type', 'text/html');
+        return $response;
+    }
+
+    private function logout(Request $request): Response
+    {
+        session_destroy();
+        $url = $this->getFullUrl('/login');
+        return $this->responder->redirect($url);
+    }
+
+    public function handle(Request $request): Response
+    {
+        if (session_status() == PHP_SESSION_NONE) {
+            session_start();
+        }
+        $path = $request->getPathSegment(1);
+        switch ($path) {
+            case 'login':
+                return $this->login($request);
+            case 'callback':
+                return $this->callback($request);
+            case 'logout':
+                return $this->logout($request);
+        }
+        return $this->next->handle($request);
+    }
 }
 
 // file: src/Tqdev/PhpCrudApi/Middleware/AuthorizationMiddleware.php
@@ -4944,6 +5011,9 @@ class Api
                 case 'authorization':
                     new AuthorizationMiddleware($router, $responder, $properties, $reflection);
                     break;
+                case 'auth0':
+                    new Auth0Middleware($router, $responder, $properties, $reflection);
+                    break;
                 case 'customization':
                     new CustomizationMiddleware($router, $responder, $properties, $reflection);
                     break;
@@ -5345,6 +5415,8 @@ class Request
 class Response
 {
     const OK = 200;
+    const MOVED_PERMANENTLY = 301;
+    const FOUND = 302;
     const UNAUTHORIZED = 401;
     const FORBIDDEN = 403;
     const NOT_FOUND = 404;
@@ -5432,7 +5504,6 @@ $config = new Config([
     'username' => 'php-crud-api',
     'password' => 'php-crud-api',
     'database' => 'php-crud-api',
-    'middlewares' => 'basicAuth',
 ]);
 $request = new Request();
 $api = new Api($config);
