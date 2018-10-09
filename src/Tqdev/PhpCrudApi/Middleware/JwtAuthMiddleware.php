@@ -107,6 +107,7 @@ class JwtAuthMiddleware extends Middleware
             if (empty($claims)) {
                 return $this->responder->error(ErrorCode::AUTHENTICATION_FAILED, 'JWT');
             }
+            session_regenerate_id();
         }
         if (empty($_SESSION['claims'])) {
             $authenticationMode = $this->getProperty('mode', 'required');
