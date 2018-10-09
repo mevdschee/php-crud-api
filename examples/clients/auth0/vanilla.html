@@ -9,20 +9,17 @@ window.onload = function () {
     var match = RegExp('[#&]access_token=([^&]*)').exec(window.location.hash);
     var accessToken = match && decodeURIComponent(match[1].replace(/\+/g, ' '));
     if (!accessToken) {
-        redirectUri = document.location.href;
-        url = 'https://'+domain+'/authorize?audience='+audience+'&response_type=token&client_id='+clientId+'&redirect_uri='+redirectUri;
-        document.location = url;
+        document.location = 'https://'+domain+'/authorize?audience='+audience+'&response_type=token&client_id='+clientId+'&redirect_uri='+document.location.href;
     } else {
         document.location.hash = '';
-        url = '/api.php/records/posts?join=categories&join=tags&join=comments&filter=id,eq,1';
         var req = new XMLHttpRequest();
         req.onreadystatechange = function () {
             if (req.readyState==4) {
                 console.log(req.responseText);
-                jsonObject = JSON.parse(req.responseText);
-                document.getElementById('output').innerHTML = JSON.stringify(jsonObject, undefined, 4);
+                document.getElementById('output').innerHTML = JSON.stringify(JSON.parse(req.responseText), undefined, 4);
             }
         }
+        url = '/api.php/records/posts?join=categories&join=tags&join=comments&filter=id,eq,1';
         req.open("GET", url, true);
         req.setRequestHeader('X-Authorization', 'Bearer '+accessToken);
         req.send();
