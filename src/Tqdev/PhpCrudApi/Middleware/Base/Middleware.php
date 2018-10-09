@@ -22,9 +22,9 @@ abstract class Middleware implements Handler
         $this->next = $handler;
     }
 
-    protected function getArrayProperty(String $key, $default)
+    protected function getArrayProperty(String $key, String $default): array
     {
-        return isset($this->properties[$key]) ? array_filter(array_map('trim', explode(',', $this->properties[$key]))) : $default;
+        return array_filter(array_map('trim', explode(',', $this->getProperty($key, $default))));
     }
 
     protected function getProperty(String $key, $default)

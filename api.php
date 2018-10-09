@@ -2773,6 +2773,11 @@ abstract class Middleware implements Handler
         $this->next = $handler;
     }
 
+    protected function getArrayProperty(String $key, String $default): array
+    {
+        return array_filter(array_map('trim', explode(',', $this->getProperty($key, $default))));
+    }
+
     protected function getProperty(String $key, $default)
     {
         return isset($this->properties[$key]) ? $this->properties[$key] : $default;
@@ -2897,6 +2902,25 @@ class SimpleRouter implements Router
         return call_user_func($this->routeHandlers[$routeNumbers[0]], $request);
     }
 
+}
+
+// file: src/Tqdev/PhpCrudApi/Middleware/AjaxOnlyMiddleware.php
+
+class AjaxOnlyMiddleware extends Middleware
+{
+    public function handle(Request $request): Response
+    {
+        $method = $request->getMethod();
+        $excludeMethods = $this->getArrayProperty('excludeMethods', 'OPTIONS,GET');
+        if (!in_array($method, $excludeMethods)) {
+            $headerName = $this->getProperty('headerName', 'X-Requested-With');
+            $headerValue = $this->getProperty('headerValue', 'XMLHttpRequest');
+            if ($headerValue != $request->getHeader($headerName)) {
+                return $this->responder->error(ErrorCode::ONLY_AJAX_REQUESTS_ALLOWED, '');
+            }
+        }
+        return $this->next->handle($request);
+    }
 }
 
 // file: src/Tqdev/PhpCrudApi/Middleware/AuthorizationMiddleware.php
@@ -3276,11 +3300,6 @@ class JwtAuthMiddleware extends Middleware
         return $claims;
     }
 
-    private function getArrayProperty(String $property, String $default): array
-    {
-        return array_filter(array_map('trim', explode(',', $this->getProperty($property, $default))));
-    }
-
     private function getClaims(String $token): array
     {
         $time = (int) $this->getProperty('time', time());
@@ -3563,7 +3582,8 @@ class XsrfMiddleware extends Middleware
     {
         $token = $this->getToken();
         $method = $request->getMethod();
-        if (!in_array($method, ['OPTIONS', 'GET'])) {
+        $excludeMethods = $this->getArrayProperty('excludeMethods', 'OPTIONS,GET');
+        if (!in_array($method, $excludeMethods)) {
             $headerName = $this->getProperty('headerName', 'X-XSRF-TOKEN');
             if ($token != $request->getHeader($headerName)) {
                 return $this->responder->error(ErrorCode::BAD_OR_MISSING_XSRF_TOKEN, '');
@@ -4237,6 +4257,7 @@ class ErrorCode
     const OPERATION_NOT_SUPPORTED = 1015;
     const TEMPORARY_OR_PERMANENTLY_BLOCKED = 1016;
     const BAD_OR_MISSING_XSRF_TOKEN = 1017;
+    const ONLY_AJAX_REQUESTS_ALLOWED = 1018;
 
     private $values = [
         9999 => ["%s", Response::INTERNAL_SERVER_ERROR],
@@ -4258,6 +4279,7 @@ class ErrorCode
         1015 => ["Operation '%s' not supported", Response::METHOD_NOT_ALLOWED],
         1016 => ["Temporary or permanently blocked", Response::FORBIDDEN],
         1017 => ["Bad or missing XSRF token", Response::FORBIDDEN],
+        1018 => ["Only AJAX requests allowed", Response::FORBIDDEN],
     ];
 
     public function __construct(int $code)

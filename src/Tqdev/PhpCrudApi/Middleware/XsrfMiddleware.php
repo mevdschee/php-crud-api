@@ -28,7 +28,7 @@ class XsrfMiddleware extends Middleware
     {
         $token = $this->getToken();
         $method = $request->getMethod();
-        $excludeMethods = $this->getProperty('excludeMethods', 'OPTIONS,GET');
+        $excludeMethods = $this->getArrayProperty('excludeMethods', 'OPTIONS,GET');
         if (!in_array($method, $excludeMethods)) {
             $headerName = $this->getProperty('headerName', 'X-XSRF-TOKEN');
             if ($token != $request->getHeader($headerName)) {

@@ -12,7 +12,7 @@ class AjaxOnlyMiddleware extends Middleware
     public function handle(Request $request): Response
     {
         $method = $request->getMethod();
-        $excludeMethods = $this->getProperty('excludeMethods', 'OPTIONS,GET');
+        $excludeMethods = $this->getArrayProperty('excludeMethods', 'OPTIONS,GET');
         if (!in_array($method, $excludeMethods)) {
             $headerName = $this->getProperty('headerName', 'X-Requested-With');
             $headerValue = $this->getProperty('headerValue', 'XMLHttpRequest');
