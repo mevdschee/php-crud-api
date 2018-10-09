@@ -90,7 +90,9 @@ class BasicAuthMiddleware extends Middleware
             if (!$validUser) {
                 return $this->responder->error(ErrorCode::AUTHENTICATION_FAILED, $username);
             }
-            session_regenerate_id();
+            if (!headers_sent()) {
+                session_regenerate_id();
+            }
         }
         if (!isset($_SESSION['username']) || !$_SESSION['username']) {
             $authenticationMode = $this->getProperty('mode', 'required');
