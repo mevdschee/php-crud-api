@@ -9,7 +9,7 @@ use Tqdev\PhpCrudApi\Response;
 
 class JwtAuthMiddleware extends Middleware
 {
-    private function getVerifiedClaims(String $token, int $time, int $leeway, int $ttl, String $secret): array
+    private function getVerifiedClaims(String $token, int $time, int $leeway, int $ttl, String $secret, array $requirements): array
     {
         $algorithms = array('HS256' => 'sha256', 'HS384' => 'sha384', 'HS512' => 'sha512');
         $token = explode('.', $token);
@@ -36,6 +36,13 @@ class JwtAuthMiddleware extends Middleware
         if (!$claims) {
             return array();
         }
+        foreach ($requirements as $field => $values) {
+            if (!empty($values)) {
+                if (!isset($claims[$field]) || !in_array($claims[$field], $values)) {
+                    return array();
+                }
+            }
+        }
         if (isset($claims['nbf']) && $time + $leeway < $claims['nbf']) {
             return array();
         }
@@ -53,21 +60,32 @@ class JwtAuthMiddleware extends Middleware
         return $claims;
     }
 
+    private function getArrayProperty(String $property, String $default): array
+    {
+        return array_filter(array_map('trim', explode(',', $this->getProperty($property, $default))));
+    }
+
     private function getClaims(String $token): array
     {
         $time = (int) $this->getProperty('time', time());
         $leeway = (int) $this->getProperty('leeway', '5');
         $ttl = (int) $this->getProperty('ttl', '30');
         $secret = $this->getProperty('secret', '');
+        $requirements = array(
+            'alg' => $this->getArrayProperty('algorithms', ''),
+            'aud' => $this->getArrayProperty('audiences', ''),
+            'iss' => $this->getArrayProperty('issuers', ''),
+        );
         if (!$secret) {
             return array();
         }
-        return $this->getVerifiedClaims($token, $time, $leeway, $ttl, $secret);
+        return $this->getVerifiedClaims($token, $time, $leeway, $ttl, $secret, $requirements);
     }
 
     private function getAuthorizationToken(Request $request): String
     {
-        $parts = explode(' ', trim($request->getHeader('Authorization')), 2);
+        $header = $this->getProperty('header', 'X-Authorization');
+        $parts = explode(' ', trim($request->getHeader($header)), 2);
         if (count($parts) != 2) {
             return '';
         }
