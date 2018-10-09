@@ -144,7 +144,7 @@ You can enable the following middleware using the "middlewares" config parameter
 - "firewall": Limit access to specific IP addresses
 - "cors": Support for CORS requests (enabled by default)
 - "xsrf": Block XSRF attacks using the 'Double Submit Cookie' method
-- "ajaxOnly": Allow only AJAX requests to prevent XSRF attacks
+- "ajaxOnly": Restrict non-AJAX requests to prevent XSRF attacks
 - "jwtAuth": Support for "Basic Authentication"
 - "basicAuth": Support for "Basic Authentication"
 - "authorization": Restrict access to certain tables or columns
