@@ -162,6 +162,7 @@ You can tune the middleware behavior using middleware specific configuration par
 - "cors.allowCredentials": To allow credentials in the CORS request ("true")
 - "cors.maxAge": The time that the CORS grant is valid in seconds ("1728000")
 - "jwtAuth.mode": Set to "optional" if you want to allow anonymous access ("required")
+- "jwtAuth.header": Name of the header containing the JWT token ("X-Authorization")
 - "jwtAuth.leeway": The acceptable number of seconds of clock skew ("5")
 - "jwtAuth.ttl": The number of seconds the token is valid ("30")
 - "jwtAuth.secret": The shared secret used to sign the JWT token with ("")
@@ -588,10 +589,12 @@ This example sends the string "username1:password1".
 
 The JWT type requires another (SSO/Identity) server to sign a token that contains claims. 
 Both servers share a secret so that they can either sign or verify that the signature is valid.
-Claims are stored in the `$_SESSION['claims']` variable.
-You need to send an "Authorization" header containing a base64 url encoded and dot separated token header, body and signature after the word "Bearer" ([read more about JWT here](https://jwt.io/)).
+Claims are stored in the `$_SESSION['claims']` variable. You need to send an "X-Authorization" 
+header containing a base64 url encoded and dot separated token header, body and signature after
+the word "Bearer" ([read more about JWT here](https://jwt.io/)). The standard says you need to
+use the "Authorization" header, but this is problematic in Apache and PHP.
 
-    Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6IjE1MzgyMDc2MDUiLCJleHAiOjE1MzgyMDc2MzV9.Z5px_GT15TRKhJCTHhDt5Z6K6LRDSFnLj8U5ok9l7gw
+    X-Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6IjE1MzgyMDc2MDUiLCJleHAiOjE1MzgyMDc2MzV9.Z5px_GT15TRKhJCTHhDt5Z6K6LRDSFnLj8U5ok9l7gw
 
 This example sends the signed claims:
 

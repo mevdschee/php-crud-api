@@ -84,7 +84,8 @@ class JwtAuthMiddleware extends Middleware
 
     private function getAuthorizationToken(Request $request): String
     {
-        $parts = explode(' ', trim($request->getHeader('Authorization')), 2);
+        $header = $this->getProperty('header', 'X-Authorization');
+        $parts = explode(' ', trim($request->getHeader($header)), 2);
         if (count($parts) != 2) {
             return '';
         }
