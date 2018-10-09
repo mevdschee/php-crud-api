@@ -28,6 +28,8 @@ class ErrorCode
     const OPERATION_FORBIDDEN = 1014;
     const OPERATION_NOT_SUPPORTED = 1015;
     const TEMPORARY_OR_PERMANENTLY_BLOCKED = 1016;
+    const BAD_OR_MISSING_XSRF_TOKEN = 1017;
+    const ONLY_AJAX_REQUESTS_ALLOWED = 1018;
 
     private $values = [
         9999 => ["%s", Response::INTERNAL_SERVER_ERROR],
@@ -48,6 +50,8 @@ class ErrorCode
         1014 => ["Operation forbidden", Response::FORBIDDEN],
         1015 => ["Operation '%s' not supported", Response::METHOD_NOT_ALLOWED],
         1016 => ["Temporary or permanently blocked", Response::FORBIDDEN],
+        1017 => ["Bad or missing XSRF token", Response::FORBIDDEN],
+        1018 => ["Only AJAX requests allowed", Response::FORBIDDEN],
     ];
 
     public function __construct(int $code)

@@ -60,11 +60,6 @@ class JwtAuthMiddleware extends Middleware
         return $claims;
     }
 
-    private function getArrayProperty(String $property, String $default): array
-    {
-        return array_filter(array_map('trim', explode(',', $this->getProperty($property, $default))));
-    }
-
     private function getClaims(String $token): array
     {
         $time = (int) $this->getProperty('time', time());

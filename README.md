@@ -143,6 +143,8 @@ You can enable the following middleware using the "middlewares" config parameter
 
 - "firewall": Limit access to specific IP addresses
 - "cors": Support for CORS requests (enabled by default)
+- "xsrf": Block XSRF attacks using the 'Double Submit Cookie' method
+- "ajaxOnly": Allow only AJAX requests to prevent XSRF attacks
 - "jwtAuth": Support for "Basic Authentication"
 - "basicAuth": Support for "Basic Authentication"
 - "authorization": Restrict access to certain tables or columns
@@ -160,7 +162,14 @@ You can tune the middleware behavior using middleware specific configuration par
 - "cors.allowHeaders": The headers allowed in the CORS request ("Content-Type, X-XSRF-TOKEN")
 - "cors.allowMethods": The methods allowed in the CORS request ("OPTIONS, GET, PUT, POST, DELETE, PATCH")
 - "cors.allowCredentials": To allow credentials in the CORS request ("true")
+- "cors.exposeHeaders": Whitelist headers that browsers are allowed to access ("")
 - "cors.maxAge": The time that the CORS grant is valid in seconds ("1728000")
+- "xsrf.excludeMethods": The methods that do not require XSRF protection ("OPTIONS,GET")
+- "xsrf.cookieName": The name of the XSRF protection cookie ("XSRF-TOKEN")
+- "xsrf.headerName": The name of the XSRF protection header ("X-XSRF-TOKEN")
+- "ajaxOnly.excludeMethods": The methods that do not require AJAX ("OPTIONS,GET")
+- "ajaxOnly.headerName": The name of the required header ("X-Requested-With")
+- "ajaxOnly.headerValue": The value of the required header ("XMLHttpRequest")
 - "jwtAuth.mode": Set to "optional" if you want to allow anonymous access ("required")
 - "jwtAuth.header": Name of the header containing the JWT token ("X-Authorization")
 - "jwtAuth.leeway": The acceptable number of seconds of clock skew ("5")
@@ -808,6 +817,8 @@ The following errors may be reported:
 - 1014: Operation forbidden (403 FORBIDDEN)
 - 1015: Operation not supported (405 METHOD NOT ALLOWED)
 - 1016: Temporary or permanently blocked (403 FORBIDDEN)
+- 1017: Bad or missing XSRF token (403 FORBIDDEN)
+- 1018: Only AJAX requests allowed (403 FORBIDDEN)
 - 9999: Unknown error (500: INTERNAL SERVER ERROR)
 
 The following JSON structure is used:

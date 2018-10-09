@@ -2899,59 +2899,6 @@ class SimpleRouter implements Router
 
 }
 
-// file: src/Tqdev/PhpCrudApi/Middleware/Auth0Middleware.php
-
-class Auth0Middleware extends Middleware
-{
-
-    private function getFullUrl(String $path)
-    {
-        list($scheme, $default) = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == 'on') ? array('https', 443) : array('http', 80);
-        $port = ($_SERVER['SERVER_PORT'] == $default) ? '' : (':' . $_SERVER['SERVER_PORT']);
-        return $scheme . '://' . $_SERVER['HTTP_HOST'] . $_SERVER['SCRIPT_NAME'] . $path;
-    }
-
-    private function login(Request $request): Response
-    {
-        $domain = $this->getProperty('domain', '');
-        $clientId = $this->getProperty('clientId', '');
-        $redirectUri = $this->getFullUrl('/callback');
-        $url = "https://$domain/authorize?response_type=token&client_id=$clientId&redirect_uri=$redirectUri";
-        return $this->responder->redirect($url);
-    }
-
-    private function callback(Request $request): Response
-    {
-        $response = $this->responder->success('<h1>test</h1>');
-        $response->addHeader('Content-Type', 'text/html');
-        return $response;
-    }
-
-    private function logout(Request $request): Response
-    {
-        session_destroy();
-        $url = $this->getFullUrl('/login');
-        return $this->responder->redirect($url);
-    }
-
-    public function handle(Request $request): Response
-    {
-        if (session_status() == PHP_SESSION_NONE) {
-            session_start();
-        }
-        $path = $request->getPathSegment(1);
-        switch ($path) {
-            case 'login':
-                return $this->login($request);
-            case 'callback':
-                return $this->callback($request);
-            case 'logout':
-                return $this->logout($request);
-        }
-        return $this->next->handle($request);
-    }
-}
-
 // file: src/Tqdev/PhpCrudApi/Middleware/AuthorizationMiddleware.php
 
 class AuthorizationMiddleware extends Middleware
@@ -3116,6 +3063,9 @@ class BasicAuthMiddleware extends Middleware
             if (!$validUser) {
                 return $this->responder->error(ErrorCode::AUTHENTICATION_FAILED, $username);
             }
+            if (!headers_sent()) {
+                session_regenerate_id();
+            }
         }
         if (!isset($_SESSION['username']) || !$_SESSION['username']) {
             $authenticationMode = $this->getProperty('mode', 'required');
@@ -3158,19 +3108,33 @@ class CorsMiddleware extends Middleware
         } elseif ($method == 'OPTIONS') {
             $response = new Response(Response::OK, '');
             $allowHeaders = $this->getProperty('allowHeaders', 'Content-Type, X-XSRF-TOKEN');
-            $response->addHeader('Access-Control-Allow-Headers', $allowHeaders);
+            if ($allowHeaders) {
+                $response->addHeader('Access-Control-Allow-Headers', $allowHeaders);
+            }
             $allowMethods = $this->getProperty('allowMethods', 'OPTIONS, GET, PUT, POST, DELETE, PATCH');
-            $response->addHeader('Access-Control-Allow-Methods', $allowMethods);
+            if ($allowMethods) {
+                $response->addHeader('Access-Control-Allow-Methods', $allowMethods);
+            }
             $allowCredentials = $this->getProperty('allowCredentials', 'true');
-            $response->addHeader('Access-Control-Allow-Credentials', $allowCredentials);
+            if ($allowCredentials) {
+                $response->addHeader('Access-Control-Allow-Credentials', $allowCredentials);
+            }
             $maxAge = $this->getProperty('maxAge', '1728000');
-            $response->addHeader('Access-Control-Max-Age', $maxAge);
+            if ($maxAge) {
+                $response->addHeader('Access-Control-Max-Age', $maxAge);
+            }
+            $exposeHeaders = $this->getProperty('exposeHeaders', '');
+            if ($exposeHeaders) {
+                $response->addHeader('Access-Control-Expose-Headers', $exposeHeaders);
+            }
         } else {
             $response = $this->next->handle($request);
         }
         if ($origin) {
             $allowCredentials = $this->getProperty('allowCredentials', 'true');
-            $response->addHeader('Access-Control-Allow-Credentials', $allowCredentials);
+            if ($allowCredentials) {
+                $response->addHeader('Access-Control-Allow-Credentials', $allowCredentials);
+            }
             $response->addHeader('Access-Control-Allow-Origin', $origin);
         }
         return $response;
@@ -3358,6 +3322,9 @@ class JwtAuthMiddleware extends Middleware
             $_SESSION['claims'] = $claims;
             if (empty($claims)) {
                 return $this->responder->error(ErrorCode::AUTHENTICATION_FAILED, 'JWT');
+            }
+            if (!headers_sent()) {
+                session_regenerate_id();
             }
         }
         if (empty($_SESSION['claims'])) {
@@ -3567,6 +3534,39 @@ class ValidationMiddleware extends Middleware
                         }
                     }
                 }
+            }
+        }
+        return $this->next->handle($request);
+    }
+}
+
+// file: src/Tqdev/PhpCrudApi/Middleware/XsrfMiddleware.php
+
+class XsrfMiddleware extends Middleware
+{
+    private function getToken(): String
+    {
+        $cookieName = $this->getProperty('cookieName', 'XSRF-TOKEN');
+        if (isset($_COOKIE[$cookieName])) {
+            $token = $_COOKIE[$cookieName];
+        } else {
+            $secure = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == 'on';
+            $token = bin2hex(random_bytes(8));
+            if (!headers_sent()) {
+                setcookie($cookieName, $token, 0, '', '', $secure);
+            }
+        }
+        return $token;
+    }
+
+    public function handle(Request $request): Response
+    {
+        $token = $this->getToken();
+        $method = $request->getMethod();
+        if (!in_array($method, ['OPTIONS', 'GET'])) {
+            $headerName = $this->getProperty('headerName', 'X-XSRF-TOKEN');
+            if ($token != $request->getHeader($headerName)) {
+                return $this->responder->error(ErrorCode::BAD_OR_MISSING_XSRF_TOKEN, '');
             }
         }
         return $this->next->handle($request);
@@ -4236,6 +4236,7 @@ class ErrorCode
     const OPERATION_FORBIDDEN = 1014;
     const OPERATION_NOT_SUPPORTED = 1015;
     const TEMPORARY_OR_PERMANENTLY_BLOCKED = 1016;
+    const BAD_OR_MISSING_XSRF_TOKEN = 1017;
 
     private $values = [
         9999 => ["%s", Response::INTERNAL_SERVER_ERROR],
@@ -4256,6 +4257,7 @@ class ErrorCode
         1014 => ["Operation forbidden", Response::FORBIDDEN],
         1015 => ["Operation '%s' not supported", Response::METHOD_NOT_ALLOWED],
         1016 => ["Temporary or permanently blocked", Response::FORBIDDEN],
+        1017 => ["Bad or missing XSRF token", Response::FORBIDDEN],
     ];
 
     public function __construct(int $code)
@@ -5029,8 +5031,8 @@ class Api
                 case 'authorization':
                     new AuthorizationMiddleware($router, $responder, $properties, $reflection);
                     break;
-                case 'auth0':
-                    new Auth0Middleware($router, $responder, $properties, $reflection);
+                case 'xsrf':
+                    new XsrfMiddleware($router, $responder, $properties);
                     break;
                 case 'customization':
                     new CustomizationMiddleware($router, $responder, $properties, $reflection);
@@ -5395,7 +5397,7 @@ class Request
             return $this->headers[$key];
         }
         if ($this->highPerformance) {
-            $serverKey = 'HTTP_' . strtoupper(str_replace('_', '-', $key));
+            $serverKey = 'HTTP_' . strtoupper(str_replace('-', '_', $key));
             if (isset($_SERVER[$serverKey])) {
                 return $_SERVER[$serverKey];
             }
@@ -5522,6 +5524,7 @@ $config = new Config([
     'username' => 'php-crud-api',
     'password' => 'php-crud-api',
     'database' => 'php-crud-api',
+    'middlewares' => 'xsrf',
 ]);
 $request = new Request();
 $api = new Api($config);

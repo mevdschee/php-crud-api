@@ -145,7 +145,7 @@ class Request
             return $this->headers[$key];
         }
         if ($this->highPerformance) {
-            $serverKey = 'HTTP_' . strtoupper(str_replace('_', '-', $key));
+            $serverKey = 'HTTP_' . strtoupper(str_replace('-', '_', $key));
             if (isset($_SERVER[$serverKey])) {
                 return $_SERVER[$serverKey];
             }
