@@ -17,7 +17,7 @@ class AjaxOnlyMiddleware extends Middleware
             $headerName = $this->getProperty('headerName', 'X-Requested-With');
             $headerValue = $this->getProperty('headerValue', 'XMLHttpRequest');
             if ($headerValue != $request->getHeader($headerName)) {
-                return $this->responder->error(ErrorCode::ONLY_AJAX_REQUESTS_ALLOWED, '');
+                return $this->responder->error(ErrorCode::ONLY_AJAX_REQUESTS_ALLOWED, $method);
             }
         }
         return $this->next->handle($request);

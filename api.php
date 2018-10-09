@@ -2916,7 +2916,7 @@ class AjaxOnlyMiddleware extends Middleware
             $headerName = $this->getProperty('headerName', 'X-Requested-With');
             $headerValue = $this->getProperty('headerValue', 'XMLHttpRequest');
             if ($headerValue != $request->getHeader($headerName)) {
-                return $this->responder->error(ErrorCode::ONLY_AJAX_REQUESTS_ALLOWED, '');
+                return $this->responder->error(ErrorCode::ONLY_AJAX_REQUESTS_ALLOWED, $method);
             }
         }
         return $this->next->handle($request);
@@ -4279,7 +4279,7 @@ class ErrorCode
         1015 => ["Operation '%s' not supported", Response::METHOD_NOT_ALLOWED],
         1016 => ["Temporary or permanently blocked", Response::FORBIDDEN],
         1017 => ["Bad or missing XSRF token", Response::FORBIDDEN],
-        1018 => ["Only AJAX requests allowed", Response::FORBIDDEN],
+        1018 => ["Only AJAX requests allowed for '%s'", Response::FORBIDDEN],
     ];
 
     public function __construct(int $code)
