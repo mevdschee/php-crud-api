@@ -33,19 +33,33 @@ class CorsMiddleware extends Middleware
         } elseif ($method == 'OPTIONS') {
             $response = new Response(Response::OK, '');
             $allowHeaders = $this->getProperty('allowHeaders', 'Content-Type, X-XSRF-TOKEN');
-            $response->addHeader('Access-Control-Allow-Headers', $allowHeaders);
+            if ($allowHeaders) {
+                $response->addHeader('Access-Control-Allow-Headers', $allowHeaders);
+            }
             $allowMethods = $this->getProperty('allowMethods', 'OPTIONS, GET, PUT, POST, DELETE, PATCH');
-            $response->addHeader('Access-Control-Allow-Methods', $allowMethods);
+            if ($allowMethods) {
+                $response->addHeader('Access-Control-Allow-Methods', $allowMethods);
+            }
             $allowCredentials = $this->getProperty('allowCredentials', 'true');
-            $response->addHeader('Access-Control-Allow-Credentials', $allowCredentials);
+            if ($allowCredentials) {
+                $response->addHeader('Access-Control-Allow-Credentials', $allowCredentials);
+            }
             $maxAge = $this->getProperty('maxAge', '1728000');
-            $response->addHeader('Access-Control-Max-Age', $maxAge);
+            if ($maxAge) {
+                $response->addHeader('Access-Control-Max-Age', $maxAge);
+            }
+            $exposeHeaders = $this->getProperty('exposeHeaders', '');
+            if ($exposeHeaders) {
+                $response->addHeader('Access-Control-Expose-Headers', $exposeHeaders);
+            }
         } else {
             $response = $this->next->handle($request);
         }
         if ($origin) {
             $allowCredentials = $this->getProperty('allowCredentials', 'true');
-            $response->addHeader('Access-Control-Allow-Credentials', $allowCredentials);
+            if ($allowCredentials) {
+                $response->addHeader('Access-Control-Allow-Credentials', $allowCredentials);
+            }
             $response->addHeader('Access-Control-Allow-Origin', $origin);
         }
         return $response;
