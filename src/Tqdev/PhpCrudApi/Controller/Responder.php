@@ -20,18 +20,4 @@ class Responder
         return new Response(Response::OK, $result);
     }
 
-    public function redirect(String $url): Response
-    {
-        $response = new Response(Response::FOUND, '');
-        $response->addHeader('Location', $url);
-        return $response;
-    }
-
-    public function html(String $url): Response
-    {
-        $response = new Response(Response::FOUND, '');
-        $response->addHeader('Location', $url);
-        return $response;
-    }
-
 }
