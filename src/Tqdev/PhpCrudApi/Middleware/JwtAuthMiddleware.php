@@ -38,8 +38,14 @@ class JwtAuthMiddleware extends Middleware
         }
         foreach ($requirements as $field => $values) {
             if (!empty($values)) {
-                if (!isset($claims[$field]) || !in_array($claims[$field], $values)) {
-                    return array();
+                if ($field == 'alg') {
+                    if (!isset($header[$field]) || !in_array($header[$field], $values)) {
+                        return array();
+                    }
+                } else {
+                    if (!isset($claims[$field]) || !in_array($claims[$field], $values)) {
+                        return array();
+                    }
                 }
             }
         }
