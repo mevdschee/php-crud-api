@@ -2,14 +2,14 @@
 <head>
 <meta charset="utf-8" /> 
 <script>
-var domain = ''; // hostname ending in '.auth0.com'
+var authUrl = 'https://php-crud-api.auth0.com/authorize'; // hostname ending in '.auth0.com'
 var clientId = ''; // client id as defined in auth0
 var audience = ''; // api audience as defined in auth0
 window.onload = function () {
     var match = RegExp('[#&]access_token=([^&]*)').exec(window.location.hash);
     var accessToken = match && decodeURIComponent(match[1].replace(/\+/g, ' '));
     if (!accessToken) {
-        document.location = 'https://'+domain+'/authorize?audience='+audience+'&response_type=token&client_id='+clientId+'&redirect_uri='+document.location.href;
+        document.location = authUrl+'?audience='+audience+'&response_type=token&client_id='+clientId+'&redirect_uri='+document.location.href;
     } else {
         document.location.hash = '';
         var req = new XMLHttpRequest();
