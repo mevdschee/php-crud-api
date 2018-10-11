@@ -1325,20 +1325,6 @@ class Responder
         return new Response(Response::OK, $result);
     }
 
-    public function redirect(String $url): Response
-    {
-        $response = new Response(Response::FOUND, '');
-        $response->addHeader('Location', $url);
-        return $response;
-    }
-
-    public function html(String $url): Response
-    {
-        $response = new Response(Response::FOUND, '');
-        $response->addHeader('Location', $url);
-        return $response;
-    }
-
 }
 
 // file: src/Tqdev/PhpCrudApi/Database/ColumnConverter.php
@@ -5457,8 +5443,6 @@ class Request
 class Response
 {
     const OK = 200;
-    const MOVED_PERMANENTLY = 301;
-    const FOUND = 302;
     const UNAUTHORIZED = 401;
     const FORBIDDEN = 403;
     const NOT_FOUND = 404;
@@ -5546,7 +5530,6 @@ $config = new Config([
     'username' => 'php-crud-api',
     'password' => 'php-crud-api',
     'database' => 'php-crud-api',
-    'middlewares' => 'xsrf',
 ]);
 $request = new Request();
 $api = new Api($config);
