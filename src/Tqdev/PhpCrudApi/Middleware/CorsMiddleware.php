@@ -32,7 +32,7 @@ class CorsMiddleware extends Middleware
             $response = $this->responder->error(ErrorCode::ORIGIN_FORBIDDEN, $origin);
         } elseif ($method == 'OPTIONS') {
             $response = new Response(Response::OK, '');
-            $allowHeaders = $this->getProperty('allowHeaders', 'Content-Type, X-XSRF-TOKEN');
+            $allowHeaders = $this->getProperty('allowHeaders', 'Content-Type, X-XSRF-TOKEN, X-Authorization');
             if ($allowHeaders) {
                 $response->addHeader('Access-Control-Allow-Headers', $allowHeaders);
             }

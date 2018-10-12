@@ -2,9 +2,9 @@
 <head>
 <meta charset="utf-8" /> 
 <script>
-var authUrl = 'https://php-crud-api.auth0.com/authorize'; // hostname ending in '.auth0.com'
-var clientId = ''; // client id as defined in auth0
-var audience = ''; // api audience as defined in auth0
+var authUrl = 'authorize.php'; // hostname ending in '.auth0.com'
+var clientId = 'default'; // client id as defined in auth0
+var audience = 'api.php'; // api audience as defined in auth0
 window.onload = function () {
     var match = RegExp('[#&]access_token=([^&]*)').exec(window.location.hash);
     var accessToken = match && decodeURIComponent(match[1].replace(/\+/g, ' '));
@@ -19,7 +19,7 @@ window.onload = function () {
                 document.getElementById('output').innerHTML = JSON.stringify(JSON.parse(req.responseText), undefined, 4);
             }
         }
-        url = 'http://127.0.0.3/api.php/records/posts?join=categories&join=tags&join=comments&filter=id,eq,1';
+        url = 'api.php/records/posts?join=categories&join=tags&join=comments&filter=id,eq,1';
         req.open("GET", url, true);
         req.setRequestHeader('X-Authorization', 'Bearer '+accessToken);
         req.send();
