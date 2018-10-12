@@ -7,7 +7,7 @@ https://github.com/mevdschee/php-crud-api/tree/v1
 
 Related projects:
 
-  - [PHP-API-AUTH](https://github.com/mevdschee/php-api-auth): Authentication add-on (for v1) supporting JWT or username/password.
+  - [PHP-API-AUTH](https://github.com/mevdschee/php-api-auth): Authentication add-on supporting JWT for username/password.
   - [PHP-SP-API](https://github.com/mevdschee/php-sp-api): Single file PHP script that adds a REST API to a SQL database.
   - [PHP-CRUD-UI](https://github.com/mevdschee/PHP-crud-ui): Single file PHP script that adds a UI to a PHP-CRUD-API (v1) project.
   - [VUE-CRUD-UI](https://github.com/nlware/vue-crud-ui): Single file Vue.js script that adds a UI to a PHP-CRUD-API (v1) project.
