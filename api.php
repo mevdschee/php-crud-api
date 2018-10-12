@@ -3182,6 +3182,32 @@ class CustomizationMiddleware extends Middleware
     }
 }
 
+// file: src/Tqdev/PhpCrudApi/Middleware/FileUploadMiddleware.php
+
+class FileUploadMiddleware extends Middleware
+{
+    public function handle(Request $request): Response
+    {
+        $files = $request->getUploadedFiles();
+        if (!empty($files)) {
+            $body = $request->getBody();
+            foreach ($files as $fieldName => $file) {
+                if (isset($file['error'])) {
+                    return $this->responder->error(ErrorCode::FILE_UPLOAD_FAILED, $fieldName);
+                }
+                foreach ($file as $key => $value) {
+                    if ($key == 'tmp_nam') {
+                        $value = base64_encode(file_get_contents($value));
+                    }
+                    $body[$fieldName . '_' . $key] = $value;
+                }
+            }
+            $request->setBody($body);
+        }
+        return $this->next->handle($request);
+    }
+}
+
 // file: src/Tqdev/PhpCrudApi/Middleware/FirewallMiddleware.php
 
 class FirewallMiddleware extends Middleware
@@ -4244,6 +4270,7 @@ class ErrorCode
     const TEMPORARY_OR_PERMANENTLY_BLOCKED = 1016;
     const BAD_OR_MISSING_XSRF_TOKEN = 1017;
     const ONLY_AJAX_REQUESTS_ALLOWED = 1018;
+    const FILE_UPLOAD_FAILED = 1019;
 
     private $values = [
         9999 => ["%s", Response::INTERNAL_SERVER_ERROR],
@@ -4266,6 +4293,7 @@ class ErrorCode
         1016 => ["Temporary or permanently blocked", Response::FORBIDDEN],
         1017 => ["Bad or missing XSRF token", Response::FORBIDDEN],
         1018 => ["Only AJAX requests allowed for '%s'", Response::FORBIDDEN],
+        1019 => ["File upload failed for '%s'", Response::UNPROCESSABLE_ENTITY],
     ];
 
     public function __construct(int $code)
