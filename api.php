@@ -5375,16 +5375,41 @@ class Request
         $this->headers = $headers;
     }
 
-    private function parseBody(String $body = null)
+    private function decodeBody(String $body) /*: ?object*/
     {
-        if (!$body) {
+        $first = substr($body, 0, 1);
+        if ($first == '[' || $first == '{') {
+            $object = json_decode($body);
+            $causeCode = json_last_error();
+            if ($causeCode !== JSON_ERROR_NONE) {
+                $object = null;
+            }
+        } else {
+            parse_str($body, $input);
+            foreach ($input as $key => $value) {
+                if (substr($key, -9) == '__is_null') {
+                    $input[substr($key, 0, -9)] = null;
+                    unset($input[$key]);
+                }
+            }
+            $object = (object) $input;
+        }
+        return $object;
+    }
+
+    private function parseBody(String $body = null) /*: void*/
+    {
+        if ($body) {
+            $object = $this->decodeBody($body);
+        } else {
             if (!empty($_FILES)) {
-                $body = json_encode($_POST);
+                $object = (object) $_POST;
             } else {
-                $body = file_get_contents('php://input');
+                $input = file_get_contents('php://input');
+                $object = $this->decodeBody($input);
             }
         }
-        $this->body = $body;
+        $this->body = $object;
     }
 
     public function getMethod(): String
@@ -5412,30 +5437,12 @@ class Request
 
     public function getBody() /*: ?array*/
     {
-        $body = $this->body;
-        $first = substr($body, 0, 1);
-        if ($first == '[' || $first == '{') {
-            $body = json_decode($body);
-            $causeCode = json_last_error();
-            if ($causeCode !== JSON_ERROR_NONE) {
-                return null;
-            }
-        } else {
-            parse_str($body, $input);
-            foreach ($input as $key => $value) {
-                if (substr($key, -9) == '__is_null') {
-                    $input[substr($key, 0, -9)] = null;
-                    unset($input[$key]);
-                }
-            }
-            $body = (object) $input;
-        }
-        return $body;
+        return $this->body;
     }
 
     public function setBody($body) /*: void*/
     {
-        $this->body = json_encode($body);
+        $this->body = $body;
     }
 
     public function addHeader(String $key, String $value)
