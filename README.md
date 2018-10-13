@@ -579,7 +579,7 @@ These filters are based on OGC standards and so is the WKT specification in whic
 
 ### File uploads
 
-If you add the 'fileUpload' middleware you can also upload a file using a web form (multipart/form-data):
+The 'fileUpload' middleware allows you to upload a file using a web form (multipart/form-data) like this:
 
 ```
 <form method="post" action="http://localhost/api.php/records/categories" enctype="multipart/form-data">
