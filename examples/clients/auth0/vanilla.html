@@ -19,7 +19,7 @@ window.onload = function () {
                 document.getElementById('output').innerHTML = JSON.stringify(JSON.parse(req.responseText), undefined, 4);
             }
         }
-        url = 'http://127.0.0.3/api.php/records/posts?join=categories&join=tags&join=comments&filter=id,eq,1';
+        url = '/api.php/records/posts?join=categories&join=tags&join=comments&filter=id,eq,1';
         req.open("GET", url, true);
         req.setRequestHeader('X-Authorization', 'Bearer '+accessToken);
         req.send();

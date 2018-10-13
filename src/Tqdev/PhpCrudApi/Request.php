@@ -78,7 +78,11 @@ class Request
     private function parseBody(String $body = null)
     {
         if (!$body) {
-            $body = file_get_contents('php://input');
+            if (!empty($_FILES)) {
+                $body = json_encode($_POST);
+            } else {
+                $body = file_get_contents('php://input');
+            }
         }
         $this->body = $body;
     }
@@ -175,5 +179,10 @@ class Request
             $headers[$key] = trim($value);
         }
         return new Request($method, $path, $query, $headers, $body);
+    }
+
+    public function getUploadedFiles(): array
+    {
+        return $_FILES;
     }
 }

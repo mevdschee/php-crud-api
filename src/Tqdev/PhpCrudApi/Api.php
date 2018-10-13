@@ -14,6 +14,7 @@ use Tqdev\PhpCrudApi\Middleware\AuthorizationMiddleware;
 use Tqdev\PhpCrudApi\Middleware\BasicAuthMiddleware;
 use Tqdev\PhpCrudApi\Middleware\CorsMiddleware;
 use Tqdev\PhpCrudApi\Middleware\CustomizationMiddleware;
+use Tqdev\PhpCrudApi\Middleware\FileUploadMiddleware;
 use Tqdev\PhpCrudApi\Middleware\FirewallMiddleware;
 use Tqdev\PhpCrudApi\Middleware\JwtAuthMiddleware;
 use Tqdev\PhpCrudApi\Middleware\MultiTenancyMiddleware;
@@ -58,6 +59,9 @@ class Api
                     break;
                 case 'jwtAuth':
                     new JwtAuthMiddleware($router, $responder, $properties);
+                    break;
+                case 'fileUpload':
+                    new FileUploadMiddleware($router, $responder, $properties);
                     break;
                 case 'validation':
                     new ValidationMiddleware($router, $responder, $properties, $reflection);

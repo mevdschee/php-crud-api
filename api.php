@@ -3192,14 +3192,17 @@ class FileUploadMiddleware extends Middleware
         if (!empty($files)) {
             $body = $request->getBody();
             foreach ($files as $fieldName => $file) {
-                if (isset($file['error'])) {
+                if (isset($file['error']) && $file['error']) {
                     return $this->responder->error(ErrorCode::FILE_UPLOAD_FAILED, $fieldName);
                 }
                 foreach ($file as $key => $value) {
-                    if ($key == 'tmp_nam') {
+                    if ($key == 'tmp_name') {
                         $value = base64_encode(file_get_contents($value));
+                        $key = $fieldName;
+                    } else {
+                        $key = $fieldName . '_' . $key;
                     }
-                    $body[$fieldName . '_' . $key] = $value;
+                    $body->$key = $value;
                 }
             }
             $request->setBody($body);
@@ -3290,8 +3293,14 @@ class JwtAuthMiddleware extends Middleware
         }
         foreach ($requirements as $field => $values) {
             if (!empty($values)) {
-                if (!isset($claims[$field]) || !in_array($claims[$field], $values)) {
-                    return array();
+                if ($field == 'alg') {
+                    if (!isset($header[$field]) || !in_array($header[$field], $values)) {
+                        return array();
+                    }
+                } else {
+                    if (!isset($claims[$field]) || !in_array($claims[$field], $values)) {
+                        return array();
+                    }
                 }
             }
         }
@@ -5055,6 +5064,9 @@ class Api
                 case 'jwtAuth':
                     new JwtAuthMiddleware($router, $responder, $properties);
                     break;
+                case 'fileUpload':
+                    new FileUploadMiddleware($router, $responder, $properties);
+                    break;
                 case 'validation':
                     new ValidationMiddleware($router, $responder, $properties, $reflection);
                     break;
@@ -5366,7 +5378,11 @@ class Request
     private function parseBody(String $body = null)
     {
         if (!$body) {
-            $body = file_get_contents('php://input');
+            if (!empty($_FILES)) {
+                $body = json_encode($_POST);
+            } else {
+                $body = file_get_contents('php://input');
+            }
         }
         $this->body = $body;
     }
@@ -5463,6 +5479,11 @@ class Request
             $headers[$key] = trim($value);
         }
         return new Request($method, $path, $query, $headers, $body);
+    }
+
+    public function getUploadedFiles(): array
+    {
+        return $_FILES;
     }
 }
 

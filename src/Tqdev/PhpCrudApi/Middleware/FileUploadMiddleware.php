@@ -13,14 +13,17 @@ class FileUploadMiddleware extends Middleware
         if (!empty($files)) {
             $body = $request->getBody();
             foreach ($files as $fieldName => $file) {
-                if (isset($file['error'])) {
+                if (isset($file['error']) && $file['error']) {
                     return $this->responder->error(ErrorCode::FILE_UPLOAD_FAILED, $fieldName);
                 }
                 foreach ($file as $key => $value) {
-                    if ($key == 'tmp_nam') {
+                    if ($key == 'tmp_name') {
                         $value = base64_encode(file_get_contents($value));
+                        $key = $fieldName;
+                    } else {
+                        $key = $fieldName . '_' . $key;
                     }
-                    $body[$fieldName . '_' . $key] = $value;
+                    $body->$key = $value;
                 }
             }
             $request->setBody($body);
