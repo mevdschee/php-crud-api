@@ -842,6 +842,7 @@ The following errors may be reported:
 - 1016: Temporary or permanently blocked (403 FORBIDDEN)
 - 1017: Bad or missing XSRF token (403 FORBIDDEN)
 - 1018: Only AJAX requests allowed (403 FORBIDDEN)
+- 1019: File upload failed (422 UNPROCESSABLE ENTITY)
 - 9999: Unknown error (500: INTERNAL SERVER ERROR)
 
 The following JSON structure is used:
