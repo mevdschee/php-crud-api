@@ -744,7 +744,7 @@ The 'fileUpload' middleware allows you to upload a file using a web form (multip
 Then this is handled as if you would have sent:
 
 ```
-POST http://localhost/api.php/categories
+POST http://localhost/api.php/records/categories
 {"icon_name":"not.gif","icon_type":"image\/gif","icon":"ZGF0YQ==","icon_error":0,"icon_size":4}
 ```
 
