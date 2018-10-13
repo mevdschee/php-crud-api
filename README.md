@@ -104,7 +104,7 @@ These features match features in v1 (see branch "v1"):
   - [x] Supports POST variables as input (x-www-form-urlencoded)
   - [x] Supports a JSON object as input
   - [x] Supports a JSON array as input (batch insert)
-  - [ ] Supports file upload from web forms (multipart/form-data)
+  - [x] Supports file upload from web forms (multipart/form-data)
   - [ ] ~~Condensed JSON output: first row contains field names~~
   - [x] Sanitize and validate input using callbacks
   - [x] Permission system for databases, tables, columns and records
@@ -118,7 +118,7 @@ These features match features in v1 (see branch "v1"):
   - [x] Atomic increment support via PATCH (for counters)
   - [x] Binary fields supported with base64 encoding
   - [x] Spatial/GIS fields and filters supported with WKT
-  - [ ] Unstructured data support through JSON/JSONB
+  - [ ] ~~Unstructured data support through JSON/JSONB~~
   - [x] Generate API documentation using OpenAPI tools
   - [x] Authentication via JWT token or username/password
   - [ ] ~~SQLite support~~

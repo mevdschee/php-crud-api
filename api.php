@@ -2621,6 +2621,7 @@ class TypeConverter
             'point' => 'geometry',
             'datetime' => 'timestamp',
             'enum' => 'varchar',
+            'json' => 'clob',
         ],
         'pgsql' => [
             'bigserial' => 'bigint',
@@ -2633,6 +2634,7 @@ class TypeConverter
             'circle' => 'geometry',
             'double precision' => 'double',
             'inet' => 'integer',
+            'json' => 'clob',
             'jsonb' => 'clob',
             'line' => 'geometry',
             'lseg' => 'geometry',
