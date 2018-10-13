@@ -577,11 +577,34 @@ For spatial support there is an extra set of filters that can be applied on geom
 
 These filters are based on OGC standards and so is the WKT specification in which the geometry columns are represented.
 
+### File uploads
+
+If you add the 'fileUpload' middleware you can also upload a file using a web form (multipart/form-data):
+
+```
+<form method="post" action="http://localhost/api.php/records/categories" enctype="multipart/form-data">
+  Select image to upload:
+  <input type="file" name="icon">
+  <input type="submit">
+</form>
+```
+
+Then this is handled as if you would have sent:
+
+```
+POST http://localhost/api.php/categories
+{"icon_name":"not.gif","icon_type":"image\/gif","icon":"ZGF0YQ==","icon_error":0,"icon_size":4}
+```
+
+As you can see the "xxx_name", "xxx_type", "xxx_error" and "xxx_size" meta fields are added (where "xxx" is the name of the file field).
+
+NB: You cannot edit a file using this method, because browsers do not support the "PUT" method in these forms.
+
 ### Authentication
 
 Authentication is done by means of sending a "Authorization" header. It identifies the user and stores this in the `$_SESSION` super global. 
 This variable can be used in the authorization handlers to decide wether or not sombeody should have read or write access to certain tables, columns or records.
-Currently there are two types of authentication supported: "Basic" and "JWT". 
+Currently there are two types of authentication supported: "Basic" and "JWT". This functionality is enabled by adding the 'basicAuth' and/or 'jwtAuth' middleware.
 
 #### Basic authentication
 
