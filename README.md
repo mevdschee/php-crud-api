@@ -136,6 +136,8 @@ These features are new and were not included in v1.
   - Support for relational data on read (not only on list operation)
   - Support for middleware to modify all operations (also list)
   - Error reporting in JSON with corresponding HTTP status
+  - Support for basic authentication and via auth provider (JWT)
+  - Support for basic firewall functionality
 
 ## Middleware
 
