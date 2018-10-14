@@ -1,7 +1,7 @@
-GET /records/kunsthåndværk/e42c77c6-06a4-4502-816c-d112c7142e6
+GET /records/kunsthåndværk/e42c77c6-06a4-4502-816c-d112c7142e6d
 ===
-404
+200
 Content-Type: application/json
-Content-Length: 80
+Content-Length: 84
 
-{"code":1003,"message":"Record 'e42c77c6-06a4-4502-816c-d112c7142e6' not found"}
+{"id":"e42c77c6-06a4-4502-816c-d112c7142e6d","Umlauts ä_ö_ü-COUNT":1,"user_id":1}
