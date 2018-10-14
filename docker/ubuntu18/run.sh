@@ -1,7 +1,6 @@
 #!/bin/bash
-PHP=$(php -r 'echo explode("-",phpversion())[0];')
 echo "================================================"
-echo " Ubuntu 18.04 (PHP $PHP)"
+echo " Ubuntu 18.04 (PHP 7.2)"
 echo "================================================"
 
 echo -n "[1/4] Starting MySQL 5.7 ........ "

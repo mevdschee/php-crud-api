@@ -1,7 +1,6 @@
 #!/bin/bash
-PHP=$(php -r 'echo explode("-",phpversion())[0];')
 echo "================================================"
-echo " Debian 9 (PHP $PHP)"
+echo " Debian 9 (PHP 7.0)"
 echo "================================================"
 
 echo -n "[1/4] Starting MariaDB 10.1 ..... "
