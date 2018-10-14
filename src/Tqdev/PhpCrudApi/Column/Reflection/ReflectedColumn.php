@@ -124,6 +124,11 @@ class ReflectedColumn implements \JsonSerializable
         return $this->type == 'geometry';
     }
 
+    public function isInteger(): bool
+    {
+        return in_array($this->type, ['integer', 'bigint', 'smallint', 'tinyint']);
+    }
+
     public function setPk($value) /*: void*/
     {
         $this->pk = $value;

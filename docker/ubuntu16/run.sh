@@ -1,6 +1,7 @@
 #!/bin/bash
+PHP=$(php -r 'echo explode("-",phpversion())[0];')
 echo "================================================"
-echo " Ubuntu 16.04"
+echo " Ubuntu 16.04 (PHP $PHP)"
 echo "================================================"
 
 echo -n "[1/4] Starting MariaDB 10.0 ..... "

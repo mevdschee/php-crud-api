@@ -59,6 +59,7 @@ class GenericDB
                     \PDO::ATTR_PERSISTENT => true,
                 ];
             case 'sqlsrv':return $options + [
+                    \PDO::SQLSRV_ATTR_DIRECT_QUERY => false,
                     \PDO::SQLSRV_ATTR_FETCHES_NUMERIC_TYPE => true,
                 ];
         }

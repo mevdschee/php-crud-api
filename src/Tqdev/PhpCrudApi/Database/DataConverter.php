@@ -18,6 +18,8 @@ class DataConverter
         switch ($conversion) {
             case 'boolean':
                 return $value ? true : false;
+            case 'integer':
+                return (int) $value;
         }
         return $value;
     }
@@ -26,6 +28,9 @@ class DataConverter
     {
         if (in_array($this->driver, ['mysql', 'sqlsrv']) && $column->isBoolean()) {
             return 'boolean';
+        }
+        if ($this->driver == 'sqlsrv' && $column->getType() == 'bigint') {
+            return 'integer';
         }
         return 'none';
     }
