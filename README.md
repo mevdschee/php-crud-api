@@ -886,37 +886,37 @@ Install docker using the following commands and then logout and login for the ch
 To run the docker tests run "build_all.sh" and "run_all.sh" from the docker directory. The output should be:
 
     ================================================
-    Debian 9
+    Debian 9 (PHP 7.0)
     ================================================
     [1/4] Starting MariaDB 10.1 ..... done
     [2/4] Starting PostgreSQL 9.6 ... done
     [3/4] Starting SQLServer 2017 ... skipped
-    [4/4] Cloning PHP-CRUD-API v2 ... done
+    [4/4] Cloning PHP-CRUD-API v2 ... skipped
     ------------------------------------------------
-    mysql: 91 tests ran in 2470 ms, 0 failed
-    pgsql: 91 tests ran in 680 ms, 0 failed
+    mysql: 83 tests ran in 378 ms, 0 failed
+    pgsql: 83 tests ran in 284 ms, 0 failed
     sqlsrv: skipped, driver not loaded
     ================================================
-    Ubuntu 16.04
+    Ubuntu 16.04 (PHP 7.0)
     ================================================
     [1/4] Starting MariaDB 10.0 ..... done
     [2/4] Starting PostgreSQL 9.5 ... done
     [3/4] Starting SQLServer 2017 ... done
-    [4/4] Cloning PHP-CRUD-API v2 ... done
+    [4/4] Cloning PHP-CRUD-API v2 ... skipped
     ------------------------------------------------
-    mysql: 91 tests ran in 2490 ms, 0 failed
-    pgsql: 91 tests ran in 710 ms, 0 failed
-    sqlsrv: 91 tests ran in 4204 ms, 7 failed
+    mysql: 83 tests ran in 381 ms, 0 failed
+    pgsql: 83 tests ran in 290 ms, 0 failed
+    sqlsrv: 83 tests ran in 4485 ms, 0 failed
     ================================================
-    Ubuntu 18.04
+    Ubuntu 18.04 (PHP 7.2)
     ================================================
     [1/4] Starting MySQL 5.7 ........ done
     [2/4] Starting PostgreSQL 10.4 .. done
     [3/4] Starting SQLServer 2017 ... skipped
-    [4/4] Cloning PHP-CRUD-API v2 ... done
+    [4/4] Cloning PHP-CRUD-API v2 ... skipped
     ------------------------------------------------
-    mysql: 91 tests ran in 2882 ms, 0 failed
-    pgsql: 91 tests ran in 668 ms, 0 failed
+    mysql: 83 tests ran in 364 ms, 0 failed
+    pgsql: 83 tests ran in 294 ms, 0 failed
     sqlsrv: skipped, driver not loaded
 
 The above test run (including starting up the databases) takes less than one minute on my machine.
@@ -927,15 +927,15 @@ The above test run (including starting up the databases) takes less than one min
     3) ubuntu18
     > 3
     ================================================
-    Ubuntu 18.04
+    Ubuntu 18.04 (PHP 7.2)
     ================================================
     [1/4] Starting MySQL 5.7 ........ done
     [2/4] Starting PostgreSQL 10.4 .. done
     [3/4] Starting SQLServer 2017 ... skipped
     [4/4] Cloning PHP-CRUD-API v2 ... skipped
     ------------------------------------------------
-    mysql: 91 tests ran in 2899 ms, 0 failed
-    pgsql: 91 tests ran in 380 ms, 0 failed
+    mysql: 83 tests ran in 364 ms, 0 failed
+    pgsql: 83 tests ran in 294 ms, 0 failed
     sqlsrv: skipped, driver not loaded
     root@b7ab9472e08f:/php-crud-api# 
 
