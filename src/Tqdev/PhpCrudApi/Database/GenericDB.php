@@ -131,7 +131,7 @@ class GenericDB
                 break;
         }
         $pkValue = $stmt->fetchColumn(0);
-        if ($this->driver == 'sqlsrv' && $table->getPk()->isInteger()) {
+        if ($this->driver == 'sqlsrv' && $table->getPk()->getType() == 'bigint') {
             return (int) $pkValue;
         }
         return $pkValue;
