@@ -139,7 +139,7 @@ CREATE TABLE [categories](
 GO
 
 CREATE TABLE [comments](
-	[id] [int] IDENTITY,
+	[id] [bigint] IDENTITY,
 	[post_id] [int] NOT NULL,
 	[message] [nvarchar](255) NOT NULL,
 	PRIMARY KEY CLUSTERED([id] ASC)

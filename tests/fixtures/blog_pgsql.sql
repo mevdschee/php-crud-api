@@ -50,7 +50,7 @@ CREATE TABLE categories (
 --
 
 CREATE TABLE comments (
-    id serial NOT NULL,
+    id bigserial NOT NULL,
     post_id integer NOT NULL,
     message character varying(255) NOT NULL
 );

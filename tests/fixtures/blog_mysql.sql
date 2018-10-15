@@ -19,7 +19,7 @@ INSERT INTO `categories` (`name`, `icon`) VALUES
 
 DROP TABLE IF EXISTS `comments`;
 CREATE TABLE `comments` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `id` bigint(11) NOT NULL AUTO_INCREMENT,
   `post_id` int(11) NOT NULL,
   `message` varchar(255) NOT NULL,
   PRIMARY KEY (`id`),

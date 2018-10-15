@@ -130,7 +130,11 @@ class GenericDB
                 $stmt = $this->query('SELECT LAST_INSERT_ID()', []);
                 break;
         }
-        return $stmt->fetchColumn(0);
+        $pkValue = $stmt->fetchColumn(0);
+        if ($this->driver == 'sqlsrv' && $table->getPk()->isInteger()) {
+            return (int) $pkValue;
+        }
+        return $pkValue;
     }
 
     public function selectSingle(ReflectedTable $table, array $columnNames, String $id) /*: ?array*/
