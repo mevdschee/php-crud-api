@@ -5,18 +5,15 @@ use Tqdev\PhpCrudApi\Database\GenericReflection;
 
 class ReflectedDatabase implements \JsonSerializable
 {
-    private $name;
     private $tableTypes;
 
-    public function __construct(String $name, array $tableTypes)
+    public function __construct(array $tableTypes)
     {
-        $this->name = $name;
         $this->tableTypes = $tableTypes;
     }
 
     public static function fromReflection(GenericReflection $reflection): ReflectedDatabase
     {
-        $name = $reflection->getDatabaseName();
         $tableTypes = [];
         foreach ($reflection->getTables() as $table) {
             $tableName = $table['TABLE_NAME'];
@@ -26,19 +23,13 @@ class ReflectedDatabase implements \JsonSerializable
             }
             $tableTypes[$tableName] = $tableType;
         }
-        return new ReflectedDatabase($name, $tableTypes);
+        return new ReflectedDatabase($tableTypes);
     }
 
     public static function fromJson( /* object */$json): ReflectedDatabase
     {
-        $name = $json->name;
         $tableTypes = (array) $json->tables;
-        return new ReflectedDatabase($name, $tableTypes);
-    }
-
-    public function getName(): String
-    {
-        return $this->name;
+        return new ReflectedDatabase($tableTypes);
     }
 
     public function hasTable(String $tableName): bool
@@ -68,7 +59,6 @@ class ReflectedDatabase implements \JsonSerializable
     public function serialize()
     {
         return [
-            'name' => $this->name,
             'tables' => $this->tableTypes,
         ];
     }

@@ -32,12 +32,11 @@ class ColumnController
 
     public function getDatabase(Request $request): Response
     {
-        $name = $this->reflection->getDatabaseName();
         $tables = [];
         foreach ($this->reflection->getTableNames() as $table) {
             $tables[] = $this->reflection->getTable($table);
         }
-        $database = ['name' => $name, 'tables' => $tables];
+        $database = ['tables' => $tables];
         return $this->responder->success($database);
     }
 
