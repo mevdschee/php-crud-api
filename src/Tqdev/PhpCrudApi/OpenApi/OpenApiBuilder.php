@@ -87,7 +87,7 @@ class OpenApiBuilder
     private function setPath(String $tableName) /*: void*/
     {
         $table = $this->reflection->getTable($tableName);
-        $type = $table->getType($tableName);
+        $type = $table->getType();
         $pk = $table->getPk();
         $pkName = $pk ? $pk->getName() : '';
         foreach ($this->operations as $operation => $method) {
@@ -137,7 +137,7 @@ class OpenApiBuilder
     private function setComponentSchema(String $tableName) /*: void*/
     {
         $table = $this->reflection->getTable($tableName);
-        $type = $table->getType($tableName);
+        $type = $table->getType();
         $pk = $table->getPk();
         $pkName = $pk ? $pk->getName() : '';
         foreach ($this->operations as $operation => $method) {
@@ -179,7 +179,7 @@ class OpenApiBuilder
     private function setComponentResponse(String $tableName) /*: void*/
     {
         $table = $this->reflection->getTable($tableName);
-        $type = $table->getType($tableName);
+        $type = $table->getType();
         $pk = $table->getPk();
         $pkName = $pk ? $pk->getName() : '';
         foreach (['list', 'read'] as $operation) {
