@@ -204,7 +204,7 @@ class OpenApiBuilder
     private function setComponentRequestBody(String $tableName) /*: void*/
     {
         $table = $this->reflection->getTable($tableName);
-        $type = $table->getType($tableName);
+        $type = $table->getType();
         $pk = $table->getPk();
         $pkName = $pk ? $pk->getName() : '';
         if ($pkName && $type == 'table') {
