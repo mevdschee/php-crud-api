@@ -163,7 +163,7 @@ class OpenApiBuilder
                 $prefix = "components|schemas|$operation-$tableName";
             }
             $this->openapi->set("$prefix|type", "object");
-            foreach ($table->columnNames() as $columnName) {
+            foreach ($table->getColumnNames() as $columnName) {
                 if (!$this->isOperationOnColumnAllowed($operation, $tableName, $columnName)) {
                     continue;
                 }

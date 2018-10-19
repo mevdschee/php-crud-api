@@ -27,7 +27,7 @@ class AuthorizationMiddleware extends Middleware
         $columnHandler = $this->getProperty('columnHandler', '');
         if ($columnHandler) {
             $table = $this->reflection->getTable($tableName);
-            foreach ($table->columnNames() as $columnName) {
+            foreach ($table->getColumnNames() as $columnName) {
                 $allowed = call_user_func($columnHandler, $operation, $tableName, $columnName);
                 if (!$allowed) {
                     $table->removeColumn($columnName);

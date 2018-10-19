@@ -36,7 +36,7 @@ class RecordService
         }
         if ($id != '') {
             $pk = $this->reflection->getTable($tableName)->getPk();
-            foreach ($this->reflection->getTable($tableName)->columnNames() as $key) {
+            foreach ($this->reflection->getTable($tableName)->getColumnNames() as $key) {
                 $field = $this->reflection->getTable($tableName)->getColumn($key);
                 if ($field->getName() == $pk->getName()) {
                     unset($record->$key);

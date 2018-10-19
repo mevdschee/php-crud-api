@@ -653,7 +653,7 @@ class ReflectedTable implements \JsonSerializable
         return $this->type;
     }
 
-    public function columnNames(): array
+    public function getColumnNames(): array
     {
         return array_keys($this->columns);
     }
@@ -2282,7 +2282,7 @@ class GenericDefinition
         $p1 = $this->quote($tableName);
         $fields = [];
         $constraints = [];
-        foreach ($newTable->columnNames() as $columnName) {
+        foreach ($newTable->getColumnNames() as $columnName) {
             $newColumn = $newTable->getColumn($columnName);
             $f1 = $this->quote($columnName);
             $f2 = $this->getColumnType($newColumn, false);
@@ -2929,7 +2929,7 @@ class AuthorizationMiddleware extends Middleware
         $columnHandler = $this->getProperty('columnHandler', '');
         if ($columnHandler) {
             $table = $this->reflection->getTable($tableName);
-            foreach ($table->columnNames() as $columnName) {
+            foreach ($table->getColumnNames() as $columnName) {
                 $allowed = call_user_func($columnHandler, $operation, $tableName, $columnName);
                 if (!$allowed) {
                     $table->removeColumn($columnName);
@@ -3777,7 +3777,7 @@ class OpenApiBuilder
                 $prefix = "components|schemas|$operation-$tableName";
             }
             $this->openapi->set("$prefix|type", "object");
-            foreach ($table->columnNames() as $columnName) {
+            foreach ($table->getColumnNames() as $columnName) {
                 if (!$this->isOperationOnColumnAllowed($operation, $tableName, $columnName)) {
                     continue;
                 }
@@ -4232,7 +4232,7 @@ class ColumnIncluder
     public function getNames(ReflectedTable $table, bool $primaryTable, array $params): array
     {
         $tableName = $table->getName();
-        $results = $table->columnNames();
+        $results = $table->getColumnNames();
         $results = $this->select($tableName, $primaryTable, $params, 'include', $results, true);
         $results = $this->select($tableName, $primaryTable, $params, 'exclude', $results, false);
         return $results;
@@ -4427,7 +4427,7 @@ class OrderingInfo
             if ($pk) {
                 $fields[] = [$pk->getName(), 'ASC'];
             } else {
-                foreach ($table->columnNames() as $columnName) {
+                foreach ($table->getColumnNames() as $columnName) {
                     $fields[] = [$columnName, 'ASC'];
                 }
 
@@ -4602,7 +4602,7 @@ class RecordService
         }
         if ($id != '') {
             $pk = $this->reflection->getTable($tableName)->getPk();
-            foreach ($this->reflection->getTable($tableName)->columnNames() as $key) {
+            foreach ($this->reflection->getTable($tableName)->getColumnNames() as $key) {
                 $field = $this->reflection->getTable($tableName)->getColumn($key);
                 if ($field->getName() == $pk->getName()) {
                     unset($record->$key);
