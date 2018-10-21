@@ -102,7 +102,7 @@ class ReflectedTable implements \JsonSerializable
         return $this->type;
     }
 
-    public function columnNames(): array
+    public function getColumnNames(): array
     {
         return array_keys($this->columns);
     }

@@ -260,7 +260,7 @@ class GenericDefinition
         $p1 = $this->quote($tableName);
         $fields = [];
         $constraints = [];
-        foreach ($newTable->columnNames() as $columnName) {
+        foreach ($newTable->getColumnNames() as $columnName) {
             $newColumn = $newTable->getColumn($columnName);
             $f1 = $this->quote($columnName);
             $f2 = $this->getColumnType($newColumn, false);

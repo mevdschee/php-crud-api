@@ -30,7 +30,7 @@ class OrderingInfo
             if ($pk) {
                 $fields[] = [$pk->getName(), 'ASC'];
             } else {
-                foreach ($table->columnNames() as $columnName) {
+                foreach ($table->getColumnNames() as $columnName) {
                     $fields[] = [$columnName, 'ASC'];
                 }
 

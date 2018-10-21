@@ -45,7 +45,7 @@ class ColumnIncluder
     public function getNames(ReflectedTable $table, bool $primaryTable, array $params): array
     {
         $tableName = $table->getName();
-        $results = $table->columnNames();
+        $results = $table->getColumnNames();
         $results = $this->select($tableName, $primaryTable, $params, 'include', $results, true);
         $results = $this->select($tableName, $primaryTable, $params, 'exclude', $results, false);
         return $results;
