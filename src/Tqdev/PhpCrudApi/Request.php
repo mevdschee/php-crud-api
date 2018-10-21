@@ -99,17 +99,10 @@ class Request
 
     private function parseBody(String $body = null) /*: void*/
     {
-        if ($body) {
-            $object = $this->decodeBody($body);
-        } else {
-            if (!empty($_FILES)) {
-                $object = (object) $_POST;
-            } else {
-                $input = file_get_contents('php://input');
-                $object = $this->decodeBody($input);
-            }
+        if (!$body) {
+            $body = file_get_contents('php://input');
         }
-        $this->body = $object;
+        $this->body = $this->decodeBody($body);
     }
 
     public function getMethod(): String
@@ -186,10 +179,5 @@ class Request
             $headers[$key] = trim($value);
         }
         return new Request($method, $path, $query, $headers, $body);
-    }
-
-    public function getUploadedFiles(): array
-    {
-        return $_FILES;
     }
 }

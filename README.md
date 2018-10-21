@@ -105,7 +105,7 @@ These features match features in v1 (see branch "v1"):
   - [x] Supports POST variables as input (x-www-form-urlencoded)
   - [x] Supports a JSON object as input
   - [x] Supports a JSON array as input (batch insert)
-  - [x] Supports file upload from web forms (multipart/form-data)
+  - [ ] ~~Supports file upload from web forms (multipart/form-data)~~
   - [ ] ~~Condensed JSON output: first row contains field names~~
   - [x] Sanitize and validate input using callbacks
   - [x] Permission system for databases, tables, columns and records
@@ -734,26 +734,7 @@ The above example will add a header "X-Time-Taken" with the number of seconds th
 
 ### File uploads
 
-The 'fileUpload' middleware allows you to upload a file using a web form (multipart/form-data) like this:
-
-```
-<form method="post" action="http://localhost/api.php/records/categories" enctype="multipart/form-data">
-  Select image to upload:
-  <input type="file" name="icon">
-  <input type="submit">
-</form>
-```
-
-Then this is handled as if you would have sent:
-
-```
-POST http://localhost/api.php/records/categories
-{"icon_name":"not.gif","icon_type":"image\/gif","icon":"ZGF0YQ==","icon_error":0,"icon_size":4}
-```
-
-As you can see the "xxx_name", "xxx_type", "xxx_error" and "xxx_size" meta fields are added (where "xxx" is the name of the file field).
-
-NB: You cannot edit a file using this method, because browsers do not support the "PUT" method in these forms.
+File uploads are supported through the [FileReader API](https://caniuse.com/#feat=filereader).
 
 ## OpenAPI specification
 
