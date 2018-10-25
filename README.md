@@ -35,7 +35,7 @@ There are also proof-of-concept ports of this script that only support basic RES
 
 ## Known issues
 
-- Seeing integers as strings? Make sure to enable the nd_pdo_mysql extension and disable pdo_mysql.
+- Seeing integers as strings? Make sure to enable the `nd_pdo_mysql` extension and disable `pdo_mysql`.
 
 ## Installation
 
