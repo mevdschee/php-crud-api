@@ -33,6 +33,10 @@ There are also proof-of-concept ports of this script that only support basic RES
   - PostGIS 2.0 or higher for spatial features in PostgreSQL 9.1 or higher
   - SQL Server 2012 or higher (2017 for Linux support)
 
+## Known issues
+
+- Seeing integers as strings? Make sure to enable the nd_pdo_mysql extension and disable pdo_mysql.
+
 ## Installation
 
 This is a single file application! Upload "`api.php`" somewhere and enjoy!
