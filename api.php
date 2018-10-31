@@ -75,7 +75,7 @@ class MemcacheCache implements Cache
         $this->memcache->addServer($address, $port);
     }
 
-    protected function create(): stdClass
+    protected function create() /*: \Memcache*/
     {
         return new \Memcache();
     }
@@ -100,7 +100,7 @@ class MemcacheCache implements Cache
 
 class MemcachedCache extends MemcacheCache
 {
-    protected function create(): stdClass
+    protected function create() /*: \Memcached*/
     {
         return new \Memcached();
     }
@@ -3188,35 +3188,6 @@ class CustomizationMiddleware extends Middleware
     }
 }
 
-// file: src/Tqdev/PhpCrudApi/Middleware/FileUploadMiddleware.php
-
-class FileUploadMiddleware extends Middleware
-{
-    public function handle(Request $request): Response
-    {
-        $files = $request->getUploadedFiles();
-        if (!empty($files)) {
-            $body = $request->getBody();
-            foreach ($files as $fieldName => $file) {
-                if (isset($file['error']) && $file['error']) {
-                    return $this->responder->error(ErrorCode::FILE_UPLOAD_FAILED, $fieldName);
-                }
-                foreach ($file as $key => $value) {
-                    if ($key == 'tmp_name') {
-                        $value = base64_encode(file_get_contents($value));
-                        $key = $fieldName;
-                    } else {
-                        $key = $fieldName . '_' . $key;
-                    }
-                    $body->$key = $value;
-                }
-            }
-            $request->setBody($body);
-        }
-        return $this->next->handle($request);
-    }
-}
-
 // file: src/Tqdev/PhpCrudApi/Middleware/FirewallMiddleware.php
 
 class FirewallMiddleware extends Middleware
@@ -3263,6 +3234,30 @@ class FirewallMiddleware extends Middleware
             $response = $this->next->handle($request);
         }
         return $response;
+    }
+}
+
+// file: src/Tqdev/PhpCrudApi/Middleware/FormMiddleware.php
+
+class FormMiddleware extends Middleware
+{
+    public function handle(Request $request): Response
+    {
+        $body = $request->getBody();
+        if (!$body) {
+            $body = file_get_contents('php://input');
+            if ($body) {
+                parse_str($body, $input);
+                foreach ($input as $key => $value) {
+                    if (substr($key, -9) == '__is_null') {
+                        $input[substr($key, 0, -9)] = null;
+                        unset($input[$key]);
+                    }
+                }
+                $request->setBody((object) $input);
+            }
+        }
+        return $this->next->handle($request);
     }
 }
 
@@ -5070,9 +5065,6 @@ class Api
                 case 'jwtAuth':
                     new JwtAuthMiddleware($router, $responder, $properties);
                     break;
-                case 'fileUpload':
-                    new FileUploadMiddleware($router, $responder, $properties);
-                    break;
                 case 'validation':
                     new ValidationMiddleware($router, $responder, $properties, $reflection);
                     break;
@@ -5405,17 +5397,10 @@ class Request
 
     private function parseBody(String $body = null) /*: void*/
     {
-        if ($body) {
-            $object = $this->decodeBody($body);
-        } else {
-            if (!empty($_FILES)) {
-                $object = (object) $_POST;
-            } else {
-                $input = file_get_contents('php://input');
-                $object = $this->decodeBody($input);
-            }
+        if (!$body) {
+            $body = file_get_contents('php://input');
         }
-        $this->body = $object;
+        $this->body = $this->decodeBody($body);
     }
 
     public function getMethod(): String
@@ -5492,11 +5477,6 @@ class Request
             $headers[$key] = trim($value);
         }
         return new Request($method, $path, $query, $headers, $body);
-    }
-
-    public function getUploadedFiles(): array
-    {
-        return $_FILES;
     }
 }
 
