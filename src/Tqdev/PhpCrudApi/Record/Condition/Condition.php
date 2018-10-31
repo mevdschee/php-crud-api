@@ -33,6 +33,9 @@ abstract class Condition
         if (count($parts) < 2) {
             return null;
         }
+        if (count($parts) < 3) {
+            $parts[2] = '';
+        }
         $field = $table->getColumn($parts[0]);
         $command = $parts[1];
         $negate = false;
