@@ -440,6 +440,11 @@ class ReflectedColumn implements \JsonSerializable
         return $this->type == 'geometry';
     }
 
+    public function isInteger(): bool
+    {
+        return in_array($this->type, ['integer', 'bigint', 'smallint', 'tinyint']);
+    }
+
     public function setPk($value) /*: void*/
     {
         $this->pk = $value;
@@ -484,18 +489,15 @@ class ReflectedColumn implements \JsonSerializable
 
 class ReflectedDatabase implements \JsonSerializable
 {
-    private $name;
     private $tableTypes;
 
-    public function __construct(String $name, array $tableTypes)
+    public function __construct(array $tableTypes)
     {
-        $this->name = $name;
         $this->tableTypes = $tableTypes;
     }
 
     public static function fromReflection(GenericReflection $reflection): ReflectedDatabase
     {
-        $name = $reflection->getDatabaseName();
         $tableTypes = [];
         foreach ($reflection->getTables() as $table) {
             $tableName = $table['TABLE_NAME'];
@@ -505,19 +507,13 @@ class ReflectedDatabase implements \JsonSerializable
             }
             $tableTypes[$tableName] = $tableType;
         }
-        return new ReflectedDatabase($name, $tableTypes);
+        return new ReflectedDatabase($tableTypes);
     }
 
     public static function fromJson( /* object */$json): ReflectedDatabase
     {
-        $name = $json->name;
         $tableTypes = (array) $json->tables;
-        return new ReflectedDatabase($name, $tableTypes);
-    }
-
-    public function getName(): String
-    {
-        return $this->name;
+        return new ReflectedDatabase($tableTypes);
     }
 
     public function hasTable(String $tableName): bool
@@ -547,7 +543,6 @@ class ReflectedDatabase implements \JsonSerializable
     public function serialize()
     {
         return [
-            'name' => $this->name,
             'tables' => $this->tableTypes,
         ];
     }
@@ -987,12 +982,11 @@ class ColumnController
 
     public function getDatabase(Request $request): Response
     {
-        $name = $this->reflection->getDatabaseName();
         $tables = [];
         foreach ($this->reflection->getTableNames() as $table) {
             $tables[] = $this->reflection->getTable($table);
         }
-        $database = ['name' => $name, 'tables' => $tables];
+        $database = ['tables' => $tables];
         return $this->responder->success($database);
     }
 
@@ -1701,6 +1695,8 @@ class DataConverter
         switch ($conversion) {
             case 'boolean':
                 return $value ? true : false;
+            case 'integer':
+                return (int) $value;
         }
         return $value;
     }
@@ -1709,6 +1705,9 @@ class DataConverter
     {
         if (in_array($this->driver, ['mysql', 'sqlsrv']) && $column->isBoolean()) {
             return 'boolean';
+        }
+        if ($this->driver == 'sqlsrv' && $column->getType() == 'bigint') {
+            return 'integer';
         }
         return 'none';
     }
@@ -1818,6 +1817,7 @@ class GenericDB
                     \PDO::ATTR_PERSISTENT => true,
                 ];
             case 'sqlsrv':return $options + [
+                    \PDO::SQLSRV_ATTR_DIRECT_QUERY => false,
                     \PDO::SQLSRV_ATTR_FETCHES_NUMERIC_TYPE => true,
                 ];
         }
@@ -1886,7 +1886,11 @@ class GenericDB
                 $stmt = $this->query('SELECT LAST_INSERT_ID()', []);
                 break;
         }
-        return $stmt->fetchColumn(0);
+        $pkValue = $stmt->fetchColumn(0);
+        if ($this->driver == 'sqlsrv' && $table->getPk()->getType() == 'bigint') {
+            return (int) $pkValue;
+        }
+        return $pkValue;
     }
 
     public function selectSingle(ReflectedTable $table, array $columnNames, String $id) /*: ?array*/
@@ -3701,7 +3705,7 @@ class OpenApiBuilder
     private function setPath(String $tableName) /*: void*/
     {
         $table = $this->reflection->getTable($tableName);
-        $type = $table->getType($tableName);
+        $type = $table->getType();
         $pk = $table->getPk();
         $pkName = $pk ? $pk->getName() : '';
         foreach ($this->operations as $operation => $method) {
@@ -3751,7 +3755,7 @@ class OpenApiBuilder
     private function setComponentSchema(String $tableName) /*: void*/
     {
         $table = $this->reflection->getTable($tableName);
-        $type = $table->getType($tableName);
+        $type = $table->getType();
         $pk = $table->getPk();
         $pkName = $pk ? $pk->getName() : '';
         foreach ($this->operations as $operation => $method) {
@@ -3793,7 +3797,7 @@ class OpenApiBuilder
     private function setComponentResponse(String $tableName) /*: void*/
     {
         $table = $this->reflection->getTable($tableName);
-        $type = $table->getType($tableName);
+        $type = $table->getType();
         $pk = $table->getPk();
         $pkName = $pk ? $pk->getName() : '';
         foreach (['list', 'read'] as $operation) {
@@ -3818,7 +3822,7 @@ class OpenApiBuilder
     private function setComponentRequestBody(String $tableName) /*: void*/
     {
         $table = $this->reflection->getTable($tableName);
-        $type = $table->getType($tableName);
+        $type = $table->getType();
         $pk = $table->getPk();
         $pkName = $pk ? $pk->getName() : '';
         if ($pkName && $type == 'table') {
