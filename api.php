@@ -3237,30 +3237,6 @@ class FirewallMiddleware extends Middleware
     }
 }
 
-// file: src/Tqdev/PhpCrudApi/Middleware/FormMiddleware.php
-
-class FormMiddleware extends Middleware
-{
-    public function handle(Request $request): Response
-    {
-        $body = $request->getBody();
-        if (!$body) {
-            $body = file_get_contents('php://input');
-            if ($body) {
-                parse_str($body, $input);
-                foreach ($input as $key => $value) {
-                    if (substr($key, -9) == '__is_null') {
-                        $input[substr($key, 0, -9)] = null;
-                        unset($input[$key]);
-                    }
-                }
-                $request->setBody((object) $input);
-            }
-        }
-        return $this->next->handle($request);
-    }
-}
-
 // file: src/Tqdev/PhpCrudApi/Middleware/JwtAuthMiddleware.php
 
 class JwtAuthMiddleware extends Middleware
@@ -3994,6 +3970,9 @@ abstract class Condition
         if (count($parts) < 2) {
             return null;
         }
+        if (count($parts) < 3) {
+            $parts[2] = '';
+        }
         $field = $table->getColumn($parts[0]);
         $command = $parts[1];
         $negate = false;
@@ -4008,15 +3987,13 @@ abstract class Condition
                 $command = substr($command, 1);
             }
         }
-        if (count($parts) == 3 || (count($parts) == 2 && in_array($command, ['ic', 'is', 'iv']))) {
-            if ($spatial) {
-                if (in_array($command, ['co', 'cr', 'di', 'eq', 'in', 'ov', 'to', 'wi', 'ic', 'is', 'iv'])) {
-                    $condition = new SpatialCondition($field, $command, $parts[2]);
-                }
-            } else {
-                if (in_array($command, ['cs', 'sw', 'ew', 'eq', 'lt', 'le', 'ge', 'gt', 'bt', 'in', 'is'])) {
-                    $condition = new ColumnCondition($field, $command, $parts[2]);
-                }
+        if ($spatial) {
+            if (in_array($command, ['co', 'cr', 'di', 'eq', 'in', 'ov', 'to', 'wi', 'ic', 'is', 'iv'])) {
+                $condition = new SpatialCondition($field, $command, $parts[2]);
+            }
+        } else {
+            if (in_array($command, ['cs', 'sw', 'ew', 'eq', 'lt', 'le', 'ge', 'gt', 'bt', 'in', 'is'])) {
+                $condition = new ColumnCondition($field, $command, $parts[2]);
             }
         }
         if ($negate) {
