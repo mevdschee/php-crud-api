@@ -34,7 +34,7 @@ class JwtAuthMiddleware extends Middleware
         if (!isset($algorithms[$algorithm])) {
             return array();
         }
-        if (!in_array($algorithm, $requirements['alg'])) {
+        if (!empty($requirements['alg']) && !in_array($algorithm, $requirements['alg'])) {
             return array();
         }
         $hmac = $algorithms[$algorithm];
