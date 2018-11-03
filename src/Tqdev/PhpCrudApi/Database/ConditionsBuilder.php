@@ -1,6 +1,7 @@
 <?php
 namespace Tqdev\PhpCrudApi\Database;
 
+use Tqdev\PhpCrudApi\Column\Reflection\ReflectedColumn;
 use Tqdev\PhpCrudApi\Record\Condition\AndCondition;
 use Tqdev\PhpCrudApi\Record\Condition\ColumnCondition;
 use Tqdev\PhpCrudApi\Record\Condition\Condition;
@@ -8,7 +9,6 @@ use Tqdev\PhpCrudApi\Record\Condition\NoCondition;
 use Tqdev\PhpCrudApi\Record\Condition\NotCondition;
 use Tqdev\PhpCrudApi\Record\Condition\OrCondition;
 use Tqdev\PhpCrudApi\Record\Condition\SpatialCondition;
-use Tqdev\PhpCrudApi\Column\Reflection\ReflectedColumn;
 
 class ConditionsBuilder
 {
@@ -30,11 +30,11 @@ class ConditionsBuilder
         if ($condition instanceof NotCondition) {
             return $this->getNotConditionSql($condition, $arguments);
         }
-        if ($condition instanceof ColumnCondition) {
-            return $this->getColumnConditionSql($condition, $arguments);
-        }
         if ($condition instanceof SpatialCondition) {
             return $this->getSpatialConditionSql($condition, $arguments);
+        }
+        if ($condition instanceof ColumnCondition) {
+            return $this->getColumnConditionSql($condition, $arguments);
         }
         throw new \Exception('Unknown Condition: ' . get_class($condition));
     }
