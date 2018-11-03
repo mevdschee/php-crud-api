@@ -1,0 +1,7 @@
+GET /records/users?include=id,location&filter=location,swi,POLYGON((10 10,10 50,50 50,50 10,10 10))
+===
+200
+Content-Type: application/json
+Content-Length: 48
+
+{"records":[{"id":1,"location":"POINT(30 20)"}]}
