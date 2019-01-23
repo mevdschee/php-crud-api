@@ -517,6 +517,8 @@ This may lead to the following JSON data:
 You see that the "belongsTo" relationships are detected and the foreign key value is replaced by the referenced object.
 In case of "hasMany" and "hasAndBelongsToMany" the table name is used a new property on the object.
 
+NB: You need to create a foreign key constraint for the join to work.
+
 ### Batch operations
 
 When you want to create, read, update or delete you may specify multiple primary key values in the URL.
