@@ -833,7 +833,7 @@ The following errors may be reported:
 | 1017       | 403 FORBIDDEN              | Bad or missing XSRF token 
 | 1018       | 403 FORBIDDEN              | Only AJAX requests allowed 
 | 1019       | 422 UNPROCESSABLE ENTITY   | File upload failed 
-| 9999       | 500: INTERNAL SERVER ERROR | Unknown error 
+| 9999       | 500 INTERNAL SERVER ERROR  | Unknown error 
 
 The following JSON structure is used:
 
