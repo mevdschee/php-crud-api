@@ -811,29 +811,29 @@ JavaScript does not support 64 bit integers. All numbers are stored as 64 bit fl
 
 The following errors may be reported:
 
-| Error Code | HTTP Response Code         | Message
-| ---------- | -------------------------- | --------------
-| 1000       | 404 NOT FOUND              | Route not found 
-| 1001       | 404 NOT FOUND              | Table not found 
-| 1002       | 422 UNPROCESSABLE ENTITY   | Argument count mismatch 
-| 1003       | 404 NOT FOUND              | Record not found 
-| 1004       | 403 FORBIDDEN              | Origin is forbidden 
-| 1005       | 404 NOT FOUND              | Column not found 
-| 1006       | 409 CONFLICT               | Table already exists 
-| 1007       | 409 CONFLICT               | Column already exists 
-| 1008       | 422 UNPROCESSABLE ENTITY   | Cannot read HTTP message 
-| 1009       | 409 CONFLICT               | Duplicate key exception 
-| 1010       | 409 CONFLICT               | Data integrity violation 
-| 1011       | 401 UNAUTHORIZED           | Authentication required 
-| 1012       | 403 FORBIDDEN              | Authentication failed 
-| 1013       | 422 UNPROCESSABLE ENTITY   | Input validation failed 
-| 1014       | 403 FORBIDDEN              | Operation forbidden 
-| 1015       | 405 METHOD NOT ALLOWED     | Operation not supported 
-| 1016       | 403 FORBIDDEN              | Temporary or permanently blocked 
-| 1017       | 403 FORBIDDEN              | Bad or missing XSRF token 
-| 1018       | 403 FORBIDDEN              | Only AJAX requests allowed 
-| 1019       | 422 UNPROCESSABLE ENTITY   | File upload failed 
-| 9999       | 500 INTERNAL SERVER ERROR  | Unknown error 
+| Error | HTTP response code         | Message
+| ------| -------------------------- | --------------
+| 1000  | 404 Not found              | Route not found 
+| 1001  | 404 Not found              | Table not found 
+| 1002  | 422 Unprocessable entity   | Argument count mismatch 
+| 1003  | 404 Not found              | Record not found 
+| 1004  | 403 Forbidden              | Origin is forbidden 
+| 1005  | 404 Not found              | Column not found 
+| 1006  | 409 Conflict               | Table already exists 
+| 1007  | 409 Conflict               | Column already exists 
+| 1008  | 422 Unprocessable entity   | Cannot read HTTP message 
+| 1009  | 409 Conflict               | Duplicate key exception 
+| 1010  | 409 Conflict               | Data integrity violation 
+| 1011  | 401 Unauthorized           | Authentication required 
+| 1012  | 403 Forbidden              | Authentication failed 
+| 1013  | 422 Unprocessable entity   | Input validation failed 
+| 1014  | 403 Forbidden              | Operation forbidden 
+| 1015  | 405 Method not allowed     | Operation not supported 
+| 1016  | 403 Forbidden              | Temporary or permanently blocked 
+| 1017  | 403 Forbidden              | Bad or missing XSRF token 
+| 1018  | 403 Forbidden              | Only AJAX requests allowed 
+| 1019  | 422 Unprocessable entity   | File upload failed 
+| 9999  | 500 Internal server error  | Unknown error 
 
 The following JSON structure is used:
 
