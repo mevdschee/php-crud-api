@@ -39,7 +39,7 @@ There are also proof-of-concept ports of this script that only support basic RES
 
 ## Installation
 
-This is a single file application! Upload "`api.php`" somewhere and enjoy!
+This is a single file application! Upload `api.php` somewhere and enjoy!
 
 For local development you may run PHP's built-in web server:
 
@@ -53,7 +53,7 @@ Don't forget to modify the configuration at the bottom of the file.
 
 ## Configuration
 
-Edit the following lines in the bottom of the file "`api.php`":
+Edit the following lines in the bottom of the file `api.php`:
 
     $config = new Config([
         'username' => 'xxx',
@@ -63,19 +63,19 @@ Edit the following lines in the bottom of the file "`api.php`":
 
 These are all the configuration options and their default value between brackets:
 
-- "driver": `mysql`, `pgsql` or `sqlsrv` (`mysql`)
-- "address": Hostname of the database server (`localhost`)
-- "port": TCP port of the database server (defaults to driver default)
-- "username": Username of the user connecting to the database (no default)
-- "password": Password of the user connecting to the database (no default)
-- "database": Database the connecting is made to (no default)
-- "middlewares": List of middlewares to load (`cors`)
-- "controllers": List of controllers to load (`records,openapi`)
-- "openApiBase": OpenAPI info (`{"info":{"title":"PHP-CRUD-API","version":"1.0.0"}}`)
-- "cacheType": `TempFile`, `Redis`, `Memcache`, `Memcached` or `NoCache` (`TempFile`)
-- "cachePath": Path/address of the cache (defaults to system's temp directory)
-- "cacheTime": Number of seconds the cache is valid (`10`)
-- "debug": Show errors in the "X-Debug-Info" header (`false`)
+- `driver`: `mysql`, `pgsql` or `sqlsrv` (`mysql`)
+- `address`: Hostname of the database server (`localhost`)
+- `port`: TCP port of the database server (defaults to driver default)
+- `username`: Username of the user connecting to the database (no default)
+- `password`: Password of the user connecting to the database (no default)
+- `database`: Database the connecting is made to (no default)
+- `middlewares`: List of middlewares to load (`cors`)
+- `controllers`: List of controllers to load (`records,openapi`)
+- `openApiBase`: OpenAPI info (`{"info":{"title":"PHP-CRUD-API","version":"1.0.0"}}`)
+- `cacheType`: `TempFile`, `Redis`, `Memcache`, `Memcached` or `NoCache` (`TempFile`)
+- `cachePath`: Path/address of the cache (defaults to system's temp directory)
+- `cacheTime`: Number of seconds the cache is valid (`10`)
+- `debug`: Show errors in the `X-Debug-Info` header (`false`)
 
 ## Compilation
 
@@ -96,7 +96,7 @@ These limitation were also present in v1:
   - Primary keys should either be auto-increment (from 1 to 2^53) or UUID
   - Composite primary or foreign keys are not supported
   - Complex writes (transactions) are not supported
-  - Complex queries calling functions (like "concat" or "sum") are not supported
+  - Complex queries calling functions (like `concat` or `sum`) are not supported
   - Database must support and define foreign key constraints
   
 ## Features
@@ -118,7 +118,7 @@ These features match features in v1 (see branch "v1"):
   - [x] Support for reading joined results from multiple tables
   - [x] Search support on multiple criteria
   - [x] Pagination, seeking, sorting and column selection
-  - [x] Relation detection with nested results (belongsTo, hasMany and HABTM)
+  - [x] Relation detection with nested results (`belongsTo`, `hasMany` and `HABTM`)
   - [ ] ~~Relation "transforms" (of condensed JSON) for PHP and JavaScript~~
   - [x] Atomic increment support via PATCH (for counters)
   - [x] Binary fields supported with base64 encoding
@@ -135,7 +135,7 @@ These features match features in v1 (see branch "v1"):
 These features are new and were not included in v1.
 
   - Does not reflect on every request (better performance)
-  - Complex filters (with both "and" & "or") are supported
+  - Complex filters (with both `and` & `or`) are supported
   - Support for output of database structure in JSON
   - Support for boolean and binary data in all database engines
   - Support for relational data on read (not only on list operation)
@@ -146,56 +146,56 @@ These features are new and were not included in v1.
 
 ## Middleware
 
-You can enable the following middleware using the "middlewares" config parameter:
+You can enable the following middleware using the `middlewares` config parameter:
 
-- "firewall": Limit access to specific IP addresses
-- "cors": Support for CORS requests (enabled by default)
-- "xsrf": Block XSRF attacks using the 'Double Submit Cookie' method
-- "ajaxOnly": Restrict non-AJAX requests to prevent XSRF attacks
-- "jwtAuth": Support for "JWT Authentication"
-- "basicAuth": Support for "Basic Authentication"
-- "authorization": Restrict access to certain tables or columns
-- "validation": Return input validation errors for custom rules
-- "sanitation": Apply input sanitation on create and update
-- "multiTenancy": Restricts tenants access in a multi-tenant scenario
-- "customization": Provides handlers for request and response customization
+- `firewall`: Limit access to specific IP addresses
+- `cors`: Support for CORS requests (enabled by default)
+- `xsrf`: Block XSRF attacks using the 'Double Submit Cookie' method
+- `ajaxOnly`: Restrict non-AJAX requests to prevent XSRF attacks
+- `jwtAuth`: Support for "JWT Authentication"
+- `basicAuth`: Support for "Basic Authentication"
+- `authorization`: Restrict access to certain tables or columns
+- `validation`: Return input validation errors for custom rules
+- `sanitation`: Apply input sanitation on create and update
+- `multiTenancy`: Restricts tenants access in a multi-tenant scenario
+- `customization`: Provides handlers for request and response customization
 
-The "middlewares" config parameter is a comma separated list of enabled middlewares.
+The `middlewares` config parameter is a comma separated list of enabled middlewares.
 You can tune the middleware behavior using middleware specific configuration parameters:
 
-- "firewall.reverseProxy": Set to "true" when a reverse proxy is used ("")
-- "firewall.allowedIpAddresses": List of IP addresses that are allowed to connect ("")
-- "cors.allowedOrigins": The origins allowed in the CORS headers ("*")
-- "cors.allowHeaders": The headers allowed in the CORS request ("Content-Type, X-XSRF-TOKEN")
-- "cors.allowMethods": The methods allowed in the CORS request ("OPTIONS, GET, PUT, POST, DELETE, PATCH")
-- "cors.allowCredentials": To allow credentials in the CORS request ("true")
-- "cors.exposeHeaders": Whitelist headers that browsers are allowed to access ("")
-- "cors.maxAge": The time that the CORS grant is valid in seconds ("1728000")
-- "xsrf.excludeMethods": The methods that do not require XSRF protection ("OPTIONS,GET")
-- "xsrf.cookieName": The name of the XSRF protection cookie ("XSRF-TOKEN")
-- "xsrf.headerName": The name of the XSRF protection header ("X-XSRF-TOKEN")
-- "ajaxOnly.excludeMethods": The methods that do not require AJAX ("OPTIONS,GET")
-- "ajaxOnly.headerName": The name of the required header ("X-Requested-With")
-- "ajaxOnly.headerValue": The value of the required header ("XMLHttpRequest")
-- "jwtAuth.mode": Set to "optional" if you want to allow anonymous access ("required")
-- "jwtAuth.header": Name of the header containing the JWT token ("X-Authorization")
-- "jwtAuth.leeway": The acceptable number of seconds of clock skew ("5")
-- "jwtAuth.ttl": The number of seconds the token is valid ("30")
-- "jwtAuth.secret": The shared secret used to sign the JWT token with ("")
-- "jwtAuth.algorithms": The algorithms that are allowed, empty means 'all' ("")
-- "jwtAuth.audiences": The audiences that are allowed, empty means 'all' ("")
-- "jwtAuth.issuers": The issuers that are allowed, empty means 'all' ("")
-- "basicAuth.mode": Set to "optional" if you want to allow anonymous access ("required")
-- "basicAuth.realm": Text to prompt when showing login ("Username and password required")
-- "basicAuth.passwordFile": The file to read for username/password combinations (".htpasswd")
-- "authorization.tableHandler": Handler to implement table authorization rules ("")
-- "authorization.columnHandler": Handler to implement column authorization rules ("")
-- "authorization.recordHandler": Handler to implement record authorization filter rules ("")
-- "validation.handler": Handler to implement validation rules for input values ("")
-- "sanitation.handler": Handler to implement sanitation rules for input values ("")
-- "multiTenancy.handler": Handler to implement simple multi-tenancy rules ("")
-- "customization.beforeHandler": Handler to implement request customization ("")
-- "customization.afterHandler": Handler to implement response customization ("")
+- `firewall.reverseProxy`: Set to "true" when a reverse proxy is used ("")
+- `firewall.allowedIpAddresses`: List of IP addresses that are allowed to connect ("")
+- `cors.allowedOrigins`: The origins allowed in the CORS headers ("*")
+- `cors.allowHeaders`: The headers allowed in the CORS request (`Content-Type, X-XSRF-TOKEN`)
+- `cors.allowMethods`: The methods allowed in the CORS request (`OPTIONS, GET, PUT, POST, DELETE, PATCH`)
+- `cors.allowCredentials`: To allow credentials in the CORS request (`true`)
+- `cors.exposeHeaders`: Whitelist headers that browsers are allowed to access (``)
+- `cors.maxAge`: The time that the CORS grant is valid in seconds (`1728000`)
+- `xsrf.excludeMethods`: The methods that do not require XSRF protection (`OPTIONS,GET`)
+- `xsrf.cookieName`: The name of the XSRF protection cookie (`XSRF-TOKEN`)
+- `xsrf.headerName`: The name of the XSRF protection header (`X-XSRF-TOKEN`)
+- `ajaxOnly.excludeMethods`: The methods that do not require AJAX (`OPTIONS,GET`)
+- `ajaxOnly.headerName`: The name of the required header (`X-Requested-With`)
+- `ajaxOnly.headerValue`: The value of the required header (`XMLHttpRequest`)
+- `jwtAuth.mode`: Set to `optional` if you want to allow anonymous access (`required`)
+- `jwtAuth.header`: Name of the header containing the JWT token (`X-Authorization`)
+- `jwtAuth.leeway`: The acceptable number of seconds of clock skew (`5`)
+- `jwtAuth.ttl`: The number of seconds the token is valid (`30`)
+- `jwtAuth.secret`: The shared secret used to sign the JWT token with (``)
+- `jwtAuth.algorithms`: The algorithms that are allowed, empty means `all` (``)
+- `jwtAuth.audiences`: The audiences that are allowed, empty means `all` (``)
+- `jwtAuth.issuers`: The issuers that are allowed, empty means `all` (``)
+- `basicAuth.mode`: Set to `optional` if you want to allow anonymous access (`required`)
+- `basicAuth.realm`: Text to prompt when showing login ("Username and password required")
+- `basicAuth.passwordFile`: The file to read for username/password combinations (`.htpasswd`)
+- `authorization.tableHandler`: Handler to implement table authorization rules (``)
+- `authorization.columnHandler`: Handler to implement column authorization rules (``)
+- `authorization.recordHandler`: Handler to implement record authorization filter rules (``)
+- `validation.handler`: Handler to implement validation rules for input values (``)
+- `sanitation.handler`: Handler to implement sanitation rules for input values (``)
+- `multiTenancy.handler`: Handler to implement simple multi-tenancy rules (``)
+- `customization.beforeHandler`: Handler to implement request customization (``)
+- `customization.afterHandler`: Handler to implement response customization (``)
 
 If you don't specify these parameters in the configuration, then the default values (between brackets) are used.
 
@@ -203,7 +203,7 @@ If you don't specify these parameters in the configuration, then the default val
 
 TreeQL allows you to create a "tree" of JSON objects based on your SQL database structure (relations) and your query.
 
-It is loosely based on the REST standard and also inspired by json:api.
+It is loosely based on the REST standard and also inspired by [json:api](https://jsonapi.org/).
 
 ### CRUD + List
 
@@ -242,7 +242,7 @@ To read a record from this table the request can be written in URL format as:
 
     GET /records/posts/1
 
-Where "1" is the value of the primary key of the record that you want to read. It will return:
+Where `1` is the value of the primary key of the record that you want to read. It will return:
 
     {
         "id": 1
@@ -259,7 +259,7 @@ To update a record in this table the request can be written in URL format as:
 
     PUT /records/posts/1
 
-Where "1" is the value of the primary key of the record that you want to update. Send as a body:
+Where `1` is the value of the primary key of the record that you want to update. Send as a body:
 
     {
         "title": "Adjusted title!"
@@ -302,22 +302,22 @@ On list operations you may apply filters and joins.
 
 ### Filters
 
-Filters provide search functionality, on list calls, using the "filter" parameter. You need to specify the column
-name, a comma, the match type, another commma and the value you want to filter on. These are supported match types:
+Filters provide search functionality, on list calls, using the `filter` parameter. You need to specify the column
+name, a comma, the match type, another comma and the value you want to filter on. These are supported match types:
 
-  - "cs": contain string (string contains value)
-  - "sw": start with (string starts with value)
-  - "ew": end with (string end with value)
-  - "eq": equal (string or number matches exactly)
-  - "lt": lower than (number is lower than value)
-  - "le": lower or equal (number is lower than or equal to value)
-  - "ge": greater or equal (number is higher than or equal to value)
-  - "gt": greater than (number is higher than value)
-  - "bt": between (number is between two comma separated values)
-  - "in": in (number or string is in comma separated list of values)
-  - "is": is null (field contains "NULL" value)
+  - `cs`: contain string (string contains value)
+  - `sw`: start with (string starts with value)
+  - `ew`: end with (string end with value)
+  - `eq`: equal (string or number matches exactly)
+  - `lt`: lower than (number is lower than value)
+  - `le`: lower or equal (number is lower than or equal to value)
+  - `ge`: greater or equal (number is higher than or equal to value)
+  - `gt`: greater than (number is higher than value)
+  - `bt`: between (number is between two comma separated values)
+  - `in`: in (number or string is in comma separated list of values)
+  - `is`: is null (field contains `NULL` value)
 
-You can negate all filters by prepending a "n" character, so that "eq" becomes "neq". 
+You can negate all filters by prepending a `n` character, so that `eq` becomes `neq`. 
 Examples of filter usage are:
 
     GET /records/categories?filter=name,eq,Internet
@@ -341,25 +341,25 @@ In the next section we dive deeper into how you can apply multiple filters on a 
 
 ### Multiple filters
 
-Filters can be a by applied by repeating the "filter" parameter in the URL. For example the following URL: 
+Filters can be a by applied by repeating the `filter` parameter in the URL. For example the following URL: 
 
     GET /records/categories?filter=id,gt,1&filter=id,lt,3
 
-will request all categories "where id > 1 and id < 3". If you wanted "where id = 2 or id = 4" you should write:
+will request all categories `where id > 1 and id < 3`. If you wanted `where id = 2 or id = 4` you should write:
 
     GET /records/categories?filter1=id,eq,2&filter2=id,eq,4
     
-As you see we added a number to the "filter" parameter to indicate that "OR" instead of "AND" should be applied.
-Note that you can also repeat "filter1" and create an "AND" within an "OR". Since you can also go one level deeper
+As you see we added a number to the `filter` parameter to indicate that `OR` instead of `AND` should be applied.
+Note that you can also repeat `filter1` and create an `AND` within an `OR`. Since you can also go one level deeper
 by adding a letter (a-f) you can create almost any reasonably complex condition tree.
 
 NB: You can only filter on the requested table (not on it's included) and filters are only applied on list calls.
 
 ### Column selection
 
-By default all columns are selected. With the "include" parameter you can select specific columns. 
+By default all columns are selected. With the `include` parameter you can select specific columns. 
 You may use a dot to separate the table name from the column name. Multiple columns should be comma separated. 
-An asterisk ("*") may be used as a wildcard to indicate "all columns". Similar to "include" you may use the "exclude" parameter to remove certain columns:
+An asterisk ("*") may be used as a wildcard to indicate "all columns". Similar to `include` you may use the `exclude` parameter to remove certain columns:
 
 ```
 GET /records/categories/1?include=name
@@ -379,7 +379,7 @@ NB: Columns that are used to include related entities are automatically added an
 
 ### Ordering
 
-With the "order" parameter you can sort. By default the sort is in ascending order, but by specifying "desc" this can be reversed:
+With the `order` parameter you can sort. By default the sort is in ascending order, but by specifying `desc` this can be reversed:
 
 ```
 GET /records/categories?order=name,desc
@@ -403,11 +403,11 @@ Output:
     }
 ```
 
-NB: You may sort on multiple fields by using multiple "order" parameters. You can not order on "joined" columns.
+NB: You may sort on multiple fields by using multiple `order` parameters. You can not order on `joined` columns.
 
 ### Pagination
 
-The "page" parameter holds the requested page. The default page size is 20, but can be adjusted (e.g. to 50):
+The `page` parameter holds the requested page. The default page size is 20, but can be adjusted (e.g. to 50):
 
 ```
 GET /records/categories?order=id&page=1
@@ -455,7 +455,7 @@ These paths have the same root and this request can be written in URL format as:
     GET /records/posts?join=comments,users&join=tags
 
 Here you are allowed to leave out the intermediate table that binds posts to tags. In this example
-you see all three table relation types (hasMany, belongsTo and hasAndBelongsToMany) in effect:
+you see all three table relation types (`hasMany`, `belongsTo` and `hasAndBelongsToMany`) in effect:
 
 - "post" has many "comments"
 - "comment" belongs to "user"
@@ -514,8 +514,8 @@ This may lead to the following JSON data:
         ]
     }
 
-You see that the "belongsTo" relationships are detected and the foreign key value is replaced by the referenced object.
-In case of "hasMany" and "hasAndBelongsToMany" the table name is used a new property on the object.
+You see that the `belongsTo` relationships are detected and the foreign key value is replaced by the referenced object.
+In case of `hasMany` and `hasAndBelongsToMany` the table name is used a new property on the object.
 
 NB: You need to create a foreign key constraint for the join to work.
 
@@ -549,7 +549,7 @@ Similarly when you want to do a batch update the request in URL format is writte
 
     PUT /records/posts/1,2
 
-Where "1" and "2" are the values of the primary keys of the records that you want to update. The body should 
+Where `1` and `2` are the values of the primary keys of the records that you want to update. The body should 
 contain the same number of objects as there are primary keys in the URL:
 
     [   
@@ -566,38 +566,38 @@ This adjusts the titles of the posts. And the return values are the number of ro
     1,1
 
 Which means that there were two update operations and each of them had set one row. Batch operations use database
-transactions, so they either all succeed or all fail (successful ones get roled back).
+transactions, so they either all succeed or all fail (successful ones get rolled back).
 
 ### Spatial support
 
-For spatial support there is an extra set of filters that can be applied on geometry columns and that starting with an "s":
+For spatial support there is an extra set of filters that can be applied on geometry columns and that starting with an **`s`**:
 
-  - "sco": spatial contains (geometry contains another)
-  - "scr": spatial crosses (geometry crosses another)
-  - "sdi": spatial disjoint (geometry is disjoint from another)
-  - "seq": spatial equal (geometry is equal to another)
-  - "sin": spatial intersects (geometry intersects another)
-  - "sov": spatial overlaps (geometry overlaps another)
-  - "sto": spatial touches (geometry touches another)
-  - "swi": spatial within (geometry is within another)
-  - "sic": spatial is closed (geometry is closed and simple)
-  - "sis": spatial is simple (geometry is simple)
-  - "siv": spatial is valid (geometry is valid)
+  - `sco`: spatial contains (geometry contains another)
+  - `scr`: spatial crosses (geometry crosses another)
+  - `sdi`: spatial disjoint (geometry is disjoint from another)
+  - `seq`: spatial equal (geometry is equal to another)
+  - `sin`: spatial intersects (geometry intersects another)
+  - `sov`: spatial overlaps (geometry overlaps another)
+  - `sto`: spatial touches (geometry touches another)
+  - `swi`: spatial within (geometry is within another)
+  - `sic`: spatial is closed (geometry is closed and simple)
+  - `sis`: spatial is simple (geometry is simple)
+  - `siv`: spatial is valid (geometry is valid)
 
-These filters are based on OGC standards and so is the WKT specification in which the geometry columns are represented.
+These filters are based on OGC standards and so is the [WKT specification](https://en.wikipedia.org/wiki/Well-known_text_representation_of_geometry) in which the geometry columns are represented.
 
 ### Authentication
 
-Authentication is done by means of sending a "Authorization" header. It identifies the user and stores this in the `$_SESSION` super global. 
-This variable can be used in the authorization handlers to decide wether or not sombeody should have read or write access to certain tables, columns or records.
-Currently there are two types of authentication supported: "Basic" and "JWT". This functionality is enabled by adding the 'basicAuth' and/or 'jwtAuth' middleware.
+Authentication is done by means of sending a `Authorization` header. It identifies the user and stores this in the `$_SESSION` super global. 
+This variable can be used in the authorization handlers to decide whether or not somebody should have read or write access to certain tables, columns or records.
+Currently there are two types of authentication supported: **"Basic"** and **"JWT"**. This functionality is enabled by adding the `basicAuth` and/or `jwtAuth` middleware.
 
 #### Basic authentication
 
 The Basic type supports a file that holds the users and their (hashed) passwords separated by a colon (':'). 
 When the passwords are entered in plain text they fill be automatically hashed.
 The authenticated username will be stored in the `$_SESSION['username']` variable.
-You need to send an "Authorization" header containing a base64 url encoded and colon separated username and password after the word "Basic".
+You need to send an "Authorization" header containing a base64 url encoded and colon separated username and password after the word `Basic`.
 
     Authorization: Basic dXNlcm5hbWUxOnBhc3N3b3JkMQ
 
@@ -607,10 +607,10 @@ This example sends the string "username1:password1".
 
 The JWT type requires another (SSO/Identity) server to sign a token that contains claims. 
 Both servers share a secret so that they can either sign or verify that the signature is valid.
-Claims are stored in the `$_SESSION['claims']` variable. You need to send an "X-Authorization" 
+Claims are stored in the `$_SESSION['claims']` variable. You need to send an `X-Authorization` 
 header containing a base64 url encoded and dot separated token header, body and signature after
-the word "Bearer" ([read more about JWT here](https://jwt.io/)). The standard says you need to
-use the "Authorization" header, but this is problematic in Apache and PHP.
+the word `Bearer` ([read more about JWT here](https://jwt.io/)). The standard says you need to
+use the `Authorization` header, but this is problematic in Apache and PHP.
 
     X-Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6IjE1MzgyMDc2MDUiLCJleHAiOjE1MzgyMDc2MzV9.Z5px_GT15TRKhJCTHhDt5Z6K6LRDSFnLj8U5ok9l7gw
 
@@ -639,24 +639,24 @@ The Authorization model acts on "operations". The most important ones are listed
     DELETE /records/{table}/{id} - delete    - deletes a record by primary key
     PATCH  /records/{table}/{id} - increment - increments columns of a record by primary key
 
-The "`/openapi`" endpoint will only show what is allowed in your session. It also has a special 
-"document" operation to allow you to hide tables and columns from the documentation.
+The `/openapi` endpoint will only show what is allowed in your session. It also has a special 
+`document` operation to allow you to hide tables and columns from the documentation.
     
-For endpoints that start with "`/columns`" there are the operations "reflect" and "remodel". 
+For endpoints that start with `/columns` there are the operations `reflect` and `remodel`. 
 These operations can display or change the definition of the database, table or column. 
-This functionality is disabled by default and for good reason (be careful!). 
-Add the "columns" controller in the configuration to enable this functionality.
+This functionality is disabled by default and for good reason (**be careful!**). 
+Add the `columns` controller in the configuration to enable this functionality.
 
 ### Authorizing tables, columns and records
 
-By default all tables and columns are accessible. If you want to restrict access to some tables you may add the 'authorization' middleware 
-and define a 'authorization.tableHandler' function that returns 'false' for these tables.
+By default all tables and columns are accessible. If you want to restrict access to some tables you may add the `authorization` middleware 
+and define a `authorization.tableHandler` function that returns `false` for these tables.
 
     'authorization.tableHandler' => function ($operation, $tableName) {
         return $tableName != 'license_keys';
     },
 
-The above example will restrict access to the table 'license_keys' for all operations.
+The above example will restrict access to the table `license_keys` for all operations.
 
     'authorization.columnHandler' => function ($operation, $tableName, $columnName) {
         return !($tableName == 'users' && $columnName == 'password');
@@ -676,7 +676,7 @@ NB: You need to handle the creation of invalid records with a validation (or san
 ### Sanitizing input
 
 By default all input is accepted and sent to the database. If you want to strip (certain) HTML tags before storing you may add 
-the 'sanitation' middleware and define a 'sanitation.handler' function that returns the adjusted value.
+the `sanitation` middleware and define a `sanitation.handler` function that returns the adjusted value.
 
     'sanitation.handler' => function ($operation, $tableName, $column, $value) {
         return is_string($value) ? strip_tags($value) : $value;
@@ -686,7 +686,7 @@ The above example will strip all HTML tags from strings in the input.
 
 ### Validating input
 
-By default all input is accepted. If you want to validate the input, you may add the 'validation' middleware and define a 
+By default all input is accepted. If you want to validate the input, you may add the `validation` middleware and define a 
 'validation.handler' function that returns a boolean indicating whether or not the value is valid.
 
     'validation.handler' => function ($operation, $tableName, $column, $value, $context) {
@@ -715,19 +715,19 @@ You can parse this output to make form fields show up with a red border and thei
 
 ### Multi-tenancy support
 
-You may use the "multiTenancy" middleware when you have a multi-tenant database. 
+You may use the `multiTenancy` middleware when you have a multi-tenant database. 
 If your tenants are identified by the "customer_id" column you can use the following handler:
 
     'multiTenancy.handler' => function ($operation, $tableName) {
         return ['customer_id' => 12];
     },
 
-This construct adds a filter requiring "customer_id" to be "12" to every operation (except for "create").
-It also sets the column "customer_id" on "create" to "12" and removes the column from any other write operation.
+This construct adds a filter requiring "customer_id" to be "12" to every operation (except for `create`).
+It also sets the column "customer_id" on `create` to "12" and removes the column from any other write operation.
 
 ### Customization handlers
 
-You may use the "customization" middleware to modify request and response and implement any other functionality.
+You may use the `customization` middleware to modify request and response and implement any other functionality.
 
     'customization.beforeHandler' => function ($operation, $tableName, $request, $environment) {
         $environment->start = microtime(true);
@@ -736,7 +736,7 @@ You may use the "customization" middleware to modify request and response and im
         $response->addHeader('X-Time-Taken', microtime(true) - $environment->start);
     },
 
-The above example will add a header "X-Time-Taken" with the number of seconds the API call has taken.
+The above example will add a header `X-Time-Taken` with the number of seconds the API call has taken.
 
 ### File uploads
 
@@ -744,7 +744,7 @@ File uploads are supported through the [FileReader API](https://caniuse.com/#fea
 
 ## OpenAPI specification
 
-On the "/openapi" end-point the OpenAPI 3.0 (formerly called "Swagger") specification is served. 
+On the `/openapi` end-point the OpenAPI 3.0 (formerly called "Swagger") specification is served. 
 It is a machine readable instant documentation of your API. To learn more, check out these links:
 
 - [Swagger Editor](https://editor.swagger.io/) can be used to view and debug the generated specification.
@@ -753,12 +753,12 @@ It is a machine readable instant documentation of your API. To learn more, check
 
 ## Cache
 
-There are 4 cache engines that can be configured by the "cacheType" config parameter:
+There are 4 cache engines that can be configured by the `cacheType` config parameter:
 
-- TempFile (default)
-- Redis
-- Memcache
-- Memcached
+- `TempFile` (default)
+- `Redis`
+- `Memcache`
+- `Memcached`
 
 You can install the dependencies for the last three engines by running:
 
@@ -768,8 +768,8 @@ You can install the dependencies for the last three engines by running:
 
 The default engine has no dependencies and will use temporary files in the system "temp" path.
 
-You may use the "cachePath" config parameter to specify the file system path for the temporary files or
-in case that you use a non-default "cacheType" the hostname (optionally with port) of the cache server.
+You may use the `cachePath` config parameter to specify the file system path for the temporary files or
+in case that you use a non-default `cacheType` the hostname (optionally with port) of the cache server.
 
 ## Types
 
@@ -813,27 +813,29 @@ JavaScript does not support 64 bit integers. All numbers are stored as 64 bit fl
 
 The following errors may be reported:
 
-- 1000: Route not found (404 NOT FOUND)
-- 1001: Table not found (404 NOT FOUND)
-- 1002: Argument count mismatch (422 UNPROCESSABLE ENTITY)
-- 1003: Record not found (404 NOT FOUND)
-- 1004: Origin is forbidden (403 FORBIDDEN)
-- 1005: Column not found (404 NOT FOUND)
-- 1006: Table already exists (409 CONFLICT)
-- 1007: Column already exists (409 CONFLICT)
-- 1008: Cannot read HTTP message (422 UNPROCESSABLE ENTITY)
-- 1009: Duplicate key exception (409 CONFLICT)
-- 1010: Data integrity violation (409 CONFLICT)
-- 1011: Authentication required (401 UNAUTHORIZED)
-- 1012: Authentication failed (403 FORBIDDEN)
-- 1013: Input validation failed (422 UNPROCESSABLE ENTITY)
-- 1014: Operation forbidden (403 FORBIDDEN)
-- 1015: Operation not supported (405 METHOD NOT ALLOWED)
-- 1016: Temporary or permanently blocked (403 FORBIDDEN)
-- 1017: Bad or missing XSRF token (403 FORBIDDEN)
-- 1018: Only AJAX requests allowed (403 FORBIDDEN)
-- 1019: File upload failed (422 UNPROCESSABLE ENTITY)
-- 9999: Unknown error (500: INTERNAL SERVER ERROR)
+| Error Code | HTTP Response Code         | Message
+| ---------- | -------------------------- | --------------
+| 1000       | 404 NOT FOUND              | Route not found 
+| 1001       | 404 NOT FOUND              | Table not found 
+| 1002       | 422 UNPROCESSABLE ENTITY   | Argument count mismatch 
+| 1003       | 404 NOT FOUND              | Record not found 
+| 1004       | 403 FORBIDDEN              | Origin is forbidden 
+| 1005       | 404 NOT FOUND              | Column not found 
+| 1006       | 409 CONFLICT               | Table already exists 
+| 1007       | 409 CONFLICT               | Column already exists 
+| 1008       | 422 UNPROCESSABLE ENTITY   | Cannot read HTTP message 
+| 1009       | 409 CONFLICT               | Duplicate key exception 
+| 1010       | 409 CONFLICT               | Data integrity violation 
+| 1011       | 401 UNAUTHORIZED           | Authentication required 
+| 1012       | 403 FORBIDDEN              | Authentication failed 
+| 1013       | 422 UNPROCESSABLE ENTITY   | Input validation failed 
+| 1014       | 403 FORBIDDEN              | Operation forbidden 
+| 1015       | 405 METHOD NOT ALLOWED     | Operation not supported 
+| 1016       | 403 FORBIDDEN              | Temporary or permanently blocked 
+| 1017       | 403 FORBIDDEN              | Bad or missing XSRF token 
+| 1018       | 403 FORBIDDEN              | Only AJAX requests allowed 
+| 1019       | 422 UNPROCESSABLE ENTITY   | File upload failed 
+| 9999       | 500: INTERNAL SERVER ERROR | Unknown error 
 
 The following JSON structure is used:
 
@@ -959,4 +961,4 @@ The above test run (including starting up the databases) takes less than one min
 
 As you can see the "run.sh" script gives you access to a prompt in a chosen the docker environment.
 In this environment the local files are mounted. This allows for easy debugging on different environments.
-You may type "exit" when you are done.
+You may type `exit` when you are done.
