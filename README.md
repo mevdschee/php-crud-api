@@ -811,27 +811,29 @@ JavaScript does not support 64 bit integers. All numbers are stored as 64 bit fl
 
 The following errors may be reported:
 
-- 1000: Route not found (404 NOT FOUND)
-- 1001: Table not found (404 NOT FOUND)
-- 1002: Argument count mismatch (422 UNPROCESSABLE ENTITY)
-- 1003: Record not found (404 NOT FOUND)
-- 1004: Origin is forbidden (403 FORBIDDEN)
-- 1005: Column not found (404 NOT FOUND)
-- 1006: Table already exists (409 CONFLICT)
-- 1007: Column already exists (409 CONFLICT)
-- 1008: Cannot read HTTP message (422 UNPROCESSABLE ENTITY)
-- 1009: Duplicate key exception (409 CONFLICT)
-- 1010: Data integrity violation (409 CONFLICT)
-- 1011: Authentication required (401 UNAUTHORIZED)
-- 1012: Authentication failed (403 FORBIDDEN)
-- 1013: Input validation failed (422 UNPROCESSABLE ENTITY)
-- 1014: Operation forbidden (403 FORBIDDEN)
-- 1015: Operation not supported (405 METHOD NOT ALLOWED)
-- 1016: Temporary or permanently blocked (403 FORBIDDEN)
-- 1017: Bad or missing XSRF token (403 FORBIDDEN)
-- 1018: Only AJAX requests allowed (403 FORBIDDEN)
-- 1019: File upload failed (422 UNPROCESSABLE ENTITY)
-- 9999: Unknown error (500: INTERNAL SERVER ERROR)
+| Error | HTTP response code         | Message
+| ------| -------------------------- | --------------
+| 1000  | 404 Not found              | Route not found 
+| 1001  | 404 Not found              | Table not found 
+| 1002  | 422 Unprocessable entity   | Argument count mismatch 
+| 1003  | 404 Not found              | Record not found 
+| 1004  | 403 Forbidden              | Origin is forbidden 
+| 1005  | 404 Not found              | Column not found 
+| 1006  | 409 Conflict               | Table already exists 
+| 1007  | 409 Conflict               | Column already exists 
+| 1008  | 422 Unprocessable entity   | Cannot read HTTP message 
+| 1009  | 409 Conflict               | Duplicate key exception 
+| 1010  | 409 Conflict               | Data integrity violation 
+| 1011  | 401 Unauthorized           | Authentication required 
+| 1012  | 403 Forbidden              | Authentication failed 
+| 1013  | 422 Unprocessable entity   | Input validation failed 
+| 1014  | 403 Forbidden              | Operation forbidden 
+| 1015  | 405 Method not allowed     | Operation not supported 
+| 1016  | 403 Forbidden              | Temporary or permanently blocked 
+| 1017  | 403 Forbidden              | Bad or missing XSRF token 
+| 1018  | 403 Forbidden              | Only AJAX requests allowed 
+| 1019  | 422 Unprocessable entity   | File upload failed 
+| 9999  | 500 Internal server error  | Unknown error 
 
 The following JSON structure is used:
 
