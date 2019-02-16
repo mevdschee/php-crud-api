@@ -61,6 +61,7 @@ class TypeConverter
             'polygon' => 'geometry',
             'point' => 'geometry',
             'datetime' => 'timestamp',
+            'year' => 'integer',
             'enum' => 'varchar',
             'json' => 'clob',
         ],
