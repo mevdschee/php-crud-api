@@ -31,7 +31,7 @@ abstract class Condition
         $condition = new NoCondition();
         $parts = explode(',', $value, 3);
         if (count($parts) < 2) {
-            return null;
+            return $condition;
         }
         if (count($parts) < 3) {
             $parts[2] = '';

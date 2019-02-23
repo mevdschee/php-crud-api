@@ -1,10 +1,11 @@
 <?php
 namespace Tqdev\PhpCrudApi\Record;
 
+use Tqdev\PhpCrudApi\Column\Reflection\ReflectedTable;
 use Tqdev\PhpCrudApi\Record\Condition\AndCondition;
 use Tqdev\PhpCrudApi\Record\Condition\Condition;
+use Tqdev\PhpCrudApi\Record\Condition\NoCondition;
 use Tqdev\PhpCrudApi\Record\Condition\OrCondition;
-use Tqdev\PhpCrudApi\Column\Reflection\ReflectedTable;
 
 class FilterInfo
 {
@@ -15,7 +16,7 @@ class FilterInfo
         if (isset($params[$key])) {
             foreach ($params[$key] as $filter) {
                 $condition = Condition::fromString($table, $filter);
-                if ($condition != null) {
+                if (($condition instanceof NoCondition) == false) {
                     $conditions->put($path, $condition);
                 }
             }
