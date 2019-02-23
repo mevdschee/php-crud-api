@@ -27,6 +27,7 @@ class OpenApiBuilder
         'decimal' => ['type' => 'string'],
         'float' => ['type' => 'number', 'format' => 'float'],
         'double' => ['type' => 'number', 'format' => 'double'],
+        'date' => ['type' => 'string', 'format' => 'date'],
         'time' => ['type' => 'string', 'format' => 'date-time'],
         'timestamp' => ['type' => 'string', 'format' => 'date-time'],
         'geometry' => ['type' => 'string'],
