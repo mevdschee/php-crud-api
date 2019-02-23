@@ -3992,7 +3992,7 @@ abstract class Condition
         $condition = new NoCondition();
         $parts = explode(',', $value, 3);
         if (count($parts) < 2) {
-            return null;
+            return $condition;
         }
         if (count($parts) < 3) {
             $parts[2] = '';
@@ -4345,7 +4345,7 @@ class FilterInfo
         if (isset($params[$key])) {
             foreach ($params[$key] as $filter) {
                 $condition = Condition::fromString($table, $filter);
-                if ($condition != null) {
+                if (($condition instanceof NoCondition) == false) {
                     $conditions->put($path, $condition);
                 }
             }
