@@ -31,3 +31,13 @@ Content-Type: application/json
 Content-Length: 54
 
 {"code":1001,"message":"Table 'invisibles' not found"}
+===
+OPTIONS /records/invisibles/e42c77c6-06a4-4502-816c-d112c7142e6d
+Access-Control-Request-Method: POST
+Access-Control-Request-Headers: X-PINGOTHER, Content-Type
+===
+200
+Access-Control-Allow-Headers: Content-Type, X-XSRF-TOKEN, X-Authorization
+Access-Control-Allow-Methods: OPTIONS, GET, PUT, POST, DELETE, PATCH
+Access-Control-Allow-Credentials: true
+Access-Control-Max-Age: 1728000
