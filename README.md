@@ -99,7 +99,7 @@ These limitation and constrains apply:
   
 ## Features
 
-These features match features in v1 (see branch "v1"):
+The following features are supported:
 
   - Single PHP file, easy to deploy.
   - Very little code, easy to adapt and maintain
