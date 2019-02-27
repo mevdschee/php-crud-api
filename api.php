@@ -3463,6 +3463,65 @@ class MultiTenancyMiddleware extends Middleware
     }
 }
 
+// file: src/Tqdev/PhpCrudApi/Middleware/PageLimitsMiddleware.php
+
+class PageLimitsMiddleware extends Middleware
+{
+    private $reflection;
+
+    public function __construct(Router $router, Responder $responder, array $properties, ReflectionService $reflection)
+    {
+        parent::__construct($router, $responder, $properties);
+        $this->reflection = $reflection;
+        $this->utils = new RequestUtils($reflection);
+    }
+
+    private function getMissingOrderParam(ReflectedTable $table): String
+    {
+        $pk = $table->getPk();
+        if (!$pk) {
+            $columnNames = $table->getColumnNames();
+            if (!$columnNames) {
+                return '';
+            }
+            return $columnNames[0];
+        }
+        return $pk->getName();
+    }
+
+    public function handle(Request $request): Response
+    {
+        $operation = $this->utils->getOperation($request);
+        if ($operation == 'list') {
+            $tableName = $request->getPathSegment(2);
+            $table = $this->reflection->getTable($tableName);
+            if ($table) {
+                $params = $request->getParams();
+                if (!isset($params['order']) || !$params['order']) {
+                    $params['order'] = array($this->getMissingOrderParam($table));
+                }
+                $maxPage = (int) $this->getProperty('pages', '100');
+                if (isset($params['page']) && $params['page']) {
+                    if (strpos($params['page'][0], ',') === false) {
+                        $params['page'] = array(min($params['page'][0], $maxPage));
+                    } else {
+                        list($page, $size) = explode(',', $params['page'][0], 2);
+                        $params['page'] = array(min($page, $maxPage) . ',' . $size);
+                    }
+                }
+                $maxSize = (int) $this->getProperty('records', '1000');
+                if (!isset($params['size']) || !$params['size']) {
+                    $params['size'] = array($maxSize);
+                } else {
+                    $params['size'] = array(min($params['size'][0], $maxSize));
+                }
+                $request->setParams($params);
+            }
+        }
+        return $this->next->handle($request);
+    }
+}
+
 // file: src/Tqdev/PhpCrudApi/Middleware/SanitationMiddleware.php
 
 class SanitationMiddleware extends Middleware
@@ -4464,7 +4523,7 @@ class PaginationInfo
         return $offset;
     }
 
-    public function getPageSize(array $params): int
+    private function getPageSize(array $params): int
     {
         $pageSize = $this->DEFAULT_PAGE_SIZE;
         if (isset($params['page'])) {
@@ -4487,6 +4546,23 @@ class PaginationInfo
             }
         }
         return $numberOfRows;
+    }
+
+    public function getPageLimit(array $params): int
+    {
+        $pageLimit = -1;
+        if ($this->hasPage($params)) {
+            $pageLimit = $this->getPageSize($params);
+        }
+        $resultSize = $this->getResultSize($params);
+        if ($resultSize >= 0) {
+            if ($pageLimit >= 0) {
+                $pageLimit = min($pageLimit, $resultSize);
+            } else {
+                $pageLimit = $resultSize;
+            }
+        }
+        return $pageLimit;
     }
 
 }
@@ -4675,11 +4751,11 @@ class RecordService
         $columnOrdering = $this->ordering->getColumnOrdering($table, $params);
         if (!$this->pagination->hasPage($params)) {
             $offset = 0;
-            $limit = $this->pagination->getResultSize($params);
+            $limit = $this->pagination->getPageLimit($params);
             $count = 0;
         } else {
             $offset = $this->pagination->getPageOffset($params);
-            $limit = $this->pagination->getPageSize($params);
+            $limit = $this->pagination->getPageLimit($params);
             $count = $this->db->selectCount($table, $condition);
         }
         $records = $this->db->selectAll($table, $columnNames, $condition, $columnOrdering, $offset, $limit);
@@ -5082,6 +5158,9 @@ class Api
                 case 'xsrf':
                     new XsrfMiddleware($router, $responder, $properties);
                     break;
+                case 'pageLimits':
+                    new PageLimitsMiddleware($router, $responder, $properties, $reflection);
+                    break;
                 case 'customization':
                     new CustomizationMiddleware($router, $responder, $properties, $reflection);
                     break;
@@ -5426,6 +5505,11 @@ class Request
     public function getParams(): array
     {
         return $this->params;
+    }
+
+    public function setParams(array $params) /*: void*/
+    {
+        $this->params = $params;
     }
 
     public function getBody() /*: ?array*/
