@@ -30,7 +30,7 @@ class ErrorCode
     const TEMPORARY_OR_PERMANENTLY_BLOCKED = 1016;
     const BAD_OR_MISSING_XSRF_TOKEN = 1017;
     const ONLY_AJAX_REQUESTS_ALLOWED = 1018;
-    const FILE_UPLOAD_FAILED = 1019;
+    const PAGINATION_FORBIDDEN = 1019;
 
     private $values = [
         9999 => ["%s", Response::INTERNAL_SERVER_ERROR],
@@ -53,7 +53,7 @@ class ErrorCode
         1016 => ["Temporary or permanently blocked", Response::FORBIDDEN],
         1017 => ["Bad or missing XSRF token", Response::FORBIDDEN],
         1018 => ["Only AJAX requests allowed for '%s'", Response::FORBIDDEN],
-        1019 => ["File upload failed for '%s'", Response::UNPROCESSABLE_ENTITY],
+        1019 => ["Pagination forbidden", Response::FORBIDDEN],
     ];
 
     public function __construct(int $code)

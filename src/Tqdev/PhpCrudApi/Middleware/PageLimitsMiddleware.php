@@ -5,6 +5,7 @@ use Tqdev\PhpCrudApi\Column\ReflectionService;
 use Tqdev\PhpCrudApi\Controller\Responder;
 use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
 use Tqdev\PhpCrudApi\Middleware\Router\Router;
+use Tqdev\PhpCrudApi\Record\ErrorCode;
 use Tqdev\PhpCrudApi\Record\RequestUtils;
 use Tqdev\PhpCrudApi\Request;
 use Tqdev\PhpCrudApi\Response;
@@ -28,10 +29,12 @@ class PageLimitsMiddleware extends Middleware
             $maxPage = (int) $this->getProperty('pages', '100');
             if (isset($params['page']) && $params['page'] && $maxPage > 0) {
                 if (strpos($params['page'][0], ',') === false) {
-                    $params['page'] = array(min($params['page'][0], $maxPage));
+                    $page = $params['page'][0];
                 } else {
                     list($page, $size) = explode(',', $params['page'][0], 2);
-                    $params['page'] = array(min($page, $maxPage) . ',' . $size);
+                }
+                if ($page > $maxPage) {
+                    return $this->responder->error(ErrorCode::PAGINATION_FORBIDDEN, '');
                 }
             }
             $maxSize = (int) $this->getProperty('records', '1000');

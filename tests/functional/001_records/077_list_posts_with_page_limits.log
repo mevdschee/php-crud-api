@@ -24,8 +24,8 @@ Content-Length: 78
 ===
 GET /records/posts?page=6,1
 ===
-200
+403
 Content-Type: application/json
-Content-Length: 78
+Content-Length: 46
 
-{"records":[{"id":7,"user_id":1,"category_id":1,"content":"#3"}],"results":12}
+{"code":1019,"message":"Pagination forbidden"}
