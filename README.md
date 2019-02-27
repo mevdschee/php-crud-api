@@ -161,7 +161,7 @@ You can enable the following middleware using the "middlewares" config parameter
 - "validation": Return input validation errors for custom rules
 - "sanitation": Apply input sanitation on create and update
 - "multiTenancy": Restricts tenants access in a multi-tenant scenario
-- "pageLimits": Restricts list operations to become too heavy
+- "pageLimits": Restricts list operations to prevent heavy load and scraping
 - "customization": Provides handlers for request and response customization
 
 The "middlewares" config parameter is a comma separated list of enabled middlewares.
