@@ -17,6 +17,7 @@ use Tqdev\PhpCrudApi\Middleware\CustomizationMiddleware;
 use Tqdev\PhpCrudApi\Middleware\FirewallMiddleware;
 use Tqdev\PhpCrudApi\Middleware\JwtAuthMiddleware;
 use Tqdev\PhpCrudApi\Middleware\MultiTenancyMiddleware;
+use Tqdev\PhpCrudApi\Middleware\PageLimitsMiddleware;
 use Tqdev\PhpCrudApi\Middleware\Router\SimpleRouter;
 use Tqdev\PhpCrudApi\Middleware\SanitationMiddleware;
 use Tqdev\PhpCrudApi\Middleware\ValidationMiddleware;
@@ -73,6 +74,9 @@ class Api
                     break;
                 case 'xsrf':
                     new XsrfMiddleware($router, $responder, $properties);
+                    break;
+                case 'pageLimits':
+                    new PageLimitsMiddleware($router, $responder, $properties, $reflection);
                     break;
                 case 'customization':
                     new CustomizationMiddleware($router, $responder, $properties, $reflection);

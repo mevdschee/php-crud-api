@@ -108,11 +108,11 @@ class RecordService
         $columnOrdering = $this->ordering->getColumnOrdering($table, $params);
         if (!$this->pagination->hasPage($params)) {
             $offset = 0;
-            $limit = $this->pagination->getResultSize($params);
+            $limit = $this->pagination->getPageLimit($params);
             $count = 0;
         } else {
             $offset = $this->pagination->getPageOffset($params);
-            $limit = $this->pagination->getPageSize($params);
+            $limit = $this->pagination->getPageLimit($params);
             $count = $this->db->selectCount($table, $condition);
         }
         $records = $this->db->selectAll($table, $columnNames, $condition, $columnOrdering, $offset, $limit);

@@ -128,6 +128,11 @@ class Request
         return $this->params;
     }
 
+    public function setParams(array $params) /*: void*/
+    {
+        $this->params = $params;
+    }
+
     public function getBody() /*: ?array*/
     {
         return $this->body;

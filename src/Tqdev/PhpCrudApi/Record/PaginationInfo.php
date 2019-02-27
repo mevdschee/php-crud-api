@@ -25,7 +25,7 @@ class PaginationInfo
         return $offset;
     }
 
-    public function getPageSize(array $params): int
+    private function getPageSize(array $params): int
     {
         $pageSize = $this->DEFAULT_PAGE_SIZE;
         if (isset($params['page'])) {
@@ -48,6 +48,23 @@ class PaginationInfo
             }
         }
         return $numberOfRows;
+    }
+
+    public function getPageLimit(array $params): int
+    {
+        $pageLimit = -1;
+        if ($this->hasPage($params)) {
+            $pageLimit = $this->getPageSize($params);
+        }
+        $resultSize = $this->getResultSize($params);
+        if ($resultSize >= 0) {
+            if ($pageLimit >= 0) {
+                $pageLimit = min($pageLimit, $resultSize);
+            } else {
+                $pageLimit = $resultSize;
+            }
+        }
+        return $pageLimit;
     }
 
 }

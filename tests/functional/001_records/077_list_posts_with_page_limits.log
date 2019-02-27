@@ -1,0 +1,31 @@
+GET /records/posts?size=10
+===
+200
+Content-Type: application/json
+Content-Length: 690
+
+{"records":[{"id":1,"user_id":1,"category_id":1,"content":"blog started"},{"id":2,"user_id":1,"category_id":2,"content":"🦀€ Grüßgott, Вiтаю, dobrý deň, hyvää päivää, გამარჯობა, Γεια σας, góðan dag, здравствуйте"},{"id":5,"user_id":1,"category_id":1,"content":"#1"},{"id":6,"user_id":1,"category_id":1,"content":"#2"},{"id":7,"user_id":1,"category_id":1,"content":"#3"},{"id":8,"user_id":1,"category_id":1,"content":"#4"},{"id":9,"user_id":1,"category_id":1,"content":"#5"},{"id":10,"user_id":1,"category_id":1,"content":"#6"},{"id":11,"user_id":1,"category_id":1,"content":"#7"},{"id":12,"user_id":1,"category_id":1,"content":"#8"}]}
+===
+GET /records/posts
+===
+200
+Content-Type: application/json
+Content-Length: 690
+
+{"records":[{"id":1,"user_id":1,"category_id":1,"content":"blog started"},{"id":2,"user_id":1,"category_id":2,"content":"🦀€ Grüßgott, Вiтаю, dobrý deň, hyvää päivää, გამარჯობა, Γεια σας, góðan dag, здравствуйте"},{"id":5,"user_id":1,"category_id":1,"content":"#1"},{"id":6,"user_id":1,"category_id":1,"content":"#2"},{"id":7,"user_id":1,"category_id":1,"content":"#3"},{"id":8,"user_id":1,"category_id":1,"content":"#4"},{"id":9,"user_id":1,"category_id":1,"content":"#5"},{"id":10,"user_id":1,"category_id":1,"content":"#6"},{"id":11,"user_id":1,"category_id":1,"content":"#7"},{"id":12,"user_id":1,"category_id":1,"content":"#8"}]}
+===
+GET /records/posts?page=5,1
+===
+200
+Content-Type: application/json
+Content-Length: 78
+
+{"records":[{"id":7,"user_id":1,"category_id":1,"content":"#3"}],"results":12}
+===
+GET /records/posts?page=6,1
+===
+200
+Content-Type: application/json
+Content-Length: 78
+
+{"records":[{"id":7,"user_id":1,"category_id":1,"content":"#3"}],"results":12}

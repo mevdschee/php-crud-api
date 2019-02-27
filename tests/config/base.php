@@ -4,7 +4,7 @@ $settings = [
     'username' => 'php-crud-api',
     'password' => 'php-crud-api',
     'controllers' => 'records,columns,cache,openapi',
-    'middlewares' => 'cors,jwtAuth,basicAuth,authorization,validation,sanitation,multiTenancy,customization',
+    'middlewares' => 'cors,jwtAuth,basicAuth,authorization,validation,sanitation,multiTenancy,pageLimits,customization',
     'jwtAuth.mode' => 'optional',
     'jwtAuth.time' => '1538207605',
     'jwtAuth.secret' => 'axpIrCGNGqxzx2R9dtXLIPUSqPo778uhb8CA0F4Hx',
@@ -28,6 +28,8 @@ $settings = [
     'multiTenancy.handler' => function ($operation, $tableName) {
         return ($tableName == 'kunsthåndværk') ? ['user_id' => 1] : [];
     },
+    'pageLimits.pages' => 5,
+    'pageLimits.records' => 10,
     'customization.beforeHandler' => function ($operation, $tableName, $request, $environment) {
         $environment->start = 0.003/*microtime(true)*/;
     },
