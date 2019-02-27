@@ -838,7 +838,7 @@ The following errors may be reported:
 | 1016  | 403 Forbidden              | Temporary or permanently blocked 
 | 1017  | 403 Forbidden              | Bad or missing XSRF token 
 | 1018  | 403 Forbidden              | Only AJAX requests allowed 
-| 1019  | 422 Unprocessable entity   | File upload failed 
+| 1019  | 403 Forbidden              | Pagination Forbidden 
 | 9999  | 500 Internal server error  | Unknown error 
 
 The following JSON structure is used:
