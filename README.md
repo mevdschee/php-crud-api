@@ -1,10 +1,8 @@
-# PHP-CRUD-API (v2)
+# PHP-CRUD-API
 
-Single file PHP 7 script that adds a REST API to a MySQL 5.5 InnoDB database. PostgreSQL 9.1 and MS SQL Server 2012 are fully supported. 
+Single file PHP 7 script that adds a REST API to a MySQL 5.6 InnoDB database. PostgreSQL 9.1 and MS SQL Server 2012 are fully supported. 
 
 NB: This is the [TreeQL](https://treeql.org) reference implementation in PHP.
-
-NB: Are you looking for v1? It is here: https://github.com/mevdschee/php-crud-api/tree/v1
 
 Related projects:
 
@@ -91,7 +89,7 @@ NB: The script appends the classes in alphabetical order (directories first).
 
 ## Limitations
 
-These limitation were also present in v1:
+These limitation and constrains apply:
 
   - Primary keys should either be auto-increment (from 1 to 2^53) or UUID
   - Composite primary or foreign keys are not supported
@@ -101,38 +99,30 @@ These limitation were also present in v1:
   
 ## Features
 
-These features match features in v1 (see branch "v1"):
+The following features are supported:
 
-  - [x] Single PHP file, easy to deploy.
-  - [x] Very little code, easy to adapt and maintain
-  - [ ] ~~Streaming data, low memory footprint~~
-  - [x] Supports POST variables as input (x-www-form-urlencoded)
-  - [x] Supports a JSON object as input
-  - [x] Supports a JSON array as input (batch insert)
-  - [ ] ~~Supports file upload from web forms (multipart/form-data)~~
-  - [ ] ~~Condensed JSON output: first row contains field names~~
-  - [x] Sanitize and validate input using callbacks
-  - [x] Permission system for databases, tables, columns and records
-  - [x] Multi-tenant database layouts are supported
-  - [x] Multi-domain CORS support for cross-domain requests
-  - [x] Support for reading joined results from multiple tables
-  - [x] Search support on multiple criteria
-  - [x] Pagination, seeking, sorting and column selection
-  - [x] Relation detection with nested results (belongsTo, hasMany and HABTM)
-  - [ ] ~~Relation "transforms" (of condensed JSON) for PHP and JavaScript~~
-  - [x] Atomic increment support via PATCH (for counters)
-  - [x] Binary fields supported with base64 encoding
-  - [x] Spatial/GIS fields and filters supported with WKT
-  - [ ] ~~Unstructured data support through JSON/JSONB~~
-  - [x] Generate API documentation using OpenAPI tools
-  - [x] Authentication via JWT token or username/password
-  - [ ] ~~SQLite support~~
-
- NB: No checkmark means: not yet implemented. Striken means: will not be implemented.
+  - Single PHP file, easy to deploy.
+  - Very little code, easy to adapt and maintain
+  - Supports POST variables as input (x-www-form-urlencoded)
+  - Supports a JSON object as input
+  - Supports a JSON array as input (batch insert)
+  - Sanitize and validate input using callbacks
+  - Permission system for databases, tables, columns and records
+  - Multi-tenant database layouts are supported
+  - Multi-domain CORS support for cross-domain requests
+  - Support for reading joined results from multiple tables
+  - Search support on multiple criteria
+  - Pagination, seeking, sorting and column selection
+  - Relation detection with nested results (belongsTo, hasMany and HABTM)
+  - Atomic increment support via PATCH (for counters)
+  - Binary fields supported with base64 encoding
+  - Spatial/GIS fields and filters supported with WKT
+  - Generate API documentation using OpenAPI tools
+  - Authentication via JWT token or username/password
 
 ### Extra Features
 
-These features are new and were not included in v1.
+These features are new in v2 and were not included in v1:
 
   - Does not reflect on every request (better performance)
   - Complex filters (with both "and" & "or") are supported
@@ -143,6 +133,19 @@ These features are new and were not included in v1.
   - Error reporting in JSON with corresponding HTTP status
   - Support for basic authentication and via auth provider (JWT)
   - Support for basic firewall functionality
+
+### Dropped features
+
+The following features of v1 were dropped in v2:
+
+  - ~~Streaming data, low memory footprint~~
+  - ~~Supports file upload from web forms (multipart/form-data)~~
+  - ~~Condensed JSON output: first row contains field names~~
+  - ~~Relation "transforms" (of condensed JSON) for PHP and JavaScript~~
+  - ~~Unstructured data support through JSON/JSONB~~
+  - ~~SQLite support~~
+
+NB: You can find v1 here: https://github.com/mevdschee/php-crud-api/tree/v1
 
 ## Middleware
 
