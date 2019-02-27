@@ -26,7 +26,7 @@ class PageLimitsMiddleware extends Middleware
         if ($operation == 'list') {
             $params = $request->getParams();
             $maxPage = (int) $this->getProperty('pages', '100');
-            if (isset($params['page']) && $params['page']) {
+            if (isset($params['page']) && $params['page'] && $maxPage > 0) {
                 if (strpos($params['page'][0], ',') === false) {
                     $params['page'] = array(min($params['page'][0], $maxPage));
                 } else {
@@ -35,7 +35,7 @@ class PageLimitsMiddleware extends Middleware
                 }
             }
             $maxSize = (int) $this->getProperty('records', '1000');
-            if (!isset($params['size']) || !$params['size']) {
+            if (!isset($params['size']) || !$params['size'] && $maxSize > 0) {
                 $params['size'] = array($maxSize);
             } else {
                 $params['size'] = array(min($params['size'][0], $maxSize));
