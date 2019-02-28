@@ -198,8 +198,8 @@ You can tune the middleware behavior using middleware specific configuration par
 - "validation.handler": Handler to implement validation rules for input values ("")
 - "sanitation.handler": Handler to implement sanitation rules for input values ("")
 - "multiTenancy.handler": Handler to implement simple multi-tenancy rules ("")
-- "pageLimits.pages": The maximum page number a list operation returns ("100")
-- "pageLimits.records": The maximum number of records a list operation returns ("1000")
+- "pageLimits.pages": The maximum page number that a list operation allows ("100")
+- "pageLimits.records": The maximum number of records returned by a list operation ("1000")
 - "customization.beforeHandler": Handler to implement request customization ("")
 - "customization.afterHandler": Handler to implement response customization ("")
 
