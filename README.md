@@ -732,7 +732,7 @@ It also sets the column "customer_id" on "create" to "12" and removes the column
 ### Prevent high load and scraping
 
 You may use the "pageLimits" middleware to limit the page number and the number records returned from a list operation. 
-If you want no more than 10 pages with a maximum of 25 records each, you can specify:
+If you want to allow no more than 10 pages with a maximum of 25 records each, you can specify:
 
     'pageLimits.pages' => 10,
     'pageLimits.records' => 25,
