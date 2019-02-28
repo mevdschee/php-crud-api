@@ -438,7 +438,7 @@ Output:
     }
 ```
 
-NB: Pages that are not ordered cannot be paginated.
+NB: Since pages that are not ordered cannot be paginated, pages will be ordered by primary key.
 
 ### Joins
 
