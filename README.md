@@ -161,7 +161,7 @@ You can enable the following middleware using the "middlewares" config parameter
 - "validation": Return input validation errors for custom rules
 - "sanitation": Apply input sanitation on create and update
 - "multiTenancy": Restricts tenants access in a multi-tenant scenario
-- "pageLimits": Restricts list operations to prevent heavy load and scraping
+- "pageLimits": Restricts list operations to prevent high load and scraping
 - "customization": Provides handlers for request and response customization
 
 The "middlewares" config parameter is a comma separated list of enabled middlewares.
@@ -728,6 +728,16 @@ If your tenants are identified by the "customer_id" column you can use the follo
 
 This construct adds a filter requiring "customer_id" to be "12" to every operation (except for "create").
 It also sets the column "customer_id" on "create" to "12" and removes the column from any other write operation.
+
+### Prevent high load and scraping
+
+You may use the "pageLimits" middleware to limit the page number and the number records returned from a list operation. 
+If you want no more than 10 pages with a maximum of 25 records each, you can specify:
+
+    'pageLimits.pages' => 10,
+    'pageLimits.records' => 25,
+
+NB: The maximum number of records is also applied when there is no page number specified in the request.
 
 ### Customization handlers
 
