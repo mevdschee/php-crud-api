@@ -98,7 +98,7 @@ CREATE TABLE users (
     id serial NOT NULL,
     username character varying(255) NOT NULL,
     password character varying(255) NOT NULL,
-    location geometry NULL
+    location geometry
 );
 
 --
@@ -118,8 +118,8 @@ CREATE TABLE countries (
 CREATE TABLE events (
     id serial NOT NULL,
     name character varying(255) NOT NULL,
-    datetime timestamp NULL,
-    visitors bigint NULL
+    datetime timestamp,
+    visitors bigint
 );
 
 --

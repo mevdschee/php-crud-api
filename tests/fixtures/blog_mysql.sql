@@ -9,7 +9,7 @@ DROP TABLE IF EXISTS `categories`;
 CREATE TABLE `categories` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(255) NOT NULL,
-  `icon` blob NULL,
+  `icon` blob,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -85,13 +85,13 @@ CREATE TABLE `users` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `username` varchar(255) NOT NULL,
   `password` varchar(255) NOT NULL,
-  `location` point NULL,
+  `location` point,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 INSERT INTO `users` (`username`, `password`, `location`) VALUES
-('user1',	'pass1', null),
-('user2',	'pass2', null);
+('user1',	'pass1', NULL),
+('user2',	'pass2', NULL);
 
 DROP TABLE IF EXISTS `countries`;
 CREATE TABLE `countries` (
@@ -127,7 +127,7 @@ CREATE TABLE `products` (
   `price` decimal(10,2) NOT NULL,
   `properties` longtext NOT NULL,
   `created_at` datetime NOT NULL,
-  `deleted_at` datetime NULL,
+  `deleted_at` datetime,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 

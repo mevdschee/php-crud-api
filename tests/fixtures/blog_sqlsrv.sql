@@ -133,7 +133,7 @@ GO
 CREATE TABLE [categories](
 	[id] [int] IDENTITY,
 	[name] [nvarchar](255) NOT NULL,
-	[icon] [image] NULL,
+	[icon] [image],
 	PRIMARY KEY CLUSTERED([id] ASC)
 )
 GO
@@ -175,7 +175,7 @@ CREATE TABLE [users](
 	[id] [int] IDENTITY,
 	[username] [nvarchar](255) NOT NULL,
 	[password] [nvarchar](255) NOT NULL,
-	[location] [geometry] NULL,
+	[location] [geometry],
 	CONSTRAINT [PK_users]
 	PRIMARY KEY CLUSTERED([id] ASC)
 )
@@ -193,8 +193,8 @@ GO
 CREATE TABLE [events](
 	[id] [int] IDENTITY,
 	[name] [nvarchar](255) NOT NULL,
-	[datetime] [datetime2](0) NULL,
-	[visitors] [bigint] NULL,
+	[datetime] [datetime2](0),
+	[visitors] [bigint],
 	CONSTRAINT [PK_events]
 	PRIMARY KEY CLUSTERED([id] ASC)
 )
@@ -211,7 +211,7 @@ CREATE TABLE [products](
 	[price] [decimal](10,2) NOT NULL,
 	[properties] [xml] NOT NULL,
 	[created_at] [datetime2](0) NOT NULL,
-	[deleted_at] [datetime2](0) NULL,
+	[deleted_at] [datetime2](0),
 	CONSTRAINT [PK_products]
 	PRIMARY KEY CLUSTERED([id] ASC)
 )
