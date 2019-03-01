@@ -19,7 +19,7 @@ INSERT INTO `categories` (`name`, `icon`) VALUES
 
 DROP TABLE IF EXISTS `comments`;
 CREATE TABLE `comments` (
-  `id` bigint(11) NOT NULL AUTO_INCREMENT,
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
   `post_id` int(11) NOT NULL,
   `message` varchar(255) NOT NULL,
   PRIMARY KEY (`id`),
@@ -109,8 +109,8 @@ DROP TABLE IF EXISTS `events`;
 CREATE TABLE `events` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(255) NOT NULL,
-  `datetime` datetime NOT NULL,
-  `visitors` int(11) NOT NULL,
+  `datetime` datetime,
+  `visitors` bigint(20),
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 

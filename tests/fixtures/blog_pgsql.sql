@@ -118,8 +118,8 @@ CREATE TABLE countries (
 CREATE TABLE events (
     id serial NOT NULL,
     name character varying(255) NOT NULL,
-    datetime timestamp NOT NULL,
-    visitors integer NOT NULL
+    datetime timestamp NULL,
+    visitors bigint NULL
 );
 
 --

@@ -193,8 +193,8 @@ GO
 CREATE TABLE [events](
 	[id] [int] IDENTITY,
 	[name] [nvarchar](255) NOT NULL,
-	[datetime] [datetime2](0) NOT NULL,
-	[visitors] [int] NOT NULL,
+	[datetime] [datetime2](0) NULL,
+	[visitors] [bigint] NULL,
 	CONSTRAINT [PK_events]
 	PRIMARY KEY CLUSTERED([id] ASC)
 )
