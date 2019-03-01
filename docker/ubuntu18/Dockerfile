@@ -2,13 +2,12 @@ FROM ubuntu:18.04
 
 ARG DEBIAN_FRONTEND=noninteractive
 
-# install: php / mysql / postgres / sqlite / tools
+# install: php / mysql / postgres / tools
 RUN apt-get update && apt-get -y install \
 php-cli php-xml \
 mysql-server mysql-client php-mysql \
 postgresql php-pgsql \
 postgresql-10-postgis-2.4 \
-sqlite php-sqlite3 \
 git wget
 
 # install locales
