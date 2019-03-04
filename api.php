@@ -1805,6 +1805,7 @@ class GenericDB
         $options = array(
             \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
             \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
+            \PDO::ATTR_STRINGIFY_FETCHES => false,                
         );
         switch ($this->driver) {
             case 'mysql':return $options + [
@@ -3476,47 +3477,29 @@ class PageLimitsMiddleware extends Middleware
         $this->utils = new RequestUtils($reflection);
     }
 
-    private function getMissingOrderParam(ReflectedTable $table): String
-    {
-        $pk = $table->getPk();
-        if (!$pk) {
-            $columnNames = $table->getColumnNames();
-            if (!$columnNames) {
-                return '';
-            }
-            return $columnNames[0];
-        }
-        return $pk->getName();
-    }
-
     public function handle(Request $request): Response
     {
         $operation = $this->utils->getOperation($request);
         if ($operation == 'list') {
-            $tableName = $request->getPathSegment(2);
-            $table = $this->reflection->getTable($tableName);
-            if ($table) {
-                $params = $request->getParams();
-                if (!isset($params['order']) || !$params['order']) {
-                    $params['order'] = array($this->getMissingOrderParam($table));
-                }
-                $maxPage = (int) $this->getProperty('pages', '100');
-                if (isset($params['page']) && $params['page']) {
-                    if (strpos($params['page'][0], ',') === false) {
-                        $params['page'] = array(min($params['page'][0], $maxPage));
-                    } else {
-                        list($page, $size) = explode(',', $params['page'][0], 2);
-                        $params['page'] = array(min($page, $maxPage) . ',' . $size);
-                    }
-                }
-                $maxSize = (int) $this->getProperty('records', '1000');
-                if (!isset($params['size']) || !$params['size']) {
-                    $params['size'] = array($maxSize);
+            $params = $request->getParams();
+            $maxPage = (int) $this->getProperty('pages', '100');
+            if (isset($params['page']) && $params['page'] && $maxPage > 0) {
+                if (strpos($params['page'][0], ',') === false) {
+                    $page = $params['page'][0];
                 } else {
-                    $params['size'] = array(min($params['size'][0], $maxSize));
+                    list($page, $size) = explode(',', $params['page'][0], 2);
                 }
-                $request->setParams($params);
+                if ($page > $maxPage) {
+                    return $this->responder->error(ErrorCode::PAGINATION_FORBIDDEN, '');
+                }
             }
+            $maxSize = (int) $this->getProperty('records', '1000');
+            if (!isset($params['size']) || !$params['size'] && $maxSize > 0) {
+                $params['size'] = array($maxSize);
+            } else {
+                $params['size'] = array(min($params['size'][0], $maxSize));
+            }
+            $request->setParams($params);
         }
         return $this->next->handle($request);
     }
@@ -4341,7 +4324,7 @@ class ErrorCode
     const TEMPORARY_OR_PERMANENTLY_BLOCKED = 1016;
     const BAD_OR_MISSING_XSRF_TOKEN = 1017;
     const ONLY_AJAX_REQUESTS_ALLOWED = 1018;
-    const FILE_UPLOAD_FAILED = 1019;
+    const PAGINATION_FORBIDDEN = 1019;
 
     private $values = [
         9999 => ["%s", Response::INTERNAL_SERVER_ERROR],
@@ -4364,7 +4347,7 @@ class ErrorCode
         1016 => ["Temporary or permanently blocked", Response::FORBIDDEN],
         1017 => ["Bad or missing XSRF token", Response::FORBIDDEN],
         1018 => ["Only AJAX requests allowed for '%s'", Response::FORBIDDEN],
-        1019 => ["File upload failed for '%s'", Response::UNPROCESSABLE_ENTITY],
+        1019 => ["Pagination forbidden", Response::FORBIDDEN],
     ];
 
     public function __construct(int $code)
