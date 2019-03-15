@@ -413,7 +413,7 @@ NB: You may sort on multiple fields by using multiple "order" parameters. You ca
 The "size" parameter limits the number of returned records. This can be used for top N lists together with the "order" parameter (use descending order).
 
 ```
-GET /records/categories?order=id&size=2
+GET /records/categories?order=id,desc&size=2
 ```
 
 Output:
@@ -422,12 +422,12 @@ Output:
     {
         "records":[
             {
-                "id": 1
-                "name": "Internet"
-            },
-            {
                 "id": 3
                 "name": "Web development"
+            },
+            {
+                "id": 1
+                "name": "Internet"
             }
         ]
     }
