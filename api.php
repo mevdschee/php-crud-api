@@ -4917,10 +4917,13 @@ class RelationJoiner
         foreach ($joins->getKeys() as $t2Name) {
 
             $t2 = $this->reflection->getTable($t2Name);
+            $t3 = null;
 
             $belongsTo = count($t1->getFksTo($t2->getName())) > 0;
             $hasMany = count($t2->getFksTo($t1->getName())) > 0;
-            $t3 = $this->hasAndBelongsToMany($t1, $t2);
+            if (!$belongsTo && !$hasMany) {
+                $t3 = $this->hasAndBelongsToMany($t1, $t2);
+            }
             $hasAndBelongsToMany = ($t3 != null);
 
             $newRecords = array();
@@ -4931,10 +4934,12 @@ class RelationJoiner
             if ($belongsTo) {
                 $fkValues = $this->getFkEmptyValues($t1, $t2, $records);
                 $this->addFkRecords($t2, $fkValues, $params, $db, $newRecords);
-            } elseif ($hasMany) {
+            } 
+            if ($hasMany) {
                 $pkValues = $this->getPkEmptyValues($t1, $records);
                 $this->addPkRecords($t1, $t2, $pkValues, $params, $db, $newRecords);
-            } elseif ($hasAndBelongsToMany) {
+            } 
+            if ($hasAndBelongsToMany) {
                 $habtmValues = $this->getHabtmEmptyValues($t1, $t2, $t3, $db, $records);
                 $this->addFkRecords($t2, $habtmValues->fkValues, $params, $db, $newRecords);
             }
@@ -4944,10 +4949,12 @@ class RelationJoiner
             if ($fkValues != null) {
                 $this->fillFkValues($t2, $newRecords, $fkValues);
                 $this->setFkValues($t1, $t2, $records, $fkValues);
-            } elseif ($pkValues != null) {
+            } 
+            if ($pkValues != null) {
                 $this->fillPkValues($t1, $t2, $newRecords, $pkValues);
                 $this->setPkValues($t1, $t2, $records, $pkValues);
-            } elseif ($habtmValues != null) {
+            } 
+            if ($habtmValues != null) {
                 $this->fillFkValues($t2, $newRecords, $habtmValues->fkValues);
                 $this->setHabtmValues($t1, $t3, $records, $habtmValues);
             }
