@@ -108,7 +108,7 @@ The following features are supported:
   - Multi-domain CORS support for cross-domain requests
   - Support for reading joined results from multiple tables
   - Search support on multiple criteria
-  - Pagination, sorting, top N and column selection
+  - Pagination, sorting, top N list and column selection
   - Relation detection with nested results (belongsTo, hasMany and HABTM)
   - Atomic increment support via PATCH (for counters)
   - Binary fields supported with base64 encoding
