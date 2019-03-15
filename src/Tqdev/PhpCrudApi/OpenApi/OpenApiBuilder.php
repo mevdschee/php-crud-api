@@ -281,7 +281,7 @@ class OpenApiBuilder
         $this->openapi->set("components|parameters|size|name", "size");
         $this->openapi->set("components|parameters|size|in", "query");
         $this->openapi->set("components|parameters|size|schema|type", "string");
-        $this->openapi->set("components|parameters|size|description", "Maximum number of results (for top N lists). Example: 10");
+        $this->openapi->set("components|parameters|size|description", "Maximum number of results (for top lists). Example: 10");
         $this->openapi->set("components|parameters|size|required", false);
 
         $this->openapi->set("components|parameters|page|name", "page");
