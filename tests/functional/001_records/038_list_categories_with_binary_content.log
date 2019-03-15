@@ -1,4 +1,4 @@
-GET /records/categories
+GET /records/categories?filter=id,le,2
 ===
 200
 Content-Type: application/json

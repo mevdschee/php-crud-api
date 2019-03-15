@@ -1,6 +1,6 @@
 POST /records/comments
 
-{"user_id":1,"post_id":2,"message":"invisible"}
+{"user_id":1,"post_id":2,"message":"invisible","category_id":3}
 ===
 200
 Content-Type: application/json

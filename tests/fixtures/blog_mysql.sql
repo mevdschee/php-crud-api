@@ -15,23 +15,26 @@ CREATE TABLE `categories` (
 
 INSERT INTO `categories` (`name`, `icon`) VALUES
 ('announcement',	NULL),
-('article',	NULL);
+('article',	NULL),
+('comment',	NULL);
 
 DROP TABLE IF EXISTS `comments`;
 CREATE TABLE `comments` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT,
   `post_id` int(11) NOT NULL,
   `message` varchar(255) NOT NULL,
+  `category_id` int(11) NOT NULL,
   PRIMARY KEY (`id`),
   KEY `post_id` (`post_id`),
-  CONSTRAINT `comments_post_id_fkey` FOREIGN KEY (`post_id`) REFERENCES `posts` (`id`)
+  CONSTRAINT `comments_post_id_fkey` FOREIGN KEY (`post_id`) REFERENCES `posts` (`id`),
+  CONSTRAINT `comments_category_id_fkey` FOREIGN KEY (`category_id`) REFERENCES `categories` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-INSERT INTO `comments` (`post_id`, `message`) VALUES
-(1,	'great'),
-(1,	'fantastic'),
-(2,	'thank you'),
-(2,	'awesome');
+INSERT INTO `comments` (`post_id`, `message`, `category_id`) VALUES
+(1,	'great', 3),
+(1,	'fantastic', 3),
+(2,	'thank you', 3),
+(2,	'awesome', 3);
 
 DROP TABLE IF EXISTS `posts`;
 CREATE TABLE `posts` (

@@ -1,4 +1,4 @@
-GET /records/posts?join=categories&join=post_tags,tags&join=comments&exclude=comments.message&filter=id,eq,1
+GET /records/posts?join=categories&join=post_tags,tags&join=comments&exclude=comments.message,comments.category_id&filter=id,eq,1
 
 ===
 200

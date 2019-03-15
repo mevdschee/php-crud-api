@@ -1,0 +1,31 @@
+GET /records/posts/1?join=tags&include=tags.name
+===
+200
+Content-Type: application/json
+Content-Length: 74
+
+{"id":1,"post_tags":[{"id":1,"name":"funny"},{"id":2,"name":"important"}]}
+===
+GET /records/posts/1?join=categories&include=category_id,categories.name
+===
+200
+Content-Type: application/json
+Content-Length: 53
+
+{"id":1,"category_id":{"id":1,"name":"announcement"}}
+===
+GET /records/posts/1?join=comments,categories&include=category_id,categories.name
+===
+200
+Content-Type: application/json
+Content-Length: 145
+
+{"id":1,"category_id":1,"comments":[{"post_id":1,"category_id":{"id":3,"name":"comment"}},{"post_id":1,"category_id":{"id":3,"name":"comment"}}]}
+===
+GET /records/posts/1?join=categories&join=comments,categories&include=category_id,categories.name
+===
+200
+Content-Type: application/json
+Content-Length: 174
+
+{"id":1,"category_id":{"id":1,"name":"announcement"},"comments":[{"post_id":1,"category_id":{"id":3,"name":"comment"}},{"post_id":1,"category_id":{"id":3,"name":"comment"}}]}

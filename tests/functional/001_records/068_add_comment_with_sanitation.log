@@ -1,6 +1,6 @@
 POST /records/comments
 
-{"user_id":1,"post_id":2,"message":"<h1>Title</h1> <p>Body</p>"}
+{"user_id":1,"post_id":2,"message":"<h1>Title</h1> <p>Body</p>","category_id":3}
 ===
 200
 Content-Type: application/json
@@ -12,6 +12,6 @@ GET /records/comments/5
 ===
 200
 Content-Type: application/json
-Content-Length: 43
+Content-Length: 59
 
-{"id":5,"post_id":2,"message":"Title Body"}
+{"id":5,"post_id":2,"message":"Title Body","category_id":3}

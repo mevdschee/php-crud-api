@@ -40,6 +40,12 @@ ALTER TABLE [comments] DROP	CONSTRAINT [FK_comments_posts]
 END
 GO
 
+IF (OBJECT_ID('FK_comments_categories', 'F') IS NOT NULL)
+BEGIN
+ALTER TABLE [comments] DROP	CONSTRAINT [FK_comments_categories]
+END
+GO
+
 IF (OBJECT_ID('barcodes2', 'U') IS NOT NULL)
 BEGIN
 DROP TABLE [barcodes2]
@@ -142,6 +148,7 @@ CREATE TABLE [comments](
 	[id] [bigint] IDENTITY,
 	[post_id] [int] NOT NULL,
 	[message] [nvarchar](255) NOT NULL,
+	[category_id] [int] NOT NULL,
 	PRIMARY KEY CLUSTERED([id] ASC)
 )
 GO
@@ -253,14 +260,16 @@ INSERT [categories] ([name], [icon]) VALUES (N'announcement', NULL)
 GO
 INSERT [categories] ([name], [icon]) VALUES (N'article', NULL)
 GO
+INSERT [categories] ([name], [icon]) VALUES (N'comment', NULL)
+GO
 
-INSERT [comments] ([post_id], [message]) VALUES (1, N'great')
+INSERT [comments] ([post_id], [message], [category_id]) VALUES (1, N'great', 3)
 GO
-INSERT [comments] ([post_id], [message]) VALUES (1, N'fantastic')
+INSERT [comments] ([post_id], [message], [category_id]) VALUES (1, N'fantastic', 3)
 GO
-INSERT [comments] ([post_id], [message]) VALUES (2, N'thank you')
+INSERT [comments] ([post_id], [message], [category_id]) VALUES (2, N'thank you', 3)
 GO
-INSERT [comments] ([post_id], [message]) VALUES (2, N'awesome')
+INSERT [comments] ([post_id], [message], [category_id]) VALUES (2, N'awesome', 3)
 GO
 
 INSERT [post_tags] ([post_id], [tag_id]) VALUES (1, 1)
@@ -316,6 +325,12 @@ ALTER TABLE [comments]  WITH CHECK ADD 	CONSTRAINT [FK_comments_posts] FOREIGN K
 REFERENCES [posts] ([id])
 GO
 ALTER TABLE [comments] CHECK	CONSTRAINT [FK_comments_posts]
+GO
+
+ALTER TABLE [comments]  WITH CHECK ADD 	CONSTRAINT [FK_comments_categories] FOREIGN KEY([category_id])
+REFERENCES [categories] ([id])
+GO
+ALTER TABLE [comments] CHECK	CONSTRAINT [FK_comments_categories]
 GO
 
 ALTER TABLE [post_tags]  WITH CHECK ADD 	CONSTRAINT [FK_post_tags_posts] FOREIGN KEY([post_id])
