@@ -258,7 +258,6 @@ class OpenApiBuilder
         $this->openapi->set("components|parameters|filter|schema|items|type", "string");
         $this->openapi->set("components|parameters|filter|description", "Filters to be applied. Each filter consists of a column, an operator and a value (comma separated). Example: id,eq,1");
         $this->openapi->set("components|parameters|filter|required", false);
-        $this->openapi->set("components|parameters|filter|explode", false);
         
         $this->openapi->set("components|parameters|include|name", "include");
         $this->openapi->set("components|parameters|include|in", "query");
@@ -278,7 +277,6 @@ class OpenApiBuilder
         $this->openapi->set("components|parameters|order|schema|items|type", "string");
         $this->openapi->set("components|parameters|order|description", "Column you want to sort on and the sort direction (comma separated). Example: id,desc");
         $this->openapi->set("components|parameters|order|required", false);
-        $this->openapi->set("components|parameters|order|explode", false);
 
         $this->openapi->set("components|parameters|size|name", "size");
         $this->openapi->set("components|parameters|size|in", "query");
@@ -298,7 +296,6 @@ class OpenApiBuilder
         $this->openapi->set("components|parameters|join|schema|items|type", "string");
         $this->openapi->set("components|parameters|join|description", "Paths (comma separated) to related entities that you want to include. Example: comments,users");
         $this->openapi->set("components|parameters|join|required", false);
-        $this->openapi->set("components|parameters|join|explode", false);
     }
 
     private function setTag(int $index, String $tableName) /*: void*/
