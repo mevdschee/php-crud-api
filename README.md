@@ -31,10 +31,6 @@ There are also proof-of-concept ports of this script that only support basic RES
   - PostGIS 2.0 or higher for spatial features in PostgreSQL 9.1 or higher
   - SQL Server 2012 or higher (2017 for Linux support)
 
-## Known issues
-
-- Seeing integers as strings? Make sure to enable the `nd_pdo_mysql` extension and disable `pdo_mysql`.
-
 ## Installation
 
 This is a single file application! Upload "`api.php`" somewhere and enjoy!
@@ -133,6 +129,7 @@ These features are new in v2 and were not included in v1:
   - Error reporting in JSON with corresponding HTTP status
   - Support for basic authentication and via auth provider (JWT)
   - Support for basic firewall functionality
+  - Prevent database scraping using list limits
 
 ### Dropped features
 
@@ -161,7 +158,7 @@ You can enable the following middleware using the "middlewares" config parameter
 - "validation": Return input validation errors for custom rules
 - "sanitation": Apply input sanitation on create and update
 - "multiTenancy": Restricts tenants access in a multi-tenant scenario
-- "pageLimits": Restricts list operations to prevent high load and scraping
+- "pageLimits": Restricts list operations to prevent database scraping
 - "customization": Provides handlers for request and response customization
 
 The "middlewares" config parameter is a comma separated list of enabled middlewares.
@@ -729,7 +726,7 @@ If your tenants are identified by the "customer_id" column you can use the follo
 This construct adds a filter requiring "customer_id" to be "12" to every operation (except for "create").
 It also sets the column "customer_id" on "create" to "12" and removes the column from any other write operation.
 
-### Prevent high load and scraping
+### Prevent database scraping
 
 You may use the "pageLimits" middleware to limit the page number and the number records returned from a list operation. 
 If you want to allow no more than 10 pages with a maximum of 25 records each, you can specify:
