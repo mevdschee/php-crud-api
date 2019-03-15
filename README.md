@@ -108,7 +108,7 @@ The following features are supported:
   - Multi-domain CORS support for cross-domain requests
   - Support for reading joined results from multiple tables
   - Search support on multiple criteria
-  - Pagination, seeking, sorting and column selection
+  - Pagination, sorting, top N and column selection
   - Relation detection with nested results (belongsTo, hasMany and HABTM)
   - Atomic increment support via PATCH (for counters)
   - Binary fields supported with base64 encoding
@@ -413,7 +413,7 @@ NB: You may sort on multiple fields by using multiple "order" parameters. You ca
 The "size" parameter limits the number of returned records. This can be used for top N lists together with the "order" parameter (use descending order).
 
 ```
-GET /records/categories?order=id&size=2
+GET /records/categories?order=id,desc&size=1
 ```
 
 Output:
@@ -421,10 +421,6 @@ Output:
 ```
     {
         "records":[
-            {
-                "id": 1
-                "name": "Internet"
-            },
             {
                 "id": 3
                 "name": "Web development"
