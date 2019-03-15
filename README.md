@@ -408,9 +408,36 @@ Output:
 
 NB: You may sort on multiple fields by using multiple "order" parameters. You can not order on "joined" columns.
 
+### Limit size
+
+The "size" parameter limits the number of returned records. This can be used for top N lists together with the "order" parameter (use descending order).
+
+```
+GET /records/categories?order=id&size=2
+```
+
+Output:
+
+```
+    {
+        "records":[
+            {
+                "id": 1
+                "name": "Internet"
+            },
+            {
+                "id": 3
+                "name": "Web development"
+            }
+        ]
+    }
+```
+
+NB: If you also want to know to the total number of records you may want to use the "page" parameter.
+
 ### Pagination
 
-The "page" parameter holds the requested page. The default page size is 20, but can be adjusted (e.g. to 50):
+The "page" parameter holds the requested page. The default page size is 20, but can be adjusted (e.g. to 50).
 
 ```
 GET /records/categories?order=id&page=1
