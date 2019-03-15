@@ -24,6 +24,20 @@ class OpenApiDefinition implements \JsonSerializable
         $current = $value;
     }
 
+    public function has(String $path): bool
+    {
+        $parts = explode('|', trim($path, '|'));
+        $current = &$this->root;
+        while (count($parts) > 0) {
+            $part = array_shift($parts);
+            if (!isset($current[$part])) {
+                return false;
+            }
+            $current = &$current[$part];
+        }
+        return true;
+    }
+
     public function jsonSerialize()
     {
         return $this->root;
