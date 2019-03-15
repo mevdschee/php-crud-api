@@ -4917,12 +4917,13 @@ class RelationJoiner
         foreach ($joins->getKeys() as $t2Name) {
 
             $t2 = $this->reflection->getTable($t2Name);
-            $t3 = null;
-
+            
             $belongsTo = count($t1->getFksTo($t2->getName())) > 0;
             $hasMany = count($t2->getFksTo($t1->getName())) > 0;
             if (!$belongsTo && !$hasMany) {
                 $t3 = $this->hasAndBelongsToMany($t1, $t2);
+            } else {
+                $t3 = null;
             }
             $hasAndBelongsToMany = ($t3 != null);
 
