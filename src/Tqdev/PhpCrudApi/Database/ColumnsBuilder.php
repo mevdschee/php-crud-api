@@ -21,9 +21,9 @@ class ColumnsBuilder
             return '';
         }
         switch ($this->driver) {
-            case 'mysql':return "LIMIT $offset, $limit";
-            case 'pgsql':return "LIMIT $limit OFFSET $offset";
-            case 'sqlsrv':return "OFFSET $offset ROWS FETCH NEXT $limit ROWS ONLY";
+            case 'mysql':return " LIMIT $offset, $limit";
+            case 'pgsql':return " LIMIT $limit OFFSET $offset";
+            case 'sqlsrv':return " OFFSET $offset ROWS FETCH NEXT $limit ROWS ONLY";
         }
     }
 
@@ -34,13 +34,16 @@ class ColumnsBuilder
 
     public function getOrderBy(ReflectedTable $table, array $columnOrdering): String
     {
+        if (count($columnOrdering)==0) {
+            return '';
+        }
         $results = array();
         foreach ($columnOrdering as $i => list($columnName, $ordering)) {
             $column = $table->getColumn($columnName);
             $quotedColumnName = $this->quoteColumnName($column);
             $results[] = $quotedColumnName . ' ' . $ordering;
         }
-        return implode(',', $results);
+        return ' ORDER BY '.implode(',', $results);
     }
 
     public function getSelect(ReflectedTable $table, array $columnNames): String

@@ -1402,9 +1402,9 @@ class ColumnsBuilder
             return '';
         }
         switch ($this->driver) {
-            case 'mysql':return "LIMIT $offset, $limit";
-            case 'pgsql':return "LIMIT $limit OFFSET $offset";
-            case 'sqlsrv':return "OFFSET $offset ROWS FETCH NEXT $limit ROWS ONLY";
+            case 'mysql':return " LIMIT $offset, $limit";
+            case 'pgsql':return " LIMIT $limit OFFSET $offset";
+            case 'sqlsrv':return " OFFSET $offset ROWS FETCH NEXT $limit ROWS ONLY";
         }
     }
 
@@ -1415,13 +1415,16 @@ class ColumnsBuilder
 
     public function getOrderBy(ReflectedTable $table, array $columnOrdering): String
     {
+        if (count($columnOrdering)==0) {
+            return '';
+        }
         $results = array();
         foreach ($columnOrdering as $i => list($columnName, $ordering)) {
             $column = $table->getColumn($columnName);
             $quotedColumnName = $this->quoteColumnName($column);
             $results[] = $quotedColumnName . ' ' . $ordering;
         }
-        return implode(',', $results);
+        return ' ORDER BY '.implode(',', $results);
     }
 
     public function getSelect(ReflectedTable $table, array $columnNames): String
@@ -1941,20 +1944,6 @@ class GenericDB
         return $stmt->fetchColumn(0);
     }
 
-    public function selectAllUnordered(ReflectedTable $table, array $columnNames, Condition $condition): array
-    {
-        $selectColumns = $this->columns->getSelect($table, $columnNames);
-        $tableName = $table->getName();
-        $condition = $this->addMiddlewareConditions($tableName, $condition);
-        $parameters = array();
-        $whereClause = $this->conditions->getWhereClause($condition, $parameters);
-        $sql = 'SELECT ' . $selectColumns . ' FROM "' . $tableName . '"' . $whereClause;
-        $stmt = $this->query($sql, $parameters);
-        $records = $stmt->fetchAll();
-        $this->converter->convertRecords($table, $columnNames, $records);
-        return $records;
-    }
-
     public function selectAll(ReflectedTable $table, array $columnNames, Condition $condition, array $columnOrdering, int $offset, int $limit): array
     {
         if ($limit == 0) {
@@ -1967,7 +1956,7 @@ class GenericDB
         $whereClause = $this->conditions->getWhereClause($condition, $parameters);
         $orderBy = $this->columns->getOrderBy($table, $columnOrdering);
         $offsetLimit = $this->columns->getOffsetLimit($offset, $limit);
-        $sql = 'SELECT ' . $selectColumns . ' FROM "' . $tableName . '"' . $whereClause . ' ORDER BY ' . $orderBy . ' ' . $offsetLimit;
+        $sql = 'SELECT ' . $selectColumns . ' FROM "' . $tableName . '"' . $whereClause . $orderBy . $offsetLimit;
         $stmt = $this->query($sql, $parameters);
         $records = $stmt->fetchAll();
         $this->converter->convertRecords($table, $columnNames, $records);
@@ -5032,7 +5021,7 @@ class RelationJoiner
             $conditions[] = new ColumnCondition($fk, 'in', $pkValueKeys);
         }
         $condition = OrCondition::fromArray($conditions);
-        foreach ($db->selectAllUnordered($t2, $columnNames, $condition) as $record) {
+        foreach ($db->selectAll($t2, $columnNames, $condition, array(), 0, -1) as $record) {
             $records[] = $record;
         }
     }
@@ -5078,7 +5067,7 @@ class RelationJoiner
         $pkIds = implode(',', array_keys($pkValues));
         $condition = new ColumnCondition($t3->getColumn($fk1Name), 'in', $pkIds);
 
-        $records = $db->selectAllUnordered($t3, $columnNames, $condition);
+        $records = $db->selectAll($t3, $columnNames, $condition, array(), 0, -1);
         foreach ($records as $record) {
             $val1 = $record[$fk1Name];
             $val2 = $record[$fk2Name];

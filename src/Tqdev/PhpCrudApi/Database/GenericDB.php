@@ -185,20 +185,6 @@ class GenericDB
         return $stmt->fetchColumn(0);
     }
 
-    public function selectAllUnordered(ReflectedTable $table, array $columnNames, Condition $condition): array
-    {
-        $selectColumns = $this->columns->getSelect($table, $columnNames);
-        $tableName = $table->getName();
-        $condition = $this->addMiddlewareConditions($tableName, $condition);
-        $parameters = array();
-        $whereClause = $this->conditions->getWhereClause($condition, $parameters);
-        $sql = 'SELECT ' . $selectColumns . ' FROM "' . $tableName . '"' . $whereClause;
-        $stmt = $this->query($sql, $parameters);
-        $records = $stmt->fetchAll();
-        $this->converter->convertRecords($table, $columnNames, $records);
-        return $records;
-    }
-
     public function selectAll(ReflectedTable $table, array $columnNames, Condition $condition, array $columnOrdering, int $offset, int $limit): array
     {
         if ($limit == 0) {
@@ -211,7 +197,7 @@ class GenericDB
         $whereClause = $this->conditions->getWhereClause($condition, $parameters);
         $orderBy = $this->columns->getOrderBy($table, $columnOrdering);
         $offsetLimit = $this->columns->getOffsetLimit($offset, $limit);
-        $sql = 'SELECT ' . $selectColumns . ' FROM "' . $tableName . '"' . $whereClause . ' ORDER BY ' . $orderBy . ' ' . $offsetLimit;
+        $sql = 'SELECT ' . $selectColumns . ' FROM "' . $tableName . '"' . $whereClause . $orderBy . $offsetLimit;
         $stmt = $this->query($sql, $parameters);
         $records = $stmt->fetchAll();
         $this->converter->convertRecords($table, $columnNames, $records);

@@ -208,7 +208,7 @@ class RelationJoiner
             $conditions[] = new ColumnCondition($fk, 'in', $pkValueKeys);
         }
         $condition = OrCondition::fromArray($conditions);
-        foreach ($db->selectAllUnordered($t2, $columnNames, $condition) as $record) {
+        foreach ($db->selectAll($t2, $columnNames, $condition, array(), 0, -1) as $record) {
             $records[] = $record;
         }
     }
@@ -254,7 +254,7 @@ class RelationJoiner
         $pkIds = implode(',', array_keys($pkValues));
         $condition = new ColumnCondition($t3->getColumn($fk1Name), 'in', $pkIds);
 
-        $records = $db->selectAllUnordered($t3, $columnNames, $condition);
+        $records = $db->selectAll($t3, $columnNames, $condition, array(), 0, -1);
         foreach ($records as $record) {
             $val1 = $record[$fk1Name];
             $val2 = $record[$fk2Name];
