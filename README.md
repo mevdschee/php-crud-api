@@ -757,9 +757,10 @@ It also sets the column "customer_id" on "create" to "12" and removes the column
 
 You may use the "joinLimits" and "pageLimits" middleware to prevent database scraping.
 The "joinLimits" middleware limits the table depth, number of tables and number of records returned in a join operation. 
+If you want to allow 5 direct direct joins with a maximum of 25 records each, you can specify:
 
-    'joinLimits.depth' => 2,
-    'joinLimits.tables' => 3,
+    'joinLimits.depth' => 1,
+    'joinLimits.tables' => 5,
     'joinLimits.records' => 25,
 
 The "pageLimits" middleware limits the page number and the number records returned from a list operation. 
