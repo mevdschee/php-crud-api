@@ -2,6 +2,6 @@ GET /records/posts/1?include=content,tags.name&join=tags
 ===
 200
 Content-Type: application/json
-Content-Length: 99
+Content-Length: 94
 
-{"id":1,"content":"blog started","post_tags":[{"id":1,"name":"funny"},{"id":2,"name":"important"}]}
+{"id":1,"content":"blog started","tags":[{"id":1,"name":"funny"},{"id":2,"name":"important"}]}

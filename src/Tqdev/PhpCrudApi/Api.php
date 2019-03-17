@@ -15,6 +15,7 @@ use Tqdev\PhpCrudApi\Middleware\BasicAuthMiddleware;
 use Tqdev\PhpCrudApi\Middleware\CorsMiddleware;
 use Tqdev\PhpCrudApi\Middleware\CustomizationMiddleware;
 use Tqdev\PhpCrudApi\Middleware\FirewallMiddleware;
+use Tqdev\PhpCrudApi\Middleware\JoinLimitsMiddleware;
 use Tqdev\PhpCrudApi\Middleware\JwtAuthMiddleware;
 use Tqdev\PhpCrudApi\Middleware\MultiTenancyMiddleware;
 use Tqdev\PhpCrudApi\Middleware\PageLimitsMiddleware;
@@ -77,6 +78,9 @@ class Api
                     break;
                 case 'pageLimits':
                     new PageLimitsMiddleware($router, $responder, $properties, $reflection);
+                    break;
+                case 'joinLimits':
+                    new JoinLimitsMiddleware($router, $responder, $properties, $reflection);
                     break;
                 case 'customization':
                     new CustomizationMiddleware($router, $responder, $properties, $reflection);

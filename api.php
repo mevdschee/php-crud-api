@@ -3227,6 +3227,52 @@ class FirewallMiddleware extends Middleware
     }
 }
 
+// file: src/Tqdev/PhpCrudApi/Middleware/JoinLimitsMiddleware.php
+
+class JoinLimitsMiddleware extends Middleware
+{
+    private $reflection;
+
+    public function __construct(Router $router, Responder $responder, array $properties, ReflectionService $reflection)
+    {
+        parent::__construct($router, $responder, $properties);
+        $this->reflection = $reflection;
+        $this->utils = new RequestUtils($reflection);
+    }
+
+    public function handle(Request $request): Response
+    {
+        $operation = $this->utils->getOperation($request);
+        $params = $request->getParams();
+        if (in_array($operation, ['read', 'list']) && isset($params['join'])) {
+            $maxDepth = (int) $this->getProperty('depth', '3');
+            $maxTables = (int) $this->getProperty('tables', '10');
+            $maxRecords = (int) $this->getProperty('records', '1000');
+            $tableCount = 0;
+            $joinPaths = array();
+            for ($i = 0; $i < count($params['join']); $i++) {
+                $joinPath = array();
+                $tables = explode(',', $params['join'][$i]);
+                for ($depth = 0; $depth < min($maxDepth, count($tables)); $depth++) {
+                    array_push($joinPath, $table);
+                    $tableCount += 1;
+                    if ($tableCount == $maxTables) {
+                        break;
+                    }
+                }
+                array_push($joinPaths, $joinPath);
+                if ($tableCount == $maxTables) {
+                    break;
+                }
+            }
+            $params['join'] = $joinPaths;
+            $request->setParams($params);
+            VariableStore::set("joinLimits.maxRecords", $maxRecords);
+        }
+        return $this->next->handle($request);
+    }
+}
+
 // file: src/Tqdev/PhpCrudApi/Middleware/JwtAuthMiddleware.php
 
 class JwtAuthMiddleware extends Middleware
@@ -5021,7 +5067,8 @@ class RelationJoiner
             $conditions[] = new ColumnCondition($fk, 'in', $pkValueKeys);
         }
         $condition = OrCondition::fromArray($conditions);
-        foreach ($db->selectAll($t2, $columnNames, $condition, array(), 0, -1) as $record) {
+        $limit = VariableStore::get("joinLimits.maxRecords") ?: -1;
+        foreach ($db->selectAll($t2, $columnNames, $condition, array(), 0, $limit) as $record) {
             $records[] = $record;
         }
     }
@@ -5067,7 +5114,8 @@ class RelationJoiner
         $pkIds = implode(',', array_keys($pkValues));
         $condition = new ColumnCondition($t3->getColumn($fk1Name), 'in', $pkIds);
 
-        $records = $db->selectAll($t3, $columnNames, $condition, array(), 0, -1);
+        $limit = VariableStore::get("joinLimits.maxRecords") ?: -1;
+        $records = $db->selectAll($t3, $columnNames, $condition, array(), 0, $limit);
         foreach ($records as $record) {
             $val1 = $record[$fk1Name];
             $val2 = $record[$fk2Name];
@@ -5218,6 +5266,9 @@ class Api
                     break;
                 case 'pageLimits':
                     new PageLimitsMiddleware($router, $responder, $properties, $reflection);
+                    break;
+                case 'joinLimits':
+                    new JoinLimitsMiddleware($router, $responder, $properties, $reflection);
                     break;
                 case 'customization':
                     new CustomizationMiddleware($router, $responder, $properties, $reflection);

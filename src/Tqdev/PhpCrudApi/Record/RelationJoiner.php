@@ -6,6 +6,7 @@ use Tqdev\PhpCrudApi\Column\Reflection\ReflectedTable;
 use Tqdev\PhpCrudApi\Database\GenericDB;
 use Tqdev\PhpCrudApi\Record\Condition\ColumnCondition;
 use Tqdev\PhpCrudApi\Record\Condition\OrCondition;
+use Tqdev\PhpCrudApi\Middleware\Communication\VariableStore;
 
 class RelationJoiner
 {
@@ -133,7 +134,7 @@ class RelationJoiner
             } 
             if ($habtmValues != null) {
                 $this->fillFkValues($t2, $newRecords, $habtmValues->fkValues);
-                $this->setHabtmValues($t1, $t3, $records, $habtmValues);
+                $this->setHabtmValues($t1, $t2, $records, $habtmValues);
             }
         }
     }
@@ -208,7 +209,8 @@ class RelationJoiner
             $conditions[] = new ColumnCondition($fk, 'in', $pkValueKeys);
         }
         $condition = OrCondition::fromArray($conditions);
-        foreach ($db->selectAll($t2, $columnNames, $condition, array(), 0, -1) as $record) {
+        $limit = VariableStore::get("joinLimits.maxRecords") ?: -1;
+        foreach ($db->selectAll($t2, $columnNames, $condition, array(), 0, $limit) as $record) {
             $records[] = $record;
         }
     }
@@ -254,7 +256,8 @@ class RelationJoiner
         $pkIds = implode(',', array_keys($pkValues));
         $condition = new ColumnCondition($t3->getColumn($fk1Name), 'in', $pkIds);
 
-        $records = $db->selectAll($t3, $columnNames, $condition, array(), 0, -1);
+        $limit = VariableStore::get("joinLimits.maxRecords") ?: -1;
+        $records = $db->selectAll($t3, $columnNames, $condition, array(), 0, $limit);
         foreach ($records as $record) {
             $val1 = $record[$fk1Name];
             $val2 = $record[$fk2Name];
@@ -265,10 +268,10 @@ class RelationJoiner
         return new HabtmValues($pkValues, $fkValues);
     }
 
-    private function setHabtmValues(ReflectedTable $t1, ReflectedTable $t3, array &$records, HabtmValues $habtmValues) /*: void*/
+    private function setHabtmValues(ReflectedTable $t1, ReflectedTable $t2, array &$records, HabtmValues $habtmValues) /*: void*/
     {
         $pkName = $t1->getPk()->getName();
-        $t3Name = $t3->getName();
+        $t2Name = $t2->getName();
         foreach ($records as $i => $record) {
             $key = $record[$pkName];
             $val = array();
@@ -276,7 +279,7 @@ class RelationJoiner
             foreach ($fks as $fk) {
                 $val[] = $habtmValues->fkValues[$fk];
             }
-            $records[$i][$t3Name] = $val;
+            $records[$i][$t2Name] = $val;
         }
     }
 }
