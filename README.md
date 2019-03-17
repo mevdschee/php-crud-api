@@ -159,6 +159,7 @@ You can enable the following middleware using the "middlewares" config parameter
 - "sanitation": Apply input sanitation on create and update
 - "multiTenancy": Restricts tenants access in a multi-tenant scenario
 - "pageLimits": Restricts list operations to prevent database scraping
+- "joinLimits": Restricts join parameters to prevent database scraping
 - "customization": Provides handlers for request and response customization
 
 The "middlewares" config parameter is a comma separated list of enabled middlewares.
@@ -197,6 +198,9 @@ You can tune the middleware behavior using middleware specific configuration par
 - "multiTenancy.handler": Handler to implement simple multi-tenancy rules ("")
 - "pageLimits.pages": The maximum page number that a list operation allows ("100")
 - "pageLimits.records": The maximum number of records returned by a list operation ("1000")
+- "joinLimits.depth": The maximum depth (length) that is allowed in a join path ("3")
+- "joinLimits.tables": The maximum number of tables that you are allowed to join ("10")
+- "joinLimits.records": The maximum number of records returned for a joined entity ("1000")
 - "customization.beforeHandler": Handler to implement request customization ("")
 - "customization.afterHandler": Handler to implement response customization ("")
 
@@ -751,7 +755,14 @@ It also sets the column "customer_id" on "create" to "12" and removes the column
 
 ### Prevent database scraping
 
-You may use the "pageLimits" middleware to limit the page number and the number records returned from a list operation. 
+You may use the "joinLimits" and "pageLimits" middleware to prevent database scraping.
+The "joinLimits" middleware limits the table depth, number of tables and number of records returned in a join operation. 
+
+    'joinLimits.depth' => 2,
+    'joinLimits.tables' => 3,
+    'joinLimits.records' => 25,
+
+The "pageLimits" middleware limits the page number and the number records returned from a list operation. 
 If you want to allow no more than 10 pages with a maximum of 25 records each, you can specify:
 
     'pageLimits.pages' => 10,
