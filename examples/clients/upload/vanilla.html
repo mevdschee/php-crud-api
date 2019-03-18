@@ -8,7 +8,7 @@ if (!window.File || !window.FileReader || !window.FileList || !window.Blob) {
 }
 
 function showImagePreview() {
-    var demoImage = document.querySelector('img');
+    var demoImage = document.querySelector('img#preview');
     var file = document.querySelector('input[type=file]').files[0];
     var reader = new FileReader();
     reader.onload = function (event) {
@@ -20,6 +20,7 @@ function showImagePreview() {
 }
 
 function uploadImageFile() {
+    var demoImage = document.querySelector('img#preview');
     var req = new XMLHttpRequest();
     req.onreadystatechange = function () {
         if (req.readyState==4) {
@@ -29,15 +30,29 @@ function uploadImageFile() {
     }
     url = '/api.php/records/categories';
     req.open("POST", url);
-    req.send(JSON.stringify({"name":"upload","icon":null}));
+    var icon = demoImage.src.split(";")[1].split(",")[1];
+    req.send(JSON.stringify({"name":"upload","icon":icon}));
 }
 
 function listImageFiles() {
+    var ul = document.querySelector('ul');
     var req = new XMLHttpRequest();
     req.onreadystatechange = function () {
         if (req.readyState==4) {
             console.log(req.responseText);
-            document.getElementById('output').innerHTML = JSON.stringify(JSON.parse(req.responseText), undefined, 4);
+            output.innerHTML = "";
+            var categories = JSON.parse(req.responseText).records;
+            for (var i=0;i<categories.length;i++) {
+                var li = document.createElement('li');
+                var img = document.createElement('img');
+                var span = document.createElement('span');
+                img.style = 'height:2em;margin:0 .5em;';
+                img.src = "data:image/png;base64," + categories[i].icon;
+                span.innerHTML = categories[i].name;            
+                li.appendChild(img);
+                li.appendChild(span);
+                ul.appendChild(li);
+            }
         }
     }
     url = '/api.php/records/categories';
@@ -47,11 +62,12 @@ function listImageFiles() {
 </script>
 </head>
 <body onload="listImageFiles()">
-    <pre id="output"></pre>
-    <form onsubmit="uploadImageFile()">
-        <input type="file" onchange="showImagePreview()" accept="image/*"><br><br>
-        <img src="" width="150" alt="Thumb preview...">
-        <input type="submit" value="Upload">
+    <ul id="output"></ul>
+    <hr>
+    <form onsubmit="uploadImageFile(); return false;">
+        <img src="" id="preview" style="height:2em;margin:0 .5em;" alt="PNG preview..."><br><br>
+        <input type="file" onchange="showImagePreview()" accept="image/png"><br><br>
+        <input type="submit" value="Upload PNG">
     </form>
 </body>
 </html>
