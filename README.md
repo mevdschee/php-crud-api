@@ -652,7 +652,7 @@ This example sends the signed claims:
       "exp": 1538207635
     }
 
-NB: The JWT implementation only supports the hash based algorithms HS256, HS384 and HS512.
+NB: The JWT implementation only supports the RSA and HMAC based algorithms.
 
 ## Authorizing operations
 
