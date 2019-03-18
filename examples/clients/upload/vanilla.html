@@ -1,0 +1,57 @@
+<html>
+<head>
+<meta charset="utf-8" /> 
+<script>
+
+if (!window.File || !window.FileReader || !window.FileList || !window.Blob) {
+    alert("Your browser is too old to support HTML5 File API");
+}
+
+function showImagePreview() {
+    var demoImage = document.querySelector('img');
+    var file = document.querySelector('input[type=file]').files[0];
+    var reader = new FileReader();
+    reader.onload = function (event) {
+        console.log(reader.result)
+        demoImage.src = reader.result;
+    }
+    console.log(file)
+    reader.readAsDataURL(file);
+}
+
+function uploadImageFile() {
+    var req = new XMLHttpRequest();
+    req.onreadystatechange = function () {
+        if (req.readyState==4) {
+            console.log(req.responseText);
+            listImageFiles();
+        }
+    }
+    url = '/api.php/records/categories';
+    req.open("POST", url);
+    req.send(JSON.stringify({"name":"upload","icon":null}));
+}
+
+function listImageFiles() {
+    var req = new XMLHttpRequest();
+    req.onreadystatechange = function () {
+        if (req.readyState==4) {
+            console.log(req.responseText);
+            document.getElementById('output').innerHTML = JSON.stringify(JSON.parse(req.responseText), undefined, 4);
+        }
+    }
+    url = '/api.php/records/categories';
+    req.open("GET", url);
+    req.send();
+}
+</script>
+</head>
+<body onload="listImageFiles()">
+    <pre id="output"></pre>
+    <form onsubmit="uploadImageFile()">
+        <input type="file" onchange="showImagePreview()" accept="image/*"><br><br>
+        <img src="" width="150" alt="Thumb preview...">
+        <input type="submit" value="Upload">
+    </form>
+</body>
+</html>
