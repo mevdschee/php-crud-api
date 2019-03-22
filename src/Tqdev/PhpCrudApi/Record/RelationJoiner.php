@@ -17,6 +17,7 @@ class RelationJoiner
     public function __construct(ReflectionService $reflection, ColumnIncluder $columns)
     {
         $this->reflection = $reflection;
+        $this->ordering = new OrderingInfo();
         $this->columns = $columns;
     }
 
@@ -209,8 +210,12 @@ class RelationJoiner
             $conditions[] = new ColumnCondition($fk, 'in', $pkValueKeys);
         }
         $condition = OrCondition::fromArray($conditions);
+        $columnOrdering = array();
         $limit = VariableStore::get("joinLimits.maxRecords") ?: -1;
-        foreach ($db->selectAll($t2, $columnNames, $condition, array(), 0, $limit) as $record) {
+        if ($limit != -1) {
+            $columnOrdering = $this->ordering->getDefaultColumnOrdering($t2);
+        }
+        foreach ($db->selectAll($t2, $columnNames, $condition, $columnOrdering, 0, $limit) as $record) {
             $records[] = $record;
         }
     }
@@ -255,9 +260,13 @@ class RelationJoiner
 
         $pkIds = implode(',', array_keys($pkValues));
         $condition = new ColumnCondition($t3->getColumn($fk1Name), 'in', $pkIds);
+        $columnOrdering = array();
 
         $limit = VariableStore::get("joinLimits.maxRecords") ?: -1;
-        $records = $db->selectAll($t3, $columnNames, $condition, array(), 0, $limit);
+        if ($limit != -1) {
+            $columnOrdering = $this->ordering->getDefaultColumnOrdering($t3);
+        }
+        $records = $db->selectAll($t3, $columnNames, $condition, $columnOrdering, 0, $limit);
         foreach ($records as $record) {
             $val1 = $record[$fk1Name];
             $val2 = $record[$fk2Name];

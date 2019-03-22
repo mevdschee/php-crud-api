@@ -26,14 +26,20 @@ class OrderingInfo
             }
         }
         if (count($fields) == 0) {
-            $pk = $table->getPk();
-            if ($pk) {
-                $fields[] = [$pk->getName(), 'ASC'];
-            } else {
-                foreach ($table->getColumnNames() as $columnName) {
-                    $fields[] = [$columnName, 'ASC'];
-                }
+            return $this->getDefaultColumnOrdering($table);
+        }
+        return $fields;
+    }
 
+    public function getDefaultColumnOrdering(ReflectedTable $table): array
+    {
+        $fields = array();
+        $pk = $table->getPk();
+        if ($pk) {
+            $fields[] = [$pk->getName(), 'ASC'];
+        } else {
+            foreach ($table->getColumnNames() as $columnName) {
+                $fields[] = [$columnName, 'ASC'];
             }
         }
         return $fields;

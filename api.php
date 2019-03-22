@@ -3254,13 +3254,13 @@ class JoinLimitsMiddleware extends Middleware
                 $joinPath = array();
                 $tables = explode(',', $params['join'][$i]);
                 for ($depth = 0; $depth < min($maxDepth, count($tables)); $depth++) {
-                    array_push($joinPath, $table);
+                    array_push($joinPath, $tables[$depth]);
                     $tableCount += 1;
                     if ($tableCount == $maxTables) {
                         break;
                     }
                 }
-                array_push($joinPaths, $joinPath);
+                array_push($joinPaths, implode(',', $joinPath));
                 if ($tableCount == $maxTables) {
                     break;
                 }
@@ -4583,14 +4583,20 @@ class OrderingInfo
             }
         }
         if (count($fields) == 0) {
-            $pk = $table->getPk();
-            if ($pk) {
-                $fields[] = [$pk->getName(), 'ASC'];
-            } else {
-                foreach ($table->getColumnNames() as $columnName) {
-                    $fields[] = [$columnName, 'ASC'];
-                }
+            return $this->getDefaultColumnOrdering($table);
+        }
+        return $fields;
+    }
 
+    public function getDefaultColumnOrdering(ReflectedTable $table): array
+    {
+        $fields = array();
+        $pk = $table->getPk();
+        if ($pk) {
+            $fields[] = [$pk->getName(), 'ASC'];
+        } else {
+            foreach ($table->getColumnNames() as $columnName) {
+                $fields[] = [$columnName, 'ASC'];
             }
         }
         return $fields;
@@ -4875,6 +4881,7 @@ class RelationJoiner
     public function __construct(ReflectionService $reflection, ColumnIncluder $columns)
     {
         $this->reflection = $reflection;
+        $this->ordering = new OrderingInfo();
         $this->columns = $columns;
     }
 
@@ -4992,7 +4999,7 @@ class RelationJoiner
             } 
             if ($habtmValues != null) {
                 $this->fillFkValues($t2, $newRecords, $habtmValues->fkValues);
-                $this->setHabtmValues($t1, $t3, $records, $habtmValues);
+                $this->setHabtmValues($t1, $t2, $records, $habtmValues);
             }
         }
     }
@@ -5067,8 +5074,12 @@ class RelationJoiner
             $conditions[] = new ColumnCondition($fk, 'in', $pkValueKeys);
         }
         $condition = OrCondition::fromArray($conditions);
+        $columnOrdering = array();
         $limit = VariableStore::get("joinLimits.maxRecords") ?: -1;
-        foreach ($db->selectAll($t2, $columnNames, $condition, array(), 0, $limit) as $record) {
+        if ($limit != -1) {
+            $columnOrdering = $this->ordering->getDefaultColumnOrdering($t2);
+        }
+        foreach ($db->selectAll($t2, $columnNames, $condition, $columnOrdering, 0, $limit) as $record) {
             $records[] = $record;
         }
     }
@@ -5113,9 +5124,13 @@ class RelationJoiner
 
         $pkIds = implode(',', array_keys($pkValues));
         $condition = new ColumnCondition($t3->getColumn($fk1Name), 'in', $pkIds);
+        $columnOrdering = array();
 
         $limit = VariableStore::get("joinLimits.maxRecords") ?: -1;
-        $records = $db->selectAll($t3, $columnNames, $condition, array(), 0, $limit);
+        if ($limit != -1) {
+            $columnOrdering = $this->ordering->getDefaultColumnOrdering($t3);
+        }
+        $records = $db->selectAll($t3, $columnNames, $condition, $columnOrdering, 0, $limit);
         foreach ($records as $record) {
             $val1 = $record[$fk1Name];
             $val2 = $record[$fk2Name];
@@ -5126,10 +5141,10 @@ class RelationJoiner
         return new HabtmValues($pkValues, $fkValues);
     }
 
-    private function setHabtmValues(ReflectedTable $t1, ReflectedTable $t3, array &$records, HabtmValues $habtmValues) /*: void*/
+    private function setHabtmValues(ReflectedTable $t1, ReflectedTable $t2, array &$records, HabtmValues $habtmValues) /*: void*/
     {
         $pkName = $t1->getPk()->getName();
-        $t3Name = $t3->getName();
+        $t2Name = $t2->getName();
         foreach ($records as $i => $record) {
             $key = $record[$pkName];
             $val = array();
@@ -5137,7 +5152,7 @@ class RelationJoiner
             foreach ($fks as $fk) {
                 $val[] = $habtmValues->fkValues[$fk];
             }
-            $records[$i][$t3Name] = $val;
+            $records[$i][$t2Name] = $val;
         }
     }
 }
