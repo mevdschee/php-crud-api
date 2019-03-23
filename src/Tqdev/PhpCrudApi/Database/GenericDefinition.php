@@ -69,6 +69,7 @@ class GenericDefinition
             case 'mysql':
                 return $column->getPk() ? ' AUTO_INCREMENT' : '';
             case 'pgsql':
+            case 'sqlsrv':
                 return '';
         }
     }
