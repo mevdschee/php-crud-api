@@ -1,0 +1,61 @@
+PUT /columns/events/visitors
+
+{"nullable":false,"pk":true}
+===
+200
+Content-Type: application/json
+Content-Length: 4
+
+true
+===
+GET /columns/events/visitors
+===
+200
+Content-Type: application/json
+Content-Length: 45
+
+{"name":"visitors","type":"bigint","pk":true}
+===
+GET /columns/events/id
+===
+200
+Content-Type: application/json
+Content-Length: 30
+
+{"name":"id","type":"integer"}
+===
+PUT /columns/events/visitors
+
+{"pk":false}
+===
+200
+Content-Type: application/json
+Content-Length: 4
+
+true
+===
+GET /columns/events/visitors
+===
+200
+Content-Type: application/json
+Content-Length: 35
+
+{"name":"visitors","type":"bigint"}
+===
+PUT /columns/events/id
+
+{"pk":true}
+===
+200
+Content-Type: application/json
+Content-Length: 4
+
+true
+===
+GET /columns/events/id
+===
+200
+Content-Type: application/json
+Content-Length: 40
+
+{"name":"id","type":"integer","pk":true}
