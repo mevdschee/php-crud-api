@@ -263,15 +263,17 @@ class GenericDefinition
         $fields = [];
         $constraints = [];
         foreach ($newTable->getColumnNames() as $columnName) {
+            $pkColumn = $this->getPrimaryKey($tableName);
             $newColumn = $newTable->getColumn($columnName);
             $f1 = $this->quote($columnName);
             $f2 = $this->getColumnType($newColumn, false);
             $f3 = $this->quote($tableName . '_' . $columnName . '_fkey');
             $f4 = $this->quote($newColumn->getFk());
             $f5 = $this->quote($this->getPrimaryKey($newColumn->getFk()));
+            $f6 = $this->quote($tableName . '_' . $pkColumn . '_pkey');
             $fields[] = "$f1 $f2";
             if ($newColumn->getPk()) {
-                $constraints[] = "PRIMARY KEY ($f1)";
+                $constraints[] = "CONSTRAINT $f6 PRIMARY KEY ($f1)";
             }
             if ($newColumn->getFk()) {
                 $constraints[] = "CONSTRAINT $f3 FOREIGN KEY ($f1) REFERENCES $f4 ($f5)";
