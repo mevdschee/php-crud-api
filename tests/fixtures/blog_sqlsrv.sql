@@ -1,48 +1,48 @@
-IF (OBJECT_ID('FK_kunsthåndværk_users', 'F') IS NOT NULL)
+IF (OBJECT_ID('kunsthåndværk_user_id_fkey', 'F') IS NOT NULL)
 BEGIN
-ALTER TABLE [kunsthåndværk] DROP	CONSTRAINT [FK_kunsthåndværk_users]
+ALTER TABLE [kunsthåndværk] DROP	CONSTRAINT [kunsthåndværk_user_id_fkey]
 END
 GO
 
-IF (OBJECT_ID('FK_barcodes_products', 'F') IS NOT NULL)
+IF (OBJECT_ID('barcodes_product_id_fkey', 'F') IS NOT NULL)
 BEGIN
-ALTER TABLE [barcodes] DROP	CONSTRAINT [FK_barcodes_products]
+ALTER TABLE [barcodes] DROP	CONSTRAINT [barcodes_product_id_fkey]
 END
 GO
 
-IF (OBJECT_ID('FK_posts_users', 'F') IS NOT NULL)
+IF (OBJECT_ID('posts_user_id_fkey', 'F') IS NOT NULL)
 BEGIN
-ALTER TABLE [posts] DROP	CONSTRAINT [FK_posts_users]
+ALTER TABLE [posts] DROP	CONSTRAINT [posts_user_id_fkey]
 END
 GO
 
-IF (OBJECT_ID('FK_posts_categories', 'F') IS NOT NULL)
+IF (OBJECT_ID('posts_category_id_fkey', 'F') IS NOT NULL)
 BEGIN
-ALTER TABLE [posts] DROP	CONSTRAINT [FK_posts_categories]
+ALTER TABLE [posts] DROP	CONSTRAINT [posts_category_id_fkey]
 END
 GO
 
-IF (OBJECT_ID('FK_post_tags_tags', 'F') IS NOT NULL)
+IF (OBJECT_ID('post_tags_tag_id_fkey', 'F') IS NOT NULL)
 BEGIN
-ALTER TABLE [post_tags] DROP	CONSTRAINT [FK_post_tags_tags]
+ALTER TABLE [post_tags] DROP	CONSTRAINT [post_tags_tag_id_fkey]
 END
 GO
 
-IF (OBJECT_ID('FK_post_tags_posts', 'F') IS NOT NULL)
+IF (OBJECT_ID('post_tags_post_id_fkey', 'F') IS NOT NULL)
 BEGIN
-ALTER TABLE [post_tags] DROP	CONSTRAINT [FK_post_tags_posts]
+ALTER TABLE [post_tags] DROP	CONSTRAINT [post_tags_post_id_fkey]
 END
 GO
 
-IF (OBJECT_ID('FK_comments_posts', 'F') IS NOT NULL)
+IF (OBJECT_ID('comments_post_id_fkey', 'F') IS NOT NULL)
 BEGIN
-ALTER TABLE [comments] DROP	CONSTRAINT [FK_comments_posts]
+ALTER TABLE [comments] DROP	CONSTRAINT [comments_post_id_fkey]
 END
 GO
 
-IF (OBJECT_ID('FK_comments_categories', 'F') IS NOT NULL)
+IF (OBJECT_ID('comments_category_id_fkey', 'F') IS NOT NULL)
 BEGIN
-ALTER TABLE [comments] DROP	CONSTRAINT [FK_comments_categories]
+ALTER TABLE [comments] DROP	CONSTRAINT [comments_category_id_fkey]
 END
 GO
 
@@ -136,74 +136,111 @@ DROP TABLE [nopk]
 END
 GO
 
+DROP SEQUENCE IF EXISTS [categories_id_seq]
+GO
+CREATE SEQUENCE [categories_id_seq] AS int START WITH 1 INCREMENT BY 1 NO CACHE
+GO
+
 CREATE TABLE [categories](
-	[id] [int] IDENTITY,
+	[id] [int] NOT NULL CONSTRAINT [categories_id_def] DEFAULT NEXT VALUE FOR [categories_id_seq],
 	[name] [nvarchar](255) NOT NULL,
 	[icon] [image],
-	PRIMARY KEY CLUSTERED([id] ASC)
+	CONSTRAINT [categories_pkey] PRIMARY KEY CLUSTERED([id] ASC)
 )
+GO
+
+DROP SEQUENCE IF EXISTS [comments_id_seq]
+GO
+CREATE SEQUENCE [comments_id_seq] AS bigint START WITH 1 INCREMENT BY 1 NO CACHE
 GO
 
 CREATE TABLE [comments](
-	[id] [bigint] IDENTITY,
+	[id] [bigint] NOT NULL CONSTRAINT [comments_id_def] DEFAULT NEXT VALUE FOR [comments_id_seq],
 	[post_id] [int] NOT NULL,
 	[message] [nvarchar](255) NOT NULL,
 	[category_id] [int] NOT NULL,
-	PRIMARY KEY CLUSTERED([id] ASC)
+	CONSTRAINT [comments_pkey] PRIMARY KEY CLUSTERED([id] ASC)
 )
+GO
+
+DROP SEQUENCE IF EXISTS [post_tags_id_seq]
+GO
+CREATE SEQUENCE [post_tags_id_seq] AS int START WITH 1 INCREMENT BY 1 NO CACHE
 GO
 
 CREATE TABLE [post_tags](
-	[id] [int] IDENTITY,
+	[id] [int] NOT NULL CONSTRAINT [post_tags_id_def] DEFAULT NEXT VALUE FOR [post_tags_id_seq],
 	[post_id] [int] NOT NULL,
 	[tag_id] [int] NOT NULL,
-	PRIMARY KEY CLUSTERED([id] ASC)
+	CONSTRAINT [post_tags_pkey] PRIMARY KEY CLUSTERED([id] ASC)
 )
+GO
+
+DROP SEQUENCE IF EXISTS [posts_id_seq]
+GO
+CREATE SEQUENCE [posts_id_seq] AS int START WITH 1 INCREMENT BY 1 NO CACHE
 GO
 
 CREATE TABLE [posts](
-	[id] [int] IDENTITY,
+	[id] [int] NOT NULL CONSTRAINT [posts_id_def] DEFAULT NEXT VALUE FOR [posts_id_seq],
 	[user_id] [int] NOT NULL,
 	[category_id] [int] NOT NULL,
 	[content] [nvarchar](255) NOT NULL,
-	PRIMARY KEY CLUSTERED([id] ASC)
+	CONSTRAINT [posts_pkey] PRIMARY KEY CLUSTERED([id] ASC)
 )
+GO
+
+DROP SEQUENCE IF EXISTS [tags_id_seq]
+GO
+CREATE SEQUENCE [tags_id_seq] AS int START WITH 1 INCREMENT BY 1 NO CACHE
 GO
 
 CREATE TABLE [tags](
-	[id] [int] IDENTITY,
+	[id] [int] NOT NULL CONSTRAINT [tags_id_def] DEFAULT NEXT VALUE FOR [tags_id_seq],
 	[name] [nvarchar](255) NOT NULL,
 	[is_important] [bit] NOT NULL,
-	PRIMARY KEY CLUSTERED([id] ASC)
+	CONSTRAINT [tags_pkey] PRIMARY KEY CLUSTERED([id] ASC)
 )
+GO
+
+DROP SEQUENCE IF EXISTS [users_id_seq]
+GO
+CREATE SEQUENCE [users_id_seq] AS int START WITH 1 INCREMENT BY 1 NO CACHE
 GO
 
 CREATE TABLE [users](
-	[id] [int] IDENTITY,
+	[id] [int] NOT NULL CONSTRAINT [users_id_def] DEFAULT NEXT VALUE FOR [users_id_seq],
 	[username] [nvarchar](255) NOT NULL,
 	[password] [nvarchar](255) NOT NULL,
 	[location] [geometry],
-	CONSTRAINT [PK_users]
-	PRIMARY KEY CLUSTERED([id] ASC)
+	CONSTRAINT [users_pkey] PRIMARY KEY CLUSTERED([id] ASC)
 )
+GO
+
+DROP SEQUENCE IF EXISTS [countries_id_seq]
+GO
+CREATE SEQUENCE [countries_id_seq] AS int START WITH 1 INCREMENT BY 1 NO CACHE
 GO
 
 CREATE TABLE [countries](
-	[id] [int] IDENTITY,
+	[id] [int] NOT NULL CONSTRAINT [countries_id_def] DEFAULT NEXT VALUE FOR [countries_id_seq],
 	[name] [nvarchar](255) NOT NULL,
 	[shape] [geometry] NOT NULL,
-	CONSTRAINT [PK_countries]
-	PRIMARY KEY CLUSTERED([id] ASC)
+	CONSTRAINT [countries_pkey] PRIMARY KEY CLUSTERED([id] ASC)
 )
 GO
 
+DROP SEQUENCE IF EXISTS [events_id_seq]
+GO
+CREATE SEQUENCE [events_id_seq] AS int START WITH 1 INCREMENT BY 1 NO CACHE
+GO
+
 CREATE TABLE [events](
-	[id] [int] IDENTITY,
+	[id] [int] NOT NULL CONSTRAINT [events_id_def] DEFAULT NEXT VALUE FOR [events_id_seq],
 	[name] [nvarchar](255) NOT NULL,
 	[datetime] [datetime2](0),
 	[visitors] [bigint],
-	CONSTRAINT [PK_events]
-	PRIMARY KEY CLUSTERED([id] ASC)
+	CONSTRAINT [events_pkey] PRIMARY KEY CLUSTERED([id] ASC)
 )
 GO
 
@@ -212,25 +249,33 @@ AS
 SELECT top 100 PERCENT name, COUNT_BIG(name) AS [count] FROM tags, post_tags WHERE tags.id = post_tags.tag_id GROUP BY name ORDER BY [count] DESC, name
 GO
 
+DROP SEQUENCE IF EXISTS [products_id_seq]
+GO
+CREATE SEQUENCE [products_id_seq] AS int START WITH 1 INCREMENT BY 1 NO CACHE
+GO
+
 CREATE TABLE [products](
-	[id] [int] IDENTITY,
+	[id] [int] NOT NULL CONSTRAINT [products_id_def] DEFAULT NEXT VALUE FOR [products_id_seq],
 	[name] [nvarchar](255) NOT NULL,
 	[price] [decimal](10,2) NOT NULL,
 	[properties] [xml] NOT NULL,
 	[created_at] [datetime2](0) NOT NULL,
 	[deleted_at] [datetime2](0),
-	CONSTRAINT [PK_products]
-	PRIMARY KEY CLUSTERED([id] ASC)
+	CONSTRAINT [products_pkey] PRIMARY KEY CLUSTERED([id] ASC)
 )
 GO
 
+DROP SEQUENCE IF EXISTS [barcodes_id_seq]
+GO
+CREATE SEQUENCE [barcodes_id_seq] AS int START WITH 1 INCREMENT BY 1 NO CACHE
+GO
+
 CREATE TABLE [barcodes](
-	[id] [int] IDENTITY,
+	[id] [int] NOT NULL CONSTRAINT [barcodes_id_def] DEFAULT NEXT VALUE FOR [barcodes_id_seq],
 	[product_id] [int] NOT NULL,
 	[hex] [nvarchar](255) NOT NULL,
 	[bin] [varbinary](max) NOT NULL,
-	CONSTRAINT [PK_barcodes]
-	PRIMARY KEY CLUSTERED([id] ASC)
+	CONSTRAINT [barcodes_pkey] PRIMARY KEY CLUSTERED([id] ASC)
 )
 GO
 
@@ -239,15 +284,13 @@ CREATE TABLE [kunsthåndværk](
 	[Umlauts ä_ö_ü-COUNT] [int] NOT NULL,
 	[user_id] [int] NOT NULL,
 	[invisible] [nvarchar](36),
-	CONSTRAINT [PK_kunsthåndværk]
-	PRIMARY KEY CLUSTERED([id] ASC)
+	CONSTRAINT [kunsthåndværk_pkey] PRIMARY KEY CLUSTERED([id] ASC)
 )
 GO
 
 CREATE TABLE [invisibles](
 	[id] [nvarchar](36) NOT NULL,
-	CONSTRAINT [PK_invisibles]
-	PRIMARY KEY CLUSTERED([id] ASC)
+	CONSTRAINT [invisibles_pkey] PRIMARY KEY CLUSTERED([id] ASC)
 )
 GO
 
@@ -321,53 +364,53 @@ GO
 INSERT [nopk] ([id]) VALUES ('e42c77c6-06a4-4502-816c-d112c7142e6d')
 GO
 
-ALTER TABLE [comments]  WITH CHECK ADD 	CONSTRAINT [FK_comments_posts] FOREIGN KEY([post_id])
+ALTER TABLE [comments]  WITH CHECK ADD 	CONSTRAINT [comments_post_id_fkey] FOREIGN KEY([post_id])
 REFERENCES [posts] ([id])
 GO
-ALTER TABLE [comments] CHECK	CONSTRAINT [FK_comments_posts]
+ALTER TABLE [comments] CHECK	CONSTRAINT [comments_post_id_fkey]
 GO
 
-ALTER TABLE [comments]  WITH CHECK ADD 	CONSTRAINT [FK_comments_categories] FOREIGN KEY([category_id])
+ALTER TABLE [comments]  WITH CHECK ADD 	CONSTRAINT [comments_category_id_fkey] FOREIGN KEY([category_id])
 REFERENCES [categories] ([id])
 GO
-ALTER TABLE [comments] CHECK	CONSTRAINT [FK_comments_categories]
+ALTER TABLE [comments] CHECK	CONSTRAINT [comments_category_id_fkey]
 GO
 
-ALTER TABLE [post_tags]  WITH CHECK ADD 	CONSTRAINT [FK_post_tags_posts] FOREIGN KEY([post_id])
+ALTER TABLE [post_tags]  WITH CHECK ADD 	CONSTRAINT [post_tags_post_id_fkey] FOREIGN KEY([post_id])
 REFERENCES [posts] ([id])
 GO
-ALTER TABLE [post_tags] CHECK	CONSTRAINT [FK_post_tags_posts]
+ALTER TABLE [post_tags] CHECK	CONSTRAINT [post_tags_post_id_fkey]
 GO
 
-ALTER TABLE [post_tags]  WITH CHECK ADD 	CONSTRAINT [FK_post_tags_tags] FOREIGN KEY([tag_id])
+ALTER TABLE [post_tags]  WITH CHECK ADD 	CONSTRAINT [post_tags_tag_id_fkey] FOREIGN KEY([tag_id])
 REFERENCES [tags] ([id])
 GO
-ALTER TABLE [post_tags] CHECK	CONSTRAINT [FK_post_tags_tags]
+ALTER TABLE [post_tags] CHECK	CONSTRAINT [post_tags_tag_id_fkey]
 GO
 
-ALTER TABLE [posts]  WITH CHECK ADD 	CONSTRAINT [FK_posts_categories] FOREIGN KEY([category_id])
+ALTER TABLE [posts]  WITH CHECK ADD 	CONSTRAINT [posts_category_id_fkey] FOREIGN KEY([category_id])
 REFERENCES [categories] ([id])
 GO
-ALTER TABLE [posts] CHECK	CONSTRAINT [FK_posts_categories]
+ALTER TABLE [posts] CHECK	CONSTRAINT [posts_category_id_fkey]
 GO
 
-ALTER TABLE [posts]  WITH CHECK ADD 	CONSTRAINT [FK_posts_users] FOREIGN KEY([user_id])
+ALTER TABLE [posts]  WITH CHECK ADD 	CONSTRAINT [posts_user_id_fkey] FOREIGN KEY([user_id])
 REFERENCES [users] ([id])
 GO
-ALTER TABLE [posts] CHECK	CONSTRAINT [FK_posts_users]
+ALTER TABLE [posts] CHECK	CONSTRAINT [posts_user_id_fkey]
 GO
 
-ALTER TABLE [barcodes]  WITH CHECK ADD 	CONSTRAINT [FK_barcodes_products] FOREIGN KEY([product_id])
+ALTER TABLE [barcodes]  WITH CHECK ADD 	CONSTRAINT [barcodes_product_id_fkey] FOREIGN KEY([product_id])
 REFERENCES [products] ([id])
 GO
-ALTER TABLE [barcodes] CHECK	CONSTRAINT [FK_barcodes_products]
+ALTER TABLE [barcodes] CHECK	CONSTRAINT [barcodes_product_id_fkey]
 GO
 
 ALTER TABLE [kunsthåndværk]  WITH CHECK ADD 	CONSTRAINT [UC_kunsthåndværk_Umlauts ä_ö_ü-COUNT] UNIQUE([Umlauts ä_ö_ü-COUNT])
 GO
 
-ALTER TABLE [kunsthåndværk]  WITH CHECK ADD 	CONSTRAINT [FK_kunsthåndværk_users] FOREIGN KEY([user_id])
+ALTER TABLE [kunsthåndværk]  WITH CHECK ADD 	CONSTRAINT [kunsthåndværk_user_id_fkey] FOREIGN KEY([user_id])
 REFERENCES [users] ([id])
 GO
-ALTER TABLE [kunsthåndværk] CHECK	CONSTRAINT [FK_kunsthåndværk_users]
+ALTER TABLE [kunsthåndværk] CHECK	CONSTRAINT [kunsthåndværk_user_id_fkey]
 GO

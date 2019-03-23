@@ -163,7 +163,7 @@ class GenericDefinition
                 return "ALTER TABLE $p1 $p4";
             case 'pgsql':
             case 'sqlsrv':
-                $p4 = $newColumn->getPk() ? "ADD PRIMARY KEY ($p2)" : "DROP CONSTRAINT $p3";
+                $p4 = $newColumn->getPk() ? "ADD CONSTRAINT $p3 PRIMARY KEY ($p2)" : "DROP CONSTRAINT $p3";
                 return "ALTER TABLE $p1 $p4";
         }
     }
@@ -188,15 +188,17 @@ class GenericDefinition
     {
         $p1 = $this->quote($tableName);
         $p2 = $this->quote($columnName);
-        $p3 = $this->pdo->quote($tableName . '_' . $columnName . '_seq');
-
+        
         switch ($this->driver) {
             case 'mysql':
                 return "select 1";
             case 'pgsql':
+                $p3 = $this->pdo->quote($tableName . '_' . $columnName . '_seq');
                 return "SELECT setval($p3, (SELECT max($p2)+1 FROM $p1));";
             case 'sqlsrv':
-                return "ALTER SEQUENCE $p3 RESTART WITH (SELECT max($p2)+1 FROM $p1)";
+                $p3 = $this->quote($tableName . '_' . $columnName . '_seq');
+                $p4 = $this->pdo->query("SELECT max($p2)+1 FROM $p1")->fetchColumn();
+                return "ALTER SEQUENCE $p3 RESTART WITH $p4";
         }
     }
 
@@ -219,8 +221,8 @@ class GenericDefinition
                 }
                 return "ALTER TABLE $p1 ALTER COLUMN $p2 $p4";
             case 'sqlsrv':
-                $p3 = $this->pdo->quote($tableName . '_' . $columnName . '_seq');
-                $p4 = $this->quote('DF_' . $tableName . '_' . $columnName);
+                $p3 = $this->quote($tableName . '_' . $columnName . '_seq');
+                $p4 = $this->quote($tableName . '_' . $columnName . '_def');
                 if ($newColumn->getPk()) {
                     return "ALTER TABLE $p1 ADD CONSTRAINT $p4 DEFAULT NEXT VALUE FOR $p3 FOR $p2";
                 } else {
@@ -286,14 +288,27 @@ class GenericDefinition
         $p2 = $this->quote($newColumn->getName());
         $p3 = $this->getColumnType($newColumn, false);
 
-        return "ALTER TABLE $p1 ADD COLUMN $p2 $p3";
+        
+        switch ($this->driver) {
+            case 'mysql':
+            case 'pgsql':
+                return "ALTER TABLE $p1 ADD COLUMN $p2 $p3";
+            case 'sqlsrv':
+                return "ALTER TABLE $p1 ADD $p2 $p3";
+        }
     }
 
     private function getRemoveTableSQL(String $tableName): String
     {
         $p1 = $this->quote($tableName);
 
-        return "DROP TABLE $p1 CASCADE;";
+        switch ($this->driver) {
+            case 'mysql':
+            case 'pgsql':
+                return "DROP TABLE $p1 CASCADE;";
+            case 'sqlsrv':
+                return "DROP TABLE $p1;";
+        }
     }
 
     private function getRemoveColumnSQL(String $tableName, String $columnName): String
@@ -301,7 +316,14 @@ class GenericDefinition
         $p1 = $this->quote($tableName);
         $p2 = $this->quote($columnName);
 
-        return "ALTER TABLE $p1 DROP COLUMN $p2 CASCADE;";
+        
+        switch ($this->driver) {
+            case 'mysql':
+            case 'pgsql':
+                return "ALTER TABLE $p1 DROP COLUMN $p2 CASCADE;";
+            case 'sqlsrv':
+                return "ALTER TABLE $p1 DROP COLUMN $p2;";
+        }
     }
 
     public function renameTable(String $tableName, String $newTableName)
