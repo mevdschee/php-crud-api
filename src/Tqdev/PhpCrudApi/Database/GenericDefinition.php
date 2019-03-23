@@ -70,8 +70,6 @@ class GenericDefinition
                 return $column->getPk() ? ' AUTO_INCREMENT' : '';
             case 'pgsql':
                 return '';
-            case 'sqlsrv':
-                return ($column->getPk() && !$update) ? ' IDENTITY(1,1)' : '';
         }
     }
 
