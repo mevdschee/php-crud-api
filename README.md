@@ -195,6 +195,7 @@ You can tune the middleware behavior using middleware specific configuration par
 - "authorization.columnHandler": Handler to implement column authorization rules ("")
 - "authorization.recordHandler": Handler to implement record authorization filter rules ("")
 - "validation.handler": Handler to implement validation rules for input values ("")
+- "ipAddress.column": Column to protect and override with the IP address on create ("")
 - "sanitation.handler": Handler to implement sanitation rules for input values ("")
 - "multiTenancy.handler": Handler to implement simple multi-tenancy rules ("")
 - "pageLimits.pages": The maximum page number that a list operation allows ("100")
