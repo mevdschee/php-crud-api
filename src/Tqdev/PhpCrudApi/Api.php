@@ -66,7 +66,7 @@ class Api
                     new ValidationMiddleware($router, $responder, $properties, $reflection);
                     break;
                 case 'ipAddress':
-                    new IpAddressMiddleware($router, $responder, $properties);
+                    new IpAddressMiddleware($router, $responder, $properties, $reflection);
                     break;
                 case 'sanitation':
                     new SanitationMiddleware($router, $responder, $properties, $reflection);
