@@ -17,6 +17,7 @@ use Tqdev\PhpCrudApi\Middleware\CustomizationMiddleware;
 use Tqdev\PhpCrudApi\Middleware\FirewallMiddleware;
 use Tqdev\PhpCrudApi\Middleware\JoinLimitsMiddleware;
 use Tqdev\PhpCrudApi\Middleware\JwtAuthMiddleware;
+use Tqdev\PhpCrudApi\Middleware\IpAddressMiddleware;
 use Tqdev\PhpCrudApi\Middleware\MultiTenancyMiddleware;
 use Tqdev\PhpCrudApi\Middleware\PageLimitsMiddleware;
 use Tqdev\PhpCrudApi\Middleware\Router\SimpleRouter;
@@ -63,6 +64,9 @@ class Api
                     break;
                 case 'validation':
                     new ValidationMiddleware($router, $responder, $properties, $reflection);
+                    break;
+                case 'ipAddress':
+                    new IpAddressMiddleware($router, $responder, $properties);
                     break;
                 case 'sanitation':
                     new SanitationMiddleware($router, $responder, $properties, $reflection);

@@ -2084,9 +2084,8 @@ class GenericDefinition
             case 'mysql':
                 return $column->getPk() ? ' AUTO_INCREMENT' : '';
             case 'pgsql':
-                return '';
             case 'sqlsrv':
-                return ($column->getPk() && !$update) ? ' IDENTITY(1,1)' : '';
+                return '';
         }
     }
 
@@ -2278,15 +2277,17 @@ class GenericDefinition
         $fields = [];
         $constraints = [];
         foreach ($newTable->getColumnNames() as $columnName) {
+            $pkColumn = $this->getPrimaryKey($tableName);
             $newColumn = $newTable->getColumn($columnName);
             $f1 = $this->quote($columnName);
             $f2 = $this->getColumnType($newColumn, false);
             $f3 = $this->quote($tableName . '_' . $columnName . '_fkey');
             $f4 = $this->quote($newColumn->getFk());
             $f5 = $this->quote($this->getPrimaryKey($newColumn->getFk()));
+            $f6 = $this->quote($tableName . '_' . $pkColumn . '_pkey');
             $fields[] = "$f1 $f2";
             if ($newColumn->getPk()) {
-                $constraints[] = "PRIMARY KEY ($f1)";
+                $constraints[] = "CONSTRAINT $f6 PRIMARY KEY ($f1)";
             }
             if ($newColumn->getFk()) {
                 $constraints[] = "CONSTRAINT $f3 FOREIGN KEY ($f1) REFERENCES $f4 ($f5)";
@@ -3244,6 +3245,60 @@ class FirewallMiddleware extends Middleware
             $response = $this->next->handle($request);
         }
         return $response;
+    }
+}
+
+// file: src/Tqdev/PhpCrudApi/Middleware/IpAddressMiddleware.php
+
+class IpAddressMiddleware extends Middleware
+{
+    private $reflection;
+
+    public function __construct(Router $router, Responder $responder, array $properties, ReflectionService $reflection)
+    {
+        parent::__construct($router, $responder, $properties);
+        $this->reflection = $reflection;
+        $this->utils = new RequestUtils($reflection);
+    }
+
+    private function callHandler($handler, $record, String $operation, ReflectedTable $table) /*: object */
+    {
+        $context = (array) $record;
+        $columnName = $this->getProperty('column', '');
+        if ($table->hasColumn($columnName)) {
+            if ($operation == 'create') {
+                $context[$columnName] = $_SERVER['REMOTE_ADDR'];
+            } else {
+                unset($context[$columnName]);
+            }
+        }
+        return (object) $context;
+    }
+
+    public function handle(Request $request): Response
+    {
+        $operation = $this->utils->getOperation($request);
+        if (in_array($operation, ['create', 'update', 'increment'])) {
+            $tableName = $request->getPathSegment(2);
+            if ($this->reflection->hasTable($tableName)) {
+                $record = $request->getBody();
+                if ($record !== null) {
+                    $handler = $this->getProperty('handler', '');
+                    if ($handler !== '') {
+                        $table = $this->reflection->getTable($tableName);
+                        if (is_array($record)) {
+                            foreach ($record as &$r) {
+                                $r = $this->callHandler($handler, $r, $operation, $table);
+                            }
+                        } else {
+                            $record = $this->callHandler($handler, $record, $operation, $table);
+                        }
+                        $request->setBody($record);
+                    }
+                }
+            }
+        }
+        return $this->next->handle($request);
     }
 }
 
@@ -5286,6 +5341,9 @@ class Api
                     break;
                 case 'validation':
                     new ValidationMiddleware($router, $responder, $properties, $reflection);
+                    break;
+                case 'ipAddress':
+                    new IpAddressMiddleware($router, $responder, $properties);
                     break;
                 case 'sanitation':
                     new SanitationMiddleware($router, $responder, $properties, $reflection);
