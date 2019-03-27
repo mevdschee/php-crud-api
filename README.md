@@ -156,6 +156,7 @@ You can enable the following middleware using the "middlewares" config parameter
 - "basicAuth": Support for "Basic Authentication"
 - "authorization": Restrict access to certain tables or columns
 - "validation": Return input validation errors for custom rules
+- "ipAddress": Fill a protected field with the IP address on create
 - "sanitation": Apply input sanitation on create and update
 - "multiTenancy": Restricts tenants access in a multi-tenant scenario
 - "pageLimits": Restricts list operations to prevent database scraping

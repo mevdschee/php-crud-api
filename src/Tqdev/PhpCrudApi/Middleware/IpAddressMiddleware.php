@@ -21,7 +21,7 @@ class IpAddressMiddleware extends Middleware
         $this->utils = new RequestUtils($reflection);
     }
 
-    private function callHandler($handler, $record, String $operation, ReflectedTable $table) /*: object */
+    private function callHandler($record, String $operation, ReflectedTable $table) /*: object */
     {
         $context = (array) $record;
         $columnName = $this->getProperty('column', '');
@@ -43,18 +43,15 @@ class IpAddressMiddleware extends Middleware
             if ($this->reflection->hasTable($tableName)) {
                 $record = $request->getBody();
                 if ($record !== null) {
-                    $handler = $this->getProperty('handler', '');
-                    if ($handler !== '') {
-                        $table = $this->reflection->getTable($tableName);
-                        if (is_array($record)) {
-                            foreach ($record as &$r) {
-                                $r = $this->callHandler($handler, $r, $operation, $table);
-                            }
-                        } else {
-                            $record = $this->callHandler($handler, $record, $operation, $table);
+                    $table = $this->reflection->getTable($tableName);
+                    if (is_array($record)) {
+                        foreach ($record as &$r) {
+                            $r = $this->callHandler($r, $operation, $table);
                         }
-                        $request->setBody($record);
+                    } else {
+                        $record = $this->callHandler($record, $operation, $table);
                     }
+                    $request->setBody($record);
                 }
             }
         }
