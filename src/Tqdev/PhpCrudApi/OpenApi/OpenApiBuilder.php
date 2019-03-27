@@ -198,6 +198,13 @@ class OpenApiBuilder
                 foreach ($properties as $key => $value) {
                     $this->openapi->set("$prefix|properties|$columnName|$key", $value);
                 }
+                if ($column->getPk()) {
+                    $this->openapi->set("$prefix|properties|$columnName|x-primary-key", true);
+                }
+                $fk = $column->getFk();
+                if ($fk) {
+                    $this->openapi->set("$prefix|properties|$columnName|x-references", $fk);
+                }
             }
         }
     }

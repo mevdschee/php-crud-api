@@ -24,12 +24,16 @@ class IpAddressMiddleware extends Middleware
     private function callHandler($record, String $operation, ReflectedTable $table) /*: object */
     {
         $context = (array) $record;
-        $columnName = $this->getProperty('column', '');
-        if ($table->hasColumn($columnName)) {
-            if ($operation == 'create') {
-                $context[$columnName] = $_SERVER['REMOTE_ADDR'];
-            } else {
-                unset($context[$columnName]);
+        $columnNames = $this->getProperty('columns', '');
+        if ($columnNames) {
+            foreach (explode(',', $columnNames) as $columnName) {
+                if ($table->hasColumn($columnName)) {
+                    if ($operation == 'create') {
+                        $context[$columnName] = $_SERVER['REMOTE_ADDR'];
+                    } else {
+                        unset($context[$columnName]);
+                    }
+                }
             }
         }
         return (object) $context;
@@ -39,19 +43,22 @@ class IpAddressMiddleware extends Middleware
     {
         $operation = $this->utils->getOperation($request);
         if (in_array($operation, ['create', 'update', 'increment'])) {
+            $tableNames = $this->getProperty('tables', '');
             $tableName = $request->getPathSegment(2);
-            if ($this->reflection->hasTable($tableName)) {
-                $record = $request->getBody();
-                if ($record !== null) {
-                    $table = $this->reflection->getTable($tableName);
-                    if (is_array($record)) {
-                        foreach ($record as &$r) {
-                            $r = $this->callHandler($r, $operation, $table);
+            if (!$tableNames || in_array($tableName, explode(',', $tableNames))) {
+                if ($this->reflection->hasTable($tableName)) {
+                    $record = $request->getBody();
+                    if ($record !== null) {
+                        $table = $this->reflection->getTable($tableName);
+                        if (is_array($record)) {
+                            foreach ($record as &$r) {
+                                $r = $this->callHandler($r, $operation, $table);
+                            }
+                        } else {
+                            $record = $this->callHandler($record, $operation, $table);
                         }
-                    } else {
-                        $record = $this->callHandler($record, $operation, $table);
+                        $request->setBody($record);
                     }
-                    $request->setBody($record);
                 }
             }
         }
