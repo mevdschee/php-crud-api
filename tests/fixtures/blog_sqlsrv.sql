@@ -275,6 +275,7 @@ CREATE TABLE [barcodes](
 	[product_id] [int] NOT NULL,
 	[hex] [nvarchar](255) NOT NULL,
 	[bin] [varbinary](max) NOT NULL,
+	[ip_address] [nvarchar](15),
 	CONSTRAINT [barcodes_pkey] PRIMARY KEY CLUSTERED([id] ASC)
 )
 GO
@@ -350,7 +351,7 @@ GO
 INSERT [products] ([name], [price], [properties], [created_at]) VALUES (N'Calculator', N'23.01', N'<root type="object"><depth type="boolean">false</depth><model type="string">TRX-120</model><width type="number">100</width><height type="null" /></root>', '1970-01-01 01:01:01')
 GO
 
-INSERT [barcodes] ([product_id], [hex], [bin]) VALUES (1, N'00ff01', 0x00ff01)
+INSERT [barcodes] ([product_id], [hex], [bin], [ip_address]) VALUES (1, N'00ff01', 0x00ff01, N'127.0.0.1')
 GO
 
 INSERT [kunsthåndværk] ([id], [Umlauts ä_ö_ü-COUNT], [user_id], [invisible]) VALUES ('e42c77c6-06a4-4502-816c-d112c7142e6d', 1, 1, NULL)

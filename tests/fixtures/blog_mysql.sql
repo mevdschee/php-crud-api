@@ -144,12 +144,13 @@ CREATE TABLE `barcodes` (
   `product_id` int(11) NOT NULL,
   `hex` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
   `bin` blob NOT NULL,
+  `ip_address` varchar(15),
   PRIMARY KEY (`id`),
   CONSTRAINT `barcodes_product_id_fkey` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-INSERT INTO `barcodes` (`product_id`, `hex`, `bin`) VALUES
-(1, '00ff01', UNHEX('00ff01'));
+INSERT INTO `barcodes` (`product_id`, `hex`, `bin`, `ip_address`) VALUES
+(1, '00ff01', UNHEX('00ff01'), '127.0.0.1');
 
 DROP TABLE IF EXISTS `kunsthåndværk`;
 CREATE TABLE `kunsthåndværk` (

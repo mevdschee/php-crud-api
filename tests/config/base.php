@@ -19,6 +19,8 @@ $settings = [
     'authorization.recordHandler' => function ($operation, $tableName) {
         return ($tableName == 'comments') ? 'filter=message,neq,invisible' : '';
     },
+    'ipAddress.tables' => 'barcodes',
+    'ipAddress.columns' => 'ip_address',
     'sanitation.handler' => function ($operation, $tableName, $column, $value) {
         return is_string($value) ? strip_tags($value) : $value;
     },

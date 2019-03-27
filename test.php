@@ -62,6 +62,7 @@ function runTest(Config $config, String $file, String $category): int
         $in = $parts[$i];
         $exp = $parts[$i + 1];
         $api = new Api($config);
+        $_SERVER['REMOTE_ADDR'] = 'TEST_IP';
         $out = $api->handle(Request::fromString($in));
         if ($recording) {
             $parts[$i + 1] = $out;

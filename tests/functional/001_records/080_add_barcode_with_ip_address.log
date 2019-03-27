@@ -1,0 +1,43 @@
+POST /records/barcodes
+
+{"product_id":1,"hex":"","bin":""}
+===
+200
+Content-Type: application/json
+Content-Length: 1
+
+2
+===
+GET /records/barcodes/2
+===
+200
+Content-Type: application/json
+Content-Length: 64
+
+{"id":2,"product_id":1,"hex":"","bin":"","ip_address":"TEST_IP"}
+===
+PUT /records/barcodes/2
+
+{"ip_address":"FAKE_IP"}
+===
+200
+Content-Type: application/json
+Content-Length: 1
+
+0
+===
+GET /records/barcodes/2
+===
+200
+Content-Type: application/json
+Content-Length: 64
+
+{"id":2,"product_id":1,"hex":"","bin":"","ip_address":"TEST_IP"}
+===
+DELETE /records/barcodes/2
+===
+200
+Content-Type: application/json
+Content-Length: 1
+
+1

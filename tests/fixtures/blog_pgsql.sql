@@ -150,7 +150,8 @@ CREATE TABLE barcodes (
     id serial NOT NULL,
     product_id integer NOT NULL,
     hex character varying(255) NOT NULL,
-    bin bytea NOT NULL
+    bin bytea NOT NULL,
+    ip_address character varying(15)
 );
 
 --
@@ -259,8 +260,8 @@ INSERT INTO "products" ("name", "price", "properties", "created_at") VALUES
 -- Data for Name: barcodes; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-INSERT INTO "barcodes" ("product_id", "hex", "bin") VALUES
-(1,	'00ff01', E'\\x00ff01');
+INSERT INTO "barcodes" ("product_id", "hex", "bin", "ip_address") VALUES
+(1,	'00ff01', E'\\x00ff01',	'127.0.0.1');
 
 --
 -- Data for Name: kunsthåndværk; Type: TABLE DATA; Schema: public; Owner: postgres
