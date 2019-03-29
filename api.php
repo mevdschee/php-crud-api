@@ -5425,7 +5425,8 @@ class Api
             }
             $response = $this->responder->error(ErrorCode::ERROR_NOT_FOUND, $e->getMessage());
             if ($this->debug) {
-                $response->addHeader('X-Debug-Info', 'Exception in ' . $e->getFile() . ' on line ' . $e->getLine());
+                $response->addHeader('X-Exception-Message', $e->getMessage());
+                $response->addHeader('X-Exception-File', $e->getFile() . ':' . $e->getLine());
             }
         }
         return $response;
