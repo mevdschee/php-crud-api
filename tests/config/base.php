@@ -43,5 +43,5 @@ $settings = [
             $response->addHeader('X-Time-Taken', 0.006/*microtime(true)*/ - $environment->start);
         }
     },
-    'debug' => true,
+    'debug' => false,
 ];
