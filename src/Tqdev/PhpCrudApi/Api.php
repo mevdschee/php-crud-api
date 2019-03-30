@@ -123,19 +123,18 @@ class Api
         } catch (\Throwable $e) {
             if ($e instanceof \PDOException) {
                 if (strpos(strtolower($e->getMessage()), 'duplicate') !== false) {
-                    return $this->responder->error(ErrorCode::DUPLICATE_KEY_EXCEPTION, '');
-                }
-                if (strpos(strtolower($e->getMessage()), 'default value') !== false) {
-                    return $this->responder->error(ErrorCode::DATA_INTEGRITY_VIOLATION, '');
-                }
-                if (strpos(strtolower($e->getMessage()), 'allow nulls') !== false) {
-                    return $this->responder->error(ErrorCode::DATA_INTEGRITY_VIOLATION, '');
-                }
-                if (strpos(strtolower($e->getMessage()), 'constraint') !== false) {
-                    return $this->responder->error(ErrorCode::DATA_INTEGRITY_VIOLATION, '');
+                    $response = $this->responder->error(ErrorCode::DUPLICATE_KEY_EXCEPTION, '');
+                } elseif (strpos(strtolower($e->getMessage()), 'default value') !== false) {
+                    $response = $this->responder->error(ErrorCode::DATA_INTEGRITY_VIOLATION, '');
+                } elseif (strpos(strtolower($e->getMessage()), 'allow nulls') !== false) {
+                    $response = $this->responder->error(ErrorCode::DATA_INTEGRITY_VIOLATION, '');
+                } elseif (strpos(strtolower($e->getMessage()), 'constraint') !== false) {
+                    $response = $this->responder->error(ErrorCode::DATA_INTEGRITY_VIOLATION, '');
                 }
             }
-            $response = $this->responder->error(ErrorCode::ERROR_NOT_FOUND, $e->getMessage());
+            if (!$response) {
+                $response = $this->responder->error(ErrorCode::ERROR_NOT_FOUND, $e->getMessage());
+            }
             if ($this->debug) {
                 $response->addHeader('X-Exception-Message', $e->getMessage());
                 $response->addHeader('X-Exception-File', $e->getFile() . ':' . $e->getLine());
