@@ -50,6 +50,25 @@ class OpenApiBuilder
         return sprintf('%s://%s%s/%s', $protocol, $host, $port, $path);
     }
 
+    private function getAllTableReferences(): array
+    {
+        $tableReferences = array();
+        foreach ($this->reflection->getTableNames() as $tableName) {
+            $table = $this->reflection->getTable($tableName);
+            foreach ($table->getColumnNames() as $columnName) {
+                $column = $table->getColumn($columnName);
+                $referencedTableName = $column->getFk();
+                if ($referencedTableName) {
+                    if (!isset($tableReferences[$referencedTableName])) {
+                        $tableReferences[$referencedTableName] = array();
+                    }
+                    $tableReferences[$referencedTableName][] = "$tableName.$columnName";
+                }
+            }
+        }
+        return $tableReferences;
+    }
+
     public function build(): OpenApiDefinition
     {
         $this->openapi->set("openapi", "3.0.0");
@@ -69,8 +88,10 @@ class OpenApiBuilder
         $this->openapi->set("components|responses|rows_affected|description", "number of rows affected (integer)");
         $this->openapi->set("components|responses|rows_affected|content|application/json|schema|type", "integer");
         $this->openapi->set("components|responses|rows_affected|content|application/json|schema|format", "int64");
+        $tableReferences = $this->getAllTableReferences();
         foreach ($tableNames as $tableName) {
-            $this->setComponentSchema($tableName);
+            $references = isset($tableReferences[$tableName])?$tableReferences[$tableName]:array();
+            $this->setComponentSchema($tableName, $references);
             $this->setComponentResponse($tableName);
             $this->setComponentRequestBody($tableName);
         }
@@ -160,7 +181,7 @@ class OpenApiBuilder
         }
     }
 
-    private function setComponentSchema(String $tableName) /*: void*/
+    private function setComponentSchema(String $tableName, array $references) /*: void*/
     {
         $table = $this->reflection->getTable($tableName);
         $type = $table->getType();
@@ -200,6 +221,7 @@ class OpenApiBuilder
                 }
                 if ($column->getPk()) {
                     $this->openapi->set("$prefix|properties|$columnName|x-primary-key", true);
+                    $this->openapi->set("$prefix|properties|$columnName|x-referenced", $references);
                 }
                 $fk = $column->getFk();
                 if ($fk) {
@@ -265,19 +287,19 @@ class OpenApiBuilder
         $this->openapi->set("components|parameters|filter|schema|items|type", "string");
         $this->openapi->set("components|parameters|filter|description", "Filters to be applied. Each filter consists of a column, an operator and a value (comma separated). Example: id,eq,1");
         $this->openapi->set("components|parameters|filter|required", false);
-        
+
         $this->openapi->set("components|parameters|include|name", "include");
         $this->openapi->set("components|parameters|include|in", "query");
         $this->openapi->set("components|parameters|include|schema|type", "string");
         $this->openapi->set("components|parameters|include|description", "Columns you want to include in the output (comma separated). Example: posts.*,categories.name");
         $this->openapi->set("components|parameters|include|required", false);
-        
+
         $this->openapi->set("components|parameters|exclude|name", "exclude");
         $this->openapi->set("components|parameters|exclude|in", "query");
         $this->openapi->set("components|parameters|exclude|schema|type", "string");
         $this->openapi->set("components|parameters|exclude|description", "Columns you want to exclude from the output (comma separated). Example: posts.content");
         $this->openapi->set("components|parameters|exclude|required", false);
-        
+
         $this->openapi->set("components|parameters|order|name", "order");
         $this->openapi->set("components|parameters|order|in", "query");
         $this->openapi->set("components|parameters|order|schema|type", "array");
