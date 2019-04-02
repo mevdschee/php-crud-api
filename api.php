@@ -3857,7 +3857,7 @@ class OpenApiBuilder
         $this->openapi->set("components|responses|rows_affected|content|application/json|schema|format", "int64");
         $tableReferences = $this->getAllTableReferences();
         foreach ($tableNames as $tableName) {
-            $references = isset($tableReferences[$tableName])?$tableReferences[$tableName]:array();
+            $references = isset($tableReferences[$tableName]) ? $tableReferences[$tableName] : array();
             $this->setComponentSchema($tableName, $references);
             $this->setComponentResponse($tableName);
             $this->setComponentRequestBody($tableName);
