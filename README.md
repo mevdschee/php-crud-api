@@ -6,10 +6,10 @@ NB: This is the [TreeQL](https://treeql.org) reference implementation in PHP.
 
 Related projects:
 
-  - [PHP-API-AUTH](https://github.com/mevdschee/php-api-auth): Single file PHP script that is an authentication provider for PHP-CRUD-API (v2)
+  - [PHP-API-AUTH](https://github.com/mevdschee/php-api-auth): Single file PHP script that is an authentication provider for PHP-CRUD-API
   - [PHP-SP-API](https://github.com/mevdschee/php-sp-api): Single file PHP script that adds a REST API to a SQL database.
-  - [PHP-CRUD-UI](https://github.com/mevdschee/PHP-crud-ui): Single file PHP script that adds a UI to a PHP-CRUD-API (v1) project.
-  - [VUE-CRUD-UI](https://github.com/nlware/vue-crud-ui): Single file Vue.js script that adds a UI to a PHP-CRUD-API (v1) project.
+  - [PHP-CRUD-UI](https://github.com/mevdschee/PHP-crud-ui): Single file PHP script that adds a UI to a PHP-CRUD-API project.
+  - [VUE-CRUD-UI](https://github.com/nlware/vue-crud-ui): Single file Vue.js script that adds a UI to a PHP-CRUD-API project.
   
 There are also ports of this script in:
 
