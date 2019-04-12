@@ -71,6 +71,13 @@ class Response
         echo $this->getBody();
     }
 
+    public function addExceptionHeaders(\Throwable $e)
+    {
+        $this->addHeader('X-Exception-Name', get_class($e));
+        $this->addHeader('X-Exception-Message', $e->getMessage());
+        $this->addHeader('X-Exception-File', $e->getFile() . ':' . $e->getLine());
+    }
+
     public function __toString(): String
     {
         $str = "$this->status\n";

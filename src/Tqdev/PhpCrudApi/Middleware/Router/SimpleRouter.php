@@ -14,16 +14,18 @@ class SimpleRouter implements Router
     private $responder;
     private $cache;
     private $ttl;
+    private $debug;
     private $registration;
     private $routes;
     private $routeHandlers;
     private $middlewares;
 
-    public function __construct(Responder $responder, Cache $cache, int $ttl)
+    public function __construct(Responder $responder, Cache $cache, int $ttl, bool $debug)
     {
         $this->responder = $responder;
         $this->cache = $cache;
         $this->ttl = $ttl;
+        $this->debug = $debug;
         $this->registration = true;
         $this->routes = $this->loadPathTree();
         $this->routeHandlers = [];
@@ -91,7 +93,23 @@ class SimpleRouter implements Router
         if (count($routeNumbers) == 0) {
             return $this->responder->error(ErrorCode::ROUTE_NOT_FOUND, $request->getPath());
         }
-        return call_user_func($this->routeHandlers[$routeNumbers[0]], $request);
+        try {
+            $response = call_user_func($this->routeHandlers[$routeNumbers[0]], $request);
+        } catch (\PDOException $e) {
+            if (strpos(strtolower($e->getMessage()), 'duplicate') !== false) {
+                $response = $this->responder->error(ErrorCode::DUPLICATE_KEY_EXCEPTION, '');
+            } elseif (strpos(strtolower($e->getMessage()), 'default value') !== false) {
+                $response = $this->responder->error(ErrorCode::DATA_INTEGRITY_VIOLATION, '');
+            } elseif (strpos(strtolower($e->getMessage()), 'allow nulls') !== false) {
+                $response = $this->responder->error(ErrorCode::DATA_INTEGRITY_VIOLATION, '');
+            } elseif (strpos(strtolower($e->getMessage()), 'constraint') !== false) {
+                $response = $this->responder->error(ErrorCode::DATA_INTEGRITY_VIOLATION, '');
+            }
+            if ($this->debug) {
+                $response->addExceptionHeaders($e);
+            }
+        }
+        return $response;
     }
 
 }
