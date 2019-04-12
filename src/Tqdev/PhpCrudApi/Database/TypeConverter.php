@@ -46,8 +46,7 @@ class TypeConverter
             'timestamp_with_timezone' => 'timestamp',
         ],
         'mysql' => [
-            'bit(0)' => 'boolean',
-            'bit(1)' => 'boolean',
+            'bit' => 'boolean',
             'tinyblob' => 'blob',
             'mediumblob' => 'blob',
             'longblob' => 'blob',
