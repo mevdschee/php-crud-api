@@ -26,7 +26,7 @@ class RequestFactory
         $psr17Factory = new Psr17Factory();
         $serverRequest = $psr17Factory->createServerRequest($method, $url);
         if ($body) {
-            $serverRequest = $serverRequest->withBody($body);
+            $serverRequest = $serverRequest->withBody($psr17Factory->createStream($body));
         }
         foreach ($lines as $line) {
             list($key, $value) = explode(':', $line, 2);
