@@ -1,7 +1,7 @@
 <?php
 use Tqdev\PhpCrudApi\Api;
 use Tqdev\PhpCrudApi\Config;
-use Tqdev\PhpCrudApi\Request;
+use Tqdev\PhpCrudApi\RequestFactory;
 
 // do not reformat the following line
 spl_autoload_register(function ($class) {include str_replace('\\', '/', __DIR__ . "/$class.php");});
@@ -12,7 +12,7 @@ $config = new Config([
     'password' => 'php-crud-api',
     'database' => 'php-crud-api',
 ]);
-$request = new Request();
+$request = RequestFactory::fromGlobals();
 $api = new Api($config);
 $response = $api->handle($request);
 $response->output();

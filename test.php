@@ -2,7 +2,7 @@
 use Tqdev\PhpCrudApi\Api;
 use Tqdev\PhpCrudApi\Config;
 use Tqdev\PhpCrudApi\Database\GenericDB;
-use Tqdev\PhpCrudApi\Request;
+use Tqdev\PhpCrudApi\RequestFactory;
 
 spl_autoload_register(function ($class) {
     include str_replace('\\', '/', "src\\$class.php");
@@ -63,7 +63,7 @@ function runTest(Config $config, String $file, String $category): int
         $exp = $parts[$i + 1];
         $api = new Api($config);
         $_SERVER['REMOTE_ADDR'] = 'TEST_IP';
-        $out = $api->handle(Request::fromString($in));
+        $out = $api->handle(RequestFactory::fromString($in));
         if ($recording) {
             $parts[$i + 1] = $out;
         } else if ($out != $exp) {

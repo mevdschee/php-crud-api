@@ -23,7 +23,7 @@ function runDir(String $base, String $dir, array &$lines): int
             $data = file_get_contents($filename);
             array_push($lines, "// file: $dir/$entry");
             foreach (explode("\n", $data) as $line) {
-                if (!preg_match('/^<\?php|^namespace |^use |spl_autoload_register|^\s*\/\//', $line)) {
+                if (!preg_match('/^<\?php|^namespace |^use |spl_autoload_register|declare\s*\(\s*strict_types\s*=\s*1|^\s*\/\//', $line)) {
                     array_push($lines, $line);
                 }
             }
@@ -56,7 +56,9 @@ function run(String $base, String $dir, String $filename)
     $lines = [];
     $start = microtime(true);
     addHeader($lines);
-    $count = runDir($base, $dir, $lines);
+    $count = runDir($base, 'src/Psr', $lines);
+    $count += runDir($base, 'src/Nyholm', $lines);
+    $count += runDir($base, 'src/Tqdev', $lines);
     $data = implode("\n", $lines);
     $data = preg_replace('/\n\s*\n\s*\n/', "\n\n", $data);
     file_put_contents('tmp_' . $filename, $data);

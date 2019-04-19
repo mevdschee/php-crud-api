@@ -1,12 +1,12 @@
 <?php
 namespace Tqdev\PhpCrudApi\Middleware\Router;
 
+use Psr\Http\Message\ServerRequestInterface;
 use Tqdev\PhpCrudApi\Cache\Cache;
 use Tqdev\PhpCrudApi\Controller\Responder;
 use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
 use Tqdev\PhpCrudApi\Record\ErrorCode;
 use Tqdev\PhpCrudApi\Record\PathTree;
-use Tqdev\PhpCrudApi\Request;
 use Tqdev\PhpCrudApi\Response;
 
 class SimpleRouter implements Router
@@ -66,7 +66,7 @@ class SimpleRouter implements Router
         array_unshift($this->middlewares, $middleware);
     }
 
-    public function route(Request $request): Response
+    public function route(ServerRequestInterface $request): Response
     {
         if ($this->registration) {
             $data = gzcompress(json_encode($this->routes, JSON_UNESCAPED_UNICODE));
@@ -79,19 +79,19 @@ class SimpleRouter implements Router
         return $obj->handle($request);
     }
 
-    private function getRouteNumbers(Request $request): array
+    private function getRouteNumbers(ServerRequestInterface $request): array
     {
         $method = strtoupper($request->getMethod());
-        $path = explode('/', trim($request->getPath(0), '/'));
+        $path = explode('/', trim($request->getRequestTarget(), '/'));
         array_unshift($path, $method);
         return $this->routes->match($path);
     }
 
-    public function handle(Request $request): Response
+    public function handle(ServerRequestInterface $request): Response
     {
         $routeNumbers = $this->getRouteNumbers($request);
         if (count($routeNumbers) == 0) {
-            return $this->responder->error(ErrorCode::ROUTE_NOT_FOUND, $request->getPath());
+            return $this->responder->error(ErrorCode::ROUTE_NOT_FOUND, $request->getRequestTarget());
         }
         try {
             $response = call_user_func($this->routeHandlers[$routeNumbers[0]], $request);

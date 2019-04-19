@@ -1,12 +1,12 @@
 <?php
 namespace Tqdev\PhpCrudApi\Middleware;
 
+use Psr\Http\Message\ServerRequestInterface;
 use Tqdev\PhpCrudApi\Column\ReflectionService;
 use Tqdev\PhpCrudApi\Controller\Responder;
 use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
 use Tqdev\PhpCrudApi\Middleware\Router\Router;
 use Tqdev\PhpCrudApi\Record\RequestUtils;
-use Tqdev\PhpCrudApi\Request;
 use Tqdev\PhpCrudApi\Response;
 
 class CustomizationMiddleware extends Middleware
@@ -17,13 +17,12 @@ class CustomizationMiddleware extends Middleware
     {
         parent::__construct($router, $responder, $properties);
         $this->reflection = $reflection;
-        $this->utils = new RequestUtils($reflection);
     }
 
-    public function handle(Request $request): Response
+    public function handle(ServerRequestInterface $request): Response
     {
-        $operation = $this->utils->getOperation($request);
-        $tableName = $request->getPathSegment(2);
+        $operation = RequestUtils::getOperation($request);
+        $tableName = RequestUtils::getPathSegment($request, 2);
         $beforeHandler = $this->getProperty('beforeHandler', '');
         $environment = (object) array();
         if ($beforeHandler !== '') {

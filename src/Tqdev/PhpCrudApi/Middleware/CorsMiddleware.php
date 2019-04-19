@@ -1,10 +1,10 @@
 <?php
 namespace Tqdev\PhpCrudApi\Middleware;
 
+use Psr\Http\Message\ServerRequestInterface;
 use Tqdev\PhpCrudApi\Controller\Responder;
 use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
 use Tqdev\PhpCrudApi\Record\ErrorCode;
-use Tqdev\PhpCrudApi\Request;
 use Tqdev\PhpCrudApi\Response;
 
 class CorsMiddleware extends Middleware
@@ -23,10 +23,10 @@ class CorsMiddleware extends Middleware
         return $found;
     }
 
-    public function handle(Request $request): Response
+    public function handle(ServerRequestInterface $request): Response
     {
         $method = $request->getMethod();
-        $origin = $request->getHeader('Origin');
+        $origin = count($request->getHeader('Origin')) ? $request->getHeader('Origin')[0] : '';
         $allowedOrigins = $this->getProperty('allowedOrigins', '*');
         if ($origin && !$this->isOriginAllowed($origin, $allowedOrigins)) {
             $response = $this->responder->error(ErrorCode::ORIGIN_FORBIDDEN, $origin);

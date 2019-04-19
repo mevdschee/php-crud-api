@@ -1,10 +1,10 @@
 <?php
 namespace Tqdev\PhpCrudApi\Middleware\Base;
 
-use Tqdev\PhpCrudApi\Request;
+use Psr\Http\Message\ServerRequestInterface;
 use Tqdev\PhpCrudApi\Response;
 
 interface Handler
 {
-    public function handle(Request $request): Response;
+    public function handle(ServerRequestInterface $request): Response;
 }

@@ -949,7 +949,7 @@ class CacheController
         $this->responder = $responder;
     }
 
-    public function clear(Request $request): Response
+    public function clear(ServerRequestInterface $request): Response
     {
         return $this->responder->success($this->cache->clear());
     }
@@ -980,7 +980,7 @@ class ColumnController
         $this->definition = $definition;
     }
 
-    public function getDatabase(Request $request): Response
+    public function getDatabase(ServerRequestInterface $request): Response
     {
         $tables = [];
         foreach ($this->reflection->getTableNames() as $table) {
@@ -990,7 +990,7 @@ class ColumnController
         return $this->responder->success($database);
     }
 
-    public function getTable(Request $request): Response
+    public function getTable(ServerRequestInterface $request): Response
     {
         $tableName = $request->getPathSegment(2);
         if (!$this->reflection->hasTable($tableName)) {
@@ -1000,7 +1000,7 @@ class ColumnController
         return $this->responder->success($table);
     }
 
-    public function getColumn(Request $request): Response
+    public function getColumn(ServerRequestInterface $request): Response
     {
         $tableName = $request->getPathSegment(2);
         $columnName = $request->getPathSegment(3);
@@ -1015,7 +1015,7 @@ class ColumnController
         return $this->responder->success($column);
     }
 
-    public function updateTable(Request $request): Response
+    public function updateTable(ServerRequestInterface $request): Response
     {
         $tableName = $request->getPathSegment(2);
         if (!$this->reflection->hasTable($tableName)) {
@@ -1028,7 +1028,7 @@ class ColumnController
         return $this->responder->success($success);
     }
 
-    public function updateColumn(Request $request): Response
+    public function updateColumn(ServerRequestInterface $request): Response
     {
         $tableName = $request->getPathSegment(2);
         $columnName = $request->getPathSegment(3);
@@ -1046,7 +1046,7 @@ class ColumnController
         return $this->responder->success($success);
     }
 
-    public function addTable(Request $request): Response
+    public function addTable(ServerRequestInterface $request): Response
     {
         $tableName = $request->getBody()->name;
         if ($this->reflection->hasTable($tableName)) {
@@ -1059,7 +1059,7 @@ class ColumnController
         return $this->responder->success($success);
     }
 
-    public function addColumn(Request $request): Response
+    public function addColumn(ServerRequestInterface $request): Response
     {
         $tableName = $request->getPathSegment(2);
         if (!$this->reflection->hasTable($tableName)) {
@@ -1077,7 +1077,7 @@ class ColumnController
         return $this->responder->success($success);
     }
 
-    public function removeTable(Request $request): Response
+    public function removeTable(ServerRequestInterface $request): Response
     {
         $tableName = $request->getPathSegment(2);
         if (!$this->reflection->hasTable($tableName)) {
@@ -1090,7 +1090,7 @@ class ColumnController
         return $this->responder->success($success);
     }
 
-    public function removeColumn(Request $request): Response
+    public function removeColumn(ServerRequestInterface $request): Response
     {
         $tableName = $request->getPathSegment(2);
         $columnName = $request->getPathSegment(3);
@@ -1123,7 +1123,7 @@ class OpenApiController
         $this->responder = $responder;
     }
 
-    public function openapi(Request $request): Response
+    public function openapi(ServerRequestInterface $request): Response
     {
         return $this->responder->success($this->openApi->get());
     }
@@ -1149,7 +1149,7 @@ class RecordController
         $this->responder = $responder;
     }
 
-    public function _list(Request $request): Response
+    public function _list(ServerRequestInterface $request): Response
     {
         $table = $request->getPathSegment(2);
         $params = $request->getParams();
@@ -1159,7 +1159,7 @@ class RecordController
         return $this->responder->success($this->service->_list($table, $params));
     }
 
-    public function read(Request $request): Response
+    public function read(ServerRequestInterface $request): Response
     {
         $table = $request->getPathSegment(2);
         if (!$this->service->hasTable($table)) {
@@ -1186,7 +1186,7 @@ class RecordController
         }
     }
 
-    public function create(Request $request): Response
+    public function create(ServerRequestInterface $request): Response
     {
         $table = $request->getPathSegment(2);
         if (!$this->service->hasTable($table)) {
@@ -1211,7 +1211,7 @@ class RecordController
         }
     }
 
-    public function update(Request $request): Response
+    public function update(ServerRequestInterface $request): Response
     {
         $table = $request->getPathSegment(2);
         if (!$this->service->hasTable($table)) {
@@ -1244,7 +1244,7 @@ class RecordController
         }
     }
 
-    public function delete(Request $request): Response
+    public function delete(ServerRequestInterface $request): Response
     {
         $table = $request->getPathSegment(2);
         if (!$this->service->hasTable($table)) {
@@ -1267,7 +1267,7 @@ class RecordController
         }
     }
 
-    public function increment(Request $request): Response
+    public function increment(ServerRequestInterface $request): Response
     {
         $table = $request->getPathSegment(2);
         if (!$this->service->hasTable($table)) {
@@ -1415,7 +1415,7 @@ class ColumnsBuilder
 
     public function getOrderBy(ReflectedTable $table, array $columnOrdering): String
     {
-        if (count($columnOrdering)==0) {
+        if (count($columnOrdering) == 0) {
             return '';
         }
         $results = array();
@@ -1424,7 +1424,7 @@ class ColumnsBuilder
             $quotedColumnName = $this->quoteColumnName($column);
             $results[] = $quotedColumnName . ' ' . $ordering;
         }
-        return ' ORDER BY '.implode(',', $results);
+        return ' ORDER BY ' . implode(',', $results);
     }
 
     public function getSelect(ReflectedTable $table, array $columnNames): String
@@ -2202,7 +2202,7 @@ class GenericDefinition
     {
         $p1 = $this->quote($tableName);
         $p2 = $this->quote($columnName);
-        
+
         switch ($this->driver) {
             case 'mysql':
                 return "select 1";
@@ -2751,7 +2751,7 @@ class TypeConverter
 
 interface Handler
 {
-    public function handle(Request $request): Response;
+    public function handle(ServerRequestInterface $request): Response;
 }
 
 // file: src/Tqdev/PhpCrudApi/Middleware/Base/Middleware.php
@@ -2813,7 +2813,7 @@ interface Router extends Handler
 
     public function load(Middleware $middleware);
 
-    public function route(Request $request): Response;
+    public function route(ServerRequestInterface $request): Response;
 }
 
 // file: src/Tqdev/PhpCrudApi/Middleware/Router/SimpleRouter.php
@@ -2875,7 +2875,7 @@ class SimpleRouter implements Router
         array_unshift($this->middlewares, $middleware);
     }
 
-    public function route(Request $request): Response
+    public function route(ServerRequestInterface $request): Response
     {
         if ($this->registration) {
             $data = gzcompress(json_encode($this->routes, JSON_UNESCAPED_UNICODE));
@@ -2888,7 +2888,7 @@ class SimpleRouter implements Router
         return $obj->handle($request);
     }
 
-    private function getRouteNumbers(Request $request): array
+    private function getRouteNumbers(ServerRequestInterface $request): array
     {
         $method = strtoupper($request->getMethod());
         $path = explode('/', trim($request->getPath(0), '/'));
@@ -2896,7 +2896,7 @@ class SimpleRouter implements Router
         return $this->routes->match($path);
     }
 
-    public function handle(Request $request): Response
+    public function handle(ServerRequestInterface $request): Response
     {
         $routeNumbers = $this->getRouteNumbers($request);
         if (count($routeNumbers) == 0) {
@@ -2927,7 +2927,7 @@ class SimpleRouter implements Router
 
 class AjaxOnlyMiddleware extends Middleware
 {
-    public function handle(Request $request): Response
+    public function handle(ServerRequestInterface $request): Response
     {
         $method = $request->getMethod();
         $excludeMethods = $this->getArrayProperty('excludeMethods', 'OPTIONS,GET');
@@ -3002,7 +3002,7 @@ class AuthorizationMiddleware extends Middleware
         }
     }
 
-    public function handle(Request $request): Response
+    public function handle(ServerRequestInterface $request): Response
     {
         $path = $request->getPathSegment(1);
         $operation = $this->utils->getOperation($request);
@@ -3074,7 +3074,7 @@ class BasicAuthMiddleware extends Middleware
         return $success;
     }
 
-    private function getAuthorizationCredentials(Request $request): String
+    private function getAuthorizationCredentials(ServerRequestInterface $request): String
     {
         if (isset($_SERVER['PHP_AUTH_USER'])) {
             return $_SERVER['PHP_AUTH_USER'] . ':' . $_SERVER['PHP_AUTH_PW'];
@@ -3089,7 +3089,7 @@ class BasicAuthMiddleware extends Middleware
         return base64_decode(strtr($parts[1], '-_', '+/'));
     }
 
-    public function handle(Request $request): Response
+    public function handle(ServerRequestInterface $request): Response
     {
         if (session_status() == PHP_SESSION_NONE) {
             session_start();
@@ -3141,7 +3141,7 @@ class CorsMiddleware extends Middleware
         return $found;
     }
 
-    public function handle(Request $request): Response
+    public function handle(ServerRequestInterface $request): Response
     {
         $method = $request->getMethod();
         $origin = $request->getHeader('Origin');
@@ -3197,7 +3197,7 @@ class CustomizationMiddleware extends Middleware
         $this->utils = new RequestUtils($reflection);
     }
 
-    public function handle(Request $request): Response
+    public function handle(ServerRequestInterface $request): Response
     {
         $operation = $this->utils->getOperation($request);
         $tableName = $request->getPathSegment(2);
@@ -3244,7 +3244,7 @@ class FirewallMiddleware extends Middleware
         return false;
     }
 
-    public function handle(Request $request): Response
+    public function handle(ServerRequestInterface $request): Response
     {
         $reverseProxy = $this->getProperty('reverseProxy', '');
         if ($reverseProxy) {
@@ -3295,7 +3295,7 @@ class IpAddressMiddleware extends Middleware
         return (object) $context;
     }
 
-    public function handle(Request $request): Response
+    public function handle(ServerRequestInterface $request): Response
     {
         $operation = $this->utils->getOperation($request);
         if (in_array($operation, ['create', 'update', 'increment'])) {
@@ -3335,7 +3335,7 @@ class JoinLimitsMiddleware extends Middleware
         $this->utils = new RequestUtils($reflection);
     }
 
-    public function handle(Request $request): Response
+    public function handle(ServerRequestInterface $request): Response
     {
         $operation = $this->utils->getOperation($request);
         $params = $request->getParams();
@@ -3469,7 +3469,7 @@ class JwtAuthMiddleware extends Middleware
         return $this->getVerifiedClaims($token, $time, $leeway, $ttl, $secret, $requirements);
     }
 
-    private function getAuthorizationToken(Request $request): String
+    private function getAuthorizationToken(ServerRequestInterface $request): String
     {
         $header = $this->getProperty('header', 'X-Authorization');
         $parts = explode(' ', trim($request->getHeader($header)), 2);
@@ -3482,7 +3482,7 @@ class JwtAuthMiddleware extends Middleware
         return $parts[1];
     }
 
-    public function handle(Request $request): Response
+    public function handle(ServerRequestInterface $request): Response
     {
         if (session_status() == PHP_SESSION_NONE) {
             session_start();
@@ -3544,7 +3544,7 @@ class MultiTenancyMiddleware extends Middleware
         return $result;
     }
 
-    private function handleRecord(Request $request, String $operation, array $pairs) /*: void*/
+    private function handleRecord(ServerRequestInterface $request, String $operation, array $pairs) /*: void*/
     {
         $record = $request->getBody();
         if ($record === null) {
@@ -3566,7 +3566,7 @@ class MultiTenancyMiddleware extends Middleware
         $request->setBody($multi ? $records : $records[0]);
     }
 
-    public function handle(Request $request): Response
+    public function handle(ServerRequestInterface $request): Response
     {
         $handler = $this->getProperty('handler', '');
         if ($handler !== '') {
@@ -3606,7 +3606,7 @@ class PageLimitsMiddleware extends Middleware
         $this->utils = new RequestUtils($reflection);
     }
 
-    public function handle(Request $request): Response
+    public function handle(ServerRequestInterface $request): Response
     {
         $operation = $this->utils->getOperation($request);
         if ($operation == 'list') {
@@ -3660,7 +3660,7 @@ class SanitationMiddleware extends Middleware
         return (object) $context;
     }
 
-    public function handle(Request $request): Response
+    public function handle(ServerRequestInterface $request): Response
     {
         $operation = $this->utils->getOperation($request);
         if (in_array($operation, ['create', 'update', 'increment'])) {
@@ -3720,7 +3720,7 @@ class ValidationMiddleware extends Middleware
         return null;
     }
 
-    public function handle(Request $request): Response
+    public function handle(ServerRequestInterface $request): Response
     {
         $operation = $this->utils->getOperation($request);
         if (in_array($operation, ['create', 'update', 'increment'])) {
@@ -3771,7 +3771,7 @@ class XsrfMiddleware extends Middleware
         return $token;
     }
 
-    public function handle(Request $request): Response
+    public function handle(ServerRequestInterface $request): Response
     {
         $token = $this->getToken();
         $method = $request->getMethod();
@@ -5083,7 +5083,7 @@ class RelationJoiner
         foreach ($joins->getKeys() as $t2Name) {
 
             $t2 = $this->reflection->getTable($t2Name);
-            
+
             $belongsTo = count($t1->getFksTo($t2->getName())) > 0;
             $hasMany = count($t2->getFksTo($t1->getName())) > 0;
             if (!$belongsTo && !$hasMany) {
@@ -5101,11 +5101,11 @@ class RelationJoiner
             if ($belongsTo) {
                 $fkValues = $this->getFkEmptyValues($t1, $t2, $records);
                 $this->addFkRecords($t2, $fkValues, $params, $db, $newRecords);
-            } 
+            }
             if ($hasMany) {
                 $pkValues = $this->getPkEmptyValues($t1, $records);
                 $this->addPkRecords($t1, $t2, $pkValues, $params, $db, $newRecords);
-            } 
+            }
             if ($hasAndBelongsToMany) {
                 $habtmValues = $this->getHabtmEmptyValues($t1, $t2, $t3, $db, $records);
                 $this->addFkRecords($t2, $habtmValues->fkValues, $params, $db, $newRecords);
@@ -5116,11 +5116,11 @@ class RelationJoiner
             if ($fkValues != null) {
                 $this->fillFkValues($t2, $newRecords, $fkValues);
                 $this->setFkValues($t1, $t2, $records, $fkValues);
-            } 
+            }
             if ($pkValues != null) {
                 $this->fillPkValues($t1, $t2, $newRecords, $pkValues);
                 $this->setPkValues($t1, $t2, $records, $pkValues);
-            } 
+            }
             if ($habtmValues != null) {
                 $this->fillFkValues($t2, $newRecords, $habtmValues->fkValues);
                 $this->setHabtmValues($t1, $t2, $records, $habtmValues);
@@ -5292,7 +5292,7 @@ class RequestUtils
         $this->reflection = $reflection;
     }
 
-    public function getOperation(Request $request): String
+    public function getOperation(ServerRequestInterface $request): String
     {
         $method = $request->getMethod();
         $path = $request->getPathSegment(1);
@@ -5334,7 +5334,7 @@ class RequestUtils
         return array_keys($uniqueTableNames);
     }
 
-    public function getTableNames(Request $request): array
+    public function getTableNames(ServerRequestInterface $request): array
     {
         $path = $request->getPathSegment(1);
         $tableName = $request->getPathSegment(2);
@@ -5441,7 +5441,7 @@ class Api
         $this->debug = $config->getDebug();
     }
 
-    public function handle(Request $request): Response
+    public function handle(ServerRequestInterface $request): Response
     {
         $response = null;
         try {

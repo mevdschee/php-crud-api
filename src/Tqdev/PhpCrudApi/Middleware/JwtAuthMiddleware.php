@@ -1,10 +1,10 @@
 <?php
 namespace Tqdev\PhpCrudApi\Middleware;
 
+use Psr\Http\Message\ServerRequestInterface;
 use Tqdev\PhpCrudApi\Controller\Responder;
 use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
 use Tqdev\PhpCrudApi\Record\ErrorCode;
-use Tqdev\PhpCrudApi\Request;
 use Tqdev\PhpCrudApi\Response;
 
 class JwtAuthMiddleware extends Middleware
@@ -106,7 +106,7 @@ class JwtAuthMiddleware extends Middleware
         return $this->getVerifiedClaims($token, $time, $leeway, $ttl, $secret, $requirements);
     }
 
-    private function getAuthorizationToken(Request $request): String
+    private function getAuthorizationToken(ServerRequestInterface $request): String
     {
         $header = $this->getProperty('header', 'X-Authorization');
         $parts = explode(' ', trim($request->getHeader($header)), 2);
@@ -119,7 +119,7 @@ class JwtAuthMiddleware extends Middleware
         return $parts[1];
     }
 
-    public function handle(Request $request): Response
+    public function handle(ServerRequestInterface $request): Response
     {
         if (session_status() == PHP_SESSION_NONE) {
             session_start();

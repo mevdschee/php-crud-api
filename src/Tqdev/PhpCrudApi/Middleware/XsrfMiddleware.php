@@ -1,10 +1,10 @@
 <?php
 namespace Tqdev\PhpCrudApi\Middleware;
 
+use Psr\Http\Message\ServerRequestInterface;
 use Tqdev\PhpCrudApi\Controller\Responder;
 use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
 use Tqdev\PhpCrudApi\Record\ErrorCode;
-use Tqdev\PhpCrudApi\Request;
 use Tqdev\PhpCrudApi\Response;
 
 class XsrfMiddleware extends Middleware
@@ -24,7 +24,7 @@ class XsrfMiddleware extends Middleware
         return $token;
     }
 
-    public function handle(Request $request): Response
+    public function handle(ServerRequestInterface $request): Response
     {
         $token = $this->getToken();
         $method = $request->getMethod();

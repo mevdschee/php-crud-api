@@ -1,6 +1,7 @@
 <?php
 namespace Tqdev\PhpCrudApi\Middleware;
 
+use Psr\Http\Message\ServerRequestInterface;
 use Tqdev\PhpCrudApi\Column\ReflectionService;
 use Tqdev\PhpCrudApi\Controller\Responder;
 use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
@@ -10,7 +11,6 @@ use Tqdev\PhpCrudApi\Record\Condition\ColumnCondition;
 use Tqdev\PhpCrudApi\Record\Condition\Condition;
 use Tqdev\PhpCrudApi\Record\Condition\NoCondition;
 use Tqdev\PhpCrudApi\Record\RequestUtils;
-use Tqdev\PhpCrudApi\Request;
 use Tqdev\PhpCrudApi\Response;
 
 class MultiTenancyMiddleware extends Middleware
@@ -21,7 +21,6 @@ class MultiTenancyMiddleware extends Middleware
     {
         parent::__construct($router, $responder, $properties);
         $this->reflection = $reflection;
-        $this->utils = new RequestUtils($reflection);
     }
 
     private function getCondition(String $tableName, array $pairs): Condition
@@ -47,7 +46,7 @@ class MultiTenancyMiddleware extends Middleware
         return $result;
     }
 
-    private function handleRecord(Request $request, String $operation, array $pairs) /*: void*/
+    private function handleRecord(ServerRequestInterface $request, String $operation, array $pairs) /*: void*/
     {
         $record = $request->getBody();
         if ($record === null) {
@@ -69,14 +68,14 @@ class MultiTenancyMiddleware extends Middleware
         $request->setBody($multi ? $records : $records[0]);
     }
 
-    public function handle(Request $request): Response
+    public function handle(ServerRequestInterface $request): Response
     {
         $handler = $this->getProperty('handler', '');
         if ($handler !== '') {
-            $path = $request->getPathSegment(1);
+            $path = RequestUtils::getPathSegment($request, 1);
             if ($path == 'records') {
-                $operation = $this->utils->getOperation($request);
-                $tableNames = $this->utils->getTableNames($request);
+                $operation = RequestUtils::getOperation($request);
+                $tableNames = RequestUtils::getTableNames($request, $this->reflection);
                 foreach ($tableNames as $i => $tableName) {
                     if (!$this->reflection->hasTable($tableName)) {
                         continue;

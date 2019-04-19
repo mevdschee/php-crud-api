@@ -1,6 +1,7 @@
 <?php
 namespace Tqdev\PhpCrudApi\Middleware;
 
+use Psr\Http\Message\ServerRequestInterface;
 use Tqdev\PhpCrudApi\Column\ReflectionService;
 use Tqdev\PhpCrudApi\Column\Reflection\ReflectedTable;
 use Tqdev\PhpCrudApi\Controller\Responder;
@@ -8,7 +9,6 @@ use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
 use Tqdev\PhpCrudApi\Middleware\Router\Router;
 use Tqdev\PhpCrudApi\Record\ErrorCode;
 use Tqdev\PhpCrudApi\Record\RequestUtils;
-use Tqdev\PhpCrudApi\Request;
 use Tqdev\PhpCrudApi\Response;
 
 class ValidationMiddleware extends Middleware
@@ -19,7 +19,6 @@ class ValidationMiddleware extends Middleware
     {
         parent::__construct($router, $responder, $properties);
         $this->reflection = $reflection;
-        $this->utils = new RequestUtils($reflection);
     }
 
     private function callHandler($handler, $record, String $operation, ReflectedTable $table) /*: Response?*/
@@ -42,11 +41,11 @@ class ValidationMiddleware extends Middleware
         return null;
     }
 
-    public function handle(Request $request): Response
+    public function handle(ServerRequestInterface $request): Response
     {
-        $operation = $this->utils->getOperation($request);
+        $operation = RequestUtils::getOperation($request);
         if (in_array($operation, ['create', 'update', 'increment'])) {
-            $tableName = $request->getPathSegment(2);
+            $tableName = RequestUtils::getPathSegment($request, 2);
             if ($this->reflection->hasTable($tableName)) {
                 $record = $request->getBody();
                 if ($record !== null) {

@@ -1,11 +1,11 @@
 <?php
 namespace Tqdev\PhpCrudApi\Controller;
 
+use Psr\Http\Message\ServerRequestInterface;
 use Tqdev\PhpCrudApi\Column\DefinitionService;
 use Tqdev\PhpCrudApi\Column\ReflectionService;
 use Tqdev\PhpCrudApi\Middleware\Router\Router;
 use Tqdev\PhpCrudApi\Record\ErrorCode;
-use Tqdev\PhpCrudApi\Request;
 use Tqdev\PhpCrudApi\Response;
 
 class ColumnController
@@ -30,7 +30,7 @@ class ColumnController
         $this->definition = $definition;
     }
 
-    public function getDatabase(Request $request): Response
+    public function getDatabase(ServerRequestInterface $request): Response
     {
         $tables = [];
         foreach ($this->reflection->getTableNames() as $table) {
@@ -40,9 +40,9 @@ class ColumnController
         return $this->responder->success($database);
     }
 
-    public function getTable(Request $request): Response
+    public function getTable(ServerRequestInterface $request): Response
     {
-        $tableName = $request->getPathSegment(2);
+        $tableName = RequestUtils::getPathSegment($request, 2);
         if (!$this->reflection->hasTable($tableName)) {
             return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $tableName);
         }
@@ -50,10 +50,10 @@ class ColumnController
         return $this->responder->success($table);
     }
 
-    public function getColumn(Request $request): Response
+    public function getColumn(ServerRequestInterface $request): Response
     {
-        $tableName = $request->getPathSegment(2);
-        $columnName = $request->getPathSegment(3);
+        $tableName = RequestUtils::getPathSegment($request, 2);
+        $columnName = RequestUtils::getPathSegment($request, 3);
         if (!$this->reflection->hasTable($tableName)) {
             return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $tableName);
         }
@@ -65,9 +65,9 @@ class ColumnController
         return $this->responder->success($column);
     }
 
-    public function updateTable(Request $request): Response
+    public function updateTable(ServerRequestInterface $request): Response
     {
-        $tableName = $request->getPathSegment(2);
+        $tableName = RequestUtils::getPathSegment($request, 2);
         if (!$this->reflection->hasTable($tableName)) {
             return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $tableName);
         }
@@ -78,10 +78,10 @@ class ColumnController
         return $this->responder->success($success);
     }
 
-    public function updateColumn(Request $request): Response
+    public function updateColumn(ServerRequestInterface $request): Response
     {
-        $tableName = $request->getPathSegment(2);
-        $columnName = $request->getPathSegment(3);
+        $tableName = RequestUtils::getPathSegment($request, 2);
+        $columnName = RequestUtils::getPathSegment($request, 3);
         if (!$this->reflection->hasTable($tableName)) {
             return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $tableName);
         }
@@ -96,7 +96,7 @@ class ColumnController
         return $this->responder->success($success);
     }
 
-    public function addTable(Request $request): Response
+    public function addTable(ServerRequestInterface $request): Response
     {
         $tableName = $request->getBody()->name;
         if ($this->reflection->hasTable($tableName)) {
@@ -109,9 +109,9 @@ class ColumnController
         return $this->responder->success($success);
     }
 
-    public function addColumn(Request $request): Response
+    public function addColumn(ServerRequestInterface $request): Response
     {
-        $tableName = $request->getPathSegment(2);
+        $tableName = RequestUtils::getPathSegment($request, 2);
         if (!$this->reflection->hasTable($tableName)) {
             return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $tableName);
         }
@@ -127,9 +127,9 @@ class ColumnController
         return $this->responder->success($success);
     }
 
-    public function removeTable(Request $request): Response
+    public function removeTable(ServerRequestInterface $request): Response
     {
-        $tableName = $request->getPathSegment(2);
+        $tableName = RequestUtils::getPathSegment($request, 2);
         if (!$this->reflection->hasTable($tableName)) {
             return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $tableName);
         }
@@ -140,10 +140,10 @@ class ColumnController
         return $this->responder->success($success);
     }
 
-    public function removeColumn(Request $request): Response
+    public function removeColumn(ServerRequestInterface $request): Response
     {
-        $tableName = $request->getPathSegment(2);
-        $columnName = $request->getPathSegment(3);
+        $tableName = RequestUtils::getPathSegment($request, 2);
+        $columnName = RequestUtils::getPathSegment($request, 3);
         if (!$this->reflection->hasTable($tableName)) {
             return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $tableName);
         }

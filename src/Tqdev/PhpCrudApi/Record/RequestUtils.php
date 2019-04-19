@@ -1,23 +1,34 @@
 <?php
 namespace Tqdev\PhpCrudApi\Record;
 
+use Psr\Http\Message\ServerRequestInterface;
 use Tqdev\PhpCrudApi\Column\ReflectionService;
-use Tqdev\PhpCrudApi\Request;
 
 class RequestUtils
 {
-    private $reflection;
-
-    public function __construct(ReflectionService $reflection)
+    public static function getParams(ServerRequestInterface $request): array
     {
-        $this->reflection = $reflection;
+        $params = array();
+        $query = $request->getUri()->getQuery();
+        $query = str_replace('][]=', ']=', str_replace('=', '[]=', $query));
+        parse_str($query, $params);
+        return $params;
     }
 
-    public function getOperation(Request $request): String
+    public static function getPathSegment(ServerRequestInterface $request, int $part): String
+    {
+        $pathSegments = explode('/', rtrim($request->getUri()->getPath(), '/'));
+        if ($part < 0 || $part >= count($pathSegments)) {
+            return '';
+        }
+        return $pathSegments[$part];
+    }
+
+    public static function getOperation(ServerRequestInterface $request): String
     {
         $method = $request->getMethod();
-        $path = $request->getPathSegment(1);
-        $hasPk = $request->getPathSegment(3) != '';
+        $path = RequestUtils::getPathSegment($request, 1);
+        $hasPk = RequestUtils::getPathSegment($request, 3) != '';
         switch ($path) {
             case 'openapi':
                 return 'document';
@@ -40,7 +51,7 @@ class RequestUtils
         return 'unknown';
     }
 
-    private function getJoinTables(String $tableName, array $parameters): array
+    private static function getJoinTables(String $tableName, array $parameters): array
     {
         $uniqueTableNames = array();
         $uniqueTableNames[$tableName] = true;
@@ -55,18 +66,18 @@ class RequestUtils
         return array_keys($uniqueTableNames);
     }
 
-    public function getTableNames(Request $request): array
+    public static function getTableNames(ServerRequestInterface $request, ReflectionService $reflection): array
     {
-        $path = $request->getPathSegment(1);
-        $tableName = $request->getPathSegment(2);
-        $allTableNames = $this->reflection->getTableNames();
+        $path = RequestUtils::getPathSegment($request, 1);
+        $tableName = RequestUtils::getPathSegment($request, 2);
+        $allTableNames = $reflection->getTableNames();
         switch ($path) {
             case 'openapi':
                 return $allTableNames;
             case 'columns':
                 return $tableName ? [$tableName] : $allTableNames;
             case 'records':
-                return $this->getJoinTables($tableName, $request->getParams());
+                return self::getJoinTables($tableName, RequestUtils::getParams($request));
         }
         return $allTableNames;
     }

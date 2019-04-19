@@ -1,10 +1,10 @@
 <?php
 namespace Tqdev\PhpCrudApi\Middleware;
 
+use Psr\Http\Message\ServerRequestInterface;
 use Tqdev\PhpCrudApi\Controller\Responder;
 use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
 use Tqdev\PhpCrudApi\Record\ErrorCode;
-use Tqdev\PhpCrudApi\Request;
 use Tqdev\PhpCrudApi\Response;
 
 class BasicAuthMiddleware extends Middleware
@@ -58,7 +58,7 @@ class BasicAuthMiddleware extends Middleware
         return $success;
     }
 
-    private function getAuthorizationCredentials(Request $request): String
+    private function getAuthorizationCredentials(ServerRequestInterface $request): String
     {
         if (isset($_SERVER['PHP_AUTH_USER'])) {
             return $_SERVER['PHP_AUTH_USER'] . ':' . $_SERVER['PHP_AUTH_PW'];
@@ -73,7 +73,7 @@ class BasicAuthMiddleware extends Middleware
         return base64_decode(strtr($parts[1], '-_', '+/'));
     }
 
-    public function handle(Request $request): Response
+    public function handle(ServerRequestInterface $request): Response
     {
         if (session_status() == PHP_SESSION_NONE) {
             session_start();
