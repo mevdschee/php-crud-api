@@ -1,6 +1,7 @@
 <?php
 namespace Tqdev\PhpCrudApi;
 
+use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Tqdev\PhpCrudApi\Cache\CacheFactory;
 use Tqdev\PhpCrudApi\Column\DefinitionService;
@@ -116,7 +117,7 @@ class Api
         $this->debug = $config->getDebug();
     }
 
-    public function handle(ServerRequestInterface $request): Response
+    public function handle(ServerRequestInterface $request): ResponseInterface
     {
         $response = null;
         try {

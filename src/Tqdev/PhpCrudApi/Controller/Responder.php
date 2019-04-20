@@ -1,23 +1,24 @@
 <?php
 namespace Tqdev\PhpCrudApi\Controller;
 
+use Psr\Http\Message\ResponseInterface;
 use Tqdev\PhpCrudApi\Record\Document\ErrorDocument;
 use Tqdev\PhpCrudApi\Record\ErrorCode;
-use Tqdev\PhpCrudApi\Response;
+use Tqdev\PhpCrudApi\ResponseFactory;
 
 class Responder
 {
-    public function error(int $error, string $argument, $details = null): Response
+    public function error(int $error, string $argument, $details = null): ResponseInterface
     {
         $errorCode = new ErrorCode($error);
         $status = $errorCode->getStatus();
         $document = new ErrorDocument($errorCode, $argument, $details);
-        return new Response($status, $document);
+        return ResponseFactory::fromObject($status, $document);
     }
 
-    public function success($result): Response
+    public function success($result): ResponseInterface
     {
-        return new Response(Response::OK, $result);
+        return ResponseFactory::fromObject(ResponseFactory::OK, $result);
     }
 
 }

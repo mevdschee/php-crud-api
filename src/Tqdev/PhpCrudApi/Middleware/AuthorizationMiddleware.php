@@ -1,6 +1,7 @@
 <?php
 namespace Tqdev\PhpCrudApi\Middleware;
 
+use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Tqdev\PhpCrudApi\Column\ReflectionService;
 use Tqdev\PhpCrudApi\Controller\Responder;
@@ -9,7 +10,6 @@ use Tqdev\PhpCrudApi\Middleware\Communication\VariableStore;
 use Tqdev\PhpCrudApi\Middleware\Router\Router;
 use Tqdev\PhpCrudApi\Record\FilterInfo;
 use Tqdev\PhpCrudApi\RequestUtils;
-use Tqdev\PhpCrudApi\Response;
 
 class AuthorizationMiddleware extends Middleware
 {
@@ -68,7 +68,7 @@ class AuthorizationMiddleware extends Middleware
         }
     }
 
-    public function handle(ServerRequestInterface $request): Response
+    public function handle(ServerRequestInterface $request): ResponseInterface
     {
         $path = RequestUtils::getPathSegment($request, 1);
         $operation = RequestUtils::getOperation($request);

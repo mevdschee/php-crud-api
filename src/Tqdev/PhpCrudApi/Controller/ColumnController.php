@@ -1,13 +1,13 @@
 <?php
 namespace Tqdev\PhpCrudApi\Controller;
 
+use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Tqdev\PhpCrudApi\Column\DefinitionService;
 use Tqdev\PhpCrudApi\Column\ReflectionService;
 use Tqdev\PhpCrudApi\Middleware\Router\Router;
 use Tqdev\PhpCrudApi\Record\ErrorCode;
 use Tqdev\PhpCrudApi\RequestUtils;
-use Tqdev\PhpCrudApi\Response;
 
 class ColumnController
 {
@@ -31,7 +31,7 @@ class ColumnController
         $this->definition = $definition;
     }
 
-    public function getDatabase(ServerRequestInterface $request): Response
+    public function getDatabase(ServerRequestInterface $request): ResponseInterface
     {
         $tables = [];
         foreach ($this->reflection->getTableNames() as $table) {
@@ -41,7 +41,7 @@ class ColumnController
         return $this->responder->success($database);
     }
 
-    public function getTable(ServerRequestInterface $request): Response
+    public function getTable(ServerRequestInterface $request): ResponseInterface
     {
         $tableName = RequestUtils::getPathSegment($request, 2);
         if (!$this->reflection->hasTable($tableName)) {
@@ -51,7 +51,7 @@ class ColumnController
         return $this->responder->success($table);
     }
 
-    public function getColumn(ServerRequestInterface $request): Response
+    public function getColumn(ServerRequestInterface $request): ResponseInterface
     {
         $tableName = RequestUtils::getPathSegment($request, 2);
         $columnName = RequestUtils::getPathSegment($request, 3);
@@ -66,7 +66,7 @@ class ColumnController
         return $this->responder->success($column);
     }
 
-    public function updateTable(ServerRequestInterface $request): Response
+    public function updateTable(ServerRequestInterface $request): ResponseInterface
     {
         $tableName = RequestUtils::getPathSegment($request, 2);
         if (!$this->reflection->hasTable($tableName)) {
@@ -79,7 +79,7 @@ class ColumnController
         return $this->responder->success($success);
     }
 
-    public function updateColumn(ServerRequestInterface $request): Response
+    public function updateColumn(ServerRequestInterface $request): ResponseInterface
     {
         $tableName = RequestUtils::getPathSegment($request, 2);
         $columnName = RequestUtils::getPathSegment($request, 3);
@@ -97,7 +97,7 @@ class ColumnController
         return $this->responder->success($success);
     }
 
-    public function addTable(ServerRequestInterface $request): Response
+    public function addTable(ServerRequestInterface $request): ResponseInterface
     {
         $tableName = $request->getParsedBody()->name;
         if ($this->reflection->hasTable($tableName)) {
@@ -110,7 +110,7 @@ class ColumnController
         return $this->responder->success($success);
     }
 
-    public function addColumn(ServerRequestInterface $request): Response
+    public function addColumn(ServerRequestInterface $request): ResponseInterface
     {
         $tableName = RequestUtils::getPathSegment($request, 2);
         if (!$this->reflection->hasTable($tableName)) {
@@ -128,7 +128,7 @@ class ColumnController
         return $this->responder->success($success);
     }
 
-    public function removeTable(ServerRequestInterface $request): Response
+    public function removeTable(ServerRequestInterface $request): ResponseInterface
     {
         $tableName = RequestUtils::getPathSegment($request, 2);
         if (!$this->reflection->hasTable($tableName)) {
@@ -141,7 +141,7 @@ class ColumnController
         return $this->responder->success($success);
     }
 
-    public function removeColumn(ServerRequestInterface $request): Response
+    public function removeColumn(ServerRequestInterface $request): ResponseInterface
     {
         $tableName = RequestUtils::getPathSegment($request, 2);
         $columnName = RequestUtils::getPathSegment($request, 3);

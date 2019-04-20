@@ -1,12 +1,12 @@
 <?php
 namespace Tqdev\PhpCrudApi\Controller;
 
+use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Tqdev\PhpCrudApi\Middleware\Router\Router;
 use Tqdev\PhpCrudApi\Record\ErrorCode;
 use Tqdev\PhpCrudApi\Record\RecordService;
 use Tqdev\PhpCrudApi\RequestUtils;
-use Tqdev\PhpCrudApi\Response;
 
 class RecordController
 {
@@ -25,7 +25,7 @@ class RecordController
         $this->responder = $responder;
     }
 
-    public function _list(ServerRequestInterface $request): Response
+    public function _list(ServerRequestInterface $request): ResponseInterface
     {
         $table = RequestUtils::getPathSegment($request, 2);
         $params = RequestUtils::getParams($request);
@@ -35,7 +35,7 @@ class RecordController
         return $this->responder->success($this->service->_list($table, $params));
     }
 
-    public function read(ServerRequestInterface $request): Response
+    public function read(ServerRequestInterface $request): ResponseInterface
     {
         $table = RequestUtils::getPathSegment($request, 2);
         if (!$this->service->hasTable($table)) {
@@ -62,7 +62,7 @@ class RecordController
         }
     }
 
-    public function create(ServerRequestInterface $request): Response
+    public function create(ServerRequestInterface $request): ResponseInterface
     {
         $table = RequestUtils::getPathSegment($request, 2);
         if (!$this->service->hasTable($table)) {
@@ -87,7 +87,7 @@ class RecordController
         }
     }
 
-    public function update(ServerRequestInterface $request): Response
+    public function update(ServerRequestInterface $request): ResponseInterface
     {
         $table = RequestUtils::getPathSegment($request, 2);
         if (!$this->service->hasTable($table)) {
@@ -120,7 +120,7 @@ class RecordController
         }
     }
 
-    public function delete(ServerRequestInterface $request): Response
+    public function delete(ServerRequestInterface $request): ResponseInterface
     {
         $table = RequestUtils::getPathSegment($request, 2);
         if (!$this->service->hasTable($table)) {
@@ -143,7 +143,7 @@ class RecordController
         }
     }
 
-    public function increment(ServerRequestInterface $request): Response
+    public function increment(ServerRequestInterface $request): ResponseInterface
     {
         $table = RequestUtils::getPathSegment($request, 2);
         if (!$this->service->hasTable($table)) {

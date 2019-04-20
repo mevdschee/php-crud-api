@@ -1,11 +1,12 @@
 <?php
 namespace Tqdev\PhpCrudApi\Middleware;
 
+use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Tqdev\PhpCrudApi\Controller\Responder;
 use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
 use Tqdev\PhpCrudApi\Record\ErrorCode;
-use Tqdev\PhpCrudApi\Response;
+use Tqdev\PhpCrudApi\ResponseFactory;
 
 class CorsMiddleware extends Middleware
 {
@@ -23,7 +24,7 @@ class CorsMiddleware extends Middleware
         return $found;
     }
 
-    public function handle(ServerRequestInterface $request): Response
+    public function handle(ServerRequestInterface $request): ResponseInterface
     {
         $method = $request->getMethod();
         $origin = count($request->getHeader('Origin')) ? $request->getHeader('Origin')[0] : '';
@@ -31,26 +32,26 @@ class CorsMiddleware extends Middleware
         if ($origin && !$this->isOriginAllowed($origin, $allowedOrigins)) {
             $response = $this->responder->error(ErrorCode::ORIGIN_FORBIDDEN, $origin);
         } elseif ($method == 'OPTIONS') {
-            $response = new Response(Response::OK, '');
+            $response = ResponseFactory::fromStatus(ResponseFactory::OK);
             $allowHeaders = $this->getProperty('allowHeaders', 'Content-Type, X-XSRF-TOKEN, X-Authorization');
             if ($allowHeaders) {
-                $response->addHeader('Access-Control-Allow-Headers', $allowHeaders);
+                $response = $response->withHeader('Access-Control-Allow-Headers', $allowHeaders);
             }
             $allowMethods = $this->getProperty('allowMethods', 'OPTIONS, GET, PUT, POST, DELETE, PATCH');
             if ($allowMethods) {
-                $response->addHeader('Access-Control-Allow-Methods', $allowMethods);
+                $response = $response->withHeader('Access-Control-Allow-Methods', $allowMethods);
             }
             $allowCredentials = $this->getProperty('allowCredentials', 'true');
             if ($allowCredentials) {
-                $response->addHeader('Access-Control-Allow-Credentials', $allowCredentials);
+                $response = $response->withHeader('Access-Control-Allow-Credentials', $allowCredentials);
             }
             $maxAge = $this->getProperty('maxAge', '1728000');
             if ($maxAge) {
-                $response->addHeader('Access-Control-Max-Age', $maxAge);
+                $response = $response->withHeader('Access-Control-Max-Age', $maxAge);
             }
             $exposeHeaders = $this->getProperty('exposeHeaders', '');
             if ($exposeHeaders) {
-                $response->addHeader('Access-Control-Expose-Headers', $exposeHeaders);
+                $response = $response->withHeader('Access-Control-Expose-Headers', $exposeHeaders);
             }
         } else {
             $response = $this->next->handle($request);
@@ -58,9 +59,9 @@ class CorsMiddleware extends Middleware
         if ($origin) {
             $allowCredentials = $this->getProperty('allowCredentials', 'true');
             if ($allowCredentials) {
-                $response->addHeader('Access-Control-Allow-Credentials', $allowCredentials);
+                $response = $response->withHeader('Access-Control-Allow-Credentials', $allowCredentials);
             }
-            $response->addHeader('Access-Control-Allow-Origin', $origin);
+            $response = $response->withHeader('Access-Control-Allow-Origin', $origin);
         }
         return $response;
     }

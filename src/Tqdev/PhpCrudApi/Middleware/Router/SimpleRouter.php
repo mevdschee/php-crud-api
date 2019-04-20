@@ -1,13 +1,13 @@
 <?php
 namespace Tqdev\PhpCrudApi\Middleware\Router;
 
+use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Tqdev\PhpCrudApi\Cache\Cache;
 use Tqdev\PhpCrudApi\Controller\Responder;
 use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
 use Tqdev\PhpCrudApi\Record\ErrorCode;
 use Tqdev\PhpCrudApi\Record\PathTree;
-use Tqdev\PhpCrudApi\Response;
 
 class SimpleRouter implements Router
 {
@@ -66,7 +66,7 @@ class SimpleRouter implements Router
         array_unshift($this->middlewares, $middleware);
     }
 
-    public function route(ServerRequestInterface $request): Response
+    public function route(ServerRequestInterface $request): ResponseInterface
     {
         if ($this->registration) {
             $data = gzcompress(json_encode($this->routes, JSON_UNESCAPED_UNICODE));
@@ -87,7 +87,7 @@ class SimpleRouter implements Router
         return $this->routes->match($path);
     }
 
-    public function handle(ServerRequestInterface $request): Response
+    public function handle(ServerRequestInterface $request): ResponseInterface
     {
         $routeNumbers = $this->getRouteNumbers($request);
         if (count($routeNumbers) == 0) {

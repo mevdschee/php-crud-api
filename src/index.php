@@ -2,6 +2,7 @@
 use Tqdev\PhpCrudApi\Api;
 use Tqdev\PhpCrudApi\Config;
 use Tqdev\PhpCrudApi\RequestFactory;
+use Tqdev\PhpCrudApi\ResponseUtils;
 
 // do not reformat the following line
 spl_autoload_register(function ($class) {include str_replace('\\', '/', __DIR__ . "/$class.php");});
@@ -15,4 +16,4 @@ $config = new Config([
 $request = RequestFactory::fromGlobals();
 $api = new Api($config);
 $response = $api->handle($request);
-$response->output();
+ResponseUtils::output($response);

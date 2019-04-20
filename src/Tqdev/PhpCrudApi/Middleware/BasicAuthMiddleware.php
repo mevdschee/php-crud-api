@@ -1,12 +1,12 @@
 <?php
 namespace Tqdev\PhpCrudApi\Middleware;
 
+use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Tqdev\PhpCrudApi\Controller\Responder;
 use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
 use Tqdev\PhpCrudApi\Record\ErrorCode;
 use Tqdev\PhpCrudApi\RequestUtils;
-use Tqdev\PhpCrudApi\Response;
 
 class BasicAuthMiddleware extends Middleware
 {
@@ -75,7 +75,7 @@ class BasicAuthMiddleware extends Middleware
         return base64_decode(strtr($parts[1], '-_', '+/'));
     }
 
-    public function handle(ServerRequestInterface $request): Response
+    public function handle(ServerRequestInterface $request): ResponseInterface
     {
         if (session_status() == PHP_SESSION_NONE) {
             session_start();
@@ -101,7 +101,7 @@ class BasicAuthMiddleware extends Middleware
             if ($authenticationMode == 'required') {
                 $response = $this->responder->error(ErrorCode::AUTHENTICATION_REQUIRED, '');
                 $realm = $this->getProperty('realm', 'Username and password required');
-                $response->addHeader('WWW-Authenticate', "Basic realm=\"$realm\"");
+                $response = $response->withHeader('WWW-Authenticate', "Basic realm=\"$realm\"");
                 return $response;
             }
         }

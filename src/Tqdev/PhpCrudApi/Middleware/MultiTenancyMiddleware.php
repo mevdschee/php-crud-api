@@ -1,6 +1,7 @@
 <?php
 namespace Tqdev\PhpCrudApi\Middleware;
 
+use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Tqdev\PhpCrudApi\Column\ReflectionService;
 use Tqdev\PhpCrudApi\Controller\Responder;
@@ -11,7 +12,6 @@ use Tqdev\PhpCrudApi\Record\Condition\ColumnCondition;
 use Tqdev\PhpCrudApi\Record\Condition\Condition;
 use Tqdev\PhpCrudApi\Record\Condition\NoCondition;
 use Tqdev\PhpCrudApi\RequestUtils;
-use Tqdev\PhpCrudApi\Response;
 
 class MultiTenancyMiddleware extends Middleware
 {
@@ -68,7 +68,7 @@ class MultiTenancyMiddleware extends Middleware
         return $request->withParsedBody($multi ? $records : $records[0]);
     }
 
-    public function handle(ServerRequestInterface $request): Response
+    public function handle(ServerRequestInterface $request): ResponseInterface
     {
         $handler = $this->getProperty('handler', '');
         if ($handler !== '') {

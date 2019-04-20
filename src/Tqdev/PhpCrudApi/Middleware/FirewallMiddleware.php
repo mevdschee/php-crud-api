@@ -1,11 +1,11 @@
 <?php
 namespace Tqdev\PhpCrudApi\Middleware;
 
+use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Tqdev\PhpCrudApi\Controller\Responder;
 use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
 use Tqdev\PhpCrudApi\Record\ErrorCode;
-use Tqdev\PhpCrudApi\Response;
 
 class FirewallMiddleware extends Middleware
 {
@@ -34,7 +34,7 @@ class FirewallMiddleware extends Middleware
         return false;
     }
 
-    public function handle(ServerRequestInterface $request): Response
+    public function handle(ServerRequestInterface $request): ResponseInterface
     {
         $reverseProxy = $this->getProperty('reverseProxy', '');
         if ($reverseProxy) {

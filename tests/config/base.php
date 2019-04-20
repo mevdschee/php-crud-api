@@ -40,7 +40,7 @@ $settings = [
     },
     'customization.afterHandler' => function ($operation, $tableName, $response, $environment) {
         if ($tableName == 'kunsthåndværk' && $operation == 'increment') {
-            $response->addHeader('X-Time-Taken', 0.006/*microtime(true)*/ - $environment->start);
+            return $response->withHeader('X-Time-Taken', 0.006/*microtime(true)*/ - $environment->start);
         }
     },
     'debug' => false,
