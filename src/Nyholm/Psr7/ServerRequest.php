@@ -1,13 +1,10 @@
 <?php
 
-declare (strict_types = 1);
+declare(strict_types=1);
 
 namespace Nyholm\Psr7;
 
-use Psr\Http\Message\ServerRequestInterface;
-use Psr\Http\Message\StreamInterface;
-use Psr\Http\Message\UploadedFileInterface;
-use Psr\Http\Message\UriInterface;
+use Psr\Http\Message\{ServerRequestInterface, StreamInterface, UploadedFileInterface, UriInterface};
 
 /**
  * @author Michael Dowling and contributors to guzzlehttp/psr7

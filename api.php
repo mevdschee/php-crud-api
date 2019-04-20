@@ -247,6 +247,22 @@ interface UriInterface
     public function __toString();
 }
 
+// file: src/Psr/Http/Server/MiddlewareInterface.php
+
+interface MiddlewareInterface
+{
+    
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface;
+}
+
+// file: src/Psr/Http/Server/RequestHandlerInterface.php
+
+interface RequestHandlerInterface
+{
+    
+    public function handle(ServerRequestInterface $request): ResponseInterface;
+}
+
 // file: src/Nyholm/Psr7/Factory/Psr17Factory.php
 
 final class Psr17Factory implements RequestFactoryInterface, ResponseFactoryInterface, ServerRequestFactoryInterface, StreamFactoryInterface, UploadedFileFactoryInterface, UriFactoryInterface
@@ -4419,16 +4435,9 @@ class TypeConverter
     }
 }
 
-// file: src/Tqdev/PhpCrudApi/Middleware/Base/Handler.php
-
-interface Handler
-{
-    public function handle(ServerRequestInterface $request): ResponseInterface;
-}
-
 // file: src/Tqdev/PhpCrudApi/Middleware/Base/Middleware.php
 
-abstract class Middleware implements Handler
+abstract class Middleware implements MiddlewareInterface
 {
     protected $next;
     protected $responder;
@@ -4439,11 +4448,6 @@ abstract class Middleware implements Handler
         $router->load($this);
         $this->responder = $responder;
         $this->properties = $properties;
-    }
-
-    public function setNext(Handler $handler) /*: void*/
-    {
-        $this->next = $handler;
     }
 
     protected function getArrayProperty(string $key, string $default): array
@@ -4479,7 +4483,7 @@ class VariableStore
 
 // file: src/Tqdev/PhpCrudApi/Middleware/Router/Router.php
 
-interface Router extends Handler
+interface Router extends RequestHandlerInterface
 {
     public function register(string $method, string $path, array $handler);
 
@@ -4538,13 +4542,7 @@ class SimpleRouter implements Router
 
     public function load(Middleware $middleware) /*: void*/
     {
-        if (count($this->middlewares) > 0) {
-            $next = $this->middlewares[0];
-        } else {
-            $next = $this;
-        }
-        $middleware->setNext($next);
-        array_unshift($this->middlewares, $middleware);
+        array_push($this->middlewares, $middleware);
     }
 
     public function route(ServerRequestInterface $request): ResponseInterface
@@ -4553,11 +4551,7 @@ class SimpleRouter implements Router
             $data = gzcompress(json_encode($this->routes, JSON_UNESCAPED_UNICODE));
             $this->cache->set('PathTree', $data, $this->ttl);
         }
-        $obj = $this;
-        if (count($this->middlewares) > 0) {
-            $obj = $this->middlewares[0];
-        }
-        return $obj->handle($request);
+        return $this->handle($request);
     }
 
     private function getRouteNumbers(ServerRequestInterface $request): array
@@ -4570,6 +4564,11 @@ class SimpleRouter implements Router
 
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
+        if (count($this->middlewares)) {
+            $handler = array_pop($this->middlewares);
+            return $handler->process($request, $this);
+        }
+
         $routeNumbers = $this->getRouteNumbers($request);
         if (count($routeNumbers) == 0) {
             return $this->responder->error(ErrorCode::ROUTE_NOT_FOUND, $request->getRequestTarget());
@@ -4599,7 +4598,7 @@ class SimpleRouter implements Router
 
 class AjaxOnlyMiddleware extends Middleware
 {
-    public function handle(ServerRequestInterface $request): ResponseInterface
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $next): ResponseInterface
     {
         $method = $request->getMethod();
         $excludeMethods = $this->getArrayProperty('excludeMethods', 'OPTIONS,GET');
@@ -4610,7 +4609,7 @@ class AjaxOnlyMiddleware extends Middleware
                 return $this->responder->error(ErrorCode::ONLY_AJAX_REQUESTS_ALLOWED, $method);
             }
         }
-        return $this->next->handle($request);
+        return $next->handle($request);
     }
 }
 
@@ -4673,7 +4672,7 @@ class AuthorizationMiddleware extends Middleware
         }
     }
 
-    public function handle(ServerRequestInterface $request): ResponseInterface
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $next): ResponseInterface
     {
         $path = RequestUtils::getPathSegment($request, 1);
         $operation = RequestUtils::getOperation($request);
@@ -4688,7 +4687,7 @@ class AuthorizationMiddleware extends Middleware
             VariableStore::set('authorization.tableHandler', $this->getProperty('tableHandler', ''));
             VariableStore::set('authorization.columnHandler', $this->getProperty('columnHandler', ''));
         }
-        return $this->next->handle($request);
+        return $next->handle($request);
     }
 }
 
@@ -4761,7 +4760,7 @@ class BasicAuthMiddleware extends Middleware
         return base64_decode(strtr($parts[1], '-_', '+/'));
     }
 
-    public function handle(ServerRequestInterface $request): ResponseInterface
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $next): ResponseInterface
     {
         if (session_status() == PHP_SESSION_NONE) {
             session_start();
@@ -4791,7 +4790,7 @@ class BasicAuthMiddleware extends Middleware
                 return $response;
             }
         }
-        return $this->next->handle($request);
+        return $next->handle($request);
     }
 }
 
@@ -4813,7 +4812,7 @@ class CorsMiddleware extends Middleware
         return $found;
     }
 
-    public function handle(ServerRequestInterface $request): ResponseInterface
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $next): ResponseInterface
     {
         $method = $request->getMethod();
         $origin = count($request->getHeader('Origin')) ? $request->getHeader('Origin')[0] : '';
@@ -4843,7 +4842,7 @@ class CorsMiddleware extends Middleware
                 $response = $response->withHeader('Access-Control-Expose-Headers', $exposeHeaders);
             }
         } else {
-            $response = $this->next->handle($request);
+            $response = $next->handle($request);
         }
         if ($origin) {
             $allowCredentials = $this->getProperty('allowCredentials', 'true');
@@ -4868,7 +4867,7 @@ class CustomizationMiddleware extends Middleware
         $this->reflection = $reflection;
     }
 
-    public function handle(ServerRequestInterface $request): ResponseInterface
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $next): ResponseInterface
     {
         $operation = RequestUtils::getOperation($request);
         $tableName = RequestUtils::getPathSegment($request, 2);
@@ -4878,7 +4877,7 @@ class CustomizationMiddleware extends Middleware
             $result = call_user_func($beforeHandler, $operation, $tableName, $request, $environment);
             $request = $result ?: $request;
         }
-        $response = $this->next->handle($request);
+        $response = $next->handle($request);
         $afterHandler = $this->getProperty('afterHandler', '');
         if ($afterHandler !== '') {
             $result = call_user_func($afterHandler, $operation, $tableName, $response, $environment);
@@ -4917,7 +4916,7 @@ class FirewallMiddleware extends Middleware
         return false;
     }
 
-    public function handle(ServerRequestInterface $request): ResponseInterface
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $next): ResponseInterface
     {
         $reverseProxy = $this->getProperty('reverseProxy', '');
         if ($reverseProxy) {
@@ -4931,7 +4930,7 @@ class FirewallMiddleware extends Middleware
         if (!$this->isIpAllowed($ipAddress, $allowedIpAddresses)) {
             $response = $this->responder->error(ErrorCode::TEMPORARY_OR_PERMANENTLY_BLOCKED, '');
         } else {
-            $response = $this->next->handle($request);
+            $response = $next->handle($request);
         }
         return $response;
     }
@@ -4967,7 +4966,7 @@ class IpAddressMiddleware extends Middleware
         return (object) $context;
     }
 
-    public function handle(ServerRequestInterface $request): ResponseInterface
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $next): ResponseInterface
     {
         $operation = RequestUtils::getOperation($request);
         if (in_array($operation, ['create', 'update', 'increment'])) {
@@ -4990,7 +4989,7 @@ class IpAddressMiddleware extends Middleware
                 }
             }
         }
-        return $this->next->handle($request);
+        return $next->handle($request);
     }
 }
 
@@ -5006,7 +5005,7 @@ class JoinLimitsMiddleware extends Middleware
         $this->reflection = $reflection;
     }
 
-    public function handle(ServerRequestInterface $request): ResponseInterface
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $next): ResponseInterface
     {
         $operation = RequestUtils::getOperation($request);
         $params = RequestUtils::getParams($request);
@@ -5035,7 +5034,7 @@ class JoinLimitsMiddleware extends Middleware
             $request = RequestUtils::setParams($request, $params);
             VariableStore::set("joinLimits.maxRecords", $maxRecords);
         }
-        return $this->next->handle($request);
+        return $next->handle($request);
     }
 }
 
@@ -5154,7 +5153,7 @@ class JwtAuthMiddleware extends Middleware
         return $parts[1];
     }
 
-    public function handle(ServerRequestInterface $request): ResponseInterface
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $next): ResponseInterface
     {
         if (session_status() == PHP_SESSION_NONE) {
             session_start();
@@ -5176,7 +5175,7 @@ class JwtAuthMiddleware extends Middleware
                 return $this->responder->error(ErrorCode::AUTHENTICATION_REQUIRED, '');
             }
         }
-        return $this->next->handle($request);
+        return $next->handle($request);
     }
 }
 
@@ -5237,7 +5236,7 @@ class MultiTenancyMiddleware extends Middleware
         return $request->withParsedBody($multi ? $records : $records[0]);
     }
 
-    public function handle(ServerRequestInterface $request): ResponseInterface
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $next): ResponseInterface
     {
         $handler = $this->getProperty('handler', '');
         if ($handler !== '') {
@@ -5260,7 +5259,7 @@ class MultiTenancyMiddleware extends Middleware
                 }
             }
         }
-        return $this->next->handle($request);
+        return $next->handle($request);
     }
 }
 
@@ -5276,7 +5275,7 @@ class PageLimitsMiddleware extends Middleware
         $this->reflection = $reflection;
     }
 
-    public function handle(ServerRequestInterface $request): ResponseInterface
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $next): ResponseInterface
     {
         $operation = RequestUtils::getOperation($request);
         if ($operation == 'list') {
@@ -5300,7 +5299,7 @@ class PageLimitsMiddleware extends Middleware
             }
             $request = RequestUtils::setParams($request, $params);
         }
-        return $this->next->handle($request);
+        return $next->handle($request);
     }
 }
 
@@ -5329,7 +5328,7 @@ class SanitationMiddleware extends Middleware
         return (object) $context;
     }
 
-    public function handle(ServerRequestInterface $request): ResponseInterface
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $next): ResponseInterface
     {
         $operation = RequestUtils::getOperation($request);
         if (in_array($operation, ['create', 'update', 'increment'])) {
@@ -5352,7 +5351,7 @@ class SanitationMiddleware extends Middleware
                 }
             }
         }
-        return $this->next->handle($request);
+        return $next->handle($request);
     }
 }
 
@@ -5388,7 +5387,7 @@ class ValidationMiddleware extends Middleware
         return null;
     }
 
-    public function handle(ServerRequestInterface $request): ResponseInterface
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $next): ResponseInterface
     {
         $operation = RequestUtils::getOperation($request);
         if (in_array($operation, ['create', 'update', 'increment'])) {
@@ -5416,7 +5415,7 @@ class ValidationMiddleware extends Middleware
                 }
             }
         }
-        return $this->next->handle($request);
+        return $next->handle($request);
     }
 }
 
@@ -5439,7 +5438,7 @@ class XsrfMiddleware extends Middleware
         return $token;
     }
 
-    public function handle(ServerRequestInterface $request): ResponseInterface
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $next): ResponseInterface
     {
         $token = $this->getToken();
         $method = $request->getMethod();
@@ -5450,7 +5449,7 @@ class XsrfMiddleware extends Middleware
                 return $this->responder->error(ErrorCode::BAD_OR_MISSING_XSRF_TOKEN, '');
             }
         }
-        return $this->next->handle($request);
+        return $next->handle($request);
     }
 }
 

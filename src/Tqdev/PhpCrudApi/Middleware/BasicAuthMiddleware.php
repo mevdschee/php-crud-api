@@ -3,6 +3,7 @@ namespace Tqdev\PhpCrudApi\Middleware;
 
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 use Tqdev\PhpCrudApi\Controller\Responder;
 use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
 use Tqdev\PhpCrudApi\Record\ErrorCode;
@@ -75,7 +76,7 @@ class BasicAuthMiddleware extends Middleware
         return base64_decode(strtr($parts[1], '-_', '+/'));
     }
 
-    public function handle(ServerRequestInterface $request): ResponseInterface
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $next): ResponseInterface
     {
         if (session_status() == PHP_SESSION_NONE) {
             session_start();
@@ -105,6 +106,6 @@ class BasicAuthMiddleware extends Middleware
                 return $response;
             }
         }
-        return $this->next->handle($request);
+        return $next->handle($request);
     }
 }

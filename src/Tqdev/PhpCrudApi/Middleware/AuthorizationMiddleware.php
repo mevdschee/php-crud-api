@@ -3,6 +3,7 @@ namespace Tqdev\PhpCrudApi\Middleware;
 
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 use Tqdev\PhpCrudApi\Column\ReflectionService;
 use Tqdev\PhpCrudApi\Controller\Responder;
 use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
@@ -68,7 +69,7 @@ class AuthorizationMiddleware extends Middleware
         }
     }
 
-    public function handle(ServerRequestInterface $request): ResponseInterface
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $next): ResponseInterface
     {
         $path = RequestUtils::getPathSegment($request, 1);
         $operation = RequestUtils::getOperation($request);
@@ -83,6 +84,6 @@ class AuthorizationMiddleware extends Middleware
             VariableStore::set('authorization.tableHandler', $this->getProperty('tableHandler', ''));
             VariableStore::set('authorization.columnHandler', $this->getProperty('columnHandler', ''));
         }
-        return $this->next->handle($request);
+        return $next->handle($request);
     }
 }

@@ -3,6 +3,7 @@ namespace Tqdev\PhpCrudApi\Middleware;
 
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 use Tqdev\PhpCrudApi\Column\ReflectionService;
 use Tqdev\PhpCrudApi\Column\Reflection\ReflectedTable;
 use Tqdev\PhpCrudApi\Controller\Responder;
@@ -41,7 +42,7 @@ class ValidationMiddleware extends Middleware
         return null;
     }
 
-    public function handle(ServerRequestInterface $request): ResponseInterface
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $next): ResponseInterface
     {
         $operation = RequestUtils::getOperation($request);
         if (in_array($operation, ['create', 'update', 'increment'])) {
@@ -69,6 +70,6 @@ class ValidationMiddleware extends Middleware
                 }
             }
         }
-        return $this->next->handle($request);
+        return $next->handle($request);
     }
 }

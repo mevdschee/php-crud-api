@@ -3,6 +3,7 @@ namespace Tqdev\PhpCrudApi\Middleware;
 
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 use Tqdev\PhpCrudApi\Column\ReflectionService;
 use Tqdev\PhpCrudApi\Controller\Responder;
 use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
@@ -20,7 +21,7 @@ class JoinLimitsMiddleware extends Middleware
         $this->reflection = $reflection;
     }
 
-    public function handle(ServerRequestInterface $request): ResponseInterface
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $next): ResponseInterface
     {
         $operation = RequestUtils::getOperation($request);
         $params = RequestUtils::getParams($request);
@@ -49,6 +50,6 @@ class JoinLimitsMiddleware extends Middleware
             $request = RequestUtils::setParams($request, $params);
             VariableStore::set("joinLimits.maxRecords", $maxRecords);
         }
-        return $this->next->handle($request);
+        return $next->handle($request);
     }
 }

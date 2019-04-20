@@ -58,13 +58,7 @@ class SimpleRouter implements Router
 
     public function load(Middleware $middleware) /*: void*/
     {
-        if (count($this->middlewares) > 0) {
-            $next = $this->middlewares[0];
-        } else {
-            $next = $this;
-        }
-        $middleware->setNext($next);
-        array_unshift($this->middlewares, $middleware);
+        array_push($this->middlewares, $middleware);
     }
 
     public function route(ServerRequestInterface $request): ResponseInterface
@@ -73,11 +67,7 @@ class SimpleRouter implements Router
             $data = gzcompress(json_encode($this->routes, JSON_UNESCAPED_UNICODE));
             $this->cache->set('PathTree', $data, $this->ttl);
         }
-        $obj = $this;
-        if (count($this->middlewares) > 0) {
-            $obj = $this->middlewares[0];
-        }
-        return $obj->handle($request);
+        return $this->handle($request);
     }
 
     private function getRouteNumbers(ServerRequestInterface $request): array
@@ -90,6 +80,11 @@ class SimpleRouter implements Router
 
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
+        if (count($this->middlewares)) {
+            $handler = array_pop($this->middlewares);
+            return $handler->process($request, $this);
+        }
+
         $routeNumbers = $this->getRouteNumbers($request);
         if (count($routeNumbers) == 0) {
             return $this->responder->error(ErrorCode::ROUTE_NOT_FOUND, $request->getRequestTarget());

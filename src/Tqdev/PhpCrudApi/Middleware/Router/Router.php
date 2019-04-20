@@ -3,10 +3,10 @@ namespace Tqdev\PhpCrudApi\Middleware\Router;
 
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use Tqdev\PhpCrudApi\Middleware\Base\Handler;
+use Psr\Http\Server\RequestHandlerInterface;
 use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
 
-interface Router extends Handler
+interface Router extends RequestHandlerInterface
 {
     public function register(string $method, string $path, array $handler);
 

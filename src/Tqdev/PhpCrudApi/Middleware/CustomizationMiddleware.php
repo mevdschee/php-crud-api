@@ -3,6 +3,7 @@ namespace Tqdev\PhpCrudApi\Middleware;
 
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 use Tqdev\PhpCrudApi\Column\ReflectionService;
 use Tqdev\PhpCrudApi\Controller\Responder;
 use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
@@ -19,7 +20,7 @@ class CustomizationMiddleware extends Middleware
         $this->reflection = $reflection;
     }
 
-    public function handle(ServerRequestInterface $request): ResponseInterface
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $next): ResponseInterface
     {
         $operation = RequestUtils::getOperation($request);
         $tableName = RequestUtils::getPathSegment($request, 2);
@@ -29,7 +30,7 @@ class CustomizationMiddleware extends Middleware
             $result = call_user_func($beforeHandler, $operation, $tableName, $request, $environment);
             $request = $result ?: $request;
         }
-        $response = $this->next->handle($request);
+        $response = $next->handle($request);
         $afterHandler = $this->getProperty('afterHandler', '');
         if ($afterHandler !== '') {
             $result = call_user_func($afterHandler, $operation, $tableName, $response, $environment);

@@ -3,6 +3,7 @@ namespace Tqdev\PhpCrudApi\Middleware;
 
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 use Tqdev\PhpCrudApi\Controller\Responder;
 use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
 use Tqdev\PhpCrudApi\Record\ErrorCode;
@@ -24,7 +25,7 @@ class XsrfMiddleware extends Middleware
         return $token;
     }
 
-    public function handle(ServerRequestInterface $request): ResponseInterface
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $next): ResponseInterface
     {
         $token = $this->getToken();
         $method = $request->getMethod();
@@ -35,6 +36,6 @@ class XsrfMiddleware extends Middleware
                 return $this->responder->error(ErrorCode::BAD_OR_MISSING_XSRF_TOKEN, '');
             }
         }
-        return $this->next->handle($request);
+        return $next->handle($request);
     }
 }

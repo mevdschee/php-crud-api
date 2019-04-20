@@ -3,6 +3,7 @@ namespace Tqdev\PhpCrudApi\Middleware;
 
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 use Tqdev\PhpCrudApi\Controller\Responder;
 use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
 use Tqdev\PhpCrudApi\Record\ErrorCode;
@@ -34,7 +35,7 @@ class FirewallMiddleware extends Middleware
         return false;
     }
 
-    public function handle(ServerRequestInterface $request): ResponseInterface
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $next): ResponseInterface
     {
         $reverseProxy = $this->getProperty('reverseProxy', '');
         if ($reverseProxy) {
@@ -48,7 +49,7 @@ class FirewallMiddleware extends Middleware
         if (!$this->isIpAllowed($ipAddress, $allowedIpAddresses)) {
             $response = $this->responder->error(ErrorCode::TEMPORARY_OR_PERMANENTLY_BLOCKED, '');
         } else {
-            $response = $this->next->handle($request);
+            $response = $next->handle($request);
         }
         return $response;
     }

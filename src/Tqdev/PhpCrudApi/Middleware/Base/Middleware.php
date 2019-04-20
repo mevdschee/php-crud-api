@@ -1,10 +1,11 @@
 <?php
 namespace Tqdev\PhpCrudApi\Middleware\Base;
 
+use Psr\Http\Server\MiddlewareInterface;
 use Tqdev\PhpCrudApi\Controller\Responder;
 use Tqdev\PhpCrudApi\Middleware\Router\Router;
 
-abstract class Middleware implements Handler
+abstract class Middleware implements MiddlewareInterface
 {
     protected $next;
     protected $responder;
@@ -15,11 +16,6 @@ abstract class Middleware implements Handler
         $router->load($this);
         $this->responder = $responder;
         $this->properties = $properties;
-    }
-
-    public function setNext(Handler $handler) /*: void*/
-    {
-        $this->next = $handler;
     }
 
     protected function getArrayProperty(string $key, string $default): array
