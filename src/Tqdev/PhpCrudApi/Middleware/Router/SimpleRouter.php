@@ -8,6 +8,7 @@ use Tqdev\PhpCrudApi\Controller\Responder;
 use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
 use Tqdev\PhpCrudApi\Record\ErrorCode;
 use Tqdev\PhpCrudApi\Record\PathTree;
+use Tqdev\PhpCrudApi\ResponseUtils;
 
 class SimpleRouter implements Router
 {
@@ -106,7 +107,7 @@ class SimpleRouter implements Router
                 $response = $this->responder->error(ErrorCode::DATA_INTEGRITY_VIOLATION, '');
             }
             if ($this->debug) {
-                $response->addExceptionHeaders($e);
+                $response = ResponseUtils::addExceptionHeaders($response, $e);
             }
         }
         return $response;

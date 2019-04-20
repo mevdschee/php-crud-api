@@ -1,17 +1,35 @@
 <?php
 
-function runDir(String $base, String $dir, array &$lines): int
+function prioritySort(string $dir, array $entries, array $priority): array
+{
+    $result = array();
+    foreach ($priority as $file) {
+        if (dirname($file) == $dir) {
+            if (in_array(basename($file), $entries)) {
+                array_push($result, basename($file));
+            }
+        }
+    }
+    $entries = array_diff($entries, $result);
+    sort($entries);
+    foreach ($entries as $entry) {
+        array_push($result, $entry);
+    }
+    return $result;
+}
+
+function runDir(string $base, string $dir, array &$lines, array $priority): int
 {
     $count = 0;
     $entries = scandir($dir);
-    sort($entries);
+    $entries = prioritySort($dir, $entries, $priority);
     foreach ($entries as $entry) {
         if ($entry === '.' || $entry === '..') {
             continue;
         }
         $filename = "$base/$dir/$entry";
         if (is_dir($filename)) {
-            $count += runDir($base, "$dir/$entry", $lines);
+            $count += runDir($base, "$dir/$entry", $lines, $priority);
         }
     }
     foreach ($entries as $entry) {
@@ -21,6 +39,7 @@ function runDir(String $base, String $dir, array &$lines): int
                 continue;
             }
             $data = file_get_contents($filename);
+            $data = preg_replace('|/\*\*.*?\*/|s', '', $data);
             array_push($lines, "// file: $dir/$entry");
             foreach (explode("\n", $data) as $line) {
                 if (!preg_match('/^<\?php|^namespace |^use |spl_autoload_register|declare\s*\(\s*strict_types\s*=\s*1|^\s*\/\//', $line)) {
@@ -51,14 +70,12 @@ EOF;
     }
 }
 
-function run(String $base, String $dir, String $filename)
+function run(string $base, string $dir, string $filename, array $priority)
 {
     $lines = [];
     $start = microtime(true);
     addHeader($lines);
-    $count = runDir($base, 'src/Psr', $lines);
-    $count += runDir($base, 'src/Nyholm', $lines);
-    $count += runDir($base, 'src/Tqdev', $lines);
+    $count = runDir($base, 'src', $lines, $priority);
     $data = implode("\n", $lines);
     $data = preg_replace('/\n\s*\n\s*\n/', "\n\n", $data);
     file_put_contents('tmp_' . $filename, $data);
@@ -71,4 +88,4 @@ function run(String $base, String $dir, String $filename)
     echo sprintf("%d files combined in %d ms into '%s'\n", $count, $time, $filename);
 }
 
-run(__DIR__, 'src', 'api.php');
+run(__DIR__, 'src', 'api.php', ['src/Psr']);

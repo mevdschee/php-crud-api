@@ -29,6 +29,7 @@ use Tqdev\PhpCrudApi\Middleware\XsrfMiddleware;
 use Tqdev\PhpCrudApi\OpenApi\OpenApiService;
 use Tqdev\PhpCrudApi\Record\ErrorCode;
 use Tqdev\PhpCrudApi\Record\RecordService;
+use Tqdev\PhpCrudApi\ResponseUtils;
 
 class Api
 {
@@ -125,7 +126,7 @@ class Api
         } catch (\Throwable $e) {
             $response = $this->responder->error(ErrorCode::ERROR_NOT_FOUND, $e->getMessage());
             if ($this->debug) {
-                $response->addExceptionHeaders($e);
+                $response = ResponseUtils::addExceptionHeaders($response, $e);
             }
         }
         return $response;

@@ -12,6 +12,7 @@ git clone git@github.com:Nyholm/psr7.git
 mkdir -p Nyholm/Psr7
 cp -R psr7/src/* Nyholm/Psr7
 rm -Rf psr7
+rm Nyholm/Psr7/Factory/HttplugFactory.php
 
 git clone git@github.com:Nyholm/psr7-server.git
 mkdir -p Nyholm/Psr7Server

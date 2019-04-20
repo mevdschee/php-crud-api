@@ -50,7 +50,7 @@ final class ServerRequest implements ServerRequestInterface
         $this->serverParams = $serverParams;
 
         if (!($uri instanceof UriInterface)) {
-            $uri = new Uri((string) $uri);
+            $uri = new Uri($uri);
         }
 
         $this->method = $method;
