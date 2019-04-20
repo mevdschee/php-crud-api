@@ -46,7 +46,7 @@ class JoinLimitsMiddleware extends Middleware
                 }
             }
             $params['join'] = $joinPaths;
-            $request->setParams($params);
+            $request = RequestUtils::setParams($request, $params);
             VariableStore::set("joinLimits.maxRecords", $maxRecords);
         }
         return $this->next->handle($request);

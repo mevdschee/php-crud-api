@@ -42,7 +42,7 @@ class PageLimitsMiddleware extends Middleware
             } else {
                 $params['size'] = array(min($params['size'][0], $maxSize));
             }
-            $request->setParams($params);
+            $request = RequestUtils::setParams($request, $params);
         }
         return $this->next->handle($request);
     }
