@@ -34,6 +34,9 @@ class RequestFactory
         $psr17Factory = new Psr17Factory();
         $creator = new ServerRequestCreator($psr17Factory, $psr17Factory, $psr17Factory, $psr17Factory);
         $serverRequest = $creator->fromGlobals();
+        if (isset($_SERVER['PATH_INFO'])) {
+            $serverRequest = $serverRequest->withUri($psr17Factory->createUri($_SERVER['PATH_INFO'] . '?' . $_SERVER['QUERY_STRING']));
+        }
         $body = file_get_contents('php://input');
         if ($body) {
             $serverRequest = $serverRequest->withParsedBody(self::parseBody($body));
