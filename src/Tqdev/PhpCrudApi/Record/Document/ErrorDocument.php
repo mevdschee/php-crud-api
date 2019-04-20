@@ -9,7 +9,7 @@ class ErrorDocument implements \JsonSerializable
     public $message;
     public $details;
 
-    public function __construct(ErrorCode $errorCode, String $argument, $details)
+    public function __construct(ErrorCode $errorCode, string $argument, $details)
     {
         $this->code = $errorCode->getCode();
         $this->message = $errorCode->getMessage($argument);
@@ -21,7 +21,7 @@ class ErrorDocument implements \JsonSerializable
         return $this->code;
     }
 
-    public function getMessage(): String
+    public function getMessage(): string
     {
         return $this->message;
     }

@@ -7,12 +7,12 @@ class ColumnConverter
 {
     private $driver;
 
-    public function __construct(String $driver)
+    public function __construct(string $driver)
     {
         $this->driver = $driver;
     }
 
-    public function convertColumnValue(ReflectedColumn $column): String
+    public function convertColumnValue(ReflectedColumn $column): string
     {
         if ($column->isBinary()) {
             switch ($this->driver) {
@@ -36,7 +36,7 @@ class ColumnConverter
         return '?';
     }
 
-    public function convertColumnName(ReflectedColumn $column, $value): String
+    public function convertColumnName(ReflectedColumn $column, $value): string
     {
         if ($column->isBinary()) {
             switch ($this->driver) {

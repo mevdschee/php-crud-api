@@ -16,7 +16,7 @@ class DefinitionService
         $this->reflection = $reflection;
     }
 
-    public function updateTable(String $tableName, /* object */ $changes): bool
+    public function updateTable(string $tableName, /* object */ $changes): bool
     {
         $table = $this->reflection->getTable($tableName);
         $newTable = ReflectedTable::fromJson((object) array_merge((array) $table->jsonSerialize(), (array) $changes));
@@ -28,7 +28,7 @@ class DefinitionService
         return true;
     }
 
-    public function updateColumn(String $tableName, String $columnName, /* object */ $changes): bool
+    public function updateColumn(string $tableName, string $columnName, /* object */ $changes): bool
     {
         $table = $this->reflection->getTable($tableName);
         $column = $table->getColumn($columnName);
@@ -106,7 +106,7 @@ class DefinitionService
         return true;
     }
 
-    public function addColumn(String $tableName, /* object */ $definition)
+    public function addColumn(string $tableName, /* object */ $definition)
     {
         $newColumn = ReflectedColumn::fromJson($definition);
         if (!$this->db->definition()->addColumn($tableName, $newColumn)) {
@@ -125,7 +125,7 @@ class DefinitionService
         return true;
     }
 
-    public function removeTable(String $tableName)
+    public function removeTable(string $tableName)
     {
         if (!$this->db->definition()->removeTable($tableName)) {
             return false;
@@ -133,7 +133,7 @@ class DefinitionService
         return true;
     }
 
-    public function removeColumn(String $tableName, String $columnName)
+    public function removeColumn(string $tableName, string $columnName)
     {
         $table = $this->reflection->getTable($tableName);
         $newColumn = $table->getColumn($columnName);

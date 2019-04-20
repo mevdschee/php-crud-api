@@ -10,7 +10,7 @@ use Tqdev\PhpCrudApi\Middleware\Router\Router;
 use Tqdev\PhpCrudApi\Record\Condition\ColumnCondition;
 use Tqdev\PhpCrudApi\Record\Condition\Condition;
 use Tqdev\PhpCrudApi\Record\Condition\NoCondition;
-use Tqdev\PhpCrudApi\Record\RequestUtils;
+use Tqdev\PhpCrudApi\RequestUtils;
 use Tqdev\PhpCrudApi\Response;
 
 class MultiTenancyMiddleware extends Middleware
@@ -23,7 +23,7 @@ class MultiTenancyMiddleware extends Middleware
         $this->reflection = $reflection;
     }
 
-    private function getCondition(String $tableName, array $pairs): Condition
+    private function getCondition(string $tableName, array $pairs): Condition
     {
         $condition = new NoCondition();
         $table = $this->reflection->getTable($tableName);
@@ -33,7 +33,7 @@ class MultiTenancyMiddleware extends Middleware
         return $condition;
     }
 
-    private function getPairs($handler, String $operation, String $tableName): array
+    private function getPairs($handler, string $operation, string $tableName): array
     {
         $result = array();
         $pairs = call_user_func($handler, $operation, $tableName);
@@ -46,7 +46,7 @@ class MultiTenancyMiddleware extends Middleware
         return $result;
     }
 
-    private function handleRecord(ServerRequestInterface $request, String $operation, array $pairs) /*: void*/
+    private function handleRecord(ServerRequestInterface $request, string $operation, array $pairs) /*: void*/
     {
         $record = $request->getBody();
         if ($record === null) {

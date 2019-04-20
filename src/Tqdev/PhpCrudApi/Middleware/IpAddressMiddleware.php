@@ -7,7 +7,7 @@ use Tqdev\PhpCrudApi\Column\Reflection\ReflectedTable;
 use Tqdev\PhpCrudApi\Controller\Responder;
 use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
 use Tqdev\PhpCrudApi\Middleware\Router\Router;
-use Tqdev\PhpCrudApi\Record\RequestUtils;
+use Tqdev\PhpCrudApi\RequestUtils;
 use Tqdev\PhpCrudApi\Response;
 
 class IpAddressMiddleware extends Middleware
@@ -20,7 +20,7 @@ class IpAddressMiddleware extends Middleware
         $this->reflection = $reflection;
     }
 
-    private function callHandler($record, String $operation, ReflectedTable $table) /*: object */
+    private function callHandler($record, string $operation, ReflectedTable $table) /*: object */
     {
         $context = (array) $record;
         $columnNames = $this->getProperty('columns', '');

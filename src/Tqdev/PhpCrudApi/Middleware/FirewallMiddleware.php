@@ -9,7 +9,7 @@ use Tqdev\PhpCrudApi\Response;
 
 class FirewallMiddleware extends Middleware
 {
-    private function ipMatch(String $ip, String $cidr): bool
+    private function ipMatch(string $ip, string $cidr): bool
     {
         if (strpos($cidr, '/') !== false) {
             list($subnet, $mask) = explode('/', trim($cidr));
@@ -24,7 +24,7 @@ class FirewallMiddleware extends Middleware
         return false;
     }
 
-    private function isIpAllowed(String $ipAddress, String $allowedIpAddresses): bool
+    private function isIpAllowed(string $ipAddress, string $allowedIpAddresses): bool
     {
         foreach (explode(',', $allowedIpAddresses) as $allowedIp) {
             if ($this->ipMatch($ipAddress, $allowedIp)) {

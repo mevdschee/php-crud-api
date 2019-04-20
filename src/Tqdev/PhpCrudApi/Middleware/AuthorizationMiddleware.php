@@ -8,7 +8,7 @@ use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
 use Tqdev\PhpCrudApi\Middleware\Communication\VariableStore;
 use Tqdev\PhpCrudApi\Middleware\Router\Router;
 use Tqdev\PhpCrudApi\Record\FilterInfo;
-use Tqdev\PhpCrudApi\Record\RequestUtils;
+use Tqdev\PhpCrudApi\RequestUtils;
 use Tqdev\PhpCrudApi\Response;
 
 class AuthorizationMiddleware extends Middleware
@@ -21,7 +21,7 @@ class AuthorizationMiddleware extends Middleware
         $this->reflection = $reflection;
     }
 
-    private function handleColumns(String $operation, String $tableName) /*: void*/
+    private function handleColumns(string $operation, string $tableName) /*: void*/
     {
         $columnHandler = $this->getProperty('columnHandler', '');
         if ($columnHandler) {
@@ -35,7 +35,7 @@ class AuthorizationMiddleware extends Middleware
         }
     }
 
-    private function handleTable(String $operation, String $tableName) /*: void*/
+    private function handleTable(string $operation, string $tableName) /*: void*/
     {
         if (!$this->reflection->hasTable($tableName)) {
             return;
@@ -51,7 +51,7 @@ class AuthorizationMiddleware extends Middleware
         }
     }
 
-    private function handleRecords(String $operation, String $tableName) /*: void*/
+    private function handleRecords(string $operation, string $tableName) /*: void*/
     {
         if (!$this->reflection->hasTable($tableName)) {
             return;

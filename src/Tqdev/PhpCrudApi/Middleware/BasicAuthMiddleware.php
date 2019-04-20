@@ -5,11 +5,12 @@ use Psr\Http\Message\ServerRequestInterface;
 use Tqdev\PhpCrudApi\Controller\Responder;
 use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
 use Tqdev\PhpCrudApi\Record\ErrorCode;
+use Tqdev\PhpCrudApi\RequestUtils;
 use Tqdev\PhpCrudApi\Response;
 
 class BasicAuthMiddleware extends Middleware
 {
-    private function hasCorrectPassword(String $username, String $password, array &$passwords): bool
+    private function hasCorrectPassword(string $username, string $password, array &$passwords): bool
     {
         $hash = isset($passwords[$username]) ? $passwords[$username] : false;
         if ($hash && password_verify($password, $hash)) {
@@ -21,7 +22,7 @@ class BasicAuthMiddleware extends Middleware
         return false;
     }
 
-    private function getValidUsername(String $username, String $password, String $passwordFile): String
+    private function getValidUsername(string $username, string $password, string $passwordFile): string
     {
         $passwords = $this->readPasswords($passwordFile);
         $valid = $this->hasCorrectPassword($username, $password, $passwords);
@@ -29,7 +30,7 @@ class BasicAuthMiddleware extends Middleware
         return $valid ? $username : '';
     }
 
-    private function readPasswords(String $passwordFile): array
+    private function readPasswords(string $passwordFile): array
     {
         $passwords = [];
         $passwordLines = file($passwordFile);
@@ -45,7 +46,7 @@ class BasicAuthMiddleware extends Middleware
         return $passwords;
     }
 
-    private function writePasswords(String $passwordFile, array $passwords): bool
+    private function writePasswords(string $passwordFile, array $passwords): bool
     {
         $success = false;
         $passwordFileContents = '';
@@ -58,12 +59,13 @@ class BasicAuthMiddleware extends Middleware
         return $success;
     }
 
-    private function getAuthorizationCredentials(ServerRequestInterface $request): String
+    private function getAuthorizationCredentials(ServerRequestInterface $request): string
     {
         if (isset($_SERVER['PHP_AUTH_USER'])) {
             return $_SERVER['PHP_AUTH_USER'] . ':' . $_SERVER['PHP_AUTH_PW'];
         }
-        $parts = explode(' ', trim($request->getHeader('Authorization')), 2);
+        $header = RequestUtils::getHeader($request, 'Authorization');
+        $parts = explode(' ', trim($header), 2);
         if (count($parts) != 2) {
             return '';
         }

@@ -9,7 +9,7 @@ use Tqdev\PhpCrudApi\Response;
 
 class XsrfMiddleware extends Middleware
 {
-    private function getToken(): String
+    private function getToken(): string
     {
         $cookieName = $this->getProperty('cookieName', 'XSRF-TOKEN');
         if (isset($_COOKIE[$cookieName])) {

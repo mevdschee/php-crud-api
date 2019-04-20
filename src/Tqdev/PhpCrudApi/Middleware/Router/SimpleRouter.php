@@ -44,7 +44,7 @@ class SimpleRouter implements Router
         return $tree;
     }
 
-    public function register(String $method, String $path, array $handler)
+    public function register(string $method, string $path, array $handler)
     {
         $routeNumber = count($this->routeHandlers);
         $this->routeHandlers[$routeNumber] = $handler;

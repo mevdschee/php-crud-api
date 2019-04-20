@@ -7,7 +7,7 @@ use Tqdev\PhpCrudApi\Column\Reflection\ReflectedTable;
 use Tqdev\PhpCrudApi\Controller\Responder;
 use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
 use Tqdev\PhpCrudApi\Middleware\Router\Router;
-use Tqdev\PhpCrudApi\Record\RequestUtils;
+use Tqdev\PhpCrudApi\RequestUtils;
 use Tqdev\PhpCrudApi\Response;
 
 class SanitationMiddleware extends Middleware
@@ -20,7 +20,7 @@ class SanitationMiddleware extends Middleware
         $this->reflection = $reflection;
     }
 
-    private function callHandler($handler, $record, String $operation, ReflectedTable $table) /*: object */
+    private function callHandler($handler, $record, string $operation, ReflectedTable $table) /*: object */
     {
         $context = (array) $record;
         $tableName = $table->getName();

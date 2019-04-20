@@ -8,7 +8,7 @@ class TempFileCache implements Cache
     private $path;
     private $segments;
 
-    public function __construct(String $prefix, String $config)
+    public function __construct(string $prefix, string $config)
     {
         $this->segments = [];
         $s = DIRECTORY_SEPARATOR;
@@ -27,7 +27,7 @@ class TempFileCache implements Cache
         }
     }
 
-    private function getFileName(String $key): String
+    private function getFileName(string $key): string
     {
         $s = DIRECTORY_SEPARATOR;
         $md5 = md5($key);
@@ -41,7 +41,7 @@ class TempFileCache implements Cache
         return $filename;
     }
 
-    public function set(String $key, String $value, int $ttl = 0): bool
+    public function set(string $key, string $value, int $ttl = 0): bool
     {
         $filename = $this->getFileName($key);
         $dirname = dirname($filename);
@@ -79,7 +79,7 @@ class TempFileCache implements Cache
         return $string;
     }
 
-    private function getString($filename): String
+    private function getString($filename): string
     {
         $data = $this->fileGetContents($filename);
         if ($data === false) {
@@ -92,7 +92,7 @@ class TempFileCache implements Cache
         return $string;
     }
 
-    public function get(String $key): String
+    public function get(string $key): string
     {
         $filename = $this->getFileName($key);
         if (!file_exists($filename)) {
@@ -105,7 +105,7 @@ class TempFileCache implements Cache
         return $string;
     }
 
-    private function clean(String $path, array $segments, int $len, bool $all) /*: void*/
+    private function clean(string $path, array $segments, int $len, bool $all) /*: void*/
     {
         $entries = scandir($path);
         foreach ($entries as $entry) {

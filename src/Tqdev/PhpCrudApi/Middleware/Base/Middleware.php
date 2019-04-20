@@ -22,12 +22,12 @@ abstract class Middleware implements Handler
         $this->next = $handler;
     }
 
-    protected function getArrayProperty(String $key, String $default): array
+    protected function getArrayProperty(string $key, string $default): array
     {
         return array_filter(array_map('trim', explode(',', $this->getProperty($key, $default))));
     }
 
-    protected function getProperty(String $key, $default)
+    protected function getProperty(string $key, $default)
     {
         return isset($this->properties[$key]) ? $this->properties[$key] : $default;
     }

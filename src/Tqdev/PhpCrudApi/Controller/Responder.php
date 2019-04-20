@@ -7,7 +7,7 @@ use Tqdev\PhpCrudApi\Response;
 
 class Responder
 {
-    public function error(int $error, String $argument, $details = null): Response
+    public function error(int $error, string $argument, $details = null): Response
     {
         $errorCode = new ErrorCode($error);
         $status = $errorCode->getStatus();

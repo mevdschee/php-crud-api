@@ -9,7 +9,7 @@ use Tqdev\PhpCrudApi\Response;
 
 class CorsMiddleware extends Middleware
 {
-    private function isOriginAllowed(String $origin, String $allowedOrigins): bool
+    private function isOriginAllowed(string $origin, string $allowedOrigins): bool
     {
         $found = false;
         foreach (explode(',', $allowedOrigins) as $allowedOrigin) {

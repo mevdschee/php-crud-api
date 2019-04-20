@@ -71,7 +71,7 @@ class ErrorCode
         return $this->code;
     }
 
-    public function getMessage(String $argument): String
+    public function getMessage(string $argument): string
     {
         return sprintf($this->message, $argument);
     }

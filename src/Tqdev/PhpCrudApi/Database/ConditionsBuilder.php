@@ -14,12 +14,12 @@ class ConditionsBuilder
 {
     private $driver;
 
-    public function __construct(String $driver)
+    public function __construct(string $driver)
     {
         $this->driver = $driver;
     }
 
-    private function getConditionSql(Condition $condition, array &$arguments): String
+    private function getConditionSql(Condition $condition, array &$arguments): string
     {
         if ($condition instanceof AndCondition) {
             return $this->getAndConditionSql($condition, $arguments);
@@ -39,7 +39,7 @@ class ConditionsBuilder
         throw new \Exception('Unknown Condition: ' . get_class($condition));
     }
 
-    private function getAndConditionSql(AndCondition $and, array &$arguments): String
+    private function getAndConditionSql(AndCondition $and, array &$arguments): string
     {
         $parts = [];
         foreach ($and->getConditions() as $condition) {
@@ -48,7 +48,7 @@ class ConditionsBuilder
         return '(' . implode(' AND ', $parts) . ')';
     }
 
-    private function getOrConditionSql(OrCondition $or, array &$arguments): String
+    private function getOrConditionSql(OrCondition $or, array &$arguments): string
     {
         $parts = [];
         foreach ($or->getConditions() as $condition) {
@@ -57,23 +57,23 @@ class ConditionsBuilder
         return '(' . implode(' OR ', $parts) . ')';
     }
 
-    private function getNotConditionSql(NotCondition $not, array &$arguments): String
+    private function getNotConditionSql(NotCondition $not, array &$arguments): string
     {
         $condition = $not->getCondition();
         return '(NOT ' . $this->getConditionSql($condition, $arguments) . ')';
     }
 
-    private function quoteColumnName(ReflectedColumn $column): String
+    private function quoteColumnName(ReflectedColumn $column): string
     {
         return '"' . $column->getName() . '"';
     }
 
-    private function escapeLikeValue(String $value): String
+    private function escapeLikeValue(string $value): string
     {
         return addcslashes($value, '%_');
     }
 
-    private function getColumnConditionSql(ColumnCondition $condition, array &$arguments): String
+    private function getColumnConditionSql(ColumnCondition $condition, array &$arguments): string
     {
         $column = $this->quoteColumnName($condition->getColumn());
         $operator = $condition->getOperator();
@@ -142,7 +142,7 @@ class ConditionsBuilder
         return $sql;
     }
 
-    private function getSpatialFunctionName(String $operator): String
+    private function getSpatialFunctionName(string $operator): string
     {
         switch ($operator) {
             case 'co':return 'ST_Contains';
@@ -159,12 +159,12 @@ class ConditionsBuilder
         }
     }
 
-    private function hasSpatialArgument(String $operator): bool
+    private function hasSpatialArgument(string $operator): bool
     {
         return in_array($operator, ['ic', 'is', 'iv']) ? false : true;
     }
 
-    private function getSpatialFunctionCall(String $functionName, String $column, bool $hasArgument): String
+    private function getSpatialFunctionCall(string $functionName, string $column, bool $hasArgument): string
     {
         switch ($this->driver) {
             case 'mysql':
@@ -178,7 +178,7 @@ class ConditionsBuilder
         }
     }
 
-    private function getSpatialConditionSql(ColumnCondition $condition, array &$arguments): String
+    private function getSpatialConditionSql(ColumnCondition $condition, array &$arguments): string
     {
         $column = $this->quoteColumnName($condition->getColumn());
         $operator = $condition->getOperator();
@@ -192,7 +192,7 @@ class ConditionsBuilder
         return $sql;
     }
 
-    public function getWhereClause(Condition $condition, array &$arguments): String
+    public function getWhereClause(Condition $condition, array &$arguments): string
     {
         if ($condition instanceof NoCondition) {
             return '';

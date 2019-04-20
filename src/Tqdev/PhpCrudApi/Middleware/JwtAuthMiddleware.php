@@ -5,11 +5,12 @@ use Psr\Http\Message\ServerRequestInterface;
 use Tqdev\PhpCrudApi\Controller\Responder;
 use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
 use Tqdev\PhpCrudApi\Record\ErrorCode;
+use Tqdev\PhpCrudApi\RequestUtils;
 use Tqdev\PhpCrudApi\Response;
 
 class JwtAuthMiddleware extends Middleware
 {
-    private function getVerifiedClaims(String $token, int $time, int $leeway, int $ttl, String $secret, array $requirements): array
+    private function getVerifiedClaims(string $token, int $time, int $leeway, int $ttl, string $secret, array $requirements): array
     {
         $algorithms = array(
             'HS256' => 'sha256',
@@ -89,7 +90,7 @@ class JwtAuthMiddleware extends Middleware
         return $claims;
     }
 
-    private function getClaims(String $token): array
+    private function getClaims(string $token): array
     {
         $time = (int) $this->getProperty('time', time());
         $leeway = (int) $this->getProperty('leeway', '5');
@@ -106,10 +107,11 @@ class JwtAuthMiddleware extends Middleware
         return $this->getVerifiedClaims($token, $time, $leeway, $ttl, $secret, $requirements);
     }
 
-    private function getAuthorizationToken(ServerRequestInterface $request): String
+    private function getAuthorizationToken(ServerRequestInterface $request): string
     {
-        $header = $this->getProperty('header', 'X-Authorization');
-        $parts = explode(' ', trim($request->getHeader($header)), 2);
+        $headerName = $this->getProperty('header', 'X-Authorization');
+        $headerValue = RequestUtils::getHeader($request, $headerName);
+        $parts = explode(' ', trim($headerValue), 2);
         if (count($parts) != 2) {
             return '';
         }

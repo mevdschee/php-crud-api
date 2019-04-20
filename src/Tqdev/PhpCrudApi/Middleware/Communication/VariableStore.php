@@ -5,7 +5,7 @@ class VariableStore
 {
     static $values = array();
 
-    public static function get(String $key)
+    public static function get(string $key)
     {
         if (isset(self::$values[$key])) {
             return self::$values[$key];
@@ -13,7 +13,7 @@ class VariableStore
         return null;
     }
 
-    public static function set(String $key, /* object */ $value)
+    public static function set(string $key, /* object */ $value)
     {
         self::$values[$key] = $value;
     }

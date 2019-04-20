@@ -18,7 +18,7 @@ class ReflectedColumn implements \JsonSerializable
     private $pk;
     private $fk;
 
-    public function __construct(String $name, String $type, int $length, int $precision, int $scale, bool $nullable, bool $pk, String $fk)
+    public function __construct(string $name, string $type, int $length, int $precision, int $scale, bool $nullable, bool $pk, string $fk)
     {
         $this->name = $name;
         $this->type = $type;
@@ -64,7 +64,7 @@ class ReflectedColumn implements \JsonSerializable
         $this->scale = $this->hasScale() ? $this->getScale() : 0;
     }
 
-    public function getName(): String
+    public function getName(): string
     {
         return $this->name;
     }
@@ -74,7 +74,7 @@ class ReflectedColumn implements \JsonSerializable
         return $this->nullable;
     }
 
-    public function getType(): String
+    public function getType(): string
     {
         return $this->type;
     }
@@ -144,7 +144,7 @@ class ReflectedColumn implements \JsonSerializable
         $this->fk = $value;
     }
 
-    public function getFk(): String
+    public function getFk(): string
     {
         return $this->fk;
     }

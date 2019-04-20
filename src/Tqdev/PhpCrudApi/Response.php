@@ -39,17 +39,17 @@ class Response
         return $this->status;
     }
 
-    public function getBody(): String
+    public function getBody(): string
     {
         return $this->body;
     }
 
-    public function addHeader(String $key, String $value)
+    public function addHeader(string $key, string $value)
     {
         $this->headers[$key] = $value;
     }
 
-    public function getHeader(String $key): String
+    public function getHeader(string $key): string
     {
         if (isset($this->headers[$key])) {
             return $this->headers[$key];
@@ -78,7 +78,7 @@ class Response
         $this->addHeader('X-Exception-File', $e->getFile() . ':' . $e->getLine());
     }
 
-    public function __toString(): String
+    public function __toString(): string
     {
         $str = "$this->status\n";
         foreach ($this->headers as $key => $value) {

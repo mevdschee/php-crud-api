@@ -11,7 +11,7 @@ class Request
     private $headers;
     private $highPerformance;
 
-    public function __construct(String $method = null, String $path = null, String $query = null, array $headers = null, String $body = null, bool $highPerformance = true)
+    public function __construct(string $method = null, string $path = null, string $query = null, array $headers = null, string $body = null, bool $highPerformance = true)
     {
         $this->parseMethod($method);
         $this->parsePath($path);
@@ -21,7 +21,7 @@ class Request
         $this->highPerformance = $highPerformance;
     }
 
-    private function parseMethod(String $method = null)
+    private function parseMethod(string $method = null)
     {
         if (!$method) {
             if (isset($_SERVER['REQUEST_METHOD'])) {
@@ -33,7 +33,7 @@ class Request
         $this->method = $method;
     }
 
-    private function parsePath(String $path = null)
+    private function parsePath(string $path = null)
     {
         if (!$path) {
             if (isset($_SERVER['PATH_INFO'])) {
@@ -46,7 +46,7 @@ class Request
         $this->pathSegments = explode('/', $path);
     }
 
-    private function parseParams(String $query = null)
+    private function parseParams(string $query = null)
     {
         if (!$query) {
             if (isset($_SERVER['QUERY_STRING'])) {
@@ -75,7 +75,7 @@ class Request
         $this->headers = $headers;
     }
 
-    private function decodeBody(String $body) /*: ?object*/
+    private function decodeBody(string $body) /*: ?object*/
     {
         $first = substr($body, 0, 1);
         if ($first == '[' || $first == '{') {
@@ -97,7 +97,7 @@ class Request
         return $object;
     }
 
-    private function parseBody(String $body = null) /*: void*/
+    private function parseBody(string $body = null) /*: void*/
     {
         if (!$body) {
             $body = file_get_contents('php://input');
@@ -105,17 +105,17 @@ class Request
         $this->body = $this->decodeBody($body);
     }
 
-    public function getMethod(): String
+    public function getMethod(): string
     {
         return $this->method;
     }
 
-    public function getPath(): String
+    public function getPath(): string
     {
         return $this->path;
     }
 
-    public function getPathSegment(int $part): String
+    public function getPathSegment(int $part): string
     {
         if ($part < 0 || $part >= count($this->pathSegments)) {
             return '';
@@ -143,12 +143,12 @@ class Request
         $this->body = $body;
     }
 
-    public function addHeader(String $key, String $value)
+    public function addHeader(string $key, string $value)
     {
         $this->headers[$key] = $value;
     }
 
-    public function getHeader(String $key): String
+    public function getHeader(string $key): string
     {
         if (isset($this->headers[$key])) {
             return $this->headers[$key];
@@ -167,7 +167,7 @@ class Request
         return $this->headers;
     }
 
-    public static function fromString(String $request): Request
+    public static function fromString(string $request): Request
     {
         $parts = explode("\n\n", trim($request), 2);
         $head = $parts[0];

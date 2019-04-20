@@ -26,7 +26,7 @@ abstract class Condition
         return new NotCondition($this);
     }
 
-    public static function fromString(ReflectedTable $table, String $value): Condition
+    public static function fromString(ReflectedTable $table, string $value): Condition
     {
         $condition = new NoCondition();
         $parts = explode(',', $value, 3);

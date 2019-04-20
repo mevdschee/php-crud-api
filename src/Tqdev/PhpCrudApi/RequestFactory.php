@@ -14,7 +14,7 @@ class RequestFactory
         return $creator->fromGlobals();
     }
 
-    public static function fromString(String $request): ServerRequestInterface
+    public static function fromString(string $request): ServerRequestInterface
     {
         $parts = explode("\n\n", trim($request), 2);
         $lines = explode("\n", $parts[0]);

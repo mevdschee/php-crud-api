@@ -8,7 +8,7 @@ use Tqdev\PhpCrudApi\Response;
 
 interface Router extends Handler
 {
-    public function register(String $method, String $path, array $handler);
+    public function register(string $method, string $path, array $handler);
 
     public function load(Middleware $middleware);
 

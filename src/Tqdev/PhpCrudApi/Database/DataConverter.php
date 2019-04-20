@@ -8,7 +8,7 @@ class DataConverter
 {
     private $driver;
 
-    public function __construct(String $driver)
+    public function __construct(string $driver)
     {
         $this->driver = $driver;
     }
@@ -24,7 +24,7 @@ class DataConverter
         return $value;
     }
 
-    private function getRecordValueConversion(ReflectedColumn $column): String
+    private function getRecordValueConversion(ReflectedColumn $column): string
     {
         if (in_array($this->driver, ['mysql', 'sqlsrv']) && $column->isBoolean()) {
             return 'boolean';
@@ -61,7 +61,7 @@ class DataConverter
         return $value;
     }
 
-    private function getInputValueConversion(ReflectedColumn $column): String
+    private function getInputValueConversion(ReflectedColumn $column): string
     {
         if ($column->isBinary()) {
             return 'base64url_to_base64';

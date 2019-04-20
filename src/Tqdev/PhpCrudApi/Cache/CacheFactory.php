@@ -7,7 +7,7 @@ class CacheFactory
 {
     const PREFIX = 'phpcrudapi-%s-%s-%s-';
 
-    private static function getPrefix(Config $config): String
+    private static function getPrefix(Config $config): string
     {
         $driver = $config->getDriver();
         $database = $config->getDatabase();

@@ -8,7 +8,7 @@ use Tqdev\PhpCrudApi\Controller\Responder;
 use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
 use Tqdev\PhpCrudApi\Middleware\Router\Router;
 use Tqdev\PhpCrudApi\Record\ErrorCode;
-use Tqdev\PhpCrudApi\Record\RequestUtils;
+use Tqdev\PhpCrudApi\RequestUtils;
 use Tqdev\PhpCrudApi\Response;
 
 class ValidationMiddleware extends Middleware
@@ -21,7 +21,7 @@ class ValidationMiddleware extends Middleware
         $this->reflection = $reflection;
     }
 
-    private function callHandler($handler, $record, String $operation, ReflectedTable $table) /*: Response?*/
+    private function callHandler($handler, $record, string $operation, ReflectedTable $table) /*: Response?*/
     {
         $context = (array) $record;
         $details = array();

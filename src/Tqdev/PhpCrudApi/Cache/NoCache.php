@@ -7,12 +7,12 @@ class NoCache implements Cache
     {
     }
 
-    public function set(String $key, String $value, int $ttl = 0): bool
+    public function set(string $key, string $value, int $ttl = 0): bool
     {
         return true;
     }
 
-    public function get(String $key): String
+    public function get(string $key): string
     {
         return '';
     }
