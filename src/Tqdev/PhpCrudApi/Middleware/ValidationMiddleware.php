@@ -47,7 +47,7 @@ class ValidationMiddleware extends Middleware
         if (in_array($operation, ['create', 'update', 'increment'])) {
             $tableName = RequestUtils::getPathSegment($request, 2);
             if ($this->reflection->hasTable($tableName)) {
-                $record = $request->getBody();
+                $record = $request->getParsedBody();
                 if ($record !== null) {
                     $handler = $this->getProperty('handler', '');
                     if ($handler !== '') {

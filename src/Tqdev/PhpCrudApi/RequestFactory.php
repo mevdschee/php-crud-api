@@ -7,11 +7,38 @@ use Psr\Http\Message\ServerRequestInterface;
 
 class RequestFactory
 {
+    private static function parseBody(string $body) /*: ?object*/
+    {
+        $first = substr($body, 0, 1);
+        if ($first == '[' || $first == '{') {
+            $object = json_decode($body);
+            $causeCode = json_last_error();
+            if ($causeCode !== JSON_ERROR_NONE) {
+                $object = null;
+            }
+        } else {
+            parse_str($body, $input);
+            foreach ($input as $key => $value) {
+                if (substr($key, -9) == '__is_null') {
+                    $input[substr($key, 0, -9)] = null;
+                    unset($input[$key]);
+                }
+            }
+            $object = (object) $input;
+        }
+        return $object;
+    }
+
     public static function fromGlobals(): ServerRequestInterface
     {
         $psr17Factory = new Psr17Factory();
         $creator = new ServerRequestCreator($psr17Factory, $psr17Factory, $psr17Factory, $psr17Factory);
-        return $creator->fromGlobals();
+        $serverRequest = $creator->fromGlobals();
+        $body = file_get_contents('php://input');
+        if ($body) {
+            $serverRequest = $serverRequest->withParsedBody(self::parseBody($body));
+        }
+        return $serverRequest;
     }
 
     public static function fromString(string $request): ServerRequestInterface
@@ -25,12 +52,15 @@ class RequestFactory
 
         $psr17Factory = new Psr17Factory();
         $serverRequest = $psr17Factory->createServerRequest($method, $url);
-        if ($body) {
-            $serverRequest = $serverRequest->withBody($psr17Factory->createStream($body));
-        }
         foreach ($lines as $line) {
             list($key, $value) = explode(':', $line, 2);
             $serverRequest = $serverRequest->withAddedHeader($key, $value);
+        }
+        if ($body) {
+            $stream = $psr17Factory->createStream($body);
+            $stream->rewind();
+            $serverRequest = $serverRequest->withBody($stream);
+            $serverRequest = $serverRequest->withParsedBody(self::parseBody($body));
         }
         return $serverRequest;
     }

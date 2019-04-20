@@ -46,11 +46,11 @@ class MultiTenancyMiddleware extends Middleware
         return $result;
     }
 
-    private function handleRecord(ServerRequestInterface $request, string $operation, array $pairs) /*: void*/
+    private function handleRecord(ServerRequestInterface $request, string $operation, array $pairs): ServerRequestInterface
     {
-        $record = $request->getBody();
+        $record = $request->getParsedBody();
         if ($record === null) {
-            return;
+            return $request;
         }
         $multi = is_array($record);
         $records = $multi ? $record : [$record];
@@ -65,7 +65,7 @@ class MultiTenancyMiddleware extends Middleware
                 }
             }
         }
-        $request->setBody($multi ? $records : $records[0]);
+        return $request->withParsedBody($multi ? $records : $records[0]);
     }
 
     public function handle(ServerRequestInterface $request): Response
@@ -83,7 +83,7 @@ class MultiTenancyMiddleware extends Middleware
                     $pairs = $this->getPairs($handler, $operation, $tableName);
                     if ($i == 0) {
                         if (in_array($operation, ['create', 'update', 'increment'])) {
-                            $this->handleRecord($request, $operation, $pairs);
+                            $request = $this->handleRecord($request, $operation, $pairs);
                         }
                     }
                     $condition = $this->getCondition($tableName, $pairs);

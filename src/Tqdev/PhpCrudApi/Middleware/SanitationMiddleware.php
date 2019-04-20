@@ -39,7 +39,7 @@ class SanitationMiddleware extends Middleware
         if (in_array($operation, ['create', 'update', 'increment'])) {
             $tableName = RequestUtils::getPathSegment($request, 2);
             if ($this->reflection->hasTable($tableName)) {
-                $record = $request->getBody();
+                $record = $request->getParsedBody();
                 if ($record !== null) {
                     $handler = $this->getProperty('handler', '');
                     if ($handler !== '') {
@@ -51,7 +51,7 @@ class SanitationMiddleware extends Middleware
                         } else {
                             $record = $this->callHandler($handler, $record, $operation, $table);
                         }
-                        $request->setBody($record);
+                        $request = $request->withParsedBody($record);
                     }
                 }
             }

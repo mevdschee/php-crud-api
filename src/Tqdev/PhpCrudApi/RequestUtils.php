@@ -8,7 +8,8 @@ class RequestUtils
 {
     public static function setParams(ServerRequestInterface $request, array $params): ServerRequestInterface
     {
-        return $request->withUri($request->getUri()->withQuery(http_build_query($params)));
+        $query = preg_replace('|%5B[0-9]+%5D=|', '=', http_build_query($params));
+        return $request->withUri($request->getUri()->withQuery($query));
     }
 
     public static function getHeader(ServerRequestInterface $request, string $header): string
@@ -21,16 +22,8 @@ class RequestUtils
     {
         $params = array();
         $query = $request->getUri()->getQuery();
-        if ($query) {
-            die(var_dump($query));
-        }
-
         $query = str_replace('][]=', ']=', str_replace('=', '[]=', $query));
         parse_str($query, $params);
-        if ($params) {
-            die(var_dump($params));
-        }
-
         return $params;
     }
 
@@ -40,7 +33,7 @@ class RequestUtils
         if ($part < 0 || $part >= count($pathSegments)) {
             return '';
         }
-        return $pathSegments[$part];
+        return urldecode($pathSegments[$part]);
     }
 
     public static function getOperation(ServerRequestInterface $request): string

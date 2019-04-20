@@ -71,7 +71,7 @@ class RecordController
         if ($this->service->getType($table) != 'table') {
             return $this->responder->error(ErrorCode::OPERATION_NOT_SUPPORTED, __FUNCTION__);
         }
-        $record = $request->getBody();
+        $record = $request->getParsedBody();
         if ($record === null) {
             return $this->responder->error(ErrorCode::HTTP_MESSAGE_NOT_READABLE, '');
         }
@@ -98,7 +98,7 @@ class RecordController
         }
         $id = RequestUtils::getPathSegment($request, 3);
         $params = RequestUtils::getParams($request);
-        $record = $request->getBody();
+        $record = $request->getParsedBody();
         if ($record === null) {
             return $this->responder->error(ErrorCode::HTTP_MESSAGE_NOT_READABLE, '');
         }
@@ -153,7 +153,7 @@ class RecordController
             return $this->responder->error(ErrorCode::OPERATION_NOT_SUPPORTED, __FUNCTION__);
         }
         $id = RequestUtils::getPathSegment($request, 3);
-        $record = $request->getBody();
+        $record = $request->getParsedBody();
         if ($record === null) {
             return $this->responder->error(ErrorCode::HTTP_MESSAGE_NOT_READABLE, '');
         }

@@ -72,7 +72,7 @@ class ColumnController
         if (!$this->reflection->hasTable($tableName)) {
             return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $tableName);
         }
-        $success = $this->definition->updateTable($tableName, $request->getBody());
+        $success = $this->definition->updateTable($tableName, $request->getParsedBody());
         if ($success) {
             $this->reflection->refreshTables();
         }
@@ -90,7 +90,7 @@ class ColumnController
         if (!$table->hasColumn($columnName)) {
             return $this->responder->error(ErrorCode::COLUMN_NOT_FOUND, $columnName);
         }
-        $success = $this->definition->updateColumn($tableName, $columnName, $request->getBody());
+        $success = $this->definition->updateColumn($tableName, $columnName, $request->getParsedBody());
         if ($success) {
             $this->reflection->refreshTable($tableName);
         }
@@ -99,11 +99,11 @@ class ColumnController
 
     public function addTable(ServerRequestInterface $request): Response
     {
-        $tableName = $request->getBody()->name;
+        $tableName = $request->getParsedBody()->name;
         if ($this->reflection->hasTable($tableName)) {
             return $this->responder->error(ErrorCode::TABLE_ALREADY_EXISTS, $tableName);
         }
-        $success = $this->definition->addTable($request->getBody());
+        $success = $this->definition->addTable($request->getParsedBody());
         if ($success) {
             $this->reflection->refreshTables();
         }
@@ -116,12 +116,12 @@ class ColumnController
         if (!$this->reflection->hasTable($tableName)) {
             return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $tableName);
         }
-        $columnName = $request->getBody()->name;
+        $columnName = $request->getParsedBody()->name;
         $table = $this->reflection->getTable($tableName);
         if ($table->hasColumn($columnName)) {
             return $this->responder->error(ErrorCode::COLUMN_ALREADY_EXISTS, $columnName);
         }
-        $success = $this->definition->addColumn($tableName, $request->getBody());
+        $success = $this->definition->addColumn($tableName, $request->getParsedBody());
         if ($success) {
             $this->reflection->refreshTable($tableName);
         }
