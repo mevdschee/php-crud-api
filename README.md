@@ -71,18 +71,6 @@ These are all the configuration options and their default value between brackets
 - "cacheTime": Number of seconds the cache is valid (`10`)
 - "debug": Show errors in the "X-Debug-Info" header (`false`)
 
-## Compilation
-
-You can compile all files into a single "`api.php`" file using:
-
-    php build.php
-
-The non-compiled code resides in the "`src`" directory. You can access it at the URL:
-
-    http://localhost:8080/src/records/posts/1
-
-NB: The "`build.php`" script will install and run [Composer](https://getcomposer.org/) to install the required dependencies.
-
 ## Limitations
 
 These limitation and constrains apply:
@@ -119,6 +107,28 @@ The following features are supported:
   - Support for modifying database structure using REST endpoint
   - Security enhancing middleware is included
   - Standard compliant: PSR-2, PSR-4, PSR-7, PSR-15 and PSR-17
+
+## Compilation
+
+You can compile all files into a single "`api.php`" file using:
+
+    php build.php
+
+You can access the non-compiled code at the URL:
+
+    http://localhost:8080/src/records/posts/1
+
+The non-compiled code resides in the "`src`" and "`vendor`" directories.
+
+## Dependencies
+
+You can install all dependencies of this project using the following command:
+
+    php install.php
+
+This script will install and run [Composer](https://getcomposer.org/) to install the required dependencies in the "`vendor`" directory.
+
+NB: The install script will also patch the dependencies in the vendor directory for PHP 7.0 compatibility.
 
 ## Middleware
 
