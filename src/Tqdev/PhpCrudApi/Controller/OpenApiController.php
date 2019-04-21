@@ -1,10 +1,10 @@
 <?php
 namespace Tqdev\PhpCrudApi\Controller;
 
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
 use Tqdev\PhpCrudApi\Middleware\Router\Router;
 use Tqdev\PhpCrudApi\OpenApi\OpenApiService;
-use Tqdev\PhpCrudApi\Request;
-use Tqdev\PhpCrudApi\Response;
 
 class OpenApiController
 {
@@ -18,7 +18,7 @@ class OpenApiController
         $this->responder = $responder;
     }
 
-    public function openapi(Request $request): Response
+    public function openapi(ServerRequestInterface $request): ResponseInterface
     {
         return $this->responder->success($this->openApi->get());
     }

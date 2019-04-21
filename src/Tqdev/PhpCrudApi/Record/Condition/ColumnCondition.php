@@ -9,7 +9,7 @@ class ColumnCondition extends Condition
     private $operator;
     private $value;
 
-    public function __construct(ReflectedColumn $column, String $operator, String $value)
+    public function __construct(ReflectedColumn $column, string $operator, string $value)
     {
         $this->column = $column;
         $this->operator = $operator;
@@ -21,12 +21,12 @@ class ColumnCondition extends Condition
         return $this->column;
     }
 
-    public function getOperator(): String
+    public function getOperator(): string
     {
         return $this->operator;
     }
 
-    public function getValue(): String
+    public function getValue(): string
     {
         return $this->value;
     }

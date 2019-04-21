@@ -26,7 +26,7 @@ class RecordService
         $this->pagination = new PaginationInfo();
     }
 
-    private function sanitizeRecord(String $tableName, /* object */ $record, String $id)
+    private function sanitizeRecord(string $tableName, /* object */ $record, string $id)
     {
         $keyset = array_keys((array) $record);
         foreach ($keyset as $key) {
@@ -45,17 +45,17 @@ class RecordService
         }
     }
 
-    public function hasTable(String $table): bool
+    public function hasTable(string $table): bool
     {
         return $this->reflection->hasTable($table);
     }
 
-    public function getType(String $table): String
+    public function getType(string $table): string
     {
         return $this->reflection->getType($table);
     }
 
-    public function create(String $tableName, /* object */ $record, array $params)
+    public function create(string $tableName, /* object */ $record, array $params) /*: ?int*/
     {
         $this->sanitizeRecord($tableName, $record, '');
         $table = $this->reflection->getTable($tableName);
@@ -63,7 +63,7 @@ class RecordService
         return $this->db->createSingle($table, $columnValues);
     }
 
-    public function read(String $tableName, String $id, array $params) /*: ?object*/
+    public function read(string $tableName, string $id, array $params) /*: ?object*/
     {
         $table = $this->reflection->getTable($tableName);
         $this->joiner->addMandatoryColumns($table, $params);
@@ -77,7 +77,7 @@ class RecordService
         return $records[0];
     }
 
-    public function update(String $tableName, String $id, /* object */ $record, array $params)
+    public function update(string $tableName, string $id, /* object */ $record, array $params) /*: ?int*/
     {
         $this->sanitizeRecord($tableName, $record, $id);
         $table = $this->reflection->getTable($tableName);
@@ -85,13 +85,13 @@ class RecordService
         return $this->db->updateSingle($table, $columnValues, $id);
     }
 
-    public function delete(String $tableName, String $id, array $params)
+    public function delete(string $tableName, string $id, array $params) /*: ?int*/
     {
         $table = $this->reflection->getTable($tableName);
         return $this->db->deleteSingle($table, $id);
     }
 
-    public function increment(String $tableName, String $id, /* object */ $record, array $params)
+    public function increment(string $tableName, string $id, /* object */ $record, array $params) /*: ?int*/
     {
         $this->sanitizeRecord($tableName, $record, $id);
         $table = $this->reflection->getTable($tableName);
@@ -99,7 +99,7 @@ class RecordService
         return $this->db->incrementSingle($table, $columnValues, $id);
     }
 
-    public function _list(String $tableName, array $params): ListDocument
+    public function _list(string $tableName, array $params): ListDocument
     {
         $table = $this->reflection->getTable($tableName);
         $this->joiner->addMandatoryColumns($table, $params);

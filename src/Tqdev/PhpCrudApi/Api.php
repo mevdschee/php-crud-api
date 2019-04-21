@@ -1,6 +1,9 @@
 <?php
 namespace Tqdev\PhpCrudApi;
 
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 use Tqdev\PhpCrudApi\Cache\CacheFactory;
 use Tqdev\PhpCrudApi\Column\DefinitionService;
 use Tqdev\PhpCrudApi\Column\ReflectionService;
@@ -27,8 +30,9 @@ use Tqdev\PhpCrudApi\Middleware\XsrfMiddleware;
 use Tqdev\PhpCrudApi\OpenApi\OpenApiService;
 use Tqdev\PhpCrudApi\Record\ErrorCode;
 use Tqdev\PhpCrudApi\Record\RecordService;
+use Tqdev\PhpCrudApi\ResponseUtils;
 
-class Api
+class Api implements RequestHandlerInterface
 {
     private $router;
     private $responder;
@@ -115,7 +119,7 @@ class Api
         $this->debug = $config->getDebug();
     }
 
-    public function handle(Request $request): Response
+    public function handle(ServerRequestInterface $request): ResponseInterface
     {
         $response = null;
         try {
@@ -123,7 +127,7 @@ class Api
         } catch (\Throwable $e) {
             $response = $this->responder->error(ErrorCode::ERROR_NOT_FOUND, $e->getMessage());
             if ($this->debug) {
-                $response->addExceptionHeaders($e);
+                $response = ResponseUtils::addExceptionHeaders($response, $e);
             }
         }
         return $response;

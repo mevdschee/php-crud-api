@@ -35,7 +35,13 @@
       "php": ">=7.0.0",
       "ext-zlib": "*",
       "ext-json": "*",
-      "ext-pdo": "*"
+      "ext-pdo": "*",
+      "psr/http-message": "*",
+      "psr/http-factory": "*",
+      "psr/http-server-handler": "*",
+      "psr/http-server-middleware": "*",
+      "nyholm/psr7": "*",
+      "nyholm/psr7-server": "*"
     },
     "suggest": {
       "ext-memcache": "*",

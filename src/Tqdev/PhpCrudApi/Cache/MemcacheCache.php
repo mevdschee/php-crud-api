@@ -6,7 +6,7 @@ class MemcacheCache implements Cache
     protected $prefix;
     protected $memcache;
 
-    public function __construct(String $prefix, String $config)
+    public function __construct(string $prefix, string $config)
     {
         $this->prefix = $prefix;
         if ($config == '') {
@@ -27,12 +27,12 @@ class MemcacheCache implements Cache
         return new \Memcache();
     }
 
-    public function set(String $key, String $value, int $ttl = 0): bool
+    public function set(string $key, string $value, int $ttl = 0): bool
     {
         return $this->memcache->set($this->prefix . $key, $value, 0, $ttl);
     }
 
-    public function get(String $key): String
+    public function get(string $key): string
     {
         return $this->memcache->get($this->prefix . $key) ?: '';
     }

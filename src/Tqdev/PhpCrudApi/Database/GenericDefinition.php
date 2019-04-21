@@ -12,7 +12,7 @@ class GenericDefinition
     private $typeConverter;
     private $reflection;
 
-    public function __construct(\PDO $pdo, String $driver, String $database)
+    public function __construct(\PDO $pdo, string $driver, string $database)
     {
         $this->pdo = $pdo;
         $this->driver = $driver;
@@ -21,12 +21,12 @@ class GenericDefinition
         $this->reflection = new GenericReflection($pdo, $driver, $database);
     }
 
-    private function quote(String $identifier): String
+    private function quote(string $identifier): string
     {
         return '"' . str_replace('"', '', $identifier) . '"';
     }
 
-    public function getColumnType(ReflectedColumn $column, bool $update): String
+    public function getColumnType(ReflectedColumn $column, bool $update): string
     {
         if ($this->driver == 'pgsql' && !$update && $column->getPk() && $this->canAutoIncrement($column)) {
             return 'serial';
@@ -46,7 +46,7 @@ class GenericDefinition
         return $type . $size . $null . $auto;
     }
 
-    private function getPrimaryKey(String $tableName): String
+    private function getPrimaryKey(string $tableName): string
     {
         $pks = $this->reflection->getTablePrimaryKeys($tableName);
         if (count($pks) == 1) {
@@ -60,7 +60,7 @@ class GenericDefinition
         return in_array($column->getType(), ['integer', 'bigint']);
     }
 
-    private function getColumnAutoIncrement(ReflectedColumn $column, bool $update): String
+    private function getColumnAutoIncrement(ReflectedColumn $column, bool $update): string
     {
         if (!$this->canAutoIncrement($column)) {
             return '';
@@ -74,7 +74,7 @@ class GenericDefinition
         }
     }
 
-    private function getColumnNullType(ReflectedColumn $column, bool $update): String
+    private function getColumnNullType(ReflectedColumn $column, bool $update): string
     {
         if ($this->driver == 'pgsql' && $update) {
             return '';
@@ -82,7 +82,7 @@ class GenericDefinition
         return $column->getNullable() ? ' NULL' : ' NOT NULL';
     }
 
-    private function getTableRenameSQL(String $tableName, String $newTableName): String
+    private function getTableRenameSQL(string $tableName, string $newTableName): string
     {
         $p1 = $this->quote($tableName);
         $p2 = $this->quote($newTableName);
@@ -97,7 +97,7 @@ class GenericDefinition
         }
     }
 
-    private function getColumnRenameSQL(String $tableName, String $columnName, ReflectedColumn $newColumn): String
+    private function getColumnRenameSQL(string $tableName, string $columnName, ReflectedColumn $newColumn): string
     {
         $p1 = $this->quote($tableName);
         $p2 = $this->quote($columnName);
@@ -115,7 +115,7 @@ class GenericDefinition
         }
     }
 
-    private function getColumnRetypeSQL(String $tableName, String $columnName, ReflectedColumn $newColumn): String
+    private function getColumnRetypeSQL(string $tableName, string $columnName, ReflectedColumn $newColumn): string
     {
         $p1 = $this->quote($tableName);
         $p2 = $this->quote($columnName);
@@ -132,7 +132,7 @@ class GenericDefinition
         }
     }
 
-    private function getSetColumnNullableSQL(String $tableName, String $columnName, ReflectedColumn $newColumn): String
+    private function getSetColumnNullableSQL(string $tableName, string $columnName, ReflectedColumn $newColumn): string
     {
         $p1 = $this->quote($tableName);
         $p2 = $this->quote($columnName);
@@ -150,7 +150,7 @@ class GenericDefinition
         }
     }
 
-    private function getSetColumnPkConstraintSQL(String $tableName, String $columnName, ReflectedColumn $newColumn): String
+    private function getSetColumnPkConstraintSQL(string $tableName, string $columnName, ReflectedColumn $newColumn): string
     {
         $p1 = $this->quote($tableName);
         $p2 = $this->quote($columnName);
@@ -167,7 +167,7 @@ class GenericDefinition
         }
     }
 
-    private function getSetColumnPkSequenceSQL(String $tableName, String $columnName, ReflectedColumn $newColumn): String
+    private function getSetColumnPkSequenceSQL(string $tableName, string $columnName, ReflectedColumn $newColumn): string
     {
         $p1 = $this->quote($tableName);
         $p2 = $this->quote($columnName);
@@ -183,11 +183,11 @@ class GenericDefinition
         }
     }
 
-    private function getSetColumnPkSequenceStartSQL(String $tableName, String $columnName, ReflectedColumn $newColumn): String
+    private function getSetColumnPkSequenceStartSQL(string $tableName, string $columnName, ReflectedColumn $newColumn): string
     {
         $p1 = $this->quote($tableName);
         $p2 = $this->quote($columnName);
-        
+
         switch ($this->driver) {
             case 'mysql':
                 return "select 1";
@@ -201,7 +201,7 @@ class GenericDefinition
         }
     }
 
-    private function getSetColumnPkDefaultSQL(String $tableName, String $columnName, ReflectedColumn $newColumn): String
+    private function getSetColumnPkDefaultSQL(string $tableName, string $columnName, ReflectedColumn $newColumn): string
     {
         $p1 = $this->quote($tableName);
         $p2 = $this->quote($columnName);
@@ -230,7 +230,7 @@ class GenericDefinition
         }
     }
 
-    private function getAddColumnFkConstraintSQL(String $tableName, String $columnName, ReflectedColumn $newColumn): String
+    private function getAddColumnFkConstraintSQL(string $tableName, string $columnName, ReflectedColumn $newColumn): string
     {
         $p1 = $this->quote($tableName);
         $p2 = $this->quote($columnName);
@@ -241,7 +241,7 @@ class GenericDefinition
         return "ALTER TABLE $p1 ADD CONSTRAINT $p3 FOREIGN KEY ($p2) REFERENCES $p4 ($p5)";
     }
 
-    private function getRemoveColumnFkConstraintSQL(String $tableName, String $columnName, ReflectedColumn $newColumn): String
+    private function getRemoveColumnFkConstraintSQL(string $tableName, string $columnName, ReflectedColumn $newColumn): string
     {
         $p1 = $this->quote($tableName);
         $p2 = $this->quote($tableName . '_' . $columnName . '_fkey');
@@ -255,7 +255,7 @@ class GenericDefinition
         }
     }
 
-    private function getAddTableSQL(ReflectedTable $newTable): String
+    private function getAddTableSQL(ReflectedTable $newTable): string
     {
         $tableName = $newTable->getName();
         $p1 = $this->quote($tableName);
@@ -283,13 +283,12 @@ class GenericDefinition
         return "CREATE TABLE $p1 ($p2);";
     }
 
-    private function getAddColumnSQL(String $tableName, ReflectedColumn $newColumn): String
+    private function getAddColumnSQL(string $tableName, ReflectedColumn $newColumn): string
     {
         $p1 = $this->quote($tableName);
         $p2 = $this->quote($newColumn->getName());
         $p3 = $this->getColumnType($newColumn, false);
 
-        
         switch ($this->driver) {
             case 'mysql':
             case 'pgsql':
@@ -299,7 +298,7 @@ class GenericDefinition
         }
     }
 
-    private function getRemoveTableSQL(String $tableName): String
+    private function getRemoveTableSQL(string $tableName): string
     {
         $p1 = $this->quote($tableName);
 
@@ -312,12 +311,11 @@ class GenericDefinition
         }
     }
 
-    private function getRemoveColumnSQL(String $tableName, String $columnName): String
+    private function getRemoveColumnSQL(string $tableName, string $columnName): string
     {
         $p1 = $this->quote($tableName);
         $p2 = $this->quote($columnName);
 
-        
         switch ($this->driver) {
             case 'mysql':
             case 'pgsql':
@@ -327,31 +325,31 @@ class GenericDefinition
         }
     }
 
-    public function renameTable(String $tableName, String $newTableName)
+    public function renameTable(string $tableName, string $newTableName)
     {
         $sql = $this->getTableRenameSQL($tableName, $newTableName);
         return $this->query($sql);
     }
 
-    public function renameColumn(String $tableName, String $columnName, ReflectedColumn $newColumn)
+    public function renameColumn(string $tableName, string $columnName, ReflectedColumn $newColumn)
     {
         $sql = $this->getColumnRenameSQL($tableName, $columnName, $newColumn);
         return $this->query($sql);
     }
 
-    public function retypeColumn(String $tableName, String $columnName, ReflectedColumn $newColumn)
+    public function retypeColumn(string $tableName, string $columnName, ReflectedColumn $newColumn)
     {
         $sql = $this->getColumnRetypeSQL($tableName, $columnName, $newColumn);
         return $this->query($sql);
     }
 
-    public function setColumnNullable(String $tableName, String $columnName, ReflectedColumn $newColumn)
+    public function setColumnNullable(string $tableName, string $columnName, ReflectedColumn $newColumn)
     {
         $sql = $this->getSetColumnNullableSQL($tableName, $columnName, $newColumn);
         return $this->query($sql);
     }
 
-    public function addColumnPrimaryKey(String $tableName, String $columnName, ReflectedColumn $newColumn)
+    public function addColumnPrimaryKey(string $tableName, string $columnName, ReflectedColumn $newColumn)
     {
         $sql = $this->getSetColumnPkConstraintSQL($tableName, $columnName, $newColumn);
         $this->query($sql);
@@ -366,7 +364,7 @@ class GenericDefinition
         return true;
     }
 
-    public function removeColumnPrimaryKey(String $tableName, String $columnName, ReflectedColumn $newColumn)
+    public function removeColumnPrimaryKey(string $tableName, string $columnName, ReflectedColumn $newColumn)
     {
         if ($this->canAutoIncrement($newColumn)) {
             $sql = $this->getSetColumnPkDefaultSQL($tableName, $columnName, $newColumn);
@@ -379,13 +377,13 @@ class GenericDefinition
         return true;
     }
 
-    public function addColumnForeignKey(String $tableName, String $columnName, ReflectedColumn $newColumn)
+    public function addColumnForeignKey(string $tableName, string $columnName, ReflectedColumn $newColumn)
     {
         $sql = $this->getAddColumnFkConstraintSQL($tableName, $columnName, $newColumn);
         return $this->query($sql);
     }
 
-    public function removeColumnForeignKey(String $tableName, String $columnName, ReflectedColumn $newColumn)
+    public function removeColumnForeignKey(string $tableName, string $columnName, ReflectedColumn $newColumn)
     {
         $sql = $this->getRemoveColumnFkConstraintSQL($tableName, $columnName, $newColumn);
         return $this->query($sql);
@@ -397,25 +395,25 @@ class GenericDefinition
         return $this->query($sql);
     }
 
-    public function addColumn(String $tableName, ReflectedColumn $newColumn)
+    public function addColumn(string $tableName, ReflectedColumn $newColumn)
     {
         $sql = $this->getAddColumnSQL($tableName, $newColumn);
         return $this->query($sql);
     }
 
-    public function removeTable(String $tableName)
+    public function removeTable(string $tableName)
     {
         $sql = $this->getRemoveTableSQL($tableName);
         return $this->query($sql);
     }
 
-    public function removeColumn(String $tableName, String $columnName)
+    public function removeColumn(string $tableName, string $columnName)
     {
         $sql = $this->getRemoveColumnSQL($tableName, $columnName);
         return $this->query($sql);
     }
 
-    private function query(String $sql): bool
+    private function query(string $sql): bool
     {
         $stmt = $this->pdo->prepare($sql);
         //echo "- $sql -- []\n";

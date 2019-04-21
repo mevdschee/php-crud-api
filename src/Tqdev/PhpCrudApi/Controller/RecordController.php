@@ -1,11 +1,12 @@
 <?php
 namespace Tqdev\PhpCrudApi\Controller;
 
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
 use Tqdev\PhpCrudApi\Middleware\Router\Router;
 use Tqdev\PhpCrudApi\Record\ErrorCode;
 use Tqdev\PhpCrudApi\Record\RecordService;
-use Tqdev\PhpCrudApi\Request;
-use Tqdev\PhpCrudApi\Response;
+use Tqdev\PhpCrudApi\RequestUtils;
 
 class RecordController
 {
@@ -24,27 +25,27 @@ class RecordController
         $this->responder = $responder;
     }
 
-    public function _list(Request $request): Response
+    public function _list(ServerRequestInterface $request): ResponseInterface
     {
-        $table = $request->getPathSegment(2);
-        $params = $request->getParams();
+        $table = RequestUtils::getPathSegment($request, 2);
+        $params = RequestUtils::getParams($request);
         if (!$this->service->hasTable($table)) {
             return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $table);
         }
         return $this->responder->success($this->service->_list($table, $params));
     }
 
-    public function read(Request $request): Response
+    public function read(ServerRequestInterface $request): ResponseInterface
     {
-        $table = $request->getPathSegment(2);
+        $table = RequestUtils::getPathSegment($request, 2);
         if (!$this->service->hasTable($table)) {
             return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $table);
         }
         if ($this->service->getType($table) != 'table') {
             return $this->responder->error(ErrorCode::OPERATION_NOT_SUPPORTED, __FUNCTION__);
         }
-        $id = $request->getPathSegment(3);
-        $params = $request->getParams();
+        $id = RequestUtils::getPathSegment($request, 3);
+        $params = RequestUtils::getParams($request);
         if (strpos($id, ',') !== false) {
             $ids = explode(',', $id);
             $result = [];
@@ -61,20 +62,20 @@ class RecordController
         }
     }
 
-    public function create(Request $request): Response
+    public function create(ServerRequestInterface $request): ResponseInterface
     {
-        $table = $request->getPathSegment(2);
+        $table = RequestUtils::getPathSegment($request, 2);
         if (!$this->service->hasTable($table)) {
             return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $table);
         }
         if ($this->service->getType($table) != 'table') {
             return $this->responder->error(ErrorCode::OPERATION_NOT_SUPPORTED, __FUNCTION__);
         }
-        $record = $request->getBody();
+        $record = $request->getParsedBody();
         if ($record === null) {
             return $this->responder->error(ErrorCode::HTTP_MESSAGE_NOT_READABLE, '');
         }
-        $params = $request->getParams();
+        $params = RequestUtils::getParams($request);
         if (is_array($record)) {
             $result = array();
             foreach ($record as $r) {
@@ -86,18 +87,18 @@ class RecordController
         }
     }
 
-    public function update(Request $request): Response
+    public function update(ServerRequestInterface $request): ResponseInterface
     {
-        $table = $request->getPathSegment(2);
+        $table = RequestUtils::getPathSegment($request, 2);
         if (!$this->service->hasTable($table)) {
             return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $table);
         }
         if ($this->service->getType($table) != 'table') {
             return $this->responder->error(ErrorCode::OPERATION_NOT_SUPPORTED, __FUNCTION__);
         }
-        $id = $request->getPathSegment(3);
-        $params = $request->getParams();
-        $record = $request->getBody();
+        $id = RequestUtils::getPathSegment($request, 3);
+        $params = RequestUtils::getParams($request);
+        $record = $request->getParsedBody();
         if ($record === null) {
             return $this->responder->error(ErrorCode::HTTP_MESSAGE_NOT_READABLE, '');
         }
@@ -119,17 +120,17 @@ class RecordController
         }
     }
 
-    public function delete(Request $request): Response
+    public function delete(ServerRequestInterface $request): ResponseInterface
     {
-        $table = $request->getPathSegment(2);
+        $table = RequestUtils::getPathSegment($request, 2);
         if (!$this->service->hasTable($table)) {
             return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $table);
         }
         if ($this->service->getType($table) != 'table') {
             return $this->responder->error(ErrorCode::OPERATION_NOT_SUPPORTED, __FUNCTION__);
         }
-        $id = $request->getPathSegment(3);
-        $params = $request->getParams();
+        $id = RequestUtils::getPathSegment($request, 3);
+        $params = RequestUtils::getParams($request);
         $ids = explode(',', $id);
         if (count($ids) > 1) {
             $result = array();
@@ -142,21 +143,21 @@ class RecordController
         }
     }
 
-    public function increment(Request $request): Response
+    public function increment(ServerRequestInterface $request): ResponseInterface
     {
-        $table = $request->getPathSegment(2);
+        $table = RequestUtils::getPathSegment($request, 2);
         if (!$this->service->hasTable($table)) {
             return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $table);
         }
         if ($this->service->getType($table) != 'table') {
             return $this->responder->error(ErrorCode::OPERATION_NOT_SUPPORTED, __FUNCTION__);
         }
-        $id = $request->getPathSegment(3);
-        $record = $request->getBody();
+        $id = RequestUtils::getPathSegment($request, 3);
+        $record = $request->getParsedBody();
         if ($record === null) {
             return $this->responder->error(ErrorCode::HTTP_MESSAGE_NOT_READABLE, '');
         }
-        $params = $request->getParams();
+        $params = RequestUtils::getParams($request);
         $ids = explode(',', $id);
         if (is_array($record)) {
             if (count($ids) != count($record)) {

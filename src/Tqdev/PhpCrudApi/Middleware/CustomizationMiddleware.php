@@ -1,13 +1,14 @@
 <?php
 namespace Tqdev\PhpCrudApi\Middleware;
 
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 use Tqdev\PhpCrudApi\Column\ReflectionService;
 use Tqdev\PhpCrudApi\Controller\Responder;
 use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
 use Tqdev\PhpCrudApi\Middleware\Router\Router;
-use Tqdev\PhpCrudApi\Record\RequestUtils;
-use Tqdev\PhpCrudApi\Request;
-use Tqdev\PhpCrudApi\Response;
+use Tqdev\PhpCrudApi\RequestUtils;
 
 class CustomizationMiddleware extends Middleware
 {
@@ -17,22 +18,23 @@ class CustomizationMiddleware extends Middleware
     {
         parent::__construct($router, $responder, $properties);
         $this->reflection = $reflection;
-        $this->utils = new RequestUtils($reflection);
     }
 
-    public function handle(Request $request): Response
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $next): ResponseInterface
     {
-        $operation = $this->utils->getOperation($request);
-        $tableName = $request->getPathSegment(2);
+        $operation = RequestUtils::getOperation($request);
+        $tableName = RequestUtils::getPathSegment($request, 2);
         $beforeHandler = $this->getProperty('beforeHandler', '');
         $environment = (object) array();
         if ($beforeHandler !== '') {
-            call_user_func($beforeHandler, $operation, $tableName, $request, $environment);
+            $result = call_user_func($beforeHandler, $operation, $tableName, $request, $environment);
+            $request = $result ?: $request;
         }
-        $response = $this->next->handle($request);
+        $response = $next->handle($request);
         $afterHandler = $this->getProperty('afterHandler', '');
         if ($afterHandler !== '') {
-            call_user_func($afterHandler, $operation, $tableName, $response, $environment);
+            $result = call_user_func($afterHandler, $operation, $tableName, $response, $environment);
+            $response = $result ?: $response;
         }
         return $response;
     }

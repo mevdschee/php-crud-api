@@ -1,14 +1,15 @@
 <?php
 namespace Tqdev\PhpCrudApi\Middleware;
 
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 use Tqdev\PhpCrudApi\Column\ReflectionService;
 use Tqdev\PhpCrudApi\Controller\Responder;
 use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
 use Tqdev\PhpCrudApi\Middleware\Communication\VariableStore;
 use Tqdev\PhpCrudApi\Middleware\Router\Router;
-use Tqdev\PhpCrudApi\Record\RequestUtils;
-use Tqdev\PhpCrudApi\Request;
-use Tqdev\PhpCrudApi\Response;
+use Tqdev\PhpCrudApi\RequestUtils;
 
 class JoinLimitsMiddleware extends Middleware
 {
@@ -18,13 +19,12 @@ class JoinLimitsMiddleware extends Middleware
     {
         parent::__construct($router, $responder, $properties);
         $this->reflection = $reflection;
-        $this->utils = new RequestUtils($reflection);
     }
 
-    public function handle(Request $request): Response
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $next): ResponseInterface
     {
-        $operation = $this->utils->getOperation($request);
-        $params = $request->getParams();
+        $operation = RequestUtils::getOperation($request);
+        $params = RequestUtils::getParams($request);
         if (in_array($operation, ['read', 'list']) && isset($params['join'])) {
             $maxDepth = (int) $this->getProperty('depth', '3');
             $maxTables = (int) $this->getProperty('tables', '10');
@@ -47,9 +47,9 @@ class JoinLimitsMiddleware extends Middleware
                 }
             }
             $params['join'] = $joinPaths;
-            $request->setParams($params);
+            $request = RequestUtils::setParams($request, $params);
             VariableStore::set("joinLimits.maxRecords", $maxRecords);
         }
-        return $this->next->handle($request);
+        return $next->handle($request);
     }
 }

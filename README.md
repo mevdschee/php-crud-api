@@ -71,18 +71,6 @@ These are all the configuration options and their default value between brackets
 - "cacheTime": Number of seconds the cache is valid (`10`)
 - "debug": Show errors in the "X-Debug-Info" header (`false`)
 
-## Compilation
-
-The code resides in the "`src`" directory. You can access it at the URL:
-
-    http://localhost:8080/src/records/posts/1
-
-You can compile all files into a single "`api.php`" file using:
-
-    php build.php
-
-NB: The script appends the classes in alphabetical order (directories first).
-
 ## Limitations
 
 These limitation and constrains apply:
@@ -115,34 +103,32 @@ The following features are supported:
   - Spatial/GIS fields and filters supported with WKT
   - Generate API documentation using OpenAPI tools
   - Authentication via JWT token or username/password
+  - Support for reading database structure in JSON
+  - Support for modifying database structure using REST endpoint
+  - Security enhancing middleware is included
+  - Standard compliant: PSR-2, PSR-4, PSR-7, PSR-15 and PSR-17
 
-### Extra Features
+## Compilation
 
-These features are new in v2 and were not included in v1:
+You can compile all files into a single "`api.php`" file using:
 
-  - Does not reflect on every request (better performance)
-  - Complex filters (with both "and" & "or") are supported
-  - Support for output of database structure in JSON
-  - Support for boolean and binary data in all database engines
-  - Support for relational data on read (not only on list operation)
-  - Support for middleware to modify all operations (also list)
-  - Error reporting in JSON with corresponding HTTP status
-  - Support for basic authentication and via auth provider (JWT)
-  - Support for basic firewall functionality
-  - Prevent database scraping using list limits
+    php build.php
 
-### Dropped features
+You can access the non-compiled code at the URL:
 
-The following features of v1 were dropped in v2:
+    http://localhost:8080/src/records/posts/1
 
-  - ~~Streaming data, low memory footprint~~
-  - ~~Supports file upload from web forms (multipart/form-data)~~
-  - ~~Condensed JSON output: first row contains field names~~
-  - ~~Relation "transforms" (of condensed JSON) for PHP and JavaScript~~
-  - ~~Unstructured data support through JSON/JSONB~~
-  - ~~SQLite support~~
+The non-compiled code resides in the "`src`" and "`vendor`" directories.
 
-NB: You can find v1 here: https://github.com/mevdschee/php-crud-api/tree/v1
+### Updating dependencies
+
+You can update all dependencies of this project using the following command:
+
+    php update.php
+
+This script will install and run [Composer](https://getcomposer.org/) to update the required dependencies in the "`vendor`" directory.
+
+NB: The update script will also patch the dependencies in the vendor directory for PHP 7.0 compatibility.
 
 ## Middleware
 
@@ -782,7 +768,7 @@ You may use the "customization" middleware to modify request and response and im
         $environment->start = microtime(true);
     },
     'customization.afterHandler' => function ($operation, $tableName, $response, $environment) {
-        $response->addHeader('X-Time-Taken', microtime(true) - $environment->start);
+        return $response->withHeader('X-Time-Taken', microtime(true) - $environment->start);
     },
 
 The above example will add a header "X-Time-Taken" with the number of seconds the API call has taken.

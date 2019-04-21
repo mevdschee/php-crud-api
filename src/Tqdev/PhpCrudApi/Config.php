@@ -19,7 +19,7 @@ class Config
         'openApiBase' => '{"info":{"title":"PHP-CRUD-API","version":"1.0.0"}}',
     ];
 
-    private function getDefaultDriver(array $values): String
+    private function getDefaultDriver(array $values): string
     {
         if (isset($values['driver'])) {
             return $values['driver'];
@@ -27,7 +27,7 @@ class Config
         return 'mysql';
     }
 
-    private function getDefaultPort(String $driver): int
+    private function getDefaultPort(string $driver): int
     {
         switch ($driver) {
             case 'mysql':return 3306;
@@ -36,7 +36,7 @@ class Config
         }
     }
 
-    private function getDefaultAddress(String $driver): String
+    private function getDefaultAddress(string $driver): string
     {
         switch ($driver) {
             case 'mysql':return 'localhost';
@@ -45,7 +45,7 @@ class Config
         }
     }
 
-    private function getDriverDefaults(String $driver): array
+    private function getDriverDefaults(string $driver): array
     {
         return [
             'driver' => $driver,
@@ -92,12 +92,12 @@ class Config
         return $newValues;
     }
 
-    public function getDriver(): String
+    public function getDriver(): string
     {
         return $this->values['driver'];
     }
 
-    public function getAddress(): String
+    public function getAddress(): string
     {
         return $this->values['address'];
     }
@@ -107,17 +107,17 @@ class Config
         return $this->values['port'];
     }
 
-    public function getUsername(): String
+    public function getUsername(): string
     {
         return $this->values['username'];
     }
 
-    public function getPassword(): String
+    public function getPassword(): string
     {
         return $this->values['password'];
     }
 
-    public function getDatabase(): String
+    public function getDatabase(): string
     {
         return $this->values['database'];
     }
@@ -132,12 +132,12 @@ class Config
         return array_map('trim', explode(',', $this->values['controllers']));
     }
 
-    public function getCacheType(): String
+    public function getCacheType(): string
     {
         return $this->values['cacheType'];
     }
 
-    public function getCachePath(): String
+    public function getCachePath(): string
     {
         return $this->values['cachePath'];
     }
@@ -147,7 +147,7 @@ class Config
         return $this->values['cacheTime'];
     }
 
-    public function getDebug(): String
+    public function getDebug(): bool
     {
         return $this->values['debug'];
     }

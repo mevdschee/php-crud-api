@@ -6,6 +6,6 @@ Access-Control-Request-Headers: X-XSRF-TOKEN, X-Requested-With
 200
 Access-Control-Allow-Headers: Content-Type, X-XSRF-TOKEN, X-Authorization
 Access-Control-Allow-Methods: OPTIONS, GET, PUT, POST, DELETE, PATCH
-Access-Control-Allow-Credentials: true
 Access-Control-Max-Age: 1728000
+Access-Control-Allow-Credentials: true
 Access-Control-Allow-Origin: http://example.com

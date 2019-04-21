@@ -8,7 +8,7 @@ class GenericReflection
     private $database;
     private $typeConverter;
 
-    public function __construct(\PDO $pdo, String $driver, String $database)
+    public function __construct(\PDO $pdo, string $driver, string $database)
     {
         $this->pdo = $pdo;
         $this->driver = $driver;
@@ -25,7 +25,7 @@ class GenericReflection
         }
     }
 
-    private function getTablesSQL(): String
+    private function getTablesSQL(): string
     {
         switch ($this->driver) {
             case 'mysql':return 'SELECT "TABLE_NAME", "TABLE_TYPE" FROM "INFORMATION_SCHEMA"."TABLES" WHERE "TABLE_TYPE" IN (\'BASE TABLE\' , \'VIEW\') AND "TABLE_SCHEMA" = ? ORDER BY BINARY "TABLE_NAME"';
@@ -34,7 +34,7 @@ class GenericReflection
         }
     }
 
-    private function getTableColumnsSQL(): String
+    private function getTableColumnsSQL(): string
     {
         switch ($this->driver) {
             case 'mysql':return 'SELECT "COLUMN_NAME", "IS_NULLABLE", "DATA_TYPE", "CHARACTER_MAXIMUM_LENGTH", "NUMERIC_PRECISION", "NUMERIC_SCALE" FROM "INFORMATION_SCHEMA"."COLUMNS" WHERE "TABLE_NAME" = ? AND "TABLE_SCHEMA" = ?';
@@ -43,7 +43,7 @@ class GenericReflection
         }
     }
 
-    private function getTablePrimaryKeysSQL(): String
+    private function getTablePrimaryKeysSQL(): string
     {
         switch ($this->driver) {
             case 'mysql':return 'SELECT "COLUMN_NAME" FROM "INFORMATION_SCHEMA"."KEY_COLUMN_USAGE" WHERE "CONSTRAINT_NAME" = \'PRIMARY\' AND "TABLE_NAME" = ? AND "TABLE_SCHEMA" = ?';
@@ -52,7 +52,7 @@ class GenericReflection
         }
     }
 
-    private function getTableForeignKeysSQL(): String
+    private function getTableForeignKeysSQL(): string
     {
         switch ($this->driver) {
             case 'mysql':return 'SELECT "COLUMN_NAME", "REFERENCED_TABLE_NAME" FROM "INFORMATION_SCHEMA"."KEY_COLUMN_USAGE" WHERE "REFERENCED_TABLE_NAME" IS NOT NULL AND "TABLE_NAME" = ? AND "TABLE_SCHEMA" = ?';
@@ -61,7 +61,7 @@ class GenericReflection
         }
     }
 
-    public function getDatabaseName(): String
+    public function getDatabaseName(): string
     {
         return $this->database;
     }
@@ -89,7 +89,7 @@ class GenericReflection
         return $results;
     }
 
-    public function getTableColumns(String $tableName, String $type): array
+    public function getTableColumns(string $tableName, string $type): array
     {
         $sql = $this->getTableColumnsSQL();
         $results = $this->query($sql, [$tableName, $this->database]);
@@ -101,7 +101,7 @@ class GenericReflection
         return $results;
     }
 
-    public function getTablePrimaryKeys(String $tableName): array
+    public function getTablePrimaryKeys(string $tableName): array
     {
         $sql = $this->getTablePrimaryKeysSQL();
         $results = $this->query($sql, [$tableName, $this->database]);
@@ -112,7 +112,7 @@ class GenericReflection
         return $primaryKeys;
     }
 
-    public function getTableForeignKeys(String $tableName): array
+    public function getTableForeignKeys(string $tableName): array
     {
         $sql = $this->getTableForeignKeysSQL();
         $results = $this->query($sql, [$tableName, $this->database]);
@@ -123,12 +123,12 @@ class GenericReflection
         return $foreignKeys;
     }
 
-    public function toJdbcType(String $type, int $size): String
+    public function toJdbcType(string $type, int $size): string
     {
         return $this->typeConverter->toJdbc($type, $size);
     }
 
-    private function query(String $sql, array $parameters): array
+    private function query(string $sql, array $parameters): array
     {
         $stmt = $this->pdo->prepare($sql);
         //echo "- $sql -- " . json_encode($parameters, JSON_UNESCAPED_UNICODE) . "\n";

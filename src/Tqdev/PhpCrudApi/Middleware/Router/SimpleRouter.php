@@ -1,13 +1,14 @@
 <?php
 namespace Tqdev\PhpCrudApi\Middleware\Router;
 
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
 use Tqdev\PhpCrudApi\Cache\Cache;
 use Tqdev\PhpCrudApi\Controller\Responder;
 use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
 use Tqdev\PhpCrudApi\Record\ErrorCode;
 use Tqdev\PhpCrudApi\Record\PathTree;
-use Tqdev\PhpCrudApi\Request;
-use Tqdev\PhpCrudApi\Response;
+use Tqdev\PhpCrudApi\ResponseUtils;
 
 class SimpleRouter implements Router
 {
@@ -44,7 +45,7 @@ class SimpleRouter implements Router
         return $tree;
     }
 
-    public function register(String $method, String $path, array $handler)
+    public function register(string $method, string $path, array $handler)
     {
         $routeNumber = count($this->routeHandlers);
         $this->routeHandlers[$routeNumber] = $handler;
@@ -57,41 +58,36 @@ class SimpleRouter implements Router
 
     public function load(Middleware $middleware) /*: void*/
     {
-        if (count($this->middlewares) > 0) {
-            $next = $this->middlewares[0];
-        } else {
-            $next = $this;
-        }
-        $middleware->setNext($next);
-        array_unshift($this->middlewares, $middleware);
+        array_push($this->middlewares, $middleware);
     }
 
-    public function route(Request $request): Response
+    public function route(ServerRequestInterface $request): ResponseInterface
     {
         if ($this->registration) {
             $data = gzcompress(json_encode($this->routes, JSON_UNESCAPED_UNICODE));
             $this->cache->set('PathTree', $data, $this->ttl);
         }
-        $obj = $this;
-        if (count($this->middlewares) > 0) {
-            $obj = $this->middlewares[0];
-        }
-        return $obj->handle($request);
+        return $this->handle($request);
     }
 
-    private function getRouteNumbers(Request $request): array
+    private function getRouteNumbers(ServerRequestInterface $request): array
     {
         $method = strtoupper($request->getMethod());
-        $path = explode('/', trim($request->getPath(0), '/'));
+        $path = explode('/', trim($request->getRequestTarget(), '/'));
         array_unshift($path, $method);
         return $this->routes->match($path);
     }
 
-    public function handle(Request $request): Response
+    public function handle(ServerRequestInterface $request): ResponseInterface
     {
+        if (count($this->middlewares)) {
+            $handler = array_pop($this->middlewares);
+            return $handler->process($request, $this);
+        }
+
         $routeNumbers = $this->getRouteNumbers($request);
         if (count($routeNumbers) == 0) {
-            return $this->responder->error(ErrorCode::ROUTE_NOT_FOUND, $request->getPath());
+            return $this->responder->error(ErrorCode::ROUTE_NOT_FOUND, $request->getRequestTarget());
         }
         try {
             $response = call_user_func($this->routeHandlers[$routeNumbers[0]], $request);
@@ -106,7 +102,7 @@ class SimpleRouter implements Router
                 $response = $this->responder->error(ErrorCode::DATA_INTEGRITY_VIOLATION, '');
             }
             if ($this->debug) {
-                $response->addExceptionHeaders($e);
+                $response = ResponseUtils::addExceptionHeaders($response, $e);
             }
         }
         return $response;

@@ -1,14 +1,15 @@
 <?php
 namespace Tqdev\PhpCrudApi\Middleware;
 
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 use Tqdev\PhpCrudApi\Column\ReflectionService;
 use Tqdev\PhpCrudApi\Controller\Responder;
 use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
 use Tqdev\PhpCrudApi\Middleware\Router\Router;
 use Tqdev\PhpCrudApi\Record\ErrorCode;
-use Tqdev\PhpCrudApi\Record\RequestUtils;
-use Tqdev\PhpCrudApi\Request;
-use Tqdev\PhpCrudApi\Response;
+use Tqdev\PhpCrudApi\RequestUtils;
 
 class PageLimitsMiddleware extends Middleware
 {
@@ -18,14 +19,13 @@ class PageLimitsMiddleware extends Middleware
     {
         parent::__construct($router, $responder, $properties);
         $this->reflection = $reflection;
-        $this->utils = new RequestUtils($reflection);
     }
 
-    public function handle(Request $request): Response
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $next): ResponseInterface
     {
-        $operation = $this->utils->getOperation($request);
+        $operation = RequestUtils::getOperation($request);
         if ($operation == 'list') {
-            $params = $request->getParams();
+            $params = RequestUtils::getParams($request);
             $maxPage = (int) $this->getProperty('pages', '100');
             if (isset($params['page']) && $params['page'] && $maxPage > 0) {
                 if (strpos($params['page'][0], ',') === false) {
@@ -43,8 +43,8 @@ class PageLimitsMiddleware extends Middleware
             } else {
                 $params['size'] = array(min($params['size'][0], $maxSize));
             }
-            $request->setParams($params);
+            $request = RequestUtils::setParams($request, $params);
         }
-        return $this->next->handle($request);
+        return $next->handle($request);
     }
 }

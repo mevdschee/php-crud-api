@@ -11,7 +11,7 @@ class ReflectedTable implements \JsonSerializable
     private $pk;
     private $fks;
 
-    public function __construct(String $name, String $type, array $columns)
+    public function __construct(string $name, string $type, array $columns)
     {
         $this->name = $name;
         $this->type = $type;
@@ -39,7 +39,7 @@ class ReflectedTable implements \JsonSerializable
         }
     }
 
-    public static function fromReflection(GenericReflection $reflection, String $name, String $type): ReflectedTable
+    public static function fromReflection(GenericReflection $reflection, string $name, string $type): ReflectedTable
     {
         // set columns
         $columns = [];
@@ -77,7 +77,7 @@ class ReflectedTable implements \JsonSerializable
         return new ReflectedTable($name, $type, $columns);
     }
 
-    public function hasColumn(String $columnName): bool
+    public function hasColumn(string $columnName): bool
     {
         return isset($this->columns[$columnName]);
     }
@@ -92,12 +92,12 @@ class ReflectedTable implements \JsonSerializable
         return $this->pk;
     }
 
-    public function getName(): String
+    public function getName(): string
     {
         return $this->name;
     }
 
-    public function getType(): String
+    public function getType(): string
     {
         return $this->type;
     }
@@ -112,7 +112,7 @@ class ReflectedTable implements \JsonSerializable
         return $this->columns[$columnName];
     }
 
-    public function getFksTo(String $tableName): array
+    public function getFksTo(string $tableName): array
     {
         $columns = array();
         foreach ($this->fks as $columnName => $referencedTableName) {
@@ -123,7 +123,7 @@ class ReflectedTable implements \JsonSerializable
         return $columns;
     }
 
-    public function removeColumn(String $columnName): bool
+    public function removeColumn(string $columnName): bool
     {
         if (!isset($this->columns[$columnName])) {
             return false;

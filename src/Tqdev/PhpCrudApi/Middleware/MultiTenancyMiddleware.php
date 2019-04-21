@@ -1,6 +1,9 @@
 <?php
 namespace Tqdev\PhpCrudApi\Middleware;
 
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 use Tqdev\PhpCrudApi\Column\ReflectionService;
 use Tqdev\PhpCrudApi\Controller\Responder;
 use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
@@ -9,9 +12,7 @@ use Tqdev\PhpCrudApi\Middleware\Router\Router;
 use Tqdev\PhpCrudApi\Record\Condition\ColumnCondition;
 use Tqdev\PhpCrudApi\Record\Condition\Condition;
 use Tqdev\PhpCrudApi\Record\Condition\NoCondition;
-use Tqdev\PhpCrudApi\Record\RequestUtils;
-use Tqdev\PhpCrudApi\Request;
-use Tqdev\PhpCrudApi\Response;
+use Tqdev\PhpCrudApi\RequestUtils;
 
 class MultiTenancyMiddleware extends Middleware
 {
@@ -21,10 +22,9 @@ class MultiTenancyMiddleware extends Middleware
     {
         parent::__construct($router, $responder, $properties);
         $this->reflection = $reflection;
-        $this->utils = new RequestUtils($reflection);
     }
 
-    private function getCondition(String $tableName, array $pairs): Condition
+    private function getCondition(string $tableName, array $pairs): Condition
     {
         $condition = new NoCondition();
         $table = $this->reflection->getTable($tableName);
@@ -34,7 +34,7 @@ class MultiTenancyMiddleware extends Middleware
         return $condition;
     }
 
-    private function getPairs($handler, String $operation, String $tableName): array
+    private function getPairs($handler, string $operation, string $tableName): array
     {
         $result = array();
         $pairs = call_user_func($handler, $operation, $tableName);
@@ -47,11 +47,11 @@ class MultiTenancyMiddleware extends Middleware
         return $result;
     }
 
-    private function handleRecord(Request $request, String $operation, array $pairs) /*: void*/
+    private function handleRecord(ServerRequestInterface $request, string $operation, array $pairs): ServerRequestInterface
     {
-        $record = $request->getBody();
+        $record = $request->getParsedBody();
         if ($record === null) {
-            return;
+            return $request;
         }
         $multi = is_array($record);
         $records = $multi ? $record : [$record];
@@ -66,17 +66,17 @@ class MultiTenancyMiddleware extends Middleware
                 }
             }
         }
-        $request->setBody($multi ? $records : $records[0]);
+        return $request->withParsedBody($multi ? $records : $records[0]);
     }
 
-    public function handle(Request $request): Response
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $next): ResponseInterface
     {
         $handler = $this->getProperty('handler', '');
         if ($handler !== '') {
-            $path = $request->getPathSegment(1);
+            $path = RequestUtils::getPathSegment($request, 1);
             if ($path == 'records') {
-                $operation = $this->utils->getOperation($request);
-                $tableNames = $this->utils->getTableNames($request);
+                $operation = RequestUtils::getOperation($request);
+                $tableNames = RequestUtils::getTableNames($request, $this->reflection);
                 foreach ($tableNames as $i => $tableName) {
                     if (!$this->reflection->hasTable($tableName)) {
                         continue;
@@ -84,7 +84,7 @@ class MultiTenancyMiddleware extends Middleware
                     $pairs = $this->getPairs($handler, $operation, $tableName);
                     if ($i == 0) {
                         if (in_array($operation, ['create', 'update', 'increment'])) {
-                            $this->handleRecord($request, $operation, $pairs);
+                            $request = $this->handleRecord($request, $operation, $pairs);
                         }
                     }
                     $condition = $this->getCondition($tableName, $pairs);
@@ -92,6 +92,6 @@ class MultiTenancyMiddleware extends Middleware
                 }
             }
         }
-        return $this->next->handle($request);
+        return $next->handle($request);
     }
 }

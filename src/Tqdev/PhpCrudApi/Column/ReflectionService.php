@@ -36,7 +36,7 @@ class ReflectionService
         return $database;
     }
 
-    private function loadTable(String $tableName, bool $useCache): ReflectedTable
+    private function loadTable(string $tableName, bool $useCache): ReflectedTable
     {
         $data = $useCache ? $this->cache->get("ReflectedTable($tableName)") : '';
         if ($data != '') {
@@ -55,22 +55,22 @@ class ReflectionService
         $this->database = $this->loadDatabase(false);
     }
 
-    public function refreshTable(String $tableName)
+    public function refreshTable(string $tableName)
     {
         $this->tables[$tableName] = $this->loadTable($tableName, false);
     }
 
-    public function hasTable(String $tableName): bool
+    public function hasTable(string $tableName): bool
     {
         return $this->database->hasTable($tableName);
     }
 
-    public function getType(String $tableName): String
+    public function getType(string $tableName): string
     {
         return $this->database->getType($tableName);
     }
 
-    public function getTable(String $tableName): ReflectedTable
+    public function getTable(string $tableName): ReflectedTable
     {
         if (!isset($this->tables[$tableName])) {
             $this->tables[$tableName] = $this->loadTable($tableName, true);
@@ -83,12 +83,12 @@ class ReflectionService
         return $this->database->getTableNames();
     }
 
-    public function getDatabaseName(): String
+    public function getDatabaseName(): string
     {
         return $this->database->getName();
     }
 
-    public function removeTable(String $tableName): bool
+    public function removeTable(string $tableName): bool
     {
         unset($this->tables[$tableName]);
         return $this->database->removeTable($tableName);

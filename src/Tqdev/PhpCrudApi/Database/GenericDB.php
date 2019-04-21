@@ -17,7 +17,7 @@ class GenericDB
     private $columns;
     private $converter;
 
-    private function getDsn(String $address, String $port = null, String $database = null): String
+    private function getDsn(string $address, int $port, string $database): string
     {
         switch ($this->driver) {
             case 'mysql':return "$this->driver:host=$address;port=$port;dbname=$database;charset=utf8mb4";
@@ -65,7 +65,7 @@ class GenericDB
         }
     }
 
-    public function __construct(String $driver, String $address, String $port = null, String $database = null, String $username = null, String $password = null)
+    public function __construct(string $driver, string $address, int $port, string $database, string $username, string $password)
     {
         $this->driver = $driver;
         $this->database = $database;
@@ -98,7 +98,7 @@ class GenericDB
         return $this->definition;
     }
 
-    private function addMiddlewareConditions(String $tableName, Condition $condition): Condition
+    private function addMiddlewareConditions(string $tableName, Condition $condition): Condition
     {
         $condition1 = VariableStore::get("authorization.conditions.$tableName");
         if ($condition1) {
@@ -137,7 +137,7 @@ class GenericDB
         return $pkValue;
     }
 
-    public function selectSingle(ReflectedTable $table, array $columnNames, String $id) /*: ?array*/
+    public function selectSingle(ReflectedTable $table, array $columnNames, string $id) /*: ?array*/
     {
         $selectColumns = $this->columns->getSelect($table, $columnNames);
         $tableName = $table->getName();
@@ -204,7 +204,7 @@ class GenericDB
         return $records;
     }
 
-    public function updateSingle(ReflectedTable $table, array $columnValues, String $id)
+    public function updateSingle(ReflectedTable $table, array $columnValues, string $id)
     {
         if (count($columnValues) == 0) {
             return 0;
@@ -221,7 +221,7 @@ class GenericDB
         return $stmt->rowCount();
     }
 
-    public function deleteSingle(ReflectedTable $table, String $id)
+    public function deleteSingle(ReflectedTable $table, string $id)
     {
         $tableName = $table->getName();
         $condition = new ColumnCondition($table->getPk(), 'eq', $id);
@@ -233,7 +233,7 @@ class GenericDB
         return $stmt->rowCount();
     }
 
-    public function incrementSingle(ReflectedTable $table, array $columnValues, String $id)
+    public function incrementSingle(ReflectedTable $table, array $columnValues, string $id)
     {
         if (count($columnValues) == 0) {
             return 0;
@@ -250,7 +250,7 @@ class GenericDB
         return $stmt->rowCount();
     }
 
-    private function query(String $sql, array $parameters): \PDOStatement
+    private function query(string $sql, array $parameters): \PDOStatement
     {
         $stmt = $this->pdo->prepare($sql);
         //echo "- $sql -- " . json_encode($parameters, JSON_UNESCAPED_UNICODE) . "\n";

@@ -32,12 +32,12 @@ class ReflectedDatabase implements \JsonSerializable
         return new ReflectedDatabase($tableTypes);
     }
 
-    public function hasTable(String $tableName): bool
+    public function hasTable(string $tableName): bool
     {
         return isset($this->tableTypes[$tableName]);
     }
 
-    public function getType(String $tableName): String
+    public function getType(string $tableName): string
     {
         return isset($this->tableTypes[$tableName]) ? $this->tableTypes[$tableName] : '';
     }
@@ -47,7 +47,7 @@ class ReflectedDatabase implements \JsonSerializable
         return array_keys($this->tableTypes);
     }
 
-    public function removeTable(String $tableName): bool
+    public function removeTable(string $tableName): bool
     {
         if (!isset($this->tableTypes[$tableName])) {
             return false;

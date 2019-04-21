@@ -10,7 +10,7 @@ class OpenApiDefinition implements \JsonSerializable
         $this->root = $base;
     }
 
-    public function set(String $path, $value) /*: void*/
+    public function set(string $path, $value) /*: void*/
     {
         $parts = explode('|', trim($path, '|'));
         $current = &$this->root;
@@ -24,7 +24,7 @@ class OpenApiDefinition implements \JsonSerializable
         $current = $value;
     }
 
-    public function has(String $path): bool
+    public function has(string $path): bool
     {
         $parts = explode('|', trim($path, '|'));
         $current = &$this->root;

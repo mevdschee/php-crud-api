@@ -40,7 +40,7 @@ class OpenApiBuilder
         $this->openapi = new OpenApiDefinition($base);
     }
 
-    private function getServerUrl(): String
+    private function getServerUrl(): string
     {
         $protocol = @$_SERVER['HTTP_X_FORWARDED_PROTO'] ?: @$_SERVER['REQUEST_SCHEME'] ?: ((isset($_SERVER["HTTPS"]) && $_SERVER["HTTPS"] == "on") ? "https" : "http");
         $port = @intval($_SERVER['HTTP_X_FORWARDED_PORT']) ?: @intval($_SERVER["SERVER_PORT"]) ?: (($protocol === 'https') ? 443 : 80);
@@ -102,7 +102,7 @@ class OpenApiBuilder
         return $this->openapi;
     }
 
-    private function isOperationOnTableAllowed(String $operation, String $tableName): bool
+    private function isOperationOnTableAllowed(string $operation, string $tableName): bool
     {
         $tableHandler = VariableStore::get('authorization.tableHandler');
         if (!$tableHandler) {
@@ -111,7 +111,7 @@ class OpenApiBuilder
         return (bool) call_user_func($tableHandler, $operation, $tableName);
     }
 
-    private function isOperationOnColumnAllowed(String $operation, String $tableName, String $columnName): bool
+    private function isOperationOnColumnAllowed(string $operation, string $tableName, string $columnName): bool
     {
         $columnHandler = VariableStore::get('authorization.columnHandler');
         if (!$columnHandler) {
@@ -120,7 +120,7 @@ class OpenApiBuilder
         return (bool) call_user_func($columnHandler, $operation, $tableName, $columnName);
     }
 
-    private function setPath(String $tableName) /*: void*/
+    private function setPath(string $tableName) /*: void*/
     {
         $table = $this->reflection->getTable($tableName);
         $type = $table->getType();
@@ -181,7 +181,7 @@ class OpenApiBuilder
         }
     }
 
-    private function setComponentSchema(String $tableName, array $references) /*: void*/
+    private function setComponentSchema(string $tableName, array $references) /*: void*/
     {
         $table = $this->reflection->getTable($tableName);
         $type = $table->getType();
@@ -231,7 +231,7 @@ class OpenApiBuilder
         }
     }
 
-    private function setComponentResponse(String $tableName) /*: void*/
+    private function setComponentResponse(string $tableName) /*: void*/
     {
         $table = $this->reflection->getTable($tableName);
         $type = $table->getType();
@@ -256,7 +256,7 @@ class OpenApiBuilder
         }
     }
 
-    private function setComponentRequestBody(String $tableName) /*: void*/
+    private function setComponentRequestBody(string $tableName) /*: void*/
     {
         $table = $this->reflection->getTable($tableName);
         $type = $table->getType();
@@ -327,7 +327,7 @@ class OpenApiBuilder
         $this->openapi->set("components|parameters|join|required", false);
     }
 
-    private function setTag(int $index, String $tableName) /*: void*/
+    private function setTag(int $index, string $tableName) /*: void*/
     {
         $this->openapi->set("tags|$index|name", "$tableName");
         $this->openapi->set("tags|$index|description", "$tableName operations");

@@ -1,7 +1,7 @@
 <?php
 namespace Tqdev\PhpCrudApi\Record;
 
-use Tqdev\PhpCrudApi\Response;
+use Tqdev\PhpCrudApi\ResponseFactory;
 
 class ErrorCode
 {
@@ -33,27 +33,27 @@ class ErrorCode
     const PAGINATION_FORBIDDEN = 1019;
 
     private $values = [
-        9999 => ["%s", Response::INTERNAL_SERVER_ERROR],
-        1000 => ["Route '%s' not found", Response::NOT_FOUND],
-        1001 => ["Table '%s' not found", Response::NOT_FOUND],
-        1002 => ["Argument count mismatch in '%s'", Response::UNPROCESSABLE_ENTITY],
-        1003 => ["Record '%s' not found", Response::NOT_FOUND],
-        1004 => ["Origin '%s' is forbidden", Response::FORBIDDEN],
-        1005 => ["Column '%s' not found", Response::NOT_FOUND],
-        1006 => ["Table '%s' already exists", Response::CONFLICT],
-        1007 => ["Column '%s' already exists", Response::CONFLICT],
-        1008 => ["Cannot read HTTP message", Response::UNPROCESSABLE_ENTITY],
-        1009 => ["Duplicate key exception", Response::CONFLICT],
-        1010 => ["Data integrity violation", Response::CONFLICT],
-        1011 => ["Authentication required", Response::UNAUTHORIZED],
-        1012 => ["Authentication failed for '%s'", Response::FORBIDDEN],
-        1013 => ["Input validation failed for '%s'", Response::UNPROCESSABLE_ENTITY],
-        1014 => ["Operation forbidden", Response::FORBIDDEN],
-        1015 => ["Operation '%s' not supported", Response::METHOD_NOT_ALLOWED],
-        1016 => ["Temporary or permanently blocked", Response::FORBIDDEN],
-        1017 => ["Bad or missing XSRF token", Response::FORBIDDEN],
-        1018 => ["Only AJAX requests allowed for '%s'", Response::FORBIDDEN],
-        1019 => ["Pagination forbidden", Response::FORBIDDEN],
+        9999 => ["%s", ResponseFactory::INTERNAL_SERVER_ERROR],
+        1000 => ["Route '%s' not found", ResponseFactory::NOT_FOUND],
+        1001 => ["Table '%s' not found", ResponseFactory::NOT_FOUND],
+        1002 => ["Argument count mismatch in '%s'", ResponseFactory::UNPROCESSABLE_ENTITY],
+        1003 => ["Record '%s' not found", ResponseFactory::NOT_FOUND],
+        1004 => ["Origin '%s' is forbidden", ResponseFactory::FORBIDDEN],
+        1005 => ["Column '%s' not found", ResponseFactory::NOT_FOUND],
+        1006 => ["Table '%s' already exists", ResponseFactory::CONFLICT],
+        1007 => ["Column '%s' already exists", ResponseFactory::CONFLICT],
+        1008 => ["Cannot read HTTP message", ResponseFactory::UNPROCESSABLE_ENTITY],
+        1009 => ["Duplicate key exception", ResponseFactory::CONFLICT],
+        1010 => ["Data integrity violation", ResponseFactory::CONFLICT],
+        1011 => ["Authentication required", ResponseFactory::UNAUTHORIZED],
+        1012 => ["Authentication failed for '%s'", ResponseFactory::FORBIDDEN],
+        1013 => ["Input validation failed for '%s'", ResponseFactory::UNPROCESSABLE_ENTITY],
+        1014 => ["Operation forbidden", ResponseFactory::FORBIDDEN],
+        1015 => ["Operation '%s' not supported", ResponseFactory::METHOD_NOT_ALLOWED],
+        1016 => ["Temporary or permanently blocked", ResponseFactory::FORBIDDEN],
+        1017 => ["Bad or missing XSRF token", ResponseFactory::FORBIDDEN],
+        1018 => ["Only AJAX requests allowed for '%s'", ResponseFactory::FORBIDDEN],
+        1019 => ["Pagination forbidden", ResponseFactory::FORBIDDEN],
     ];
 
     public function __construct(int $code)
@@ -71,7 +71,7 @@ class ErrorCode
         return $this->code;
     }
 
-    public function getMessage(String $argument): String
+    public function getMessage(string $argument): string
     {
         return sprintf($this->message, $argument);
     }

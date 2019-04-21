@@ -1,15 +1,16 @@
 <?php
 namespace Tqdev\PhpCrudApi\Middleware;
 
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 use Tqdev\PhpCrudApi\Column\ReflectionService;
 use Tqdev\PhpCrudApi\Controller\Responder;
 use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
 use Tqdev\PhpCrudApi\Middleware\Communication\VariableStore;
 use Tqdev\PhpCrudApi\Middleware\Router\Router;
 use Tqdev\PhpCrudApi\Record\FilterInfo;
-use Tqdev\PhpCrudApi\Record\RequestUtils;
-use Tqdev\PhpCrudApi\Request;
-use Tqdev\PhpCrudApi\Response;
+use Tqdev\PhpCrudApi\RequestUtils;
 
 class AuthorizationMiddleware extends Middleware
 {
@@ -19,10 +20,9 @@ class AuthorizationMiddleware extends Middleware
     {
         parent::__construct($router, $responder, $properties);
         $this->reflection = $reflection;
-        $this->utils = new RequestUtils($reflection);
     }
 
-    private function handleColumns(String $operation, String $tableName) /*: void*/
+    private function handleColumns(string $operation, string $tableName) /*: void*/
     {
         $columnHandler = $this->getProperty('columnHandler', '');
         if ($columnHandler) {
@@ -36,7 +36,7 @@ class AuthorizationMiddleware extends Middleware
         }
     }
 
-    private function handleTable(String $operation, String $tableName) /*: void*/
+    private function handleTable(string $operation, string $tableName) /*: void*/
     {
         if (!$this->reflection->hasTable($tableName)) {
             return;
@@ -52,7 +52,7 @@ class AuthorizationMiddleware extends Middleware
         }
     }
 
-    private function handleRecords(String $operation, String $tableName) /*: void*/
+    private function handleRecords(string $operation, string $tableName) /*: void*/
     {
         if (!$this->reflection->hasTable($tableName)) {
             return;
@@ -69,11 +69,11 @@ class AuthorizationMiddleware extends Middleware
         }
     }
 
-    public function handle(Request $request): Response
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $next): ResponseInterface
     {
-        $path = $request->getPathSegment(1);
-        $operation = $this->utils->getOperation($request);
-        $tableNames = $this->utils->getTableNames($request);
+        $path = RequestUtils::getPathSegment($request, 1);
+        $operation = RequestUtils::getOperation($request);
+        $tableNames = RequestUtils::getTableNames($request, $this->reflection);
         foreach ($tableNames as $tableName) {
             $this->handleTable($operation, $tableName);
             if ($path == 'records') {
@@ -84,6 +84,6 @@ class AuthorizationMiddleware extends Middleware
             VariableStore::set('authorization.tableHandler', $this->getProperty('tableHandler', ''));
             VariableStore::set('authorization.columnHandler', $this->getProperty('columnHandler', ''));
         }
-        return $this->next->handle($request);
+        return $next->handle($request);
     }
 }

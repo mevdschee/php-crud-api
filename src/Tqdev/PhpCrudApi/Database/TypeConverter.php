@@ -5,7 +5,7 @@ class TypeConverter
 {
     private $driver;
 
-    public function __construct(String $driver)
+    public function __construct(string $driver)
     {
         $this->driver = $driver;
     }
@@ -163,7 +163,7 @@ class TypeConverter
         'geometry' => true,
     ];
 
-    public function toJdbc(String $type, int $size): String
+    public function toJdbc(string $type, int $size): string
     {
         $jdbcType = strtolower($type);
         if (isset($this->toJdbc[$this->driver]["$jdbcType($size)"])) {
@@ -181,7 +181,7 @@ class TypeConverter
         return $jdbcType;
     }
 
-    public function fromJdbc(String $type): String
+    public function fromJdbc(string $type): string
     {
         $jdbcType = strtolower($type);
         if (isset($this->fromJdbc[$this->driver][$jdbcType])) {

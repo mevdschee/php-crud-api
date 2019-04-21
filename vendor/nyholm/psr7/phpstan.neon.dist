@@ -1,0 +1,25 @@
+parameters:
+    level: 5
+    paths:
+      - src
+
+    ignoreErrors:
+        -
+            message: '#Strict comparison using === between false and true will always evaluate to false#'
+            path: %currentWorkingDirectory%/src/UploadedFile.php
+
+        -
+            message: '#Strict comparison using === between null and string will always evaluate to false#'
+            path: %currentWorkingDirectory%/src/Response.php
+
+        -
+            message: '#Result of && is always false.#'
+            path: %currentWorkingDirectory%/src/Response.php
+
+        -
+            message: '#Strict comparison using !== between null and null will always evaluate to false#'
+            path: %currentWorkingDirectory%/src/ServerRequest.php
+
+        -
+            message: '#Result of && is always false#'
+            path: %currentWorkingDirectory%/src/ServerRequest.php

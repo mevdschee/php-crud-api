@@ -3,16 +3,1686 @@
  * PHP-CRUD-API v2              License: MIT
  * Maurits van der Schee: maurits@vdschee.nl
  * https://github.com/mevdschee/php-crud-api
+ *
+ * Dependencies:
+ * - vendor/psr/*: PHP-FIG
+ *   https://github.com/php-fig
+ * - vendor/nyholm/*: Tobias Nyholm
+ *   https://github.com/Nyholm
  **/
 
 namespace Tqdev\PhpCrudApi;
+
+// file: vendor/psr/http-factory/src/RequestFactoryInterface.php
+
+interface RequestFactoryInterface
+{
+    public function createRequest(string $method, $uri): RequestInterface;
+}
+
+// file: vendor/psr/http-factory/src/ResponseFactoryInterface.php
+
+interface ResponseFactoryInterface
+{
+    public function createResponse(int $code = 200, string $reasonPhrase = ''): ResponseInterface;
+}
+
+// file: vendor/psr/http-factory/src/ServerRequestFactoryInterface.php
+
+interface ServerRequestFactoryInterface
+{
+    public function createServerRequest(string $method, $uri, array $serverParams = []): ServerRequestInterface;
+}
+
+// file: vendor/psr/http-factory/src/StreamFactoryInterface.php
+
+interface StreamFactoryInterface
+{
+    public function createStream(string $content = ''): StreamInterface;
+
+    public function createStreamFromFile(string $filename, string $mode = 'r'): StreamInterface;
+
+    public function createStreamFromResource($resource): StreamInterface;
+}
+
+// file: vendor/psr/http-factory/src/UploadedFileFactoryInterface.php
+
+interface UploadedFileFactoryInterface
+{
+    public function createUploadedFile(
+        StreamInterface $stream,
+        int $size = null,
+        int $error = \UPLOAD_ERR_OK,
+        string $clientFilename = null,
+        string $clientMediaType = null
+    ): UploadedFileInterface;
+}
+
+// file: vendor/psr/http-factory/src/UriFactoryInterface.php
+
+interface UriFactoryInterface
+{
+    public function createUri(string $uri = ''): UriInterface;
+}
+
+// file: vendor/psr/http-message/src/MessageInterface.php
+
+interface MessageInterface
+{
+    public function getProtocolVersion();
+
+    public function withProtocolVersion($version);
+
+    public function getHeaders();
+
+    public function hasHeader($name);
+
+    public function getHeader($name);
+
+    public function getHeaderLine($name);
+
+    public function withHeader($name, $value);
+
+    public function withAddedHeader($name, $value);
+
+    public function withoutHeader($name);
+
+    public function getBody();
+
+    public function withBody(StreamInterface $body);
+}
+
+// file: vendor/psr/http-message/src/RequestInterface.php
+
+interface RequestInterface extends MessageInterface
+{
+    public function getRequestTarget();
+
+    public function withRequestTarget($requestTarget);
+
+    public function getMethod();
+
+    public function withMethod($method);
+
+    public function getUri();
+
+    public function withUri(UriInterface $uri, $preserveHost = false);
+}
+
+// file: vendor/psr/http-message/src/ResponseInterface.php
+
+interface ResponseInterface extends MessageInterface
+{
+    public function getStatusCode();
+
+    public function withStatus($code, $reasonPhrase = '');
+
+    public function getReasonPhrase();
+}
+
+// file: vendor/psr/http-message/src/ServerRequestInterface.php
+
+interface ServerRequestInterface extends RequestInterface
+{
+    public function getServerParams();
+
+    public function getCookieParams();
+
+    public function withCookieParams(array $cookies);
+
+    public function getQueryParams();
+
+    public function withQueryParams(array $query);
+
+    public function getUploadedFiles();
+
+    public function withUploadedFiles(array $uploadedFiles);
+
+    public function getParsedBody();
+
+    public function withParsedBody($data);
+
+    public function getAttributes();
+
+    public function getAttribute($name, $default = null);
+
+    public function withAttribute($name, $value);
+
+    public function withoutAttribute($name);
+}
+
+// file: vendor/psr/http-message/src/StreamInterface.php
+
+interface StreamInterface
+{
+    public function __toString();
+
+    public function close();
+
+    public function detach();
+
+    public function getSize();
+
+    public function tell();
+
+    public function eof();
+
+    public function isSeekable();
+
+    public function seek($offset, $whence = SEEK_SET);
+
+    public function rewind();
+
+    public function isWritable();
+
+    public function write($string);
+
+    public function isReadable();
+
+    public function read($length);
+
+    public function getContents();
+
+    public function getMetadata($key = null);
+}
+
+// file: vendor/psr/http-message/src/UploadedFileInterface.php
+
+interface UploadedFileInterface
+{
+    public function getStream();
+
+    public function moveTo($targetPath);
+
+    public function getSize();
+
+    public function getError();
+
+    public function getClientFilename();
+
+    public function getClientMediaType();
+}
+
+// file: vendor/psr/http-message/src/UriInterface.php
+
+interface UriInterface
+{
+    public function getScheme();
+
+    public function getAuthority();
+
+    public function getUserInfo();
+
+    public function getHost();
+
+    public function getPort();
+
+    public function getPath();
+
+    public function getQuery();
+
+    public function getFragment();
+
+    public function withScheme($scheme);
+
+    public function withUserInfo($user, $password = null);
+
+    public function withHost($host);
+
+    public function withPort($port);
+
+    public function withPath($path);
+
+    public function withQuery($query);
+
+    public function withFragment($fragment);
+
+    public function __toString();
+}
+
+// file: vendor/psr/http-server-handler/src/RequestHandlerInterface.php
+
+interface RequestHandlerInterface
+{
+    public function handle(ServerRequestInterface $request): ResponseInterface;
+}
+
+// file: vendor/psr/http-server-middleware/src/MiddlewareInterface.php
+
+interface MiddlewareInterface
+{
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface;
+}
+
+// file: vendor/nyholm/psr7/src/Factory/Psr17Factory.php
+
+final class Psr17Factory implements RequestFactoryInterface, ResponseFactoryInterface, ServerRequestFactoryInterface, StreamFactoryInterface, UploadedFileFactoryInterface, UriFactoryInterface
+{
+    public function createRequest(string $method, $uri): RequestInterface
+    {
+        return new Request($method, $uri);
+    }
+
+    public function createResponse(int $code = 200, string $reasonPhrase = ''): ResponseInterface
+    {
+        return new Response($code, [], null, '1.1', $reasonPhrase);
+    }
+
+    public function createStream(string $content = ''): StreamInterface
+    {
+        return Stream::create($content);
+    }
+
+    public function createStreamFromFile(string $filename, string $mode = 'r'): StreamInterface
+    {
+        $resource = @\fopen($filename, $mode);
+        if (false === $resource) {
+            if ('' === $mode || false === \in_array($mode[0], ['r', 'w', 'a', 'x', 'c'])) {
+                throw new \InvalidArgumentException('The mode ' . $mode . ' is invalid.');
+            }
+
+            throw new \RuntimeException('The file ' . $filename . ' cannot be opened.');
+        }
+
+        return Stream::create($resource);
+    }
+
+    public function createStreamFromResource($resource): StreamInterface
+    {
+        return Stream::create($resource);
+    }
+
+    public function createUploadedFile(StreamInterface $stream, int $size = null, int $error = \UPLOAD_ERR_OK, string $clientFilename = null, string $clientMediaType = null): UploadedFileInterface
+    {
+        if (null === $size) {
+            $size = $stream->getSize();
+        }
+
+        return new UploadedFile($stream, $size, $error, $clientFilename, $clientMediaType);
+    }
+
+    public function createUri(string $uri = ''): UriInterface
+    {
+        return new Uri($uri);
+    }
+
+    public function createServerRequest(string $method, $uri, array $serverParams = []): ServerRequestInterface
+    {
+        return new ServerRequest($method, $uri, [], null, '1.1', $serverParams);
+    }
+}
+
+// file: vendor/nyholm/psr7/src/MessageTrait.php
+
+trait MessageTrait
+{
+    private $headers = [];
+
+    private $headerNames = [];
+
+    private $protocol = '1.1';
+
+    private $stream;
+
+    public function getProtocolVersion(): string
+    {
+        return $this->protocol;
+    }
+
+    public function withProtocolVersion($version): self
+    {
+        if ($this->protocol === $version) {
+            return $this;
+        }
+
+        $new = clone $this;
+        $new->protocol = $version;
+
+        return $new;
+    }
+
+    public function getHeaders(): array
+    {
+        return $this->headers;
+    }
+
+    public function hasHeader($header): bool
+    {
+        return isset($this->headerNames[\strtolower($header)]);
+    }
+
+    public function getHeader($header): array
+    {
+        $header = \strtolower($header);
+        if (!isset($this->headerNames[$header])) {
+            return [];
+        }
+
+        $header = $this->headerNames[$header];
+
+        return $this->headers[$header];
+    }
+
+    public function getHeaderLine($header): string
+    {
+        return \implode(', ', $this->getHeader($header));
+    }
+
+    public function withHeader($header, $value): self
+    {
+        $value = $this->validateAndTrimHeader($header, $value);
+        $normalized = \strtolower($header);
+
+        $new = clone $this;
+        if (isset($new->headerNames[$normalized])) {
+            unset($new->headers[$new->headerNames[$normalized]]);
+        }
+        $new->headerNames[$normalized] = $header;
+        $new->headers[$header] = $value;
+
+        return $new;
+    }
+
+    public function withAddedHeader($header, $value): self
+    {
+        if (!\is_string($header) || '' === $header) {
+            throw new \InvalidArgumentException('Header name must be an RFC 7230 compatible string.');
+        }
+
+        $new = clone $this;
+        $new->setHeaders([$header => $value]);
+
+        return $new;
+    }
+
+    public function withoutHeader($header): self
+    {
+        $normalized = \strtolower($header);
+        if (!isset($this->headerNames[$normalized])) {
+            return $this;
+        }
+
+        $header = $this->headerNames[$normalized];
+        $new = clone $this;
+        unset($new->headers[$header], $new->headerNames[$normalized]);
+
+        return $new;
+    }
+
+    public function getBody(): StreamInterface
+    {
+        if (null === $this->stream) {
+            $this->stream = Stream::create('');
+        }
+
+        return $this->stream;
+    }
+
+    public function withBody(StreamInterface $body): self
+    {
+        if ($body === $this->stream) {
+            return $this;
+        }
+
+        $new = clone $this;
+        $new->stream = $body;
+
+        return $new;
+    }
+
+    private function setHeaders(array $headers) /*:void*/
+    {
+        foreach ($headers as $header => $value) {
+            $value = $this->validateAndTrimHeader($header, $value);
+            $normalized = \strtolower($header);
+            if (isset($this->headerNames[$normalized])) {
+                $header = $this->headerNames[$normalized];
+                $this->headers[$header] = \array_merge($this->headers[$header], $value);
+            } else {
+                $this->headerNames[$normalized] = $header;
+                $this->headers[$header] = $value;
+            }
+        }
+    }
+
+    private function validateAndTrimHeader($header, $values): array
+    {
+        if (!\is_string($header) || 1 !== \preg_match("@^[!#$%&'*+.^_`|~0-9A-Za-z-]+$@", $header)) {
+            throw new \InvalidArgumentException('Header name must be an RFC 7230 compatible string.');
+        }
+
+        if (!\is_array($values)) {
+            if ((!\is_numeric($values) && !\is_string($values)) || 1 !== \preg_match("@^[ \t\x21-\x7E\x80-\xFF]*$@", (string) $values)) {
+                throw new \InvalidArgumentException('Header values must be RFC 7230 compatible strings.');
+            }
+
+            return [\trim((string) $values, " \t")];
+        }
+
+        if (empty($values)) {
+            throw new \InvalidArgumentException('Header values must be a string or an array of strings, empty array given.');
+        }
+
+        $returnValues = [];
+        foreach ($values as $v) {
+            if ((!\is_numeric($v) && !\is_string($v)) || 1 !== \preg_match("@^[ \t\x21-\x7E\x80-\xFF]*$@", (string) $v)) {
+                throw new \InvalidArgumentException('Header values must be RFC 7230 compatible strings.');
+            }
+
+            $returnValues[] = \trim((string) $v, " \t");
+        }
+
+        return $returnValues;
+    }
+}
+
+// file: vendor/nyholm/psr7/src/Request.php
+
+final class Request implements RequestInterface
+{
+    use MessageTrait;
+    use RequestTrait;
+
+    public function __construct(string $method, $uri, array $headers = [], $body = null, string $version = '1.1')
+    {
+        if (!($uri instanceof UriInterface)) {
+            $uri = new Uri($uri);
+        }
+
+        $this->method = $method;
+        $this->uri = $uri;
+        $this->setHeaders($headers);
+        $this->protocol = $version;
+
+        if (!$this->hasHeader('Host')) {
+            $this->updateHostFromUri();
+        }
+
+        if ('' !== $body && null !== $body) {
+            $this->stream = Stream::create($body);
+        }
+    }
+}
+
+// file: vendor/nyholm/psr7/src/RequestTrait.php
+
+trait RequestTrait
+{
+    private $method;
+
+    private $requestTarget;
+
+    private $uri;
+
+    public function getRequestTarget(): string
+    {
+        if (null !== $this->requestTarget) {
+            return $this->requestTarget;
+        }
+
+        if ('' === $target = $this->uri->getPath()) {
+            $target = '/';
+        }
+        if ('' !== $this->uri->getQuery()) {
+            $target .= '?' . $this->uri->getQuery();
+        }
+
+        return $target;
+    }
+
+    public function withRequestTarget($requestTarget): self
+    {
+        if (\preg_match('#\s#', $requestTarget)) {
+            throw new \InvalidArgumentException('Invalid request target provided; cannot contain whitespace');
+        }
+
+        $new = clone $this;
+        $new->requestTarget = $requestTarget;
+
+        return $new;
+    }
+
+    public function getMethod(): string
+    {
+        return $this->method;
+    }
+
+    public function withMethod($method): self
+    {
+        if (!\is_string($method)) {
+            throw new \InvalidArgumentException('Method must be a string');
+        }
+
+        $new = clone $this;
+        $new->method = $method;
+
+        return $new;
+    }
+
+    public function getUri(): UriInterface
+    {
+        return $this->uri;
+    }
+
+    public function withUri(UriInterface $uri, $preserveHost = false): self
+    {
+        if ($uri === $this->uri) {
+            return $this;
+        }
+
+        $new = clone $this;
+        $new->uri = $uri;
+
+        if (!$preserveHost || !$this->hasHeader('Host')) {
+            $new->updateHostFromUri();
+        }
+
+        return $new;
+    }
+
+    private function updateHostFromUri() /*:void*/
+    {
+        if ('' === $host = $this->uri->getHost()) {
+            return;
+        }
+
+        if (null !== ($port = $this->uri->getPort())) {
+            $host .= ':' . $port;
+        }
+
+        if (isset($this->headerNames['host'])) {
+            $header = $this->headerNames['host'];
+        } else {
+            $this->headerNames['host'] = $header = 'Host';
+        }
+
+        $this->headers = [$header => [$host]] + $this->headers;
+    }
+}
+
+// file: vendor/nyholm/psr7/src/Response.php
+
+final class Response implements ResponseInterface
+{
+    use MessageTrait;
+
+    /*private*/ const PHRASES = [
+        100 => 'Continue', 101 => 'Switching Protocols', 102 => 'Processing',
+        200 => 'OK', 201 => 'Created', 202 => 'Accepted', 203 => 'Non-Authoritative Information', 204 => 'No Content', 205 => 'Reset Content', 206 => 'Partial Content', 207 => 'Multi-status', 208 => 'Already Reported',
+        300 => 'Multiple Choices', 301 => 'Moved Permanently', 302 => 'Found', 303 => 'See Other', 304 => 'Not Modified', 305 => 'Use Proxy', 306 => 'Switch Proxy', 307 => 'Temporary Redirect',
+        400 => 'Bad Request', 401 => 'Unauthorized', 402 => 'Payment Required', 403 => 'Forbidden', 404 => 'Not Found', 405 => 'Method Not Allowed', 406 => 'Not Acceptable', 407 => 'Proxy Authentication Required', 408 => 'Request Time-out', 409 => 'Conflict', 410 => 'Gone', 411 => 'Length Required', 412 => 'Precondition Failed', 413 => 'Request Entity Too Large', 414 => 'Request-URI Too Large', 415 => 'Unsupported Media Type', 416 => 'Requested range not satisfiable', 417 => 'Expectation Failed', 418 => 'I\'m a teapot', 422 => 'Unprocessable Entity', 423 => 'Locked', 424 => 'Failed Dependency', 425 => 'Unordered Collection', 426 => 'Upgrade Required', 428 => 'Precondition Required', 429 => 'Too Many Requests', 431 => 'Request Header Fields Too Large', 451 => 'Unavailable For Legal Reasons',
+        500 => 'Internal Server Error', 501 => 'Not Implemented', 502 => 'Bad Gateway', 503 => 'Service Unavailable', 504 => 'Gateway Time-out', 505 => 'HTTP Version not supported', 506 => 'Variant Also Negotiates', 507 => 'Insufficient Storage', 508 => 'Loop Detected', 511 => 'Network Authentication Required',
+    ];
+
+    private $reasonPhrase = '';
+
+    private $statusCode;
+
+    public function __construct(int $status = 200, array $headers = [], $body = null, string $version = '1.1', string $reason = null)
+    {
+        if ('' !== $body && null !== $body) {
+            $this->stream = Stream::create($body);
+        }
+
+        $this->statusCode = $status;
+        $this->setHeaders($headers);
+        if (null === $reason && isset(self::PHRASES[$this->statusCode])) {
+            $this->reasonPhrase = self::PHRASES[$status];
+        } else {
+            $this->reasonPhrase = $reason;
+        }
+
+        $this->protocol = $version;
+    }
+
+    public function getStatusCode(): int
+    {
+        return $this->statusCode;
+    }
+
+    public function getReasonPhrase(): string
+    {
+        return $this->reasonPhrase;
+    }
+
+    public function withStatus($code, $reasonPhrase = ''): self
+    {
+        if (!\is_int($code) && !\is_string($code)) {
+            throw new \InvalidArgumentException('Status code has to be an integer');
+        }
+
+        $code = (int) $code;
+        if ($code < 100 || $code > 599) {
+            throw new \InvalidArgumentException('Status code has to be an integer between 100 and 599');
+        }
+
+        $new = clone $this;
+        $new->statusCode = $code;
+        if ((null === $reasonPhrase || '' === $reasonPhrase) && isset(self::PHRASES[$new->statusCode])) {
+            $reasonPhrase = self::PHRASES[$new->statusCode];
+        }
+        $new->reasonPhrase = $reasonPhrase;
+
+        return $new;
+    }
+}
+
+// file: vendor/nyholm/psr7/src/ServerRequest.php
+
+final class ServerRequest implements ServerRequestInterface
+{
+    use MessageTrait;
+    use RequestTrait;
+
+    private $attributes = [];
+
+    private $cookieParams = [];
+
+    private $parsedBody;
+
+    private $queryParams = [];
+
+    private $serverParams;
+
+    private $uploadedFiles = [];
+
+    public function __construct(string $method, $uri, array $headers = [], $body = null, string $version = '1.1', array $serverParams = [])
+    {
+        $this->serverParams = $serverParams;
+
+        if (!($uri instanceof UriInterface)) {
+            $uri = new Uri($uri);
+        }
+
+        $this->method = $method;
+        $this->uri = $uri;
+        $this->setHeaders($headers);
+        $this->protocol = $version;
+
+        if (!$this->hasHeader('Host')) {
+            $this->updateHostFromUri();
+        }
+
+        if ('' !== $body && null !== $body) {
+            $this->stream = Stream::create($body);
+        }
+    }
+
+    public function getServerParams(): array
+    {
+        return $this->serverParams;
+    }
+
+    public function getUploadedFiles(): array
+    {
+        return $this->uploadedFiles;
+    }
+
+    public function withUploadedFiles(array $uploadedFiles)
+    {
+        $new = clone $this;
+        $new->uploadedFiles = $uploadedFiles;
+
+        return $new;
+    }
+
+    public function getCookieParams(): array
+    {
+        return $this->cookieParams;
+    }
+
+    public function withCookieParams(array $cookies)
+    {
+        $new = clone $this;
+        $new->cookieParams = $cookies;
+
+        return $new;
+    }
+
+    public function getQueryParams(): array
+    {
+        return $this->queryParams;
+    }
+
+    public function withQueryParams(array $query)
+    {
+        $new = clone $this;
+        $new->queryParams = $query;
+
+        return $new;
+    }
+
+    public function getParsedBody()
+    {
+        return $this->parsedBody;
+    }
+
+    public function withParsedBody($data)
+    {
+        if (!\is_array($data) && !\is_object($data) && null !== $data) {
+            throw new \InvalidArgumentException('First parameter to withParsedBody MUST be object, array or null');
+        }
+
+        $new = clone $this;
+        $new->parsedBody = $data;
+
+        return $new;
+    }
+
+    public function getAttributes(): array
+    {
+        return $this->attributes;
+    }
+
+    public function getAttribute($attribute, $default = null)
+    {
+        if (false === \array_key_exists($attribute, $this->attributes)) {
+            return $default;
+        }
+
+        return $this->attributes[$attribute];
+    }
+
+    public function withAttribute($attribute, $value): self
+    {
+        $new = clone $this;
+        $new->attributes[$attribute] = $value;
+
+        return $new;
+    }
+
+    public function withoutAttribute($attribute): self
+    {
+        if (false === \array_key_exists($attribute, $this->attributes)) {
+            return $this;
+        }
+
+        $new = clone $this;
+        unset($new->attributes[$attribute]);
+
+        return $new;
+    }
+}
+
+// file: vendor/nyholm/psr7/src/Stream.php
+
+final class Stream implements StreamInterface
+{
+    private $stream;
+
+    private $seekable;
+
+    private $readable;
+
+    private $writable;
+
+    private $uri;
+
+    private $size;
+
+    /*private*/ const READ_WRITE_HASH = [
+        'read' => [
+            'r' => true, 'w+' => true, 'r+' => true, 'x+' => true, 'c+' => true,
+            'rb' => true, 'w+b' => true, 'r+b' => true, 'x+b' => true,
+            'c+b' => true, 'rt' => true, 'w+t' => true, 'r+t' => true,
+            'x+t' => true, 'c+t' => true, 'a+' => true,
+        ],
+        'write' => [
+            'w' => true, 'w+' => true, 'rw' => true, 'r+' => true, 'x+' => true,
+            'c+' => true, 'wb' => true, 'w+b' => true, 'r+b' => true,
+            'x+b' => true, 'c+b' => true, 'w+t' => true, 'r+t' => true,
+            'x+t' => true, 'c+t' => true, 'a' => true, 'a+' => true,
+        ],
+    ];
+
+    private function __construct()
+    {
+    }
+
+    public static function create($body = ''): StreamInterface
+    {
+        if ($body instanceof StreamInterface) {
+            return $body;
+        }
+
+        if (\is_string($body)) {
+            $resource = \fopen('php://temp', 'rw+');
+            \fwrite($resource, $body);
+            $body = $resource;
+        }
+
+        if (\is_resource($body)) {
+            $new = new self();
+            $new->stream = $body;
+            $meta = \stream_get_meta_data($new->stream);
+            $new->seekable = $meta['seekable'];
+            $new->readable = isset(self::READ_WRITE_HASH['read'][$meta['mode']]);
+            $new->writable = isset(self::READ_WRITE_HASH['write'][$meta['mode']]);
+            $new->uri = $new->getMetadata('uri');
+
+            return $new;
+        }
+
+        throw new \InvalidArgumentException('First argument to Stream::create() must be a string, resource or StreamInterface.');
+    }
+
+    public function __destruct()
+    {
+        $this->close();
+    }
+
+    public function __toString(): string
+    {
+        try {
+            if ($this->isSeekable()) {
+                $this->seek(0);
+            }
+
+            return $this->getContents();
+        } catch (\Exception $e) {
+            return '';
+        }
+    }
+
+    public function close() /*:void*/
+    {
+        if (isset($this->stream)) {
+            if (\is_resource($this->stream)) {
+                \fclose($this->stream);
+            }
+            $this->detach();
+        }
+    }
+
+    public function detach()
+    {
+        if (!isset($this->stream)) {
+            return null;
+        }
+
+        $result = $this->stream;
+        unset($this->stream);
+        $this->size = $this->uri = null;
+        $this->readable = $this->writable = $this->seekable = false;
+
+        return $result;
+    }
+
+    public function getSize() /*:?int*/
+    {
+        if (null !== $this->size) {
+            return $this->size;
+        }
+
+        if (!isset($this->stream)) {
+            return null;
+        }
+
+        if ($this->uri) {
+            \clearstatcache(true, $this->uri);
+        }
+
+        $stats = \fstat($this->stream);
+        if (isset($stats['size'])) {
+            $this->size = $stats['size'];
+
+            return $this->size;
+        }
+
+        return null;
+    }
+
+    public function tell(): int
+    {
+        if (false === $result = \ftell($this->stream)) {
+            throw new \RuntimeException('Unable to determine stream position');
+        }
+
+        return $result;
+    }
+
+    public function eof(): bool
+    {
+        return !$this->stream || \feof($this->stream);
+    }
+
+    public function isSeekable(): bool
+    {
+        return $this->seekable;
+    }
+
+    public function seek($offset, $whence = \SEEK_SET) /*:void*/
+    {
+        if (!$this->seekable) {
+            throw new \RuntimeException('Stream is not seekable');
+        }
+
+        if (-1 === \fseek($this->stream, $offset, $whence)) {
+            throw new \RuntimeException('Unable to seek to stream position ' . $offset . ' with whence ' . \var_export($whence, true));
+        }
+    }
+
+    public function rewind() /*:void*/
+    {
+        $this->seek(0);
+    }
+
+    public function isWritable(): bool
+    {
+        return $this->writable;
+    }
+
+    public function write($string): int
+    {
+        if (!$this->writable) {
+            throw new \RuntimeException('Cannot write to a non-writable stream');
+        }
+
+        $this->size = null;
+
+        if (false === $result = \fwrite($this->stream, $string)) {
+            throw new \RuntimeException('Unable to write to stream');
+        }
+
+        return $result;
+    }
+
+    public function isReadable(): bool
+    {
+        return $this->readable;
+    }
+
+    public function read($length): string
+    {
+        if (!$this->readable) {
+            throw new \RuntimeException('Cannot read from non-readable stream');
+        }
+
+        return \fread($this->stream, $length);
+    }
+
+    public function getContents(): string
+    {
+        if (!isset($this->stream)) {
+            throw new \RuntimeException('Unable to read stream contents');
+        }
+
+        if (false === $contents = \stream_get_contents($this->stream)) {
+            throw new \RuntimeException('Unable to read stream contents');
+        }
+
+        return $contents;
+    }
+
+    public function getMetadata($key = null)
+    {
+        if (!isset($this->stream)) {
+            return $key ? null : [];
+        }
+
+        $meta = \stream_get_meta_data($this->stream);
+
+        if (null === $key) {
+            return $meta;
+        }
+
+        return $meta[$key] ?? null;
+    }
+}
+
+// file: vendor/nyholm/psr7/src/UploadedFile.php
+
+final class UploadedFile implements UploadedFileInterface
+{
+    /*private*/ const ERRORS = [
+        \UPLOAD_ERR_OK => 1,
+        \UPLOAD_ERR_INI_SIZE => 1,
+        \UPLOAD_ERR_FORM_SIZE => 1,
+        \UPLOAD_ERR_PARTIAL => 1,
+        \UPLOAD_ERR_NO_FILE => 1,
+        \UPLOAD_ERR_NO_TMP_DIR => 1,
+        \UPLOAD_ERR_CANT_WRITE => 1,
+        \UPLOAD_ERR_EXTENSION => 1,
+    ];
+
+    private $clientFilename;
+
+    private $clientMediaType;
+
+    private $error;
+
+    private $file;
+
+    private $moved = false;
+
+    private $size;
+
+    private $stream;
+
+    public function __construct($streamOrFile, $size, $errorStatus, $clientFilename = null, $clientMediaType = null)
+    {
+        if (false === \is_int($errorStatus) || !isset(self::ERRORS[$errorStatus])) {
+            throw new \InvalidArgumentException('Upload file error status must be an integer value and one of the "UPLOAD_ERR_*" constants.');
+        }
+
+        if (false === \is_int($size)) {
+            throw new \InvalidArgumentException('Upload file size must be an integer');
+        }
+
+        if (null !== $clientFilename && !\is_string($clientFilename)) {
+            throw new \InvalidArgumentException('Upload file client filename must be a string or null');
+        }
+
+        if (null !== $clientMediaType && !\is_string($clientMediaType)) {
+            throw new \InvalidArgumentException('Upload file client media type must be a string or null');
+        }
+
+        $this->error = $errorStatus;
+        $this->size = $size;
+        $this->clientFilename = $clientFilename;
+        $this->clientMediaType = $clientMediaType;
+
+        if (\UPLOAD_ERR_OK === $this->error) {
+            if (\is_string($streamOrFile)) {
+                $this->file = $streamOrFile;
+            } elseif (\is_resource($streamOrFile)) {
+                $this->stream = Stream::create($streamOrFile);
+            } elseif ($streamOrFile instanceof StreamInterface) {
+                $this->stream = $streamOrFile;
+            } else {
+                throw new \InvalidArgumentException('Invalid stream or file provided for UploadedFile');
+            }
+        }
+    }
+
+    private function validateActive() /*:void*/
+    {
+        if (\UPLOAD_ERR_OK !== $this->error) {
+            throw new \RuntimeException('Cannot retrieve stream due to upload error');
+        }
+
+        if ($this->moved) {
+            throw new \RuntimeException('Cannot retrieve stream after it has already been moved');
+        }
+    }
+
+    public function getStream(): StreamInterface
+    {
+        $this->validateActive();
+
+        if ($this->stream instanceof StreamInterface) {
+            return $this->stream;
+        }
+
+        $resource = \fopen($this->file, 'r');
+
+        return Stream::create($resource);
+    }
+
+    public function moveTo($targetPath) /*:void*/
+    {
+        $this->validateActive();
+
+        if (!\is_string($targetPath) || '' === $targetPath) {
+            throw new \InvalidArgumentException('Invalid path provided for move operation; must be a non-empty string');
+        }
+
+        if (null !== $this->file) {
+            $this->moved = 'cli' === \PHP_SAPI ? \rename($this->file, $targetPath) : \move_uploaded_file($this->file, $targetPath);
+        } else {
+            $stream = $this->getStream();
+            if ($stream->isSeekable()) {
+                $stream->rewind();
+            }
+
+            $dest = Stream::create(\fopen($targetPath, 'w'));
+            while (!$stream->eof()) {
+                if (!$dest->write($stream->read(1048576))) {
+                    break;
+                }
+            }
+
+            $this->moved = true;
+        }
+
+        if (false === $this->moved) {
+            throw new \RuntimeException(\sprintf('Uploaded file could not be moved to %s', $targetPath));
+        }
+    }
+
+    public function getSize(): int
+    {
+        return $this->size;
+    }
+
+    public function getError(): int
+    {
+        return $this->error;
+    }
+
+    public function getClientFilename() /*:?string*/
+    {
+        return $this->clientFilename;
+    }
+
+    public function getClientMediaType() /*:?string*/
+    {
+        return $this->clientMediaType;
+    }
+}
+
+// file: vendor/nyholm/psr7/src/Uri.php
+
+final class Uri implements UriInterface
+{
+    /*private*/ const SCHEMES = ['http' => 80, 'https' => 443];
+
+    /*private*/ const CHAR_UNRESERVED = 'a-zA-Z0-9_\-\.~';
+
+    /*private*/ const CHAR_SUB_DELIMS = '!\$&\'\(\)\*\+,;=';
+
+    private $scheme = '';
+
+    private $userInfo = '';
+
+    private $host = '';
+
+    private $port;
+
+    private $path = '';
+
+    private $query = '';
+
+    private $fragment = '';
+
+    public function __construct(string $uri = '')
+    {
+        if ('' !== $uri) {
+            if (false === $parts = \parse_url($uri)) {
+                throw new \InvalidArgumentException("Unable to parse URI: $uri");
+            }
+
+            $this->scheme = isset($parts['scheme']) ? \strtolower($parts['scheme']) : '';
+            $this->userInfo = $parts['user'] ?? '';
+            $this->host = isset($parts['host']) ? \strtolower($parts['host']) : '';
+            $this->port = isset($parts['port']) ? $this->filterPort($parts['port']) : null;
+            $this->path = isset($parts['path']) ? $this->filterPath($parts['path']) : '';
+            $this->query = isset($parts['query']) ? $this->filterQueryAndFragment($parts['query']) : '';
+            $this->fragment = isset($parts['fragment']) ? $this->filterQueryAndFragment($parts['fragment']) : '';
+            if (isset($parts['pass'])) {
+                $this->userInfo .= ':' . $parts['pass'];
+            }
+        }
+    }
+
+    public function __toString(): string
+    {
+        return self::createUriString($this->scheme, $this->getAuthority(), $this->path, $this->query, $this->fragment);
+    }
+
+    public function getScheme(): string
+    {
+        return $this->scheme;
+    }
+
+    public function getAuthority(): string
+    {
+        if ('' === $this->host) {
+            return '';
+        }
+
+        $authority = $this->host;
+        if ('' !== $this->userInfo) {
+            $authority = $this->userInfo . '@' . $authority;
+        }
+
+        if (null !== $this->port) {
+            $authority .= ':' . $this->port;
+        }
+
+        return $authority;
+    }
+
+    public function getUserInfo(): string
+    {
+        return $this->userInfo;
+    }
+
+    public function getHost(): string
+    {
+        return $this->host;
+    }
+
+    public function getPort() /*:?int*/
+    {
+        return $this->port;
+    }
+
+    public function getPath(): string
+    {
+        return $this->path;
+    }
+
+    public function getQuery(): string
+    {
+        return $this->query;
+    }
+
+    public function getFragment(): string
+    {
+        return $this->fragment;
+    }
+
+    public function withScheme($scheme): self
+    {
+        if (!\is_string($scheme)) {
+            throw new \InvalidArgumentException('Scheme must be a string');
+        }
+
+        if ($this->scheme === $scheme = \strtolower($scheme)) {
+            return $this;
+        }
+
+        $new = clone $this;
+        $new->scheme = $scheme;
+        $new->port = $new->filterPort($new->port);
+
+        return $new;
+    }
+
+    public function withUserInfo($user, $password = null): self
+    {
+        $info = $user;
+        if (null !== $password && '' !== $password) {
+            $info .= ':' . $password;
+        }
+
+        if ($this->userInfo === $info) {
+            return $this;
+        }
+
+        $new = clone $this;
+        $new->userInfo = $info;
+
+        return $new;
+    }
+
+    public function withHost($host): self
+    {
+        if (!\is_string($host)) {
+            throw new \InvalidArgumentException('Host must be a string');
+        }
+
+        if ($this->host === $host = \strtolower($host)) {
+            return $this;
+        }
+
+        $new = clone $this;
+        $new->host = $host;
+
+        return $new;
+    }
+
+    public function withPort($port): self
+    {
+        if ($this->port === $port = $this->filterPort($port)) {
+            return $this;
+        }
+
+        $new = clone $this;
+        $new->port = $port;
+
+        return $new;
+    }
+
+    public function withPath($path): self
+    {
+        if ($this->path === $path = $this->filterPath($path)) {
+            return $this;
+        }
+
+        $new = clone $this;
+        $new->path = $path;
+
+        return $new;
+    }
+
+    public function withQuery($query): self
+    {
+        if ($this->query === $query = $this->filterQueryAndFragment($query)) {
+            return $this;
+        }
+
+        $new = clone $this;
+        $new->query = $query;
+
+        return $new;
+    }
+
+    public function withFragment($fragment): self
+    {
+        if ($this->fragment === $fragment = $this->filterQueryAndFragment($fragment)) {
+            return $this;
+        }
+
+        $new = clone $this;
+        $new->fragment = $fragment;
+
+        return $new;
+    }
+
+    private static function createUriString(string $scheme, string $authority, string $path, string $query, string $fragment): string
+    {
+        $uri = '';
+        if ('' !== $scheme) {
+            $uri .= $scheme . ':';
+        }
+
+        if ('' !== $authority) {
+            $uri .= '//' . $authority;
+        }
+
+        if ('' !== $path) {
+            if ('/' !== $path[0]) {
+                if ('' !== $authority) {
+                    $path = '/' . $path;
+                }
+            } elseif (isset($path[1]) && '/' === $path[1]) {
+                if ('' === $authority) {
+                    $path = '/' . \ltrim($path, '/');
+                }
+            }
+
+            $uri .= $path;
+        }
+
+        if ('' !== $query) {
+            $uri .= '?' . $query;
+        }
+
+        if ('' !== $fragment) {
+            $uri .= '#' . $fragment;
+        }
+
+        return $uri;
+    }
+
+    private static function isNonStandardPort(string $scheme, int $port): bool
+    {
+        return !isset(self::SCHEMES[$scheme]) || $port !== self::SCHEMES[$scheme];
+    }
+
+    private function filterPort($port) /*:?int*/
+    {
+        if (null === $port) {
+            return null;
+        }
+
+        $port = (int) $port;
+        if (1 > $port || 0xffff < $port) {
+            throw new \InvalidArgumentException(\sprintf('Invalid port: %d. Must be between 1 and 65535', $port));
+        }
+
+        return self::isNonStandardPort($this->scheme, $port) ? $port : null;
+    }
+
+    private function filterPath($path): string
+    {
+        if (!\is_string($path)) {
+            throw new \InvalidArgumentException('Path must be a string');
+        }
+
+        return \preg_replace_callback('/(?:[^' . self::CHAR_UNRESERVED . self::CHAR_SUB_DELIMS . '%:@\/]++|%(?![A-Fa-f0-9]{2}))/', [__CLASS__, 'rawurlencodeMatchZero'], $path);
+    }
+
+    private function filterQueryAndFragment($str): string
+    {
+        if (!\is_string($str)) {
+            throw new \InvalidArgumentException('Query and fragment must be a string');
+        }
+
+        return \preg_replace_callback('/(?:[^' . self::CHAR_UNRESERVED . self::CHAR_SUB_DELIMS . '%:@\/\?]++|%(?![A-Fa-f0-9]{2}))/', [__CLASS__, 'rawurlencodeMatchZero'], $str);
+    }
+
+    private static function rawurlencodeMatchZero(array $match): string
+    {
+        return \rawurlencode($match[0]);
+    }
+}
+
+// file: vendor/nyholm/psr7-server/src/ServerRequestCreator.php
+
+final class ServerRequestCreator implements ServerRequestCreatorInterface
+{
+    private $serverRequestFactory;
+
+    private $uriFactory;
+
+    private $uploadedFileFactory;
+
+    private $streamFactory;
+
+    public function __construct(
+        ServerRequestFactoryInterface $serverRequestFactory,
+        UriFactoryInterface $uriFactory,
+        UploadedFileFactoryInterface $uploadedFileFactory,
+        StreamFactoryInterface $streamFactory
+    ) {
+        $this->serverRequestFactory = $serverRequestFactory;
+        $this->uriFactory = $uriFactory;
+        $this->uploadedFileFactory = $uploadedFileFactory;
+        $this->streamFactory = $streamFactory;
+    }
+
+    public function fromGlobals(): ServerRequestInterface
+    {
+        $server = $_SERVER;
+        if (false === isset($server['REQUEST_METHOD'])) {
+            $server['REQUEST_METHOD'] = 'GET';
+        }
+
+        $headers = \function_exists('getallheaders') ? getallheaders() : static::getHeadersFromServer($_SERVER);
+
+        return $this->fromArrays($server, $headers, $_COOKIE, $_GET, $_POST, $_FILES, fopen('php://input', 'r') ?: null);
+    }
+
+    public function fromArrays(array $server, array $headers = [], array $cookie = [], array $get = [], array $post = [], array $files = [], $body = null): ServerRequestInterface
+    {
+        $method = $this->getMethodFromEnv($server);
+        $uri = $this->getUriFromEnvWithHTTP($server);
+        $protocol = isset($server['SERVER_PROTOCOL']) ? \str_replace('HTTP/', '', $server['SERVER_PROTOCOL']) : '1.1';
+
+        $serverRequest = $this->serverRequestFactory->createServerRequest($method, $uri, $server);
+        foreach ($headers as $name => $value) {
+            $serverRequest = $serverRequest->withAddedHeader($name, $value);
+        }
+
+        $serverRequest = $serverRequest
+            ->withProtocolVersion($protocol)
+            ->withCookieParams($cookie)
+            ->withQueryParams($get)
+            ->withParsedBody($post)
+            ->withUploadedFiles($this->normalizeFiles($files));
+
+        if (null === $body) {
+            return $serverRequest;
+        }
+
+        if (\is_resource($body)) {
+            $body = $this->streamFactory->createStreamFromResource($body);
+        } elseif (\is_string($body)) {
+            $body = $this->streamFactory->createStream($body);
+        } elseif (!$body instanceof StreamInterface) {
+            throw new \InvalidArgumentException('The $body parameter to ServerRequestCreator::fromArrays must be string, resource or StreamInterface');
+        }
+
+        return $serverRequest->withBody($body);
+    }
+
+    public static function getHeadersFromServer(array $server): array
+    {
+        $headers = [];
+        foreach ($server as $key => $value) {
+            if (0 === \strpos($key, 'REDIRECT_')) {
+                $key = \substr($key, 9);
+
+                if (\array_key_exists($key, $server)) {
+                    continue;
+                }
+            }
+
+            if ($value && 0 === \strpos($key, 'HTTP_')) {
+                $name = \strtr(\strtolower(\substr($key, 5)), '_', '-');
+                $headers[$name] = $value;
+
+                continue;
+            }
+
+            if ($value && 0 === \strpos($key, 'CONTENT_')) {
+                $name = 'content-'.\strtolower(\substr($key, 8));
+                $headers[$name] = $value;
+
+                continue;
+            }
+        }
+
+        return $headers;
+    }
+
+    private function getMethodFromEnv(array $environment): string
+    {
+        if (false === isset($environment['REQUEST_METHOD'])) {
+            throw new \InvalidArgumentException('Cannot determine HTTP method');
+        }
+
+        return $environment['REQUEST_METHOD'];
+    }
+
+    private function getUriFromEnvWithHTTP(array $environment): UriInterface
+    {
+        $uri = $this->createUriFromArray($environment);
+        if (empty($uri->getScheme())) {
+            $uri = $uri->withScheme('http');
+        }
+
+        return $uri;
+    }
+
+    private function normalizeFiles(array $files): array
+    {
+        $normalized = [];
+
+        foreach ($files as $key => $value) {
+            if ($value instanceof UploadedFileInterface) {
+                $normalized[$key] = $value;
+            } elseif (\is_array($value) && isset($value['tmp_name'])) {
+                $normalized[$key] = $this->createUploadedFileFromSpec($value);
+            } elseif (\is_array($value)) {
+                $normalized[$key] = $this->normalizeFiles($value);
+            } else {
+                throw new \InvalidArgumentException('Invalid value in files specification');
+            }
+        }
+
+        return $normalized;
+    }
+
+    private function createUploadedFileFromSpec(array $value)
+    {
+        if (\is_array($value['tmp_name'])) {
+            return $this->normalizeNestedFileSpec($value);
+        }
+
+        try {
+            $stream = $this->streamFactory->createStreamFromFile($value['tmp_name']);
+        } catch (\RuntimeException $e) {
+            $stream = $this->streamFactory->createStream();
+        }
+
+        return $this->uploadedFileFactory->createUploadedFile(
+            $stream,
+            (int) $value['size'],
+            (int) $value['error'],
+            $value['name'],
+            $value['type']
+        );
+    }
+
+    private function normalizeNestedFileSpec(array $files = []): array
+    {
+        $normalizedFiles = [];
+
+        foreach (\array_keys($files['tmp_name']) as $key) {
+            $spec = [
+                'tmp_name' => $files['tmp_name'][$key],
+                'size' => $files['size'][$key],
+                'error' => $files['error'][$key],
+                'name' => $files['name'][$key],
+                'type' => $files['type'][$key],
+            ];
+            $normalizedFiles[$key] = $this->createUploadedFileFromSpec($spec);
+        }
+
+        return $normalizedFiles;
+    }
+
+    private function createUriFromArray(array $server): UriInterface
+    {
+        $uri = $this->uriFactory->createUri('');
+
+        if (isset($server['REQUEST_SCHEME'])) {
+            $uri = $uri->withScheme($server['REQUEST_SCHEME']);
+        } elseif (isset($server['HTTPS'])) {
+            $uri = $uri->withScheme('on' === $server['HTTPS'] ? 'https' : 'http');
+        }
+
+        if (isset($server['HTTP_HOST'])) {
+            $uri = $uri->withHost($server['HTTP_HOST']);
+        } elseif (isset($server['SERVER_NAME'])) {
+            $uri = $uri->withHost($server['SERVER_NAME']);
+        }
+
+        if (isset($server['SERVER_PORT'])) {
+            $uri = $uri->withPort($server['SERVER_PORT']);
+        }
+
+        if (isset($server['REQUEST_URI'])) {
+            $uri = $uri->withPath(\current(\explode('?', $server['REQUEST_URI'])));
+        }
+
+        if (isset($server['QUERY_STRING'])) {
+            $uri = $uri->withQuery($server['QUERY_STRING']);
+        }
+
+        return $uri;
+    }
+}
+
+// file: vendor/nyholm/psr7-server/src/ServerRequestCreatorInterface.php
+
+interface ServerRequestCreatorInterface
+{
+    public function fromGlobals(): ServerRequestInterface;
+
+    public function fromArrays(
+        array $server,
+        array $headers = [],
+        array $cookie = [],
+        array $get = [],
+        array $post = [],
+        array $files = [],
+        $body = null
+    ): ServerRequestInterface;
+
+    public static function getHeadersFromServer(array $server): array;
+}
 
 // file: src/Tqdev/PhpCrudApi/Cache/Cache.php
 
 interface Cache
 {
-    public function set(String $key, String $value, int $ttl = 0): bool;
-    public function get(String $key): String;
+    public function set(string $key, string $value, int $ttl = 0): bool;
+    public function get(string $key): string;
     public function clear(): bool;
 }
 
@@ -22,7 +1692,7 @@ class CacheFactory
 {
     const PREFIX = 'phpcrudapi-%s-%s-%s-';
 
-    private static function getPrefix(Config $config): String
+    private static function getPrefix(Config $config): string
     {
         $driver = $config->getDriver();
         $database = $config->getDatabase();
@@ -59,7 +1729,7 @@ class MemcacheCache implements Cache
     protected $prefix;
     protected $memcache;
 
-    public function __construct(String $prefix, String $config)
+    public function __construct(string $prefix, string $config)
     {
         $this->prefix = $prefix;
         if ($config == '') {
@@ -80,12 +1750,12 @@ class MemcacheCache implements Cache
         return new \Memcache();
     }
 
-    public function set(String $key, String $value, int $ttl = 0): bool
+    public function set(string $key, string $value, int $ttl = 0): bool
     {
         return $this->memcache->set($this->prefix . $key, $value, 0, $ttl);
     }
 
-    public function get(String $key): String
+    public function get(string $key): string
     {
         return $this->memcache->get($this->prefix . $key) ?: '';
     }
@@ -105,7 +1775,7 @@ class MemcachedCache extends MemcacheCache
         return new \Memcached();
     }
 
-    public function set(String $key, String $value, int $ttl = 0): bool
+    public function set(string $key, string $value, int $ttl = 0): bool
     {
         return $this->memcache->set($this->prefix . $key, $value, $ttl);
     }
@@ -119,12 +1789,12 @@ class NoCache implements Cache
     {
     }
 
-    public function set(String $key, String $value, int $ttl = 0): bool
+    public function set(string $key, string $value, int $ttl = 0): bool
     {
         return true;
     }
 
-    public function get(String $key): String
+    public function get(string $key): string
     {
         return '';
     }
@@ -142,7 +1812,7 @@ class RedisCache implements Cache
     protected $prefix;
     protected $redis;
 
-    public function __construct(String $prefix, String $config)
+    public function __construct(string $prefix, string $config)
     {
         $this->prefix = $prefix;
         if ($config == '') {
@@ -156,12 +1826,12 @@ class RedisCache implements Cache
         call_user_func_array(array($this->redis, 'pconnect'), $params);
     }
 
-    public function set(String $key, String $value, int $ttl = 0): bool
+    public function set(string $key, string $value, int $ttl = 0): bool
     {
         return $this->redis->set($this->prefix . $key, $value, $ttl);
     }
 
-    public function get(String $key): String
+    public function get(string $key): string
     {
         return $this->redis->get($this->prefix . $key) ?: '';
     }
@@ -181,7 +1851,7 @@ class TempFileCache implements Cache
     private $path;
     private $segments;
 
-    public function __construct(String $prefix, String $config)
+    public function __construct(string $prefix, string $config)
     {
         $this->segments = [];
         $s = DIRECTORY_SEPARATOR;
@@ -200,7 +1870,7 @@ class TempFileCache implements Cache
         }
     }
 
-    private function getFileName(String $key): String
+    private function getFileName(string $key): string
     {
         $s = DIRECTORY_SEPARATOR;
         $md5 = md5($key);
@@ -214,7 +1884,7 @@ class TempFileCache implements Cache
         return $filename;
     }
 
-    public function set(String $key, String $value, int $ttl = 0): bool
+    public function set(string $key, string $value, int $ttl = 0): bool
     {
         $filename = $this->getFileName($key);
         $dirname = dirname($filename);
@@ -252,7 +1922,7 @@ class TempFileCache implements Cache
         return $string;
     }
 
-    private function getString($filename): String
+    private function getString($filename): string
     {
         $data = $this->fileGetContents($filename);
         if ($data === false) {
@@ -265,7 +1935,7 @@ class TempFileCache implements Cache
         return $string;
     }
 
-    public function get(String $key): String
+    public function get(string $key): string
     {
         $filename = $this->getFileName($key);
         if (!file_exists($filename)) {
@@ -278,7 +1948,7 @@ class TempFileCache implements Cache
         return $string;
     }
 
-    private function clean(String $path, array $segments, int $len, bool $all) /*: void*/
+    private function clean(string $path, array $segments, int $len, bool $all) /*: void*/
     {
         $entries = scandir($path);
         foreach ($entries as $entry) {
@@ -334,7 +2004,7 @@ class ReflectedColumn implements \JsonSerializable
     private $pk;
     private $fk;
 
-    public function __construct(String $name, String $type, int $length, int $precision, int $scale, bool $nullable, bool $pk, String $fk)
+    public function __construct(string $name, string $type, int $length, int $precision, int $scale, bool $nullable, bool $pk, string $fk)
     {
         $this->name = $name;
         $this->type = $type;
@@ -380,7 +2050,7 @@ class ReflectedColumn implements \JsonSerializable
         $this->scale = $this->hasScale() ? $this->getScale() : 0;
     }
 
-    public function getName(): String
+    public function getName(): string
     {
         return $this->name;
     }
@@ -390,7 +2060,7 @@ class ReflectedColumn implements \JsonSerializable
         return $this->nullable;
     }
 
-    public function getType(): String
+    public function getType(): string
     {
         return $this->type;
     }
@@ -460,7 +2130,7 @@ class ReflectedColumn implements \JsonSerializable
         $this->fk = $value;
     }
 
-    public function getFk(): String
+    public function getFk(): string
     {
         return $this->fk;
     }
@@ -516,12 +2186,12 @@ class ReflectedDatabase implements \JsonSerializable
         return new ReflectedDatabase($tableTypes);
     }
 
-    public function hasTable(String $tableName): bool
+    public function hasTable(string $tableName): bool
     {
         return isset($this->tableTypes[$tableName]);
     }
 
-    public function getType(String $tableName): String
+    public function getType(string $tableName): string
     {
         return isset($this->tableTypes[$tableName]) ? $this->tableTypes[$tableName] : '';
     }
@@ -531,7 +2201,7 @@ class ReflectedDatabase implements \JsonSerializable
         return array_keys($this->tableTypes);
     }
 
-    public function removeTable(String $tableName): bool
+    public function removeTable(string $tableName): bool
     {
         if (!isset($this->tableTypes[$tableName])) {
             return false;
@@ -563,7 +2233,7 @@ class ReflectedTable implements \JsonSerializable
     private $pk;
     private $fks;
 
-    public function __construct(String $name, String $type, array $columns)
+    public function __construct(string $name, string $type, array $columns)
     {
         $this->name = $name;
         $this->type = $type;
@@ -588,7 +2258,7 @@ class ReflectedTable implements \JsonSerializable
         }
     }
 
-    public static function fromReflection(GenericReflection $reflection, String $name, String $type): ReflectedTable
+    public static function fromReflection(GenericReflection $reflection, string $name, string $type): ReflectedTable
     {
         $columns = [];
         foreach ($reflection->getTableColumns($name, $type) as $tableColumn) {
@@ -623,7 +2293,7 @@ class ReflectedTable implements \JsonSerializable
         return new ReflectedTable($name, $type, $columns);
     }
 
-    public function hasColumn(String $columnName): bool
+    public function hasColumn(string $columnName): bool
     {
         return isset($this->columns[$columnName]);
     }
@@ -638,12 +2308,12 @@ class ReflectedTable implements \JsonSerializable
         return $this->pk;
     }
 
-    public function getName(): String
+    public function getName(): string
     {
         return $this->name;
     }
 
-    public function getType(): String
+    public function getType(): string
     {
         return $this->type;
     }
@@ -658,7 +2328,7 @@ class ReflectedTable implements \JsonSerializable
         return $this->columns[$columnName];
     }
 
-    public function getFksTo(String $tableName): array
+    public function getFksTo(string $tableName): array
     {
         $columns = array();
         foreach ($this->fks as $columnName => $referencedTableName) {
@@ -669,7 +2339,7 @@ class ReflectedTable implements \JsonSerializable
         return $columns;
     }
 
-    public function removeColumn(String $columnName): bool
+    public function removeColumn(string $columnName): bool
     {
         if (!isset($this->columns[$columnName])) {
             return false;
@@ -706,7 +2376,7 @@ class DefinitionService
         $this->reflection = $reflection;
     }
 
-    public function updateTable(String $tableName, /* object */ $changes): bool
+    public function updateTable(string $tableName, /* object */ $changes): bool
     {
         $table = $this->reflection->getTable($tableName);
         $newTable = ReflectedTable::fromJson((object) array_merge((array) $table->jsonSerialize(), (array) $changes));
@@ -718,7 +2388,7 @@ class DefinitionService
         return true;
     }
 
-    public function updateColumn(String $tableName, String $columnName, /* object */ $changes): bool
+    public function updateColumn(string $tableName, string $columnName, /* object */ $changes): bool
     {
         $table = $this->reflection->getTable($tableName);
         $column = $table->getColumn($columnName);
@@ -792,7 +2462,7 @@ class DefinitionService
         return true;
     }
 
-    public function addColumn(String $tableName, /* object */ $definition)
+    public function addColumn(string $tableName, /* object */ $definition)
     {
         $newColumn = ReflectedColumn::fromJson($definition);
         if (!$this->db->definition()->addColumn($tableName, $newColumn)) {
@@ -811,7 +2481,7 @@ class DefinitionService
         return true;
     }
 
-    public function removeTable(String $tableName)
+    public function removeTable(string $tableName)
     {
         if (!$this->db->definition()->removeTable($tableName)) {
             return false;
@@ -819,7 +2489,7 @@ class DefinitionService
         return true;
     }
 
-    public function removeColumn(String $tableName, String $columnName)
+    public function removeColumn(string $tableName, string $columnName)
     {
         $table = $this->reflection->getTable($tableName);
         $newColumn = $table->getColumn($columnName);
@@ -875,7 +2545,7 @@ class ReflectionService
         return $database;
     }
 
-    private function loadTable(String $tableName, bool $useCache): ReflectedTable
+    private function loadTable(string $tableName, bool $useCache): ReflectedTable
     {
         $data = $useCache ? $this->cache->get("ReflectedTable($tableName)") : '';
         if ($data != '') {
@@ -894,22 +2564,22 @@ class ReflectionService
         $this->database = $this->loadDatabase(false);
     }
 
-    public function refreshTable(String $tableName)
+    public function refreshTable(string $tableName)
     {
         $this->tables[$tableName] = $this->loadTable($tableName, false);
     }
 
-    public function hasTable(String $tableName): bool
+    public function hasTable(string $tableName): bool
     {
         return $this->database->hasTable($tableName);
     }
 
-    public function getType(String $tableName): String
+    public function getType(string $tableName): string
     {
         return $this->database->getType($tableName);
     }
 
-    public function getTable(String $tableName): ReflectedTable
+    public function getTable(string $tableName): ReflectedTable
     {
         if (!isset($this->tables[$tableName])) {
             $this->tables[$tableName] = $this->loadTable($tableName, true);
@@ -922,12 +2592,12 @@ class ReflectionService
         return $this->database->getTableNames();
     }
 
-    public function getDatabaseName(): String
+    public function getDatabaseName(): string
     {
         return $this->database->getName();
     }
 
-    public function removeTable(String $tableName): bool
+    public function removeTable(string $tableName): bool
     {
         unset($this->tables[$tableName]);
         return $this->database->removeTable($tableName);
@@ -949,7 +2619,7 @@ class CacheController
         $this->responder = $responder;
     }
 
-    public function clear(Request $request): Response
+    public function clear(ServerRequestInterface $request): ResponseInterface
     {
         return $this->responder->success($this->cache->clear());
     }
@@ -980,7 +2650,7 @@ class ColumnController
         $this->definition = $definition;
     }
 
-    public function getDatabase(Request $request): Response
+    public function getDatabase(ServerRequestInterface $request): ResponseInterface
     {
         $tables = [];
         foreach ($this->reflection->getTableNames() as $table) {
@@ -990,9 +2660,9 @@ class ColumnController
         return $this->responder->success($database);
     }
 
-    public function getTable(Request $request): Response
+    public function getTable(ServerRequestInterface $request): ResponseInterface
     {
-        $tableName = $request->getPathSegment(2);
+        $tableName = RequestUtils::getPathSegment($request, 2);
         if (!$this->reflection->hasTable($tableName)) {
             return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $tableName);
         }
@@ -1000,10 +2670,10 @@ class ColumnController
         return $this->responder->success($table);
     }
 
-    public function getColumn(Request $request): Response
+    public function getColumn(ServerRequestInterface $request): ResponseInterface
     {
-        $tableName = $request->getPathSegment(2);
-        $columnName = $request->getPathSegment(3);
+        $tableName = RequestUtils::getPathSegment($request, 2);
+        $columnName = RequestUtils::getPathSegment($request, 3);
         if (!$this->reflection->hasTable($tableName)) {
             return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $tableName);
         }
@@ -1015,23 +2685,23 @@ class ColumnController
         return $this->responder->success($column);
     }
 
-    public function updateTable(Request $request): Response
+    public function updateTable(ServerRequestInterface $request): ResponseInterface
     {
-        $tableName = $request->getPathSegment(2);
+        $tableName = RequestUtils::getPathSegment($request, 2);
         if (!$this->reflection->hasTable($tableName)) {
             return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $tableName);
         }
-        $success = $this->definition->updateTable($tableName, $request->getBody());
+        $success = $this->definition->updateTable($tableName, $request->getParsedBody());
         if ($success) {
             $this->reflection->refreshTables();
         }
         return $this->responder->success($success);
     }
 
-    public function updateColumn(Request $request): Response
+    public function updateColumn(ServerRequestInterface $request): ResponseInterface
     {
-        $tableName = $request->getPathSegment(2);
-        $columnName = $request->getPathSegment(3);
+        $tableName = RequestUtils::getPathSegment($request, 2);
+        $columnName = RequestUtils::getPathSegment($request, 3);
         if (!$this->reflection->hasTable($tableName)) {
             return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $tableName);
         }
@@ -1039,47 +2709,47 @@ class ColumnController
         if (!$table->hasColumn($columnName)) {
             return $this->responder->error(ErrorCode::COLUMN_NOT_FOUND, $columnName);
         }
-        $success = $this->definition->updateColumn($tableName, $columnName, $request->getBody());
+        $success = $this->definition->updateColumn($tableName, $columnName, $request->getParsedBody());
         if ($success) {
             $this->reflection->refreshTable($tableName);
         }
         return $this->responder->success($success);
     }
 
-    public function addTable(Request $request): Response
+    public function addTable(ServerRequestInterface $request): ResponseInterface
     {
-        $tableName = $request->getBody()->name;
+        $tableName = $request->getParsedBody()->name;
         if ($this->reflection->hasTable($tableName)) {
             return $this->responder->error(ErrorCode::TABLE_ALREADY_EXISTS, $tableName);
         }
-        $success = $this->definition->addTable($request->getBody());
+        $success = $this->definition->addTable($request->getParsedBody());
         if ($success) {
             $this->reflection->refreshTables();
         }
         return $this->responder->success($success);
     }
 
-    public function addColumn(Request $request): Response
+    public function addColumn(ServerRequestInterface $request): ResponseInterface
     {
-        $tableName = $request->getPathSegment(2);
+        $tableName = RequestUtils::getPathSegment($request, 2);
         if (!$this->reflection->hasTable($tableName)) {
             return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $tableName);
         }
-        $columnName = $request->getBody()->name;
+        $columnName = $request->getParsedBody()->name;
         $table = $this->reflection->getTable($tableName);
         if ($table->hasColumn($columnName)) {
             return $this->responder->error(ErrorCode::COLUMN_ALREADY_EXISTS, $columnName);
         }
-        $success = $this->definition->addColumn($tableName, $request->getBody());
+        $success = $this->definition->addColumn($tableName, $request->getParsedBody());
         if ($success) {
             $this->reflection->refreshTable($tableName);
         }
         return $this->responder->success($success);
     }
 
-    public function removeTable(Request $request): Response
+    public function removeTable(ServerRequestInterface $request): ResponseInterface
     {
-        $tableName = $request->getPathSegment(2);
+        $tableName = RequestUtils::getPathSegment($request, 2);
         if (!$this->reflection->hasTable($tableName)) {
             return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $tableName);
         }
@@ -1090,10 +2760,10 @@ class ColumnController
         return $this->responder->success($success);
     }
 
-    public function removeColumn(Request $request): Response
+    public function removeColumn(ServerRequestInterface $request): ResponseInterface
     {
-        $tableName = $request->getPathSegment(2);
-        $columnName = $request->getPathSegment(3);
+        $tableName = RequestUtils::getPathSegment($request, 2);
+        $columnName = RequestUtils::getPathSegment($request, 3);
         if (!$this->reflection->hasTable($tableName)) {
             return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $tableName);
         }
@@ -1123,7 +2793,7 @@ class OpenApiController
         $this->responder = $responder;
     }
 
-    public function openapi(Request $request): Response
+    public function openapi(ServerRequestInterface $request): ResponseInterface
     {
         return $this->responder->success($this->openApi->get());
     }
@@ -1149,27 +2819,27 @@ class RecordController
         $this->responder = $responder;
     }
 
-    public function _list(Request $request): Response
+    public function _list(ServerRequestInterface $request): ResponseInterface
     {
-        $table = $request->getPathSegment(2);
-        $params = $request->getParams();
+        $table = RequestUtils::getPathSegment($request, 2);
+        $params = RequestUtils::getParams($request);
         if (!$this->service->hasTable($table)) {
             return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $table);
         }
         return $this->responder->success($this->service->_list($table, $params));
     }
 
-    public function read(Request $request): Response
+    public function read(ServerRequestInterface $request): ResponseInterface
     {
-        $table = $request->getPathSegment(2);
+        $table = RequestUtils::getPathSegment($request, 2);
         if (!$this->service->hasTable($table)) {
             return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $table);
         }
         if ($this->service->getType($table) != 'table') {
             return $this->responder->error(ErrorCode::OPERATION_NOT_SUPPORTED, __FUNCTION__);
         }
-        $id = $request->getPathSegment(3);
-        $params = $request->getParams();
+        $id = RequestUtils::getPathSegment($request, 3);
+        $params = RequestUtils::getParams($request);
         if (strpos($id, ',') !== false) {
             $ids = explode(',', $id);
             $result = [];
@@ -1186,20 +2856,20 @@ class RecordController
         }
     }
 
-    public function create(Request $request): Response
+    public function create(ServerRequestInterface $request): ResponseInterface
     {
-        $table = $request->getPathSegment(2);
+        $table = RequestUtils::getPathSegment($request, 2);
         if (!$this->service->hasTable($table)) {
             return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $table);
         }
         if ($this->service->getType($table) != 'table') {
             return $this->responder->error(ErrorCode::OPERATION_NOT_SUPPORTED, __FUNCTION__);
         }
-        $record = $request->getBody();
+        $record = $request->getParsedBody();
         if ($record === null) {
             return $this->responder->error(ErrorCode::HTTP_MESSAGE_NOT_READABLE, '');
         }
-        $params = $request->getParams();
+        $params = RequestUtils::getParams($request);
         if (is_array($record)) {
             $result = array();
             foreach ($record as $r) {
@@ -1211,18 +2881,18 @@ class RecordController
         }
     }
 
-    public function update(Request $request): Response
+    public function update(ServerRequestInterface $request): ResponseInterface
     {
-        $table = $request->getPathSegment(2);
+        $table = RequestUtils::getPathSegment($request, 2);
         if (!$this->service->hasTable($table)) {
             return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $table);
         }
         if ($this->service->getType($table) != 'table') {
             return $this->responder->error(ErrorCode::OPERATION_NOT_SUPPORTED, __FUNCTION__);
         }
-        $id = $request->getPathSegment(3);
-        $params = $request->getParams();
-        $record = $request->getBody();
+        $id = RequestUtils::getPathSegment($request, 3);
+        $params = RequestUtils::getParams($request);
+        $record = $request->getParsedBody();
         if ($record === null) {
             return $this->responder->error(ErrorCode::HTTP_MESSAGE_NOT_READABLE, '');
         }
@@ -1244,17 +2914,17 @@ class RecordController
         }
     }
 
-    public function delete(Request $request): Response
+    public function delete(ServerRequestInterface $request): ResponseInterface
     {
-        $table = $request->getPathSegment(2);
+        $table = RequestUtils::getPathSegment($request, 2);
         if (!$this->service->hasTable($table)) {
             return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $table);
         }
         if ($this->service->getType($table) != 'table') {
             return $this->responder->error(ErrorCode::OPERATION_NOT_SUPPORTED, __FUNCTION__);
         }
-        $id = $request->getPathSegment(3);
-        $params = $request->getParams();
+        $id = RequestUtils::getPathSegment($request, 3);
+        $params = RequestUtils::getParams($request);
         $ids = explode(',', $id);
         if (count($ids) > 1) {
             $result = array();
@@ -1267,21 +2937,21 @@ class RecordController
         }
     }
 
-    public function increment(Request $request): Response
+    public function increment(ServerRequestInterface $request): ResponseInterface
     {
-        $table = $request->getPathSegment(2);
+        $table = RequestUtils::getPathSegment($request, 2);
         if (!$this->service->hasTable($table)) {
             return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $table);
         }
         if ($this->service->getType($table) != 'table') {
             return $this->responder->error(ErrorCode::OPERATION_NOT_SUPPORTED, __FUNCTION__);
         }
-        $id = $request->getPathSegment(3);
-        $record = $request->getBody();
+        $id = RequestUtils::getPathSegment($request, 3);
+        $record = $request->getParsedBody();
         if ($record === null) {
             return $this->responder->error(ErrorCode::HTTP_MESSAGE_NOT_READABLE, '');
         }
-        $params = $request->getParams();
+        $params = RequestUtils::getParams($request);
         $ids = explode(',', $id);
         if (is_array($record)) {
             if (count($ids) != count($record)) {
@@ -1306,17 +2976,17 @@ class RecordController
 
 class Responder
 {
-    public function error(int $error, String $argument, $details = null): Response
+    public function error(int $error, string $argument, $details = null): ResponseInterface
     {
         $errorCode = new ErrorCode($error);
         $status = $errorCode->getStatus();
         $document = new ErrorDocument($errorCode, $argument, $details);
-        return new Response($status, $document);
+        return ResponseFactory::fromObject($status, $document);
     }
 
-    public function success($result): Response
+    public function success($result): ResponseInterface
     {
-        return new Response(Response::OK, $result);
+        return ResponseFactory::fromObject(ResponseFactory::OK, $result);
     }
 
 }
@@ -1327,12 +2997,12 @@ class ColumnConverter
 {
     private $driver;
 
-    public function __construct(String $driver)
+    public function __construct(string $driver)
     {
         $this->driver = $driver;
     }
 
-    public function convertColumnValue(ReflectedColumn $column): String
+    public function convertColumnValue(ReflectedColumn $column): string
     {
         if ($column->isBinary()) {
             switch ($this->driver) {
@@ -1356,7 +3026,7 @@ class ColumnConverter
         return '?';
     }
 
-    public function convertColumnName(ReflectedColumn $column, $value): String
+    public function convertColumnName(ReflectedColumn $column, $value): string
     {
         if ($column->isBinary()) {
             switch ($this->driver) {
@@ -1390,13 +3060,13 @@ class ColumnsBuilder
     private $driver;
     private $converter;
 
-    public function __construct(String $driver)
+    public function __construct(string $driver)
     {
         $this->driver = $driver;
         $this->converter = new ColumnConverter($driver);
     }
 
-    public function getOffsetLimit(int $offset, int $limit): String
+    public function getOffsetLimit(int $offset, int $limit): string
     {
         if ($limit < 0 || $offset < 0) {
             return '';
@@ -1408,14 +3078,14 @@ class ColumnsBuilder
         }
     }
 
-    private function quoteColumnName(ReflectedColumn $column): String
+    private function quoteColumnName(ReflectedColumn $column): string
     {
         return '"' . $column->getName() . '"';
     }
 
-    public function getOrderBy(ReflectedTable $table, array $columnOrdering): String
+    public function getOrderBy(ReflectedTable $table, array $columnOrdering): string
     {
-        if (count($columnOrdering)==0) {
+        if (count($columnOrdering) == 0) {
             return '';
         }
         $results = array();
@@ -1424,10 +3094,10 @@ class ColumnsBuilder
             $quotedColumnName = $this->quoteColumnName($column);
             $results[] = $quotedColumnName . ' ' . $ordering;
         }
-        return ' ORDER BY '.implode(',', $results);
+        return ' ORDER BY ' . implode(',', $results);
     }
 
-    public function getSelect(ReflectedTable $table, array $columnNames): String
+    public function getSelect(ReflectedTable $table, array $columnNames): string
     {
         $results = array();
         foreach ($columnNames as $columnName) {
@@ -1439,7 +3109,7 @@ class ColumnsBuilder
         return implode(',', $results);
     }
 
-    public function getInsert(ReflectedTable $table, array $columnValues): String
+    public function getInsert(ReflectedTable $table, array $columnValues): string
     {
         $columns = array();
         $values = array();
@@ -1460,7 +3130,7 @@ class ColumnsBuilder
         }
     }
 
-    public function getUpdate(ReflectedTable $table, array $columnValues): String
+    public function getUpdate(ReflectedTable $table, array $columnValues): string
     {
         $results = array();
         foreach ($columnValues as $columnName => $columnValue) {
@@ -1472,7 +3142,7 @@ class ColumnsBuilder
         return implode(',', $results);
     }
 
-    public function getIncrement(ReflectedTable $table, array $columnValues): String
+    public function getIncrement(ReflectedTable $table, array $columnValues): string
     {
         $results = array();
         foreach ($columnValues as $columnName => $columnValue) {
@@ -1495,12 +3165,12 @@ class ConditionsBuilder
 {
     private $driver;
 
-    public function __construct(String $driver)
+    public function __construct(string $driver)
     {
         $this->driver = $driver;
     }
 
-    private function getConditionSql(Condition $condition, array &$arguments): String
+    private function getConditionSql(Condition $condition, array &$arguments): string
     {
         if ($condition instanceof AndCondition) {
             return $this->getAndConditionSql($condition, $arguments);
@@ -1520,7 +3190,7 @@ class ConditionsBuilder
         throw new \Exception('Unknown Condition: ' . get_class($condition));
     }
 
-    private function getAndConditionSql(AndCondition $and, array &$arguments): String
+    private function getAndConditionSql(AndCondition $and, array &$arguments): string
     {
         $parts = [];
         foreach ($and->getConditions() as $condition) {
@@ -1529,7 +3199,7 @@ class ConditionsBuilder
         return '(' . implode(' AND ', $parts) . ')';
     }
 
-    private function getOrConditionSql(OrCondition $or, array &$arguments): String
+    private function getOrConditionSql(OrCondition $or, array &$arguments): string
     {
         $parts = [];
         foreach ($or->getConditions() as $condition) {
@@ -1538,23 +3208,23 @@ class ConditionsBuilder
         return '(' . implode(' OR ', $parts) . ')';
     }
 
-    private function getNotConditionSql(NotCondition $not, array &$arguments): String
+    private function getNotConditionSql(NotCondition $not, array &$arguments): string
     {
         $condition = $not->getCondition();
         return '(NOT ' . $this->getConditionSql($condition, $arguments) . ')';
     }
 
-    private function quoteColumnName(ReflectedColumn $column): String
+    private function quoteColumnName(ReflectedColumn $column): string
     {
         return '"' . $column->getName() . '"';
     }
 
-    private function escapeLikeValue(String $value): String
+    private function escapeLikeValue(string $value): string
     {
         return addcslashes($value, '%_');
     }
 
-    private function getColumnConditionSql(ColumnCondition $condition, array &$arguments): String
+    private function getColumnConditionSql(ColumnCondition $condition, array &$arguments): string
     {
         $column = $this->quoteColumnName($condition->getColumn());
         $operator = $condition->getOperator();
@@ -1623,7 +3293,7 @@ class ConditionsBuilder
         return $sql;
     }
 
-    private function getSpatialFunctionName(String $operator): String
+    private function getSpatialFunctionName(string $operator): string
     {
         switch ($operator) {
             case 'co':return 'ST_Contains';
@@ -1640,12 +3310,12 @@ class ConditionsBuilder
         }
     }
 
-    private function hasSpatialArgument(String $operator): bool
+    private function hasSpatialArgument(string $operator): bool
     {
         return in_array($operator, ['ic', 'is', 'iv']) ? false : true;
     }
 
-    private function getSpatialFunctionCall(String $functionName, String $column, bool $hasArgument): String
+    private function getSpatialFunctionCall(string $functionName, string $column, bool $hasArgument): string
     {
         switch ($this->driver) {
             case 'mysql':
@@ -1659,7 +3329,7 @@ class ConditionsBuilder
         }
     }
 
-    private function getSpatialConditionSql(ColumnCondition $condition, array &$arguments): String
+    private function getSpatialConditionSql(ColumnCondition $condition, array &$arguments): string
     {
         $column = $this->quoteColumnName($condition->getColumn());
         $operator = $condition->getOperator();
@@ -1673,7 +3343,7 @@ class ConditionsBuilder
         return $sql;
     }
 
-    public function getWhereClause(Condition $condition, array &$arguments): String
+    public function getWhereClause(Condition $condition, array &$arguments): string
     {
         if ($condition instanceof NoCondition) {
             return '';
@@ -1688,7 +3358,7 @@ class DataConverter
 {
     private $driver;
 
-    public function __construct(String $driver)
+    public function __construct(string $driver)
     {
         $this->driver = $driver;
     }
@@ -1704,7 +3374,7 @@ class DataConverter
         return $value;
     }
 
-    private function getRecordValueConversion(ReflectedColumn $column): String
+    private function getRecordValueConversion(ReflectedColumn $column): string
     {
         if (in_array($this->driver, ['mysql', 'sqlsrv']) && $column->isBoolean()) {
             return 'boolean';
@@ -1741,7 +3411,7 @@ class DataConverter
         return $value;
     }
 
-    private function getInputValueConversion(ReflectedColumn $column): String
+    private function getInputValueConversion(ReflectedColumn $column): string
     {
         if ($column->isBinary()) {
             return 'base64url_to_base64';
@@ -1778,7 +3448,7 @@ class GenericDB
     private $columns;
     private $converter;
 
-    private function getDsn(String $address, String $port = null, String $database = null): String
+    private function getDsn(string $address, int $port, string $database): string
     {
         switch ($this->driver) {
             case 'mysql':return "$this->driver:host=$address;port=$port;dbname=$database;charset=utf8mb4";
@@ -1826,7 +3496,7 @@ class GenericDB
         }
     }
 
-    public function __construct(String $driver, String $address, String $port = null, String $database = null, String $username = null, String $password = null)
+    public function __construct(string $driver, string $address, int $port, string $database, string $username, string $password)
     {
         $this->driver = $driver;
         $this->database = $database;
@@ -1859,7 +3529,7 @@ class GenericDB
         return $this->definition;
     }
 
-    private function addMiddlewareConditions(String $tableName, Condition $condition): Condition
+    private function addMiddlewareConditions(string $tableName, Condition $condition): Condition
     {
         $condition1 = VariableStore::get("authorization.conditions.$tableName");
         if ($condition1) {
@@ -1896,7 +3566,7 @@ class GenericDB
         return $pkValue;
     }
 
-    public function selectSingle(ReflectedTable $table, array $columnNames, String $id) /*: ?array*/
+    public function selectSingle(ReflectedTable $table, array $columnNames, string $id) /*: ?array*/
     {
         $selectColumns = $this->columns->getSelect($table, $columnNames);
         $tableName = $table->getName();
@@ -1963,7 +3633,7 @@ class GenericDB
         return $records;
     }
 
-    public function updateSingle(ReflectedTable $table, array $columnValues, String $id)
+    public function updateSingle(ReflectedTable $table, array $columnValues, string $id)
     {
         if (count($columnValues) == 0) {
             return 0;
@@ -1980,7 +3650,7 @@ class GenericDB
         return $stmt->rowCount();
     }
 
-    public function deleteSingle(ReflectedTable $table, String $id)
+    public function deleteSingle(ReflectedTable $table, string $id)
     {
         $tableName = $table->getName();
         $condition = new ColumnCondition($table->getPk(), 'eq', $id);
@@ -1992,7 +3662,7 @@ class GenericDB
         return $stmt->rowCount();
     }
 
-    public function incrementSingle(ReflectedTable $table, array $columnValues, String $id)
+    public function incrementSingle(ReflectedTable $table, array $columnValues, string $id)
     {
         if (count($columnValues) == 0) {
             return 0;
@@ -2009,7 +3679,7 @@ class GenericDB
         return $stmt->rowCount();
     }
 
-    private function query(String $sql, array $parameters): \PDOStatement
+    private function query(string $sql, array $parameters): \PDOStatement
     {
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute($parameters);
@@ -2027,7 +3697,7 @@ class GenericDefinition
     private $typeConverter;
     private $reflection;
 
-    public function __construct(\PDO $pdo, String $driver, String $database)
+    public function __construct(\PDO $pdo, string $driver, string $database)
     {
         $this->pdo = $pdo;
         $this->driver = $driver;
@@ -2036,12 +3706,12 @@ class GenericDefinition
         $this->reflection = new GenericReflection($pdo, $driver, $database);
     }
 
-    private function quote(String $identifier): String
+    private function quote(string $identifier): string
     {
         return '"' . str_replace('"', '', $identifier) . '"';
     }
 
-    public function getColumnType(ReflectedColumn $column, bool $update): String
+    public function getColumnType(ReflectedColumn $column, bool $update): string
     {
         if ($this->driver == 'pgsql' && !$update && $column->getPk() && $this->canAutoIncrement($column)) {
             return 'serial';
@@ -2061,7 +3731,7 @@ class GenericDefinition
         return $type . $size . $null . $auto;
     }
 
-    private function getPrimaryKey(String $tableName): String
+    private function getPrimaryKey(string $tableName): string
     {
         $pks = $this->reflection->getTablePrimaryKeys($tableName);
         if (count($pks) == 1) {
@@ -2075,7 +3745,7 @@ class GenericDefinition
         return in_array($column->getType(), ['integer', 'bigint']);
     }
 
-    private function getColumnAutoIncrement(ReflectedColumn $column, bool $update): String
+    private function getColumnAutoIncrement(ReflectedColumn $column, bool $update): string
     {
         if (!$this->canAutoIncrement($column)) {
             return '';
@@ -2089,7 +3759,7 @@ class GenericDefinition
         }
     }
 
-    private function getColumnNullType(ReflectedColumn $column, bool $update): String
+    private function getColumnNullType(ReflectedColumn $column, bool $update): string
     {
         if ($this->driver == 'pgsql' && $update) {
             return '';
@@ -2097,7 +3767,7 @@ class GenericDefinition
         return $column->getNullable() ? ' NULL' : ' NOT NULL';
     }
 
-    private function getTableRenameSQL(String $tableName, String $newTableName): String
+    private function getTableRenameSQL(string $tableName, string $newTableName): string
     {
         $p1 = $this->quote($tableName);
         $p2 = $this->quote($newTableName);
@@ -2112,7 +3782,7 @@ class GenericDefinition
         }
     }
 
-    private function getColumnRenameSQL(String $tableName, String $columnName, ReflectedColumn $newColumn): String
+    private function getColumnRenameSQL(string $tableName, string $columnName, ReflectedColumn $newColumn): string
     {
         $p1 = $this->quote($tableName);
         $p2 = $this->quote($columnName);
@@ -2130,7 +3800,7 @@ class GenericDefinition
         }
     }
 
-    private function getColumnRetypeSQL(String $tableName, String $columnName, ReflectedColumn $newColumn): String
+    private function getColumnRetypeSQL(string $tableName, string $columnName, ReflectedColumn $newColumn): string
     {
         $p1 = $this->quote($tableName);
         $p2 = $this->quote($columnName);
@@ -2147,7 +3817,7 @@ class GenericDefinition
         }
     }
 
-    private function getSetColumnNullableSQL(String $tableName, String $columnName, ReflectedColumn $newColumn): String
+    private function getSetColumnNullableSQL(string $tableName, string $columnName, ReflectedColumn $newColumn): string
     {
         $p1 = $this->quote($tableName);
         $p2 = $this->quote($columnName);
@@ -2165,7 +3835,7 @@ class GenericDefinition
         }
     }
 
-    private function getSetColumnPkConstraintSQL(String $tableName, String $columnName, ReflectedColumn $newColumn): String
+    private function getSetColumnPkConstraintSQL(string $tableName, string $columnName, ReflectedColumn $newColumn): string
     {
         $p1 = $this->quote($tableName);
         $p2 = $this->quote($columnName);
@@ -2182,7 +3852,7 @@ class GenericDefinition
         }
     }
 
-    private function getSetColumnPkSequenceSQL(String $tableName, String $columnName, ReflectedColumn $newColumn): String
+    private function getSetColumnPkSequenceSQL(string $tableName, string $columnName, ReflectedColumn $newColumn): string
     {
         $p1 = $this->quote($tableName);
         $p2 = $this->quote($columnName);
@@ -2198,11 +3868,11 @@ class GenericDefinition
         }
     }
 
-    private function getSetColumnPkSequenceStartSQL(String $tableName, String $columnName, ReflectedColumn $newColumn): String
+    private function getSetColumnPkSequenceStartSQL(string $tableName, string $columnName, ReflectedColumn $newColumn): string
     {
         $p1 = $this->quote($tableName);
         $p2 = $this->quote($columnName);
-        
+
         switch ($this->driver) {
             case 'mysql':
                 return "select 1";
@@ -2216,7 +3886,7 @@ class GenericDefinition
         }
     }
 
-    private function getSetColumnPkDefaultSQL(String $tableName, String $columnName, ReflectedColumn $newColumn): String
+    private function getSetColumnPkDefaultSQL(string $tableName, string $columnName, ReflectedColumn $newColumn): string
     {
         $p1 = $this->quote($tableName);
         $p2 = $this->quote($columnName);
@@ -2245,7 +3915,7 @@ class GenericDefinition
         }
     }
 
-    private function getAddColumnFkConstraintSQL(String $tableName, String $columnName, ReflectedColumn $newColumn): String
+    private function getAddColumnFkConstraintSQL(string $tableName, string $columnName, ReflectedColumn $newColumn): string
     {
         $p1 = $this->quote($tableName);
         $p2 = $this->quote($columnName);
@@ -2256,7 +3926,7 @@ class GenericDefinition
         return "ALTER TABLE $p1 ADD CONSTRAINT $p3 FOREIGN KEY ($p2) REFERENCES $p4 ($p5)";
     }
 
-    private function getRemoveColumnFkConstraintSQL(String $tableName, String $columnName, ReflectedColumn $newColumn): String
+    private function getRemoveColumnFkConstraintSQL(string $tableName, string $columnName, ReflectedColumn $newColumn): string
     {
         $p1 = $this->quote($tableName);
         $p2 = $this->quote($tableName . '_' . $columnName . '_fkey');
@@ -2270,7 +3940,7 @@ class GenericDefinition
         }
     }
 
-    private function getAddTableSQL(ReflectedTable $newTable): String
+    private function getAddTableSQL(ReflectedTable $newTable): string
     {
         $tableName = $newTable->getName();
         $p1 = $this->quote($tableName);
@@ -2298,7 +3968,7 @@ class GenericDefinition
         return "CREATE TABLE $p1 ($p2);";
     }
 
-    private function getAddColumnSQL(String $tableName, ReflectedColumn $newColumn): String
+    private function getAddColumnSQL(string $tableName, ReflectedColumn $newColumn): string
     {
         $p1 = $this->quote($tableName);
         $p2 = $this->quote($newColumn->getName());
@@ -2313,7 +3983,7 @@ class GenericDefinition
         }
     }
 
-    private function getRemoveTableSQL(String $tableName): String
+    private function getRemoveTableSQL(string $tableName): string
     {
         $p1 = $this->quote($tableName);
 
@@ -2326,7 +3996,7 @@ class GenericDefinition
         }
     }
 
-    private function getRemoveColumnSQL(String $tableName, String $columnName): String
+    private function getRemoveColumnSQL(string $tableName, string $columnName): string
     {
         $p1 = $this->quote($tableName);
         $p2 = $this->quote($columnName);
@@ -2340,31 +4010,31 @@ class GenericDefinition
         }
     }
 
-    public function renameTable(String $tableName, String $newTableName)
+    public function renameTable(string $tableName, string $newTableName)
     {
         $sql = $this->getTableRenameSQL($tableName, $newTableName);
         return $this->query($sql);
     }
 
-    public function renameColumn(String $tableName, String $columnName, ReflectedColumn $newColumn)
+    public function renameColumn(string $tableName, string $columnName, ReflectedColumn $newColumn)
     {
         $sql = $this->getColumnRenameSQL($tableName, $columnName, $newColumn);
         return $this->query($sql);
     }
 
-    public function retypeColumn(String $tableName, String $columnName, ReflectedColumn $newColumn)
+    public function retypeColumn(string $tableName, string $columnName, ReflectedColumn $newColumn)
     {
         $sql = $this->getColumnRetypeSQL($tableName, $columnName, $newColumn);
         return $this->query($sql);
     }
 
-    public function setColumnNullable(String $tableName, String $columnName, ReflectedColumn $newColumn)
+    public function setColumnNullable(string $tableName, string $columnName, ReflectedColumn $newColumn)
     {
         $sql = $this->getSetColumnNullableSQL($tableName, $columnName, $newColumn);
         return $this->query($sql);
     }
 
-    public function addColumnPrimaryKey(String $tableName, String $columnName, ReflectedColumn $newColumn)
+    public function addColumnPrimaryKey(string $tableName, string $columnName, ReflectedColumn $newColumn)
     {
         $sql = $this->getSetColumnPkConstraintSQL($tableName, $columnName, $newColumn);
         $this->query($sql);
@@ -2379,7 +4049,7 @@ class GenericDefinition
         return true;
     }
 
-    public function removeColumnPrimaryKey(String $tableName, String $columnName, ReflectedColumn $newColumn)
+    public function removeColumnPrimaryKey(string $tableName, string $columnName, ReflectedColumn $newColumn)
     {
         if ($this->canAutoIncrement($newColumn)) {
             $sql = $this->getSetColumnPkDefaultSQL($tableName, $columnName, $newColumn);
@@ -2392,13 +4062,13 @@ class GenericDefinition
         return true;
     }
 
-    public function addColumnForeignKey(String $tableName, String $columnName, ReflectedColumn $newColumn)
+    public function addColumnForeignKey(string $tableName, string $columnName, ReflectedColumn $newColumn)
     {
         $sql = $this->getAddColumnFkConstraintSQL($tableName, $columnName, $newColumn);
         return $this->query($sql);
     }
 
-    public function removeColumnForeignKey(String $tableName, String $columnName, ReflectedColumn $newColumn)
+    public function removeColumnForeignKey(string $tableName, string $columnName, ReflectedColumn $newColumn)
     {
         $sql = $this->getRemoveColumnFkConstraintSQL($tableName, $columnName, $newColumn);
         return $this->query($sql);
@@ -2410,25 +4080,25 @@ class GenericDefinition
         return $this->query($sql);
     }
 
-    public function addColumn(String $tableName, ReflectedColumn $newColumn)
+    public function addColumn(string $tableName, ReflectedColumn $newColumn)
     {
         $sql = $this->getAddColumnSQL($tableName, $newColumn);
         return $this->query($sql);
     }
 
-    public function removeTable(String $tableName)
+    public function removeTable(string $tableName)
     {
         $sql = $this->getRemoveTableSQL($tableName);
         return $this->query($sql);
     }
 
-    public function removeColumn(String $tableName, String $columnName)
+    public function removeColumn(string $tableName, string $columnName)
     {
         $sql = $this->getRemoveColumnSQL($tableName, $columnName);
         return $this->query($sql);
     }
 
-    private function query(String $sql): bool
+    private function query(string $sql): bool
     {
         $stmt = $this->pdo->prepare($sql);
         return $stmt->execute();
@@ -2444,7 +4114,7 @@ class GenericReflection
     private $database;
     private $typeConverter;
 
-    public function __construct(\PDO $pdo, String $driver, String $database)
+    public function __construct(\PDO $pdo, string $driver, string $database)
     {
         $this->pdo = $pdo;
         $this->driver = $driver;
@@ -2461,7 +4131,7 @@ class GenericReflection
         }
     }
 
-    private function getTablesSQL(): String
+    private function getTablesSQL(): string
     {
         switch ($this->driver) {
             case 'mysql':return 'SELECT "TABLE_NAME", "TABLE_TYPE" FROM "INFORMATION_SCHEMA"."TABLES" WHERE "TABLE_TYPE" IN (\'BASE TABLE\' , \'VIEW\') AND "TABLE_SCHEMA" = ? ORDER BY BINARY "TABLE_NAME"';
@@ -2470,7 +4140,7 @@ class GenericReflection
         }
     }
 
-    private function getTableColumnsSQL(): String
+    private function getTableColumnsSQL(): string
     {
         switch ($this->driver) {
             case 'mysql':return 'SELECT "COLUMN_NAME", "IS_NULLABLE", "DATA_TYPE", "CHARACTER_MAXIMUM_LENGTH", "NUMERIC_PRECISION", "NUMERIC_SCALE" FROM "INFORMATION_SCHEMA"."COLUMNS" WHERE "TABLE_NAME" = ? AND "TABLE_SCHEMA" = ?';
@@ -2479,7 +4149,7 @@ class GenericReflection
         }
     }
 
-    private function getTablePrimaryKeysSQL(): String
+    private function getTablePrimaryKeysSQL(): string
     {
         switch ($this->driver) {
             case 'mysql':return 'SELECT "COLUMN_NAME" FROM "INFORMATION_SCHEMA"."KEY_COLUMN_USAGE" WHERE "CONSTRAINT_NAME" = \'PRIMARY\' AND "TABLE_NAME" = ? AND "TABLE_SCHEMA" = ?';
@@ -2488,7 +4158,7 @@ class GenericReflection
         }
     }
 
-    private function getTableForeignKeysSQL(): String
+    private function getTableForeignKeysSQL(): string
     {
         switch ($this->driver) {
             case 'mysql':return 'SELECT "COLUMN_NAME", "REFERENCED_TABLE_NAME" FROM "INFORMATION_SCHEMA"."KEY_COLUMN_USAGE" WHERE "REFERENCED_TABLE_NAME" IS NOT NULL AND "TABLE_NAME" = ? AND "TABLE_SCHEMA" = ?';
@@ -2497,7 +4167,7 @@ class GenericReflection
         }
     }
 
-    public function getDatabaseName(): String
+    public function getDatabaseName(): string
     {
         return $this->database;
     }
@@ -2525,7 +4195,7 @@ class GenericReflection
         return $results;
     }
 
-    public function getTableColumns(String $tableName, String $type): array
+    public function getTableColumns(string $tableName, string $type): array
     {
         $sql = $this->getTableColumnsSQL();
         $results = $this->query($sql, [$tableName, $this->database]);
@@ -2537,7 +4207,7 @@ class GenericReflection
         return $results;
     }
 
-    public function getTablePrimaryKeys(String $tableName): array
+    public function getTablePrimaryKeys(string $tableName): array
     {
         $sql = $this->getTablePrimaryKeysSQL();
         $results = $this->query($sql, [$tableName, $this->database]);
@@ -2548,7 +4218,7 @@ class GenericReflection
         return $primaryKeys;
     }
 
-    public function getTableForeignKeys(String $tableName): array
+    public function getTableForeignKeys(string $tableName): array
     {
         $sql = $this->getTableForeignKeysSQL();
         $results = $this->query($sql, [$tableName, $this->database]);
@@ -2559,12 +4229,12 @@ class GenericReflection
         return $foreignKeys;
     }
 
-    public function toJdbcType(String $type, int $size): String
+    public function toJdbcType(string $type, int $size): string
     {
         return $this->typeConverter->toJdbc($type, $size);
     }
 
-    private function query(String $sql, array $parameters): array
+    private function query(string $sql, array $parameters): array
     {
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute($parameters);
@@ -2578,7 +4248,7 @@ class TypeConverter
 {
     private $driver;
 
-    public function __construct(String $driver)
+    public function __construct(string $driver)
     {
         $this->driver = $driver;
     }
@@ -2719,7 +4389,7 @@ class TypeConverter
         'geometry' => true,
     ];
 
-    public function toJdbc(String $type, int $size): String
+    public function toJdbc(string $type, int $size): string
     {
         $jdbcType = strtolower($type);
         if (isset($this->toJdbc[$this->driver]["$jdbcType($size)"])) {
@@ -2737,7 +4407,7 @@ class TypeConverter
         return $jdbcType;
     }
 
-    public function fromJdbc(String $type): String
+    public function fromJdbc(string $type): string
     {
         $jdbcType = strtolower($type);
         if (isset($this->fromJdbc[$this->driver][$jdbcType])) {
@@ -2747,16 +4417,9 @@ class TypeConverter
     }
 }
 
-// file: src/Tqdev/PhpCrudApi/Middleware/Base/Handler.php
-
-interface Handler
-{
-    public function handle(Request $request): Response;
-}
-
 // file: src/Tqdev/PhpCrudApi/Middleware/Base/Middleware.php
 
-abstract class Middleware implements Handler
+abstract class Middleware implements MiddlewareInterface
 {
     protected $next;
     protected $responder;
@@ -2769,17 +4432,12 @@ abstract class Middleware implements Handler
         $this->properties = $properties;
     }
 
-    public function setNext(Handler $handler) /*: void*/
-    {
-        $this->next = $handler;
-    }
-
-    protected function getArrayProperty(String $key, String $default): array
+    protected function getArrayProperty(string $key, string $default): array
     {
         return array_filter(array_map('trim', explode(',', $this->getProperty($key, $default))));
     }
 
-    protected function getProperty(String $key, $default)
+    protected function getProperty(string $key, $default)
     {
         return isset($this->properties[$key]) ? $this->properties[$key] : $default;
     }
@@ -2791,7 +4449,7 @@ class VariableStore
 {
     static $values = array();
 
-    public static function get(String $key)
+    public static function get(string $key)
     {
         if (isset(self::$values[$key])) {
             return self::$values[$key];
@@ -2799,7 +4457,7 @@ class VariableStore
         return null;
     }
 
-    public static function set(String $key, /* object */ $value)
+    public static function set(string $key, /* object */ $value)
     {
         self::$values[$key] = $value;
     }
@@ -2807,13 +4465,13 @@ class VariableStore
 
 // file: src/Tqdev/PhpCrudApi/Middleware/Router/Router.php
 
-interface Router extends Handler
+interface Router extends RequestHandlerInterface
 {
-    public function register(String $method, String $path, array $handler);
+    public function register(string $method, string $path, array $handler);
 
     public function load(Middleware $middleware);
 
-    public function route(Request $request): Response;
+    public function route(ServerRequestInterface $request): ResponseInterface;
 }
 
 // file: src/Tqdev/PhpCrudApi/Middleware/Router/SimpleRouter.php
@@ -2853,7 +4511,7 @@ class SimpleRouter implements Router
         return $tree;
     }
 
-    public function register(String $method, String $path, array $handler)
+    public function register(string $method, string $path, array $handler)
     {
         $routeNumber = count($this->routeHandlers);
         $this->routeHandlers[$routeNumber] = $handler;
@@ -2866,41 +4524,36 @@ class SimpleRouter implements Router
 
     public function load(Middleware $middleware) /*: void*/
     {
-        if (count($this->middlewares) > 0) {
-            $next = $this->middlewares[0];
-        } else {
-            $next = $this;
-        }
-        $middleware->setNext($next);
-        array_unshift($this->middlewares, $middleware);
+        array_push($this->middlewares, $middleware);
     }
 
-    public function route(Request $request): Response
+    public function route(ServerRequestInterface $request): ResponseInterface
     {
         if ($this->registration) {
             $data = gzcompress(json_encode($this->routes, JSON_UNESCAPED_UNICODE));
             $this->cache->set('PathTree', $data, $this->ttl);
         }
-        $obj = $this;
-        if (count($this->middlewares) > 0) {
-            $obj = $this->middlewares[0];
-        }
-        return $obj->handle($request);
+        return $this->handle($request);
     }
 
-    private function getRouteNumbers(Request $request): array
+    private function getRouteNumbers(ServerRequestInterface $request): array
     {
         $method = strtoupper($request->getMethod());
-        $path = explode('/', trim($request->getPath(0), '/'));
+        $path = explode('/', trim($request->getRequestTarget(), '/'));
         array_unshift($path, $method);
         return $this->routes->match($path);
     }
 
-    public function handle(Request $request): Response
+    public function handle(ServerRequestInterface $request): ResponseInterface
     {
+        if (count($this->middlewares)) {
+            $handler = array_pop($this->middlewares);
+            return $handler->process($request, $this);
+        }
+
         $routeNumbers = $this->getRouteNumbers($request);
         if (count($routeNumbers) == 0) {
-            return $this->responder->error(ErrorCode::ROUTE_NOT_FOUND, $request->getPath());
+            return $this->responder->error(ErrorCode::ROUTE_NOT_FOUND, $request->getRequestTarget());
         }
         try {
             $response = call_user_func($this->routeHandlers[$routeNumbers[0]], $request);
@@ -2915,7 +4568,7 @@ class SimpleRouter implements Router
                 $response = $this->responder->error(ErrorCode::DATA_INTEGRITY_VIOLATION, '');
             }
             if ($this->debug) {
-                $response->addExceptionHeaders($e);
+                $response = ResponseUtils::addExceptionHeaders($response, $e);
             }
         }
         return $response;
@@ -2927,18 +4580,18 @@ class SimpleRouter implements Router
 
 class AjaxOnlyMiddleware extends Middleware
 {
-    public function handle(Request $request): Response
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $next): ResponseInterface
     {
         $method = $request->getMethod();
         $excludeMethods = $this->getArrayProperty('excludeMethods', 'OPTIONS,GET');
         if (!in_array($method, $excludeMethods)) {
             $headerName = $this->getProperty('headerName', 'X-Requested-With');
             $headerValue = $this->getProperty('headerValue', 'XMLHttpRequest');
-            if ($headerValue != $request->getHeader($headerName)) {
+            if ($headerValue != RequestUtils::getHeader($request, $headerName)) {
                 return $this->responder->error(ErrorCode::ONLY_AJAX_REQUESTS_ALLOWED, $method);
             }
         }
-        return $this->next->handle($request);
+        return $next->handle($request);
     }
 }
 
@@ -2952,10 +4605,9 @@ class AuthorizationMiddleware extends Middleware
     {
         parent::__construct($router, $responder, $properties);
         $this->reflection = $reflection;
-        $this->utils = new RequestUtils($reflection);
     }
 
-    private function handleColumns(String $operation, String $tableName) /*: void*/
+    private function handleColumns(string $operation, string $tableName) /*: void*/
     {
         $columnHandler = $this->getProperty('columnHandler', '');
         if ($columnHandler) {
@@ -2969,7 +4621,7 @@ class AuthorizationMiddleware extends Middleware
         }
     }
 
-    private function handleTable(String $operation, String $tableName) /*: void*/
+    private function handleTable(string $operation, string $tableName) /*: void*/
     {
         if (!$this->reflection->hasTable($tableName)) {
             return;
@@ -2985,7 +4637,7 @@ class AuthorizationMiddleware extends Middleware
         }
     }
 
-    private function handleRecords(String $operation, String $tableName) /*: void*/
+    private function handleRecords(string $operation, string $tableName) /*: void*/
     {
         if (!$this->reflection->hasTable($tableName)) {
             return;
@@ -3002,11 +4654,11 @@ class AuthorizationMiddleware extends Middleware
         }
     }
 
-    public function handle(Request $request): Response
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $next): ResponseInterface
     {
-        $path = $request->getPathSegment(1);
-        $operation = $this->utils->getOperation($request);
-        $tableNames = $this->utils->getTableNames($request);
+        $path = RequestUtils::getPathSegment($request, 1);
+        $operation = RequestUtils::getOperation($request);
+        $tableNames = RequestUtils::getTableNames($request, $this->reflection);
         foreach ($tableNames as $tableName) {
             $this->handleTable($operation, $tableName);
             if ($path == 'records') {
@@ -3017,7 +4669,7 @@ class AuthorizationMiddleware extends Middleware
             VariableStore::set('authorization.tableHandler', $this->getProperty('tableHandler', ''));
             VariableStore::set('authorization.columnHandler', $this->getProperty('columnHandler', ''));
         }
-        return $this->next->handle($request);
+        return $next->handle($request);
     }
 }
 
@@ -3025,7 +4677,7 @@ class AuthorizationMiddleware extends Middleware
 
 class BasicAuthMiddleware extends Middleware
 {
-    private function hasCorrectPassword(String $username, String $password, array &$passwords): bool
+    private function hasCorrectPassword(string $username, string $password, array &$passwords): bool
     {
         $hash = isset($passwords[$username]) ? $passwords[$username] : false;
         if ($hash && password_verify($password, $hash)) {
@@ -3037,7 +4689,7 @@ class BasicAuthMiddleware extends Middleware
         return false;
     }
 
-    private function getValidUsername(String $username, String $password, String $passwordFile): String
+    private function getValidUsername(string $username, string $password, string $passwordFile): string
     {
         $passwords = $this->readPasswords($passwordFile);
         $valid = $this->hasCorrectPassword($username, $password, $passwords);
@@ -3045,7 +4697,7 @@ class BasicAuthMiddleware extends Middleware
         return $valid ? $username : '';
     }
 
-    private function readPasswords(String $passwordFile): array
+    private function readPasswords(string $passwordFile): array
     {
         $passwords = [];
         $passwordLines = file($passwordFile);
@@ -3061,7 +4713,7 @@ class BasicAuthMiddleware extends Middleware
         return $passwords;
     }
 
-    private function writePasswords(String $passwordFile, array $passwords): bool
+    private function writePasswords(string $passwordFile, array $passwords): bool
     {
         $success = false;
         $passwordFileContents = '';
@@ -3074,12 +4726,13 @@ class BasicAuthMiddleware extends Middleware
         return $success;
     }
 
-    private function getAuthorizationCredentials(Request $request): String
+    private function getAuthorizationCredentials(ServerRequestInterface $request): string
     {
         if (isset($_SERVER['PHP_AUTH_USER'])) {
             return $_SERVER['PHP_AUTH_USER'] . ':' . $_SERVER['PHP_AUTH_PW'];
         }
-        $parts = explode(' ', trim($request->getHeader('Authorization')), 2);
+        $header = RequestUtils::getHeader($request, 'Authorization');
+        $parts = explode(' ', trim($header), 2);
         if (count($parts) != 2) {
             return '';
         }
@@ -3089,7 +4742,7 @@ class BasicAuthMiddleware extends Middleware
         return base64_decode(strtr($parts[1], '-_', '+/'));
     }
 
-    public function handle(Request $request): Response
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $next): ResponseInterface
     {
         if (session_status() == PHP_SESSION_NONE) {
             session_start();
@@ -3115,11 +4768,11 @@ class BasicAuthMiddleware extends Middleware
             if ($authenticationMode == 'required') {
                 $response = $this->responder->error(ErrorCode::AUTHENTICATION_REQUIRED, '');
                 $realm = $this->getProperty('realm', 'Username and password required');
-                $response->addHeader('WWW-Authenticate', "Basic realm=\"$realm\"");
+                $response = $response->withHeader('WWW-Authenticate', "Basic realm=\"$realm\"");
                 return $response;
             }
         }
-        return $this->next->handle($request);
+        return $next->handle($request);
     }
 }
 
@@ -3127,7 +4780,7 @@ class BasicAuthMiddleware extends Middleware
 
 class CorsMiddleware extends Middleware
 {
-    private function isOriginAllowed(String $origin, String $allowedOrigins): bool
+    private function isOriginAllowed(string $origin, string $allowedOrigins): bool
     {
         $found = false;
         foreach (explode(',', $allowedOrigins) as $allowedOrigin) {
@@ -3141,44 +4794,44 @@ class CorsMiddleware extends Middleware
         return $found;
     }
 
-    public function handle(Request $request): Response
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $next): ResponseInterface
     {
         $method = $request->getMethod();
-        $origin = $request->getHeader('Origin');
+        $origin = count($request->getHeader('Origin')) ? $request->getHeader('Origin')[0] : '';
         $allowedOrigins = $this->getProperty('allowedOrigins', '*');
         if ($origin && !$this->isOriginAllowed($origin, $allowedOrigins)) {
             $response = $this->responder->error(ErrorCode::ORIGIN_FORBIDDEN, $origin);
         } elseif ($method == 'OPTIONS') {
-            $response = new Response(Response::OK, '');
+            $response = ResponseFactory::fromStatus(ResponseFactory::OK);
             $allowHeaders = $this->getProperty('allowHeaders', 'Content-Type, X-XSRF-TOKEN, X-Authorization');
             if ($allowHeaders) {
-                $response->addHeader('Access-Control-Allow-Headers', $allowHeaders);
+                $response = $response->withHeader('Access-Control-Allow-Headers', $allowHeaders);
             }
             $allowMethods = $this->getProperty('allowMethods', 'OPTIONS, GET, PUT, POST, DELETE, PATCH');
             if ($allowMethods) {
-                $response->addHeader('Access-Control-Allow-Methods', $allowMethods);
+                $response = $response->withHeader('Access-Control-Allow-Methods', $allowMethods);
             }
             $allowCredentials = $this->getProperty('allowCredentials', 'true');
             if ($allowCredentials) {
-                $response->addHeader('Access-Control-Allow-Credentials', $allowCredentials);
+                $response = $response->withHeader('Access-Control-Allow-Credentials', $allowCredentials);
             }
             $maxAge = $this->getProperty('maxAge', '1728000');
             if ($maxAge) {
-                $response->addHeader('Access-Control-Max-Age', $maxAge);
+                $response = $response->withHeader('Access-Control-Max-Age', $maxAge);
             }
             $exposeHeaders = $this->getProperty('exposeHeaders', '');
             if ($exposeHeaders) {
-                $response->addHeader('Access-Control-Expose-Headers', $exposeHeaders);
+                $response = $response->withHeader('Access-Control-Expose-Headers', $exposeHeaders);
             }
         } else {
-            $response = $this->next->handle($request);
+            $response = $next->handle($request);
         }
         if ($origin) {
             $allowCredentials = $this->getProperty('allowCredentials', 'true');
             if ($allowCredentials) {
-                $response->addHeader('Access-Control-Allow-Credentials', $allowCredentials);
+                $response = $response->withHeader('Access-Control-Allow-Credentials', $allowCredentials);
             }
-            $response->addHeader('Access-Control-Allow-Origin', $origin);
+            $response = $response->withHeader('Access-Control-Allow-Origin', $origin);
         }
         return $response;
     }
@@ -3194,22 +4847,23 @@ class CustomizationMiddleware extends Middleware
     {
         parent::__construct($router, $responder, $properties);
         $this->reflection = $reflection;
-        $this->utils = new RequestUtils($reflection);
     }
 
-    public function handle(Request $request): Response
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $next): ResponseInterface
     {
-        $operation = $this->utils->getOperation($request);
-        $tableName = $request->getPathSegment(2);
+        $operation = RequestUtils::getOperation($request);
+        $tableName = RequestUtils::getPathSegment($request, 2);
         $beforeHandler = $this->getProperty('beforeHandler', '');
         $environment = (object) array();
         if ($beforeHandler !== '') {
-            call_user_func($beforeHandler, $operation, $tableName, $request, $environment);
+            $result = call_user_func($beforeHandler, $operation, $tableName, $request, $environment);
+            $request = $result ?: $request;
         }
-        $response = $this->next->handle($request);
+        $response = $next->handle($request);
         $afterHandler = $this->getProperty('afterHandler', '');
         if ($afterHandler !== '') {
-            call_user_func($afterHandler, $operation, $tableName, $response, $environment);
+            $result = call_user_func($afterHandler, $operation, $tableName, $response, $environment);
+            $response = $result ?: $response;
         }
         return $response;
     }
@@ -3219,7 +4873,7 @@ class CustomizationMiddleware extends Middleware
 
 class FirewallMiddleware extends Middleware
 {
-    private function ipMatch(String $ip, String $cidr): bool
+    private function ipMatch(string $ip, string $cidr): bool
     {
         if (strpos($cidr, '/') !== false) {
             list($subnet, $mask) = explode('/', trim($cidr));
@@ -3234,7 +4888,7 @@ class FirewallMiddleware extends Middleware
         return false;
     }
 
-    private function isIpAllowed(String $ipAddress, String $allowedIpAddresses): bool
+    private function isIpAllowed(string $ipAddress, string $allowedIpAddresses): bool
     {
         foreach (explode(',', $allowedIpAddresses) as $allowedIp) {
             if ($this->ipMatch($ipAddress, $allowedIp)) {
@@ -3244,7 +4898,7 @@ class FirewallMiddleware extends Middleware
         return false;
     }
 
-    public function handle(Request $request): Response
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $next): ResponseInterface
     {
         $reverseProxy = $this->getProperty('reverseProxy', '');
         if ($reverseProxy) {
@@ -3258,7 +4912,7 @@ class FirewallMiddleware extends Middleware
         if (!$this->isIpAllowed($ipAddress, $allowedIpAddresses)) {
             $response = $this->responder->error(ErrorCode::TEMPORARY_OR_PERMANENTLY_BLOCKED, '');
         } else {
-            $response = $this->next->handle($request);
+            $response = $next->handle($request);
         }
         return $response;
     }
@@ -3274,10 +4928,9 @@ class IpAddressMiddleware extends Middleware
     {
         parent::__construct($router, $responder, $properties);
         $this->reflection = $reflection;
-        $this->utils = new RequestUtils($reflection);
     }
 
-    private function callHandler($record, String $operation, ReflectedTable $table) /*: object */
+    private function callHandler($record, string $operation, ReflectedTable $table) /*: object */
     {
         $context = (array) $record;
         $columnNames = $this->getProperty('columns', '');
@@ -3295,15 +4948,15 @@ class IpAddressMiddleware extends Middleware
         return (object) $context;
     }
 
-    public function handle(Request $request): Response
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $next): ResponseInterface
     {
-        $operation = $this->utils->getOperation($request);
+        $operation = RequestUtils::getOperation($request);
         if (in_array($operation, ['create', 'update', 'increment'])) {
             $tableNames = $this->getProperty('tables', '');
-            $tableName = $request->getPathSegment(2);
+            $tableName = RequestUtils::getPathSegment($request, 2);
             if (!$tableNames || in_array($tableName, explode(',', $tableNames))) {
                 if ($this->reflection->hasTable($tableName)) {
-                    $record = $request->getBody();
+                    $record = $request->getParsedBody();
                     if ($record !== null) {
                         $table = $this->reflection->getTable($tableName);
                         if (is_array($record)) {
@@ -3313,12 +4966,12 @@ class IpAddressMiddleware extends Middleware
                         } else {
                             $record = $this->callHandler($record, $operation, $table);
                         }
-                        $request->setBody($record);
+                        $request = $request->withParsedBody($record);
                     }
                 }
             }
         }
-        return $this->next->handle($request);
+        return $next->handle($request);
     }
 }
 
@@ -3332,13 +4985,12 @@ class JoinLimitsMiddleware extends Middleware
     {
         parent::__construct($router, $responder, $properties);
         $this->reflection = $reflection;
-        $this->utils = new RequestUtils($reflection);
     }
 
-    public function handle(Request $request): Response
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $next): ResponseInterface
     {
-        $operation = $this->utils->getOperation($request);
-        $params = $request->getParams();
+        $operation = RequestUtils::getOperation($request);
+        $params = RequestUtils::getParams($request);
         if (in_array($operation, ['read', 'list']) && isset($params['join'])) {
             $maxDepth = (int) $this->getProperty('depth', '3');
             $maxTables = (int) $this->getProperty('tables', '10');
@@ -3361,10 +5013,10 @@ class JoinLimitsMiddleware extends Middleware
                 }
             }
             $params['join'] = $joinPaths;
-            $request->setParams($params);
+            $request = RequestUtils::setParams($request, $params);
             VariableStore::set("joinLimits.maxRecords", $maxRecords);
         }
-        return $this->next->handle($request);
+        return $next->handle($request);
     }
 }
 
@@ -3372,7 +5024,7 @@ class JoinLimitsMiddleware extends Middleware
 
 class JwtAuthMiddleware extends Middleware
 {
-    private function getVerifiedClaims(String $token, int $time, int $leeway, int $ttl, String $secret, array $requirements): array
+    private function getVerifiedClaims(string $token, int $time, int $leeway, int $ttl, string $secret, array $requirements): array
     {
         $algorithms = array(
             'HS256' => 'sha256',
@@ -3452,7 +5104,7 @@ class JwtAuthMiddleware extends Middleware
         return $claims;
     }
 
-    private function getClaims(String $token): array
+    private function getClaims(string $token): array
     {
         $time = (int) $this->getProperty('time', time());
         $leeway = (int) $this->getProperty('leeway', '5');
@@ -3469,10 +5121,11 @@ class JwtAuthMiddleware extends Middleware
         return $this->getVerifiedClaims($token, $time, $leeway, $ttl, $secret, $requirements);
     }
 
-    private function getAuthorizationToken(Request $request): String
+    private function getAuthorizationToken(ServerRequestInterface $request): string
     {
-        $header = $this->getProperty('header', 'X-Authorization');
-        $parts = explode(' ', trim($request->getHeader($header)), 2);
+        $headerName = $this->getProperty('header', 'X-Authorization');
+        $headerValue = RequestUtils::getHeader($request, $headerName);
+        $parts = explode(' ', trim($headerValue), 2);
         if (count($parts) != 2) {
             return '';
         }
@@ -3482,7 +5135,7 @@ class JwtAuthMiddleware extends Middleware
         return $parts[1];
     }
 
-    public function handle(Request $request): Response
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $next): ResponseInterface
     {
         if (session_status() == PHP_SESSION_NONE) {
             session_start();
@@ -3504,7 +5157,7 @@ class JwtAuthMiddleware extends Middleware
                 return $this->responder->error(ErrorCode::AUTHENTICATION_REQUIRED, '');
             }
         }
-        return $this->next->handle($request);
+        return $next->handle($request);
     }
 }
 
@@ -3518,10 +5171,9 @@ class MultiTenancyMiddleware extends Middleware
     {
         parent::__construct($router, $responder, $properties);
         $this->reflection = $reflection;
-        $this->utils = new RequestUtils($reflection);
     }
 
-    private function getCondition(String $tableName, array $pairs): Condition
+    private function getCondition(string $tableName, array $pairs): Condition
     {
         $condition = new NoCondition();
         $table = $this->reflection->getTable($tableName);
@@ -3531,7 +5183,7 @@ class MultiTenancyMiddleware extends Middleware
         return $condition;
     }
 
-    private function getPairs($handler, String $operation, String $tableName): array
+    private function getPairs($handler, string $operation, string $tableName): array
     {
         $result = array();
         $pairs = call_user_func($handler, $operation, $tableName);
@@ -3544,11 +5196,11 @@ class MultiTenancyMiddleware extends Middleware
         return $result;
     }
 
-    private function handleRecord(Request $request, String $operation, array $pairs) /*: void*/
+    private function handleRecord(ServerRequestInterface $request, string $operation, array $pairs): ServerRequestInterface
     {
-        $record = $request->getBody();
+        $record = $request->getParsedBody();
         if ($record === null) {
-            return;
+            return $request;
         }
         $multi = is_array($record);
         $records = $multi ? $record : [$record];
@@ -3563,17 +5215,17 @@ class MultiTenancyMiddleware extends Middleware
                 }
             }
         }
-        $request->setBody($multi ? $records : $records[0]);
+        return $request->withParsedBody($multi ? $records : $records[0]);
     }
 
-    public function handle(Request $request): Response
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $next): ResponseInterface
     {
         $handler = $this->getProperty('handler', '');
         if ($handler !== '') {
-            $path = $request->getPathSegment(1);
+            $path = RequestUtils::getPathSegment($request, 1);
             if ($path == 'records') {
-                $operation = $this->utils->getOperation($request);
-                $tableNames = $this->utils->getTableNames($request);
+                $operation = RequestUtils::getOperation($request);
+                $tableNames = RequestUtils::getTableNames($request, $this->reflection);
                 foreach ($tableNames as $i => $tableName) {
                     if (!$this->reflection->hasTable($tableName)) {
                         continue;
@@ -3581,7 +5233,7 @@ class MultiTenancyMiddleware extends Middleware
                     $pairs = $this->getPairs($handler, $operation, $tableName);
                     if ($i == 0) {
                         if (in_array($operation, ['create', 'update', 'increment'])) {
-                            $this->handleRecord($request, $operation, $pairs);
+                            $request = $this->handleRecord($request, $operation, $pairs);
                         }
                     }
                     $condition = $this->getCondition($tableName, $pairs);
@@ -3589,7 +5241,7 @@ class MultiTenancyMiddleware extends Middleware
                 }
             }
         }
-        return $this->next->handle($request);
+        return $next->handle($request);
     }
 }
 
@@ -3603,14 +5255,13 @@ class PageLimitsMiddleware extends Middleware
     {
         parent::__construct($router, $responder, $properties);
         $this->reflection = $reflection;
-        $this->utils = new RequestUtils($reflection);
     }
 
-    public function handle(Request $request): Response
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $next): ResponseInterface
     {
-        $operation = $this->utils->getOperation($request);
+        $operation = RequestUtils::getOperation($request);
         if ($operation == 'list') {
-            $params = $request->getParams();
+            $params = RequestUtils::getParams($request);
             $maxPage = (int) $this->getProperty('pages', '100');
             if (isset($params['page']) && $params['page'] && $maxPage > 0) {
                 if (strpos($params['page'][0], ',') === false) {
@@ -3628,9 +5279,9 @@ class PageLimitsMiddleware extends Middleware
             } else {
                 $params['size'] = array(min($params['size'][0], $maxSize));
             }
-            $request->setParams($params);
+            $request = RequestUtils::setParams($request, $params);
         }
-        return $this->next->handle($request);
+        return $next->handle($request);
     }
 }
 
@@ -3644,10 +5295,9 @@ class SanitationMiddleware extends Middleware
     {
         parent::__construct($router, $responder, $properties);
         $this->reflection = $reflection;
-        $this->utils = new RequestUtils($reflection);
     }
 
-    private function callHandler($handler, $record, String $operation, ReflectedTable $table) /*: object */
+    private function callHandler($handler, $record, string $operation, ReflectedTable $table) /*: object */
     {
         $context = (array) $record;
         $tableName = $table->getName();
@@ -3660,13 +5310,13 @@ class SanitationMiddleware extends Middleware
         return (object) $context;
     }
 
-    public function handle(Request $request): Response
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $next): ResponseInterface
     {
-        $operation = $this->utils->getOperation($request);
+        $operation = RequestUtils::getOperation($request);
         if (in_array($operation, ['create', 'update', 'increment'])) {
-            $tableName = $request->getPathSegment(2);
+            $tableName = RequestUtils::getPathSegment($request, 2);
             if ($this->reflection->hasTable($tableName)) {
-                $record = $request->getBody();
+                $record = $request->getParsedBody();
                 if ($record !== null) {
                     $handler = $this->getProperty('handler', '');
                     if ($handler !== '') {
@@ -3678,12 +5328,12 @@ class SanitationMiddleware extends Middleware
                         } else {
                             $record = $this->callHandler($handler, $record, $operation, $table);
                         }
-                        $request->setBody($record);
+                        $request = $request->withParsedBody($record);
                     }
                 }
             }
         }
-        return $this->next->handle($request);
+        return $next->handle($request);
     }
 }
 
@@ -3697,10 +5347,9 @@ class ValidationMiddleware extends Middleware
     {
         parent::__construct($router, $responder, $properties);
         $this->reflection = $reflection;
-        $this->utils = new RequestUtils($reflection);
     }
 
-    private function callHandler($handler, $record, String $operation, ReflectedTable $table) /*: Response?*/
+    private function callHandler($handler, $record, string $operation, ReflectedTable $table) /*: ResponseInterface?*/
     {
         $context = (array) $record;
         $details = array();
@@ -3720,13 +5369,13 @@ class ValidationMiddleware extends Middleware
         return null;
     }
 
-    public function handle(Request $request): Response
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $next): ResponseInterface
     {
-        $operation = $this->utils->getOperation($request);
+        $operation = RequestUtils::getOperation($request);
         if (in_array($operation, ['create', 'update', 'increment'])) {
-            $tableName = $request->getPathSegment(2);
+            $tableName = RequestUtils::getPathSegment($request, 2);
             if ($this->reflection->hasTable($tableName)) {
-                $record = $request->getBody();
+                $record = $request->getParsedBody();
                 if ($record !== null) {
                     $handler = $this->getProperty('handler', '');
                     if ($handler !== '') {
@@ -3748,7 +5397,7 @@ class ValidationMiddleware extends Middleware
                 }
             }
         }
-        return $this->next->handle($request);
+        return $next->handle($request);
     }
 }
 
@@ -3756,7 +5405,7 @@ class ValidationMiddleware extends Middleware
 
 class XsrfMiddleware extends Middleware
 {
-    private function getToken(): String
+    private function getToken(): string
     {
         $cookieName = $this->getProperty('cookieName', 'XSRF-TOKEN');
         if (isset($_COOKIE[$cookieName])) {
@@ -3771,7 +5420,7 @@ class XsrfMiddleware extends Middleware
         return $token;
     }
 
-    public function handle(Request $request): Response
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $next): ResponseInterface
     {
         $token = $this->getToken();
         $method = $request->getMethod();
@@ -3782,7 +5431,7 @@ class XsrfMiddleware extends Middleware
                 return $this->responder->error(ErrorCode::BAD_OR_MISSING_XSRF_TOKEN, '');
             }
         }
-        return $this->next->handle($request);
+        return $next->handle($request);
     }
 }
 
@@ -3823,7 +5472,7 @@ class OpenApiBuilder
         $this->openapi = new OpenApiDefinition($base);
     }
 
-    private function getServerUrl(): String
+    private function getServerUrl(): string
     {
         $protocol = @$_SERVER['HTTP_X_FORWARDED_PROTO'] ?: @$_SERVER['REQUEST_SCHEME'] ?: ((isset($_SERVER["HTTPS"]) && $_SERVER["HTTPS"] == "on") ? "https" : "http");
         $port = @intval($_SERVER['HTTP_X_FORWARDED_PORT']) ?: @intval($_SERVER["SERVER_PORT"]) ?: (($protocol === 'https') ? 443 : 80);
@@ -3885,7 +5534,7 @@ class OpenApiBuilder
         return $this->openapi;
     }
 
-    private function isOperationOnTableAllowed(String $operation, String $tableName): bool
+    private function isOperationOnTableAllowed(string $operation, string $tableName): bool
     {
         $tableHandler = VariableStore::get('authorization.tableHandler');
         if (!$tableHandler) {
@@ -3894,7 +5543,7 @@ class OpenApiBuilder
         return (bool) call_user_func($tableHandler, $operation, $tableName);
     }
 
-    private function isOperationOnColumnAllowed(String $operation, String $tableName, String $columnName): bool
+    private function isOperationOnColumnAllowed(string $operation, string $tableName, string $columnName): bool
     {
         $columnHandler = VariableStore::get('authorization.columnHandler');
         if (!$columnHandler) {
@@ -3903,7 +5552,7 @@ class OpenApiBuilder
         return (bool) call_user_func($columnHandler, $operation, $tableName, $columnName);
     }
 
-    private function setPath(String $tableName) /*: void*/
+    private function setPath(string $tableName) /*: void*/
     {
         $table = $this->reflection->getTable($tableName);
         $type = $table->getType();
@@ -3964,7 +5613,7 @@ class OpenApiBuilder
         }
     }
 
-    private function setComponentSchema(String $tableName, array $references) /*: void*/
+    private function setComponentSchema(string $tableName, array $references) /*: void*/
     {
         $table = $this->reflection->getTable($tableName);
         $type = $table->getType();
@@ -4014,7 +5663,7 @@ class OpenApiBuilder
         }
     }
 
-    private function setComponentResponse(String $tableName) /*: void*/
+    private function setComponentResponse(string $tableName) /*: void*/
     {
         $table = $this->reflection->getTable($tableName);
         $type = $table->getType();
@@ -4039,7 +5688,7 @@ class OpenApiBuilder
         }
     }
 
-    private function setComponentRequestBody(String $tableName) /*: void*/
+    private function setComponentRequestBody(string $tableName) /*: void*/
     {
         $table = $this->reflection->getTable($tableName);
         $type = $table->getType();
@@ -4110,7 +5759,7 @@ class OpenApiBuilder
         $this->openapi->set("components|parameters|join|required", false);
     }
 
-    private function setTag(int $index, String $tableName) /*: void*/
+    private function setTag(int $index, string $tableName) /*: void*/
     {
         $this->openapi->set("tags|$index|name", "$tableName");
         $this->openapi->set("tags|$index|description", "$tableName operations");
@@ -4128,7 +5777,7 @@ class OpenApiDefinition implements \JsonSerializable
         $this->root = $base;
     }
 
-    public function set(String $path, $value) /*: void*/
+    public function set(string $path, $value) /*: void*/
     {
         $parts = explode('|', trim($path, '|'));
         $current = &$this->root;
@@ -4142,7 +5791,7 @@ class OpenApiDefinition implements \JsonSerializable
         $current = $value;
     }
 
-    public function has(String $path): bool
+    public function has(string $path): bool
     {
         $parts = explode('|', trim($path, '|'));
         $current = &$this->root;
@@ -4223,7 +5872,7 @@ class ColumnCondition extends Condition
     private $operator;
     private $value;
 
-    public function __construct(ReflectedColumn $column, String $operator, String $value)
+    public function __construct(ReflectedColumn $column, string $operator, string $value)
     {
         $this->column = $column;
         $this->operator = $operator;
@@ -4235,12 +5884,12 @@ class ColumnCondition extends Condition
         return $this->column;
     }
 
-    public function getOperator(): String
+    public function getOperator(): string
     {
         return $this->operator;
     }
 
-    public function getValue(): String
+    public function getValue(): string
     {
         return $this->value;
     }
@@ -4271,7 +5920,7 @@ abstract class Condition
         return new NotCondition($this);
     }
 
-    public static function fromString(ReflectedTable $table, String $value): Condition
+    public static function fromString(ReflectedTable $table, string $value): Condition
     {
         $condition = new NoCondition();
         $parts = explode(',', $value, 3);
@@ -4399,7 +6048,7 @@ class ErrorDocument implements \JsonSerializable
     public $message;
     public $details;
 
-    public function __construct(ErrorCode $errorCode, String $argument, $details)
+    public function __construct(ErrorCode $errorCode, string $argument, $details)
     {
         $this->code = $errorCode->getCode();
         $this->message = $errorCode->getMessage($argument);
@@ -4411,7 +6060,7 @@ class ErrorDocument implements \JsonSerializable
         return $this->code;
     }
 
-    public function getMessage(): String
+    public function getMessage(): string
     {
         return $this->message;
     }
@@ -4435,7 +6084,6 @@ class ErrorDocument implements \JsonSerializable
 
 class ListDocument implements \JsonSerializable
 {
-
     private $records;
 
     private $results;
@@ -4476,13 +6124,12 @@ class ListDocument implements \JsonSerializable
 
 class ColumnIncluder
 {
-
-    private function isMandatory(String $tableName, String $columnName, array $params): bool
+    private function isMandatory(string $tableName, string $columnName, array $params): bool
     {
         return isset($params['mandatory']) && in_array($tableName . "." . $columnName, $params['mandatory']);
     }
 
-    private function select(String $tableName, bool $primaryTable, array $params, String $paramName,
+    private function select(string $tableName, bool $primaryTable, array $params, string $paramName,
         array $columnNames, bool $include): array{
         if (!isset($params[$paramName])) {
             return $columnNames;
@@ -4540,7 +6187,6 @@ class ColumnIncluder
 
 class ErrorCode
 {
-
     private $code;
     private $message;
     private $status;
@@ -4568,27 +6214,27 @@ class ErrorCode
     const PAGINATION_FORBIDDEN = 1019;
 
     private $values = [
-        9999 => ["%s", Response::INTERNAL_SERVER_ERROR],
-        1000 => ["Route '%s' not found", Response::NOT_FOUND],
-        1001 => ["Table '%s' not found", Response::NOT_FOUND],
-        1002 => ["Argument count mismatch in '%s'", Response::UNPROCESSABLE_ENTITY],
-        1003 => ["Record '%s' not found", Response::NOT_FOUND],
-        1004 => ["Origin '%s' is forbidden", Response::FORBIDDEN],
-        1005 => ["Column '%s' not found", Response::NOT_FOUND],
-        1006 => ["Table '%s' already exists", Response::CONFLICT],
-        1007 => ["Column '%s' already exists", Response::CONFLICT],
-        1008 => ["Cannot read HTTP message", Response::UNPROCESSABLE_ENTITY],
-        1009 => ["Duplicate key exception", Response::CONFLICT],
-        1010 => ["Data integrity violation", Response::CONFLICT],
-        1011 => ["Authentication required", Response::UNAUTHORIZED],
-        1012 => ["Authentication failed for '%s'", Response::FORBIDDEN],
-        1013 => ["Input validation failed for '%s'", Response::UNPROCESSABLE_ENTITY],
-        1014 => ["Operation forbidden", Response::FORBIDDEN],
-        1015 => ["Operation '%s' not supported", Response::METHOD_NOT_ALLOWED],
-        1016 => ["Temporary or permanently blocked", Response::FORBIDDEN],
-        1017 => ["Bad or missing XSRF token", Response::FORBIDDEN],
-        1018 => ["Only AJAX requests allowed for '%s'", Response::FORBIDDEN],
-        1019 => ["Pagination forbidden", Response::FORBIDDEN],
+        9999 => ["%s", ResponseFactory::INTERNAL_SERVER_ERROR],
+        1000 => ["Route '%s' not found", ResponseFactory::NOT_FOUND],
+        1001 => ["Table '%s' not found", ResponseFactory::NOT_FOUND],
+        1002 => ["Argument count mismatch in '%s'", ResponseFactory::UNPROCESSABLE_ENTITY],
+        1003 => ["Record '%s' not found", ResponseFactory::NOT_FOUND],
+        1004 => ["Origin '%s' is forbidden", ResponseFactory::FORBIDDEN],
+        1005 => ["Column '%s' not found", ResponseFactory::NOT_FOUND],
+        1006 => ["Table '%s' already exists", ResponseFactory::CONFLICT],
+        1007 => ["Column '%s' already exists", ResponseFactory::CONFLICT],
+        1008 => ["Cannot read HTTP message", ResponseFactory::UNPROCESSABLE_ENTITY],
+        1009 => ["Duplicate key exception", ResponseFactory::CONFLICT],
+        1010 => ["Data integrity violation", ResponseFactory::CONFLICT],
+        1011 => ["Authentication required", ResponseFactory::UNAUTHORIZED],
+        1012 => ["Authentication failed for '%s'", ResponseFactory::FORBIDDEN],
+        1013 => ["Input validation failed for '%s'", ResponseFactory::UNPROCESSABLE_ENTITY],
+        1014 => ["Operation forbidden", ResponseFactory::FORBIDDEN],
+        1015 => ["Operation '%s' not supported", ResponseFactory::METHOD_NOT_ALLOWED],
+        1016 => ["Temporary or permanently blocked", ResponseFactory::FORBIDDEN],
+        1017 => ["Bad or missing XSRF token", ResponseFactory::FORBIDDEN],
+        1018 => ["Only AJAX requests allowed for '%s'", ResponseFactory::FORBIDDEN],
+        1019 => ["Pagination forbidden", ResponseFactory::FORBIDDEN],
     ];
 
     public function __construct(int $code)
@@ -4606,7 +6252,7 @@ class ErrorCode
         return $this->code;
     }
 
-    public function getMessage(String $argument): String
+    public function getMessage(string $argument): string
     {
         return sprintf($this->message, $argument);
     }
@@ -4622,7 +6268,6 @@ class ErrorCode
 
 class FilterInfo
 {
-
     private function addConditionFromFilterPath(PathTree $conditions, array $path, ReflectedTable $table, array $params)
     {
         $key = 'filter' . implode('', $path);
@@ -4686,7 +6331,6 @@ class HabtmValues
 
 class OrderingInfo
 {
-
     public function getColumnOrdering(ReflectedTable $table, array $params): array
     {
         $fields = array();
@@ -4731,7 +6375,6 @@ class OrderingInfo
 
 class PaginationInfo
 {
-
     public $DEFAULT_PAGE_SIZE = 20;
 
     public function hasPage(array $params): bool
@@ -4829,7 +6472,7 @@ class PathTree implements \JsonSerializable
         return $this->tree->values;
     }
 
-    public function get(String $key): PathTree
+    public function get(string $key): PathTree
     {
         if (!isset($this->tree->branches->$key)) {
             return null;
@@ -4899,7 +6542,7 @@ class RecordService
         $this->pagination = new PaginationInfo();
     }
 
-    private function sanitizeRecord(String $tableName, /* object */ $record, String $id)
+    private function sanitizeRecord(string $tableName, /* object */ $record, string $id)
     {
         $keyset = array_keys((array) $record);
         foreach ($keyset as $key) {
@@ -4918,17 +6561,17 @@ class RecordService
         }
     }
 
-    public function hasTable(String $table): bool
+    public function hasTable(string $table): bool
     {
         return $this->reflection->hasTable($table);
     }
 
-    public function getType(String $table): String
+    public function getType(string $table): string
     {
         return $this->reflection->getType($table);
     }
 
-    public function create(String $tableName, /* object */ $record, array $params)
+    public function create(string $tableName, /* object */ $record, array $params) /*: ?int*/
     {
         $this->sanitizeRecord($tableName, $record, '');
         $table = $this->reflection->getTable($tableName);
@@ -4936,7 +6579,7 @@ class RecordService
         return $this->db->createSingle($table, $columnValues);
     }
 
-    public function read(String $tableName, String $id, array $params) /*: ?object*/
+    public function read(string $tableName, string $id, array $params) /*: ?object*/
     {
         $table = $this->reflection->getTable($tableName);
         $this->joiner->addMandatoryColumns($table, $params);
@@ -4950,7 +6593,7 @@ class RecordService
         return $records[0];
     }
 
-    public function update(String $tableName, String $id, /* object */ $record, array $params)
+    public function update(string $tableName, string $id, /* object */ $record, array $params) /*: ?int*/
     {
         $this->sanitizeRecord($tableName, $record, $id);
         $table = $this->reflection->getTable($tableName);
@@ -4958,13 +6601,13 @@ class RecordService
         return $this->db->updateSingle($table, $columnValues, $id);
     }
 
-    public function delete(String $tableName, String $id, array $params)
+    public function delete(string $tableName, string $id, array $params) /*: ?int*/
     {
         $table = $this->reflection->getTable($tableName);
         return $this->db->deleteSingle($table, $id);
     }
 
-    public function increment(String $tableName, String $id, /* object */ $record, array $params)
+    public function increment(string $tableName, string $id, /* object */ $record, array $params) /*: ?int*/
     {
         $this->sanitizeRecord($tableName, $record, $id);
         $table = $this->reflection->getTable($tableName);
@@ -4972,7 +6615,7 @@ class RecordService
         return $this->db->incrementSingle($table, $columnValues, $id);
     }
 
-    public function _list(String $tableName, array $params): ListDocument
+    public function _list(string $tableName, array $params): ListDocument
     {
         $table = $this->reflection->getTable($tableName);
         $this->joiner->addMandatoryColumns($table, $params);
@@ -4998,7 +6641,6 @@ class RecordService
 
 class RelationJoiner
 {
-
     private $reflection;
     private $columns;
 
@@ -5281,80 +6923,9 @@ class RelationJoiner
     }
 }
 
-// file: src/Tqdev/PhpCrudApi/Record/RequestUtils.php
-
-class RequestUtils
-{
-    private $reflection;
-
-    public function __construct(ReflectionService $reflection)
-    {
-        $this->reflection = $reflection;
-    }
-
-    public function getOperation(Request $request): String
-    {
-        $method = $request->getMethod();
-        $path = $request->getPathSegment(1);
-        $hasPk = $request->getPathSegment(3) != '';
-        switch ($path) {
-            case 'openapi':
-                return 'document';
-            case 'columns':
-                return $method == 'get' ? 'reflect' : 'remodel';
-            case 'records':
-                switch ($method) {
-                    case 'POST':
-                        return 'create';
-                    case 'GET':
-                        return $hasPk ? 'read' : 'list';
-                    case 'PUT':
-                        return 'update';
-                    case 'DELETE':
-                        return 'delete';
-                    case 'PATCH':
-                        return 'increment';
-                }
-        }
-        return 'unknown';
-    }
-
-    private function getJoinTables(String $tableName, array $parameters): array
-    {
-        $uniqueTableNames = array();
-        $uniqueTableNames[$tableName] = true;
-        if (isset($parameters['join'])) {
-            foreach ($parameters['join'] as $parameter) {
-                $tableNames = explode(',', trim($parameter));
-                foreach ($tableNames as $tableName) {
-                    $uniqueTableNames[$tableName] = true;
-                }
-            }
-        }
-        return array_keys($uniqueTableNames);
-    }
-
-    public function getTableNames(Request $request): array
-    {
-        $path = $request->getPathSegment(1);
-        $tableName = $request->getPathSegment(2);
-        $allTableNames = $this->reflection->getTableNames();
-        switch ($path) {
-            case 'openapi':
-                return $allTableNames;
-            case 'columns':
-                return $tableName ? [$tableName] : $allTableNames;
-            case 'records':
-                return $this->getJoinTables($tableName, $request->getParams());
-        }
-        return $allTableNames;
-    }
-
-}
-
 // file: src/Tqdev/PhpCrudApi/Api.php
 
-class Api
+class Api implements RequestHandlerInterface
 {
     private $router;
     private $responder;
@@ -5441,7 +7012,7 @@ class Api
         $this->debug = $config->getDebug();
     }
 
-    public function handle(Request $request): Response
+    public function handle(ServerRequestInterface $request): ResponseInterface
     {
         $response = null;
         try {
@@ -5449,7 +7020,7 @@ class Api
         } catch (\Throwable $e) {
             $response = $this->responder->error(ErrorCode::ERROR_NOT_FOUND, $e->getMessage());
             if ($this->debug) {
-                $response->addExceptionHeaders($e);
+                $response = ResponseUtils::addExceptionHeaders($response, $e);
             }
         }
         return $response;
@@ -5476,7 +7047,7 @@ class Config
         'openApiBase' => '{"info":{"title":"PHP-CRUD-API","version":"1.0.0"}}',
     ];
 
-    private function getDefaultDriver(array $values): String
+    private function getDefaultDriver(array $values): string
     {
         if (isset($values['driver'])) {
             return $values['driver'];
@@ -5484,7 +7055,7 @@ class Config
         return 'mysql';
     }
 
-    private function getDefaultPort(String $driver): int
+    private function getDefaultPort(string $driver): int
     {
         switch ($driver) {
             case 'mysql':return 3306;
@@ -5493,7 +7064,7 @@ class Config
         }
     }
 
-    private function getDefaultAddress(String $driver): String
+    private function getDefaultAddress(string $driver): string
     {
         switch ($driver) {
             case 'mysql':return 'localhost';
@@ -5502,7 +7073,7 @@ class Config
         }
     }
 
-    private function getDriverDefaults(String $driver): array
+    private function getDriverDefaults(string $driver): array
     {
         return [
             'driver' => $driver,
@@ -5549,12 +7120,12 @@ class Config
         return $newValues;
     }
 
-    public function getDriver(): String
+    public function getDriver(): string
     {
         return $this->values['driver'];
     }
 
-    public function getAddress(): String
+    public function getAddress(): string
     {
         return $this->values['address'];
     }
@@ -5564,17 +7135,17 @@ class Config
         return $this->values['port'];
     }
 
-    public function getUsername(): String
+    public function getUsername(): string
     {
         return $this->values['username'];
     }
 
-    public function getPassword(): String
+    public function getPassword(): string
     {
         return $this->values['password'];
     }
 
-    public function getDatabase(): String
+    public function getDatabase(): string
     {
         return $this->values['database'];
     }
@@ -5589,12 +7160,12 @@ class Config
         return array_map('trim', explode(',', $this->values['controllers']));
     }
 
-    public function getCacheType(): String
+    public function getCacheType(): string
     {
         return $this->values['cacheType'];
     }
 
-    public function getCachePath(): String
+    public function getCachePath(): string
     {
         return $this->values['cachePath'];
     }
@@ -5604,7 +7175,7 @@ class Config
         return $this->values['cacheTime'];
     }
 
-    public function getDebug(): String
+    public function getDebug(): bool
     {
         return $this->values['debug'];
     }
@@ -5615,83 +7186,11 @@ class Config
     }
 }
 
-// file: src/Tqdev/PhpCrudApi/Request.php
+// file: src/Tqdev/PhpCrudApi/RequestFactory.php
 
-class Request
+class RequestFactory
 {
-    private $method;
-    private $path;
-    private $pathSegments;
-    private $params;
-    private $body;
-    private $headers;
-    private $highPerformance;
-
-    public function __construct(String $method = null, String $path = null, String $query = null, array $headers = null, String $body = null, bool $highPerformance = true)
-    {
-        $this->parseMethod($method);
-        $this->parsePath($path);
-        $this->parseParams($query);
-        $this->parseHeaders($headers);
-        $this->parseBody($body);
-        $this->highPerformance = $highPerformance;
-    }
-
-    private function parseMethod(String $method = null)
-    {
-        if (!$method) {
-            if (isset($_SERVER['REQUEST_METHOD'])) {
-                $method = $_SERVER['REQUEST_METHOD'];
-            } else {
-                $method = 'GET';
-            }
-        }
-        $this->method = $method;
-    }
-
-    private function parsePath(String $path = null)
-    {
-        if (!$path) {
-            if (isset($_SERVER['PATH_INFO'])) {
-                $path = $_SERVER['PATH_INFO'];
-            } else {
-                $path = '/';
-            }
-        }
-        $this->path = $path;
-        $this->pathSegments = explode('/', $path);
-    }
-
-    private function parseParams(String $query = null)
-    {
-        if (!$query) {
-            if (isset($_SERVER['QUERY_STRING'])) {
-                $query = $_SERVER['QUERY_STRING'];
-            } else {
-                $query = '';
-            }
-        }
-        $query = str_replace('][]=', ']=', str_replace('=', '[]=', $query));
-        parse_str($query, $this->params);
-    }
-
-    private function parseHeaders(array $headers = null)
-    {
-        if (!$headers) {
-            $headers = array();
-            if (!$this->highPerformance) {
-                foreach ($_SERVER as $name => $value) {
-                    if (substr($name, 0, 5) == 'HTTP_') {
-                        $key = str_replace(' ', '-', ucwords(strtolower(str_replace('_', ' ', substr($name, 5)))));
-                        $headers[$key] = $value;
-                    }
-                }
-            }
-        }
-        $this->headers = $headers;
-    }
-
-    private function decodeBody(String $body) /*: ?object*/
+    private static function parseBody(string $body) /*: ?object*/
     {
         $first = substr($body, 0, 1);
         if ($first == '[' || $first == '{') {
@@ -5713,99 +7212,150 @@ class Request
         return $object;
     }
 
-    private function parseBody(String $body = null) /*: void*/
+    public static function fromGlobals(): ServerRequestInterface
     {
-        if (!$body) {
-            $body = file_get_contents('php://input');
+        $psr17Factory = new Psr17Factory();
+        $creator = new ServerRequestCreator($psr17Factory, $psr17Factory, $psr17Factory, $psr17Factory);
+        $serverRequest = $creator->fromGlobals();
+        $uri = '';
+        if (isset($_SERVER['PATH_INFO'])) {
+            $uri .= $_SERVER['PATH_INFO'];
         }
-        $this->body = $this->decodeBody($body);
-    }
-
-    public function getMethod(): String
-    {
-        return $this->method;
-    }
-
-    public function getPath(): String
-    {
-        return $this->path;
-    }
-
-    public function getPathSegment(int $part): String
-    {
-        if ($part < 0 || $part >= count($this->pathSegments)) {
-            return '';
+        if (isset($_SERVER['QUERY_STRING'])) {
+            $uri .= '?' . $_SERVER['QUERY_STRING'];
         }
-        return $this->pathSegments[$part];
-    }
-
-    public function getParams(): array
-    {
-        return $this->params;
-    }
-
-    public function setParams(array $params) /*: void*/
-    {
-        $this->params = $params;
-    }
-
-    public function getBody() /*: ?array*/
-    {
-        return $this->body;
-    }
-
-    public function setBody($body) /*: void*/
-    {
-        $this->body = $body;
-    }
-
-    public function addHeader(String $key, String $value)
-    {
-        $this->headers[$key] = $value;
-    }
-
-    public function getHeader(String $key): String
-    {
-        if (isset($this->headers[$key])) {
-            return $this->headers[$key];
+        if ($uri) {
+            $serverRequest = $serverRequest->withUri($psr17Factory->createUri($uri));
         }
-        if ($this->highPerformance) {
-            $serverKey = 'HTTP_' . strtoupper(str_replace('-', '_', $key));
-            if (isset($_SERVER[$serverKey])) {
-                return $_SERVER[$serverKey];
-            }
+        $body = file_get_contents('php://input');
+        if ($body) {
+            $serverRequest = $serverRequest->withParsedBody(self::parseBody($body));
         }
-        return '';
+        return $serverRequest;
     }
 
-    public function getHeaders(): array
-    {
-        return $this->headers;
-    }
-
-    public static function fromString(String $request): Request
+    public static function fromString(string $request): ServerRequestInterface
     {
         $parts = explode("\n\n", trim($request), 2);
-        $head = $parts[0];
-        $body = isset($parts[1]) ? $parts[1] : null;
-        $lines = explode("\n", $head);
-        $line = explode(' ', trim(array_shift($lines)), 2);
-        $method = $line[0];
-        $url = isset($line[1]) ? $line[1] : '';
-        $path = parse_url($url, PHP_URL_PATH);
-        $query = parse_url($url, PHP_URL_QUERY);
-        $headers = array();
+        $lines = explode("\n", $parts[0]);
+        $first = explode(' ', trim(array_shift($lines)), 2);
+        $method = $first[0];
+        $body = isset($parts[1]) ? $parts[1] : '';
+        $url = isset($first[1]) ? $first[1] : '';
+
+        $psr17Factory = new Psr17Factory();
+        $serverRequest = $psr17Factory->createServerRequest($method, $url);
         foreach ($lines as $line) {
             list($key, $value) = explode(':', $line, 2);
-            $headers[$key] = trim($value);
+            $serverRequest = $serverRequest->withAddedHeader($key, $value);
         }
-        return new Request($method, $path, $query, $headers, $body);
+        if ($body) {
+            $stream = $psr17Factory->createStream($body);
+            $stream->rewind();
+            $serverRequest = $serverRequest->withBody($stream);
+            $serverRequest = $serverRequest->withParsedBody(self::parseBody($body));
+        }
+        return $serverRequest;
     }
 }
 
-// file: src/Tqdev/PhpCrudApi/Response.php
+// file: src/Tqdev/PhpCrudApi/RequestUtils.php
 
-class Response
+class RequestUtils
+{
+    public static function setParams(ServerRequestInterface $request, array $params): ServerRequestInterface
+    {
+        $query = preg_replace('|%5B[0-9]+%5D=|', '=', http_build_query($params));
+        return $request->withUri($request->getUri()->withQuery($query));
+    }
+
+    public static function getHeader(ServerRequestInterface $request, string $header): string
+    {
+        $headers = $request->getHeader($header);
+        return isset($headers[0]) ? $headers[0] : '';
+    }
+
+    public static function getParams(ServerRequestInterface $request): array
+    {
+        $params = array();
+        $query = $request->getUri()->getQuery();
+        $query = str_replace('][]=', ']=', str_replace('=', '[]=', $query));
+        parse_str($query, $params);
+        return $params;
+    }
+
+    public static function getPathSegment(ServerRequestInterface $request, int $part): string
+    {
+        $pathSegments = explode('/', rtrim($request->getUri()->getPath(), '/'));
+        if ($part < 0 || $part >= count($pathSegments)) {
+            return '';
+        }
+        return urldecode($pathSegments[$part]);
+    }
+
+    public static function getOperation(ServerRequestInterface $request): string
+    {
+        $method = $request->getMethod();
+        $path = RequestUtils::getPathSegment($request, 1);
+        $hasPk = RequestUtils::getPathSegment($request, 3) != '';
+        switch ($path) {
+            case 'openapi':
+                return 'document';
+            case 'columns':
+                return $method == 'get' ? 'reflect' : 'remodel';
+            case 'records':
+                switch ($method) {
+                    case 'POST':
+                        return 'create';
+                    case 'GET':
+                        return $hasPk ? 'read' : 'list';
+                    case 'PUT':
+                        return 'update';
+                    case 'DELETE':
+                        return 'delete';
+                    case 'PATCH':
+                        return 'increment';
+                }
+        }
+        return 'unknown';
+    }
+
+    private static function getJoinTables(string $tableName, array $parameters): array
+    {
+        $uniqueTableNames = array();
+        $uniqueTableNames[$tableName] = true;
+        if (isset($parameters['join'])) {
+            foreach ($parameters['join'] as $parameter) {
+                $tableNames = explode(',', trim($parameter));
+                foreach ($tableNames as $tableName) {
+                    $uniqueTableNames[$tableName] = true;
+                }
+            }
+        }
+        return array_keys($uniqueTableNames);
+    }
+
+    public static function getTableNames(ServerRequestInterface $request, ReflectionService $reflection): array
+    {
+        $path = RequestUtils::getPathSegment($request, 1);
+        $tableName = RequestUtils::getPathSegment($request, 2);
+        $allTableNames = $reflection->getTableNames();
+        switch ($path) {
+            case 'openapi':
+                return $allTableNames;
+            case 'columns':
+                return $tableName ? [$tableName] : $allTableNames;
+            case 'records':
+                return self::getJoinTables($tableName, RequestUtils::getParams($request));
+        }
+        return $allTableNames;
+    }
+
+}
+
+// file: src/Tqdev/PhpCrudApi/ResponseFactory.php
+
+class ResponseFactory
 {
     const OK = 200;
     const UNAUTHORIZED = 401;
@@ -5815,82 +7365,70 @@ class Response
     const CONFLICT = 409;
     const UNPROCESSABLE_ENTITY = 422;
     const INTERNAL_SERVER_ERROR = 500;
-    private $status;
-    private $headers;
-    private $body;
 
-    public function __construct(int $status, $body)
+    public static function fromObject(int $status, $body): ResponseInterface
     {
-        $this->status = $status;
-        $this->headers = array();
-        $this->parseBody($body);
+        $psr17Factory = new Psr17Factory();
+        $response = $psr17Factory->createResponse($status);
+        $content = json_encode($body, JSON_UNESCAPED_UNICODE);
+        $stream = $psr17Factory->createStream($content);
+        $stream->rewind();
+        $response = $response->withBody($stream);
+        $response = $response->withHeader('Content-Type', 'application/json');
+        $response = $response->withHeader('Content-Length', strlen($content));
+        return $response;
     }
 
-    private function parseBody($body)
+    public static function fromStatus(int $status): ResponseInterface
     {
-        if ($body === '') {
-            $this->body = '';
-        } else {
-            $data = json_encode($body, JSON_UNESCAPED_UNICODE);
-            $this->addHeader('Content-Type', 'application/json');
-            $this->addHeader('Content-Length', strlen($data));
-            $this->body = $data;
+        $psr17Factory = new Psr17Factory();
+        return $psr17Factory->createResponse($status);
+    }
+
+}
+
+// file: src/Tqdev/PhpCrudApi/ResponseUtils.php
+
+class ResponseUtils
+{
+    public static function output(ResponseInterface $response)
+    {
+        $status = $response->getStatusCode();
+        $headers = $response->getHeaders();
+        $body = $response->getBody()->getContents();
+
+        http_response_code($status);
+        foreach ($headers as $key => $values) {
+            foreach ($values as $value) {
+                header("$key: $value");
+            }
         }
+        echo $body;
     }
 
-    public function getStatus(): int
+    public static function addExceptionHeaders(ResponseInterface $response, \Throwable $e): ResponseInterface
     {
-        return $this->status;
+        $response = $response->withHeader('X-Exception-Name', get_class($e));
+        $response = $response->withHeader('X-Exception-Message', $e->getMessage());
+        $response = $response->withHeader('X-Exception-File', $e->getFile() . ':' . $e->getLine());
+        return $response;
     }
 
-    public function getBody(): String
+    public static function toString(ResponseInterface $response): string
     {
-        return $this->body;
-    }
+        $status = $response->getStatusCode();
+        $headers = $response->getHeaders();
+        $body = $response->getBody()->getContents();
 
-    public function addHeader(String $key, String $value)
-    {
-        $this->headers[$key] = $value;
-    }
-
-    public function getHeader(String $key): String
-    {
-        if (isset($this->headers[$key])) {
-            return $this->headers[$key];
+        $str = "$status\n";
+        foreach ($headers as $key => $values) {
+            foreach ($values as $value) {
+                $str .= "$key: $value\n";
+            }
         }
-        return null;
-    }
-
-    public function getHeaders(): array
-    {
-        return $this->headers;
-    }
-
-    public function output()
-    {
-        http_response_code($this->getStatus());
-        foreach ($this->headers as $key => $value) {
-            header("$key: $value");
-        }
-        echo $this->getBody();
-    }
-
-    public function addExceptionHeaders(\Throwable $e)
-    {
-        $this->addHeader('X-Exception-Name', get_class($e));
-        $this->addHeader('X-Exception-Message', $e->getMessage());
-        $this->addHeader('X-Exception-File', $e->getFile() . ':' . $e->getLine());
-    }
-
-    public function __toString(): String
-    {
-        $str = "$this->status\n";
-        foreach ($this->headers as $key => $value) {
-            $str .= "$key: $value\n";
-        }
-        if ($this->body !== '') {
+        if ($body !== '') {
             $str .= "\n";
-            $str .= "$this->body\n";
+            $str .= "$body\n";
         }
         return $str;
     }
@@ -5903,7 +7441,7 @@ $config = new Config([
     'password' => 'php-crud-api',
     'database' => 'php-crud-api',
 ]);
-$request = new Request();
+$request = RequestFactory::fromGlobals();
 $api = new Api($config);
 $response = $api->handle($request);
-$response->output();
+ResponseUtils::output($response);
