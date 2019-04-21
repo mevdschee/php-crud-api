@@ -4,7 +4,7 @@
  * Maurits van der Schee: maurits@vdschee.nl
  * https://github.com/mevdschee/php-crud-api
  *
- * Dependencies
+ * Dependencies:
  * - vendor/psr/*: PHP-FIG
  *   https://github.com/php-fig
  * - vendor/nyholm/*: Tobias Nyholm
