@@ -17,7 +17,7 @@ class GenericDB
     private $columns;
     private $converter;
 
-    private function getDsn(string $address, string $port, string $database): string
+    private function getDsn(string $address, int $port, string $database): string
     {
         switch ($this->driver) {
             case 'mysql':return "$this->driver:host=$address;port=$port;dbname=$database;charset=utf8mb4";
@@ -65,7 +65,7 @@ class GenericDB
         }
     }
 
-    public function __construct(string $driver, string $address, string $port, string $database, string $username, string $password)
+    public function __construct(string $driver, string $address, int $port, string $database, string $username, string $password)
     {
         $this->driver = $driver;
         $this->database = $database;
