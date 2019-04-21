@@ -1,35 +1,42 @@
 <?php
 
-function prioritySort(string $dir, array $entries, array $priority): array
+function removeIgnored(string $dir, array &$entries, array $ignore)
 {
-    $result = array();
-    foreach ($priority as $file) {
-        if (dirname($file) == $dir) {
-            if (in_array(basename($file), $entries)) {
-                array_push($result, basename($file));
-            }
+    foreach ($entries as $i => $entry) {
+        if (isset($ignore[$dir . '/' . $entry])) {
+            unset($entries[$i]);
         }
     }
-    $entries = array_diff($entries, $result);
-    sort($entries);
-    foreach ($entries as $entry) {
-        array_push($result, $entry);
-    }
-    return $result;
 }
 
-function runDir(string $base, string $dir, array &$lines, array $priority): int
+function prioritySort(string $dir, array &$entries, array $priority)
+{
+    $first = array();
+    foreach ($entries as $i => $entry) {
+        if (isset($priority[$dir . '/' . $entry])) {
+            array_push($first, $entry);
+            unset($entries[$i]);
+        }
+    }
+    sort($entries);
+    foreach ($first as $entry) {
+        array_unshift($entries, $entry);
+    }
+}
+
+function runDir(string $base, string $dir, array &$lines, array $ignore, array $priority): int
 {
     $count = 0;
     $entries = scandir($dir);
-    $entries = prioritySort($dir, $entries, $priority);
+    removeIgnored($dir, $entries, $ignore);
+    prioritySort($dir, $entries, $priority);
     foreach ($entries as $entry) {
         if ($entry === '.' || $entry === '..') {
             continue;
         }
         $filename = "$base/$dir/$entry";
         if (is_dir($filename)) {
-            $count += runDir($base, "$dir/$entry", $lines, $priority);
+            $count += runDir($base, "$dir/$entry", $lines, $ignore, $priority);
         }
     }
     foreach ($entries as $entry) {
@@ -70,12 +77,17 @@ EOF;
     }
 }
 
-function run(string $base, string $dir, string $filename, array $priority)
+function run(string $base, array $dirs, string $filename, array $ignore, array $priority)
 {
     $lines = [];
     $start = microtime(true);
     addHeader($lines);
-    $count = runDir($base, 'src', $lines, $priority);
+    $ignore = array_flip($ignore);
+    $priority = array_flip($priority);
+    $count = 0;
+    foreach ($dirs as $dir) {
+        $count += runDir($base, $dir, $lines, $ignore, $priority);
+    }
     $data = implode("\n", $lines);
     $data = preg_replace('/\n\s*\n\s*\n/', "\n\n", $data);
     file_put_contents('tmp_' . $filename, $data);
@@ -88,4 +100,15 @@ function run(string $base, string $dir, string $filename, array $priority)
     echo sprintf("%d files combined in %d ms into '%s'\n", $count, $time, $filename);
 }
 
-run(__DIR__, 'src', 'api.php', ['src/Psr']);
+$ignore = [
+    'vendor/autoload.php',
+    'vendor/composer',
+    'vendor/php-http',
+    'vendor/nyholm/psr7/src/Factory/HttplugFactory.php',
+];
+
+$priority = [
+    'vendor/psr',
+];
+
+run(__DIR__, ['vendor', 'src'], 'api.php', $ignore, $priority);

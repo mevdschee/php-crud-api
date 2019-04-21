@@ -7,7 +7,65 @@
 
 namespace Tqdev\PhpCrudApi;
 
-// file: src/Psr/Http/Message/MessageInterface.php
+// file: vendor/psr/http-factory/src/RequestFactoryInterface.php
+
+interface RequestFactoryInterface
+{
+    
+    public function createRequest(string $method, $uri): RequestInterface;
+}
+
+// file: vendor/psr/http-factory/src/ResponseFactoryInterface.php
+
+interface ResponseFactoryInterface
+{
+    
+    public function createResponse(int $code = 200, string $reasonPhrase = ''): ResponseInterface;
+}
+
+// file: vendor/psr/http-factory/src/ServerRequestFactoryInterface.php
+
+interface ServerRequestFactoryInterface
+{
+    
+    public function createServerRequest(string $method, $uri, array $serverParams = []): ServerRequestInterface;
+}
+
+// file: vendor/psr/http-factory/src/StreamFactoryInterface.php
+
+interface StreamFactoryInterface
+{
+    
+    public function createStream(string $content = ''): StreamInterface;
+
+    public function createStreamFromFile(string $filename, string $mode = 'r'): StreamInterface;
+
+    public function createStreamFromResource($resource): StreamInterface;
+}
+
+// file: vendor/psr/http-factory/src/UploadedFileFactoryInterface.php
+
+interface UploadedFileFactoryInterface
+{
+    
+    public function createUploadedFile(
+        StreamInterface $stream,
+        int $size = null,
+        int $error = \UPLOAD_ERR_OK,
+        string $clientFilename = null,
+        string $clientMediaType = null
+    ): UploadedFileInterface;
+}
+
+// file: vendor/psr/http-factory/src/UriFactoryInterface.php
+
+interface UriFactoryInterface
+{
+    
+    public function createUri(string $uri = ''): UriInterface;
+}
+
+// file: vendor/psr/http-message/src/MessageInterface.php
 
 interface MessageInterface
 {
@@ -35,15 +93,7 @@ interface MessageInterface
     public function withBody(StreamInterface $body);
 }
 
-// file: src/Psr/Http/Message/RequestFactoryInterface.php
-
-interface RequestFactoryInterface
-{
-    
-    public function createRequest(string $method, $uri): RequestInterface;
-}
-
-// file: src/Psr/Http/Message/RequestInterface.php
+// file: vendor/psr/http-message/src/RequestInterface.php
 
 interface RequestInterface extends MessageInterface
 {
@@ -61,15 +111,7 @@ interface RequestInterface extends MessageInterface
     public function withUri(UriInterface $uri, $preserveHost = false);
 }
 
-// file: src/Psr/Http/Message/ResponseFactoryInterface.php
-
-interface ResponseFactoryInterface
-{
-    
-    public function createResponse(int $code = 200, string $reasonPhrase = ''): ResponseInterface;
-}
-
-// file: src/Psr/Http/Message/ResponseInterface.php
+// file: vendor/psr/http-message/src/ResponseInterface.php
 
 interface ResponseInterface extends MessageInterface
 {
@@ -81,15 +123,7 @@ interface ResponseInterface extends MessageInterface
     public function getReasonPhrase();
 }
 
-// file: src/Psr/Http/Message/ServerRequestFactoryInterface.php
-
-interface ServerRequestFactoryInterface
-{
-    
-    public function createServerRequest(string $method, $uri, array $serverParams = []): ServerRequestInterface;
-}
-
-// file: src/Psr/Http/Message/ServerRequestInterface.php
+// file: vendor/psr/http-message/src/ServerRequestInterface.php
 
 interface ServerRequestInterface extends RequestInterface
 {
@@ -121,19 +155,7 @@ interface ServerRequestInterface extends RequestInterface
     public function withoutAttribute($name);
 }
 
-// file: src/Psr/Http/Message/StreamFactoryInterface.php
-
-interface StreamFactoryInterface
-{
-    
-    public function createStream(string $content = ''): StreamInterface;
-
-    public function createStreamFromFile(string $filename, string $mode = 'r'): StreamInterface;
-
-    public function createStreamFromResource($resource): StreamInterface;
-}
-
-// file: src/Psr/Http/Message/StreamInterface.php
+// file: vendor/psr/http-message/src/StreamInterface.php
 
 interface StreamInterface
 {
@@ -169,21 +191,7 @@ interface StreamInterface
     public function getMetadata($key = null);
 }
 
-// file: src/Psr/Http/Message/UploadedFileFactoryInterface.php
-
-interface UploadedFileFactoryInterface
-{
-    
-    public function createUploadedFile(
-        StreamInterface $stream,
-        int $size = null,
-        int $error = \UPLOAD_ERR_OK,
-        string $clientFilename = null,
-        string $clientMediaType = null
-    ): UploadedFileInterface;
-}
-
-// file: src/Psr/Http/Message/UploadedFileInterface.php
+// file: vendor/psr/http-message/src/UploadedFileInterface.php
 
 interface UploadedFileInterface
 {
@@ -201,15 +209,7 @@ interface UploadedFileInterface
     public function getClientMediaType();
 }
 
-// file: src/Psr/Http/Message/UriFactoryInterface.php
-
-interface UriFactoryInterface
-{
-    
-    public function createUri(string $uri = ''): UriInterface;
-}
-
-// file: src/Psr/Http/Message/UriInterface.php
+// file: vendor/psr/http-message/src/UriInterface.php
 
 interface UriInterface
 {
@@ -247,15 +247,7 @@ interface UriInterface
     public function __toString();
 }
 
-// file: src/Psr/Http/Server/MiddlewareInterface.php
-
-interface MiddlewareInterface
-{
-    
-    public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface;
-}
-
-// file: src/Psr/Http/Server/RequestHandlerInterface.php
+// file: vendor/psr/http-server-handler/src/RequestHandlerInterface.php
 
 interface RequestHandlerInterface
 {
@@ -263,7 +255,15 @@ interface RequestHandlerInterface
     public function handle(ServerRequestInterface $request): ResponseInterface;
 }
 
-// file: src/Nyholm/Psr7/Factory/Psr17Factory.php
+// file: vendor/psr/http-server-middleware/src/MiddlewareInterface.php
+
+interface MiddlewareInterface
+{
+    
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface;
+}
+
+// file: vendor/nyholm/psr7/src/Factory/Psr17Factory.php
 
 final class Psr17Factory implements RequestFactoryInterface, ResponseFactoryInterface, ServerRequestFactoryInterface, StreamFactoryInterface, UploadedFileFactoryInterface, UriFactoryInterface
 {
@@ -321,7 +321,7 @@ final class Psr17Factory implements RequestFactoryInterface, ResponseFactoryInte
     }
 }
 
-// file: src/Nyholm/Psr7/MessageTrait.php
+// file: vendor/nyholm/psr7/src/MessageTrait.php
 
 trait MessageTrait
 {
@@ -486,7 +486,7 @@ trait MessageTrait
     }
 }
 
-// file: src/Nyholm/Psr7/Request.php
+// file: vendor/nyholm/psr7/src/Request.php
 
 final class Request implements RequestInterface
 {
@@ -514,7 +514,7 @@ final class Request implements RequestInterface
     }
 }
 
-// file: src/Nyholm/Psr7/RequestTrait.php
+// file: vendor/nyholm/psr7/src/RequestTrait.php
 
 trait RequestTrait
 {
@@ -611,7 +611,7 @@ trait RequestTrait
     }
 }
 
-// file: src/Nyholm/Psr7/Response.php
+// file: vendor/nyholm/psr7/src/Response.php
 
 final class Response implements ResponseInterface
 {
@@ -678,7 +678,7 @@ final class Response implements ResponseInterface
     }
 }
 
-// file: src/Nyholm/Psr7/ServerRequest.php
+// file: vendor/nyholm/psr7/src/ServerRequest.php
 
 final class ServerRequest implements ServerRequestInterface
 {
@@ -815,7 +815,7 @@ final class ServerRequest implements ServerRequestInterface
     }
 }
 
-// file: src/Nyholm/Psr7/Stream.php
+// file: vendor/nyholm/psr7/src/Stream.php
 
 final class Stream implements StreamInterface
 {
@@ -1042,7 +1042,7 @@ final class Stream implements StreamInterface
     }
 }
 
-// file: src/Nyholm/Psr7/UploadedFile.php
+// file: vendor/nyholm/psr7/src/UploadedFile.php
 
 final class UploadedFile implements UploadedFileInterface
 {
@@ -1184,7 +1184,7 @@ final class UploadedFile implements UploadedFileInterface
     }
 }
 
-// file: src/Nyholm/Psr7/Uri.php
+// file: vendor/nyholm/psr7/src/Uri.php
 
 final class Uri implements UriInterface
 {
@@ -1463,7 +1463,7 @@ final class Uri implements UriInterface
     }
 }
 
-// file: src/Nyholm/Psr7Server/ServerRequestCreator.php
+// file: vendor/nyholm/psr7-server/src/ServerRequestCreator.php
 
 final class ServerRequestCreator implements ServerRequestCreatorInterface
 {
@@ -1496,7 +1496,7 @@ final class ServerRequestCreator implements ServerRequestCreatorInterface
 
         $headers = \function_exists('getallheaders') ? getallheaders() : static::getHeadersFromServer($_SERVER);
 
-        return $this->fromArrays($server, $headers, $_COOKIE, $_GET, $_POST, $_FILES, \fopen('php://input', 'r') ?: null);
+        return $this->fromArrays($server, $headers, $_COOKIE, $_GET, $_POST, $_FILES, fopen('php://input', 'r') ?: null);
     }
 
     public function fromArrays(array $server, array $headers = [], array $cookie = [], array $get = [], array $post = [], array $files = [], $body = null): ServerRequestInterface
@@ -1649,18 +1649,14 @@ final class ServerRequestCreator implements ServerRequestCreatorInterface
             $uri = $uri->withScheme('on' === $server['HTTPS'] ? 'https' : 'http');
         }
 
-        if (isset($server['SERVER_PORT'])) {
-            $uri = $uri->withPort($server['SERVER_PORT']);
-        }
-
         if (isset($server['HTTP_HOST'])) {
-            if (1 === \preg_match('/^(.+)\:(\d+)$/', $server['HTTP_HOST'], $matches)) {
-                $uri = $uri->withHost($matches[1])->withPort($matches[2]);
-            } else {
-                $uri = $uri->withHost($server['HTTP_HOST']);
-            }
+            $uri = $uri->withHost($server['HTTP_HOST']);
         } elseif (isset($server['SERVER_NAME'])) {
             $uri = $uri->withHost($server['SERVER_NAME']);
+        }
+
+        if (isset($server['SERVER_PORT'])) {
+            $uri = $uri->withPort($server['SERVER_PORT']);
         }
 
         if (isset($server['REQUEST_URI'])) {
@@ -1675,7 +1671,7 @@ final class ServerRequestCreator implements ServerRequestCreatorInterface
     }
 }
 
-// file: src/Nyholm/Psr7Server/ServerRequestCreatorInterface.php
+// file: vendor/nyholm/psr7-server/src/ServerRequestCreatorInterface.php
 
 interface ServerRequestCreatorInterface
 {
@@ -3466,7 +3462,7 @@ class GenericDB
     private $columns;
     private $converter;
 
-    private function getDsn(string $address, string $port, string $database): string
+    private function getDsn(string $address, int $port, string $database): string
     {
         switch ($this->driver) {
             case 'mysql':return "$this->driver:host=$address;port=$port;dbname=$database;charset=utf8mb4";
@@ -3514,7 +3510,7 @@ class GenericDB
         }
     }
 
-    public function __construct(string $driver, string $address, string $port, string $database, string $username, string $password)
+    public function __construct(string $driver, string $address, int $port, string $database, string $username, string $password)
     {
         $this->driver = $driver;
         $this->database = $database;
