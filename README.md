@@ -122,13 +122,13 @@ The non-compiled code resides in the "`src`" and "`vendor`" directories.
 
 ## Dependencies
 
-You can install all dependencies of this project using the following command:
+You can update all dependencies of this project using the following command:
 
-    php install.php
+    php update.php
 
-This script will install and run [Composer](https://getcomposer.org/) to install the required dependencies in the "`vendor`" directory.
+This script will install and run [Composer](https://getcomposer.org/) to update the required dependencies in the "`vendor`" directory.
 
-NB: The install script will also patch the dependencies in the vendor directory for PHP 7.0 compatibility.
+NB: The update script will also patch the dependencies in the vendor directory for PHP 7.0 compatibility.
 
 ## Middleware
 

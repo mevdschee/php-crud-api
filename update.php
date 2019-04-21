@@ -6,9 +6,7 @@ if (!file_exists('composer.phar')) {
     $composer = file_get_contents('https://getcomposer.org/composer.phar');
     file_put_contents('composer.phar', $composer);
 }
-if (!file_exists('vendor')) {
-    exec('php composer.phar install');
-}
+exec('php composer.phar update');
 
 // patch files for PHP 7.0 compatibility
 
