@@ -111,4 +111,10 @@ $priority = [
     'vendor/psr',
 ];
 
+if (!file_exists('composer.phar')) {
+    $composer = file_get_contents('https://getcomposer.org/composer.phar');
+    file_put_contents('composer.phar', $composer);
+    exec('php composer.phar install');
+}
+
 run(__DIR__, ['vendor', 'src'], 'api.php', $ignore, $priority);
