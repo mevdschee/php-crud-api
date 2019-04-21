@@ -3466,7 +3466,7 @@ class GenericDB
     private $columns;
     private $converter;
 
-    private function getDsn(string $address, string $port = null, string $database = null): string
+    private function getDsn(string $address, string $port, string $database): string
     {
         switch ($this->driver) {
             case 'mysql':return "$this->driver:host=$address;port=$port;dbname=$database;charset=utf8mb4";
@@ -3514,7 +3514,7 @@ class GenericDB
         }
     }
 
-    public function __construct(string $driver, string $address, string $port = null, string $database = null, string $username = null, string $password = null)
+    public function __construct(string $driver, string $address, string $port, string $database, string $username, string $password)
     {
         $this->driver = $driver;
         $this->database = $database;
@@ -7200,7 +7200,7 @@ class Config
         return $this->values['cacheTime'];
     }
 
-    public function getDebug(): string
+    public function getDebug(): bool
     {
         return $this->values['debug'];
     }

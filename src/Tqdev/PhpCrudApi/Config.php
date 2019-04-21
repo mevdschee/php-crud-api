@@ -147,7 +147,7 @@ class Config
         return $this->values['cacheTime'];
     }
 
-    public function getDebug(): string
+    public function getDebug(): bool
     {
         return $this->values['debug'];
     }
