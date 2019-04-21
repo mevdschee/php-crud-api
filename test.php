@@ -5,10 +5,6 @@ use Tqdev\PhpCrudApi\Database\GenericDB;
 use Tqdev\PhpCrudApi\RequestFactory;
 use Tqdev\PhpCrudApi\ResponseUtils;
 
-if (!file_exists('vendor')) {
-    include 'install.php';
-}
-
 require 'vendor/autoload.php';
 
 function runDir(Config $config, string $dir, array $matches, string $category): array

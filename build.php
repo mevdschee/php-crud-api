@@ -1,7 +1,4 @@
 <?php
-if (!file_exists('vendor')) {
-    include 'install.php';
-}
 
 function removeIgnored(string $dir, array &$entries, array $ignore)
 {
