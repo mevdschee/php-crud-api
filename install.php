@@ -6,7 +6,6 @@ if (!file_exists('composer.phar')) {
 }
 if (!file_exists('vendor')) {
     exec('php composer.phar install');
-    exec('php patch.php');
 }
 
 function patchDir(string $base, string $dir): int
