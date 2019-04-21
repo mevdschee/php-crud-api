@@ -3,6 +3,12 @@
  * PHP-CRUD-API v2              License: MIT
  * Maurits van der Schee: maurits@vdschee.nl
  * https://github.com/mevdschee/php-crud-api
+ *
+ * Dependencies
+ * - vendor/psr/*: PHP-FIG
+ *   https://github.com/php-fig
+ * - vendor/nyholm/*: Tobias Nyholm
+ *   https://github.com/Nyholm
  **/
 
 namespace Tqdev\PhpCrudApi;
