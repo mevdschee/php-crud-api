@@ -1,6 +1,6 @@
 <?php
 
-// download composer and install dependencies
+// download composer and update dependencies
 
 if (!file_exists('composer.phar')) {
     $composer = file_get_contents('https://getcomposer.org/composer.phar');
