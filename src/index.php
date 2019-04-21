@@ -4,9 +4,7 @@ use Tqdev\PhpCrudApi\Config;
 use Tqdev\PhpCrudApi\RequestFactory;
 use Tqdev\PhpCrudApi\ResponseUtils;
 
-// do not reformat the following line
-spl_autoload_register(function ($class) {include str_replace('\\', '/', __DIR__ . "/$class.php");});
-// as it is excluded in the build
+require '../vendor/autoload.php';
 
 $config = new Config([
     'username' => 'php-crud-api',

@@ -49,7 +49,7 @@ function runDir(string $base, string $dir, array &$lines, array $ignore, array $
             $data = preg_replace('|/\*\*.*?\*/|s', '', $data);
             array_push($lines, "// file: $dir/$entry");
             foreach (explode("\n", $data) as $line) {
-                if (!preg_match('/^<\?php|^namespace |^use |spl_autoload_register|declare\s*\(\s*strict_types\s*=\s*1|^\s*\/\//', $line)) {
+                if (!preg_match('/^<\?php|^namespace |^use |vendor\/autoload|declare\s*\(\s*strict_types\s*=\s*1|^\s*\/\//', $line)) {
                     array_push($lines, $line);
                 }
             }
