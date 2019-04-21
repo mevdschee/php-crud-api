@@ -89,7 +89,7 @@ function run(string $base, array $dirs, string $filename, array $ignore, array $
         $count += runDir($base, $dir, $lines, $ignore, $priority);
     }
     $data = implode("\n", $lines);
-    $data = preg_replace('/\n\s*\n\s*\n/', "\n\n", $data);
+    $data = preg_replace('/\n({)?\s*\n\s*\n/', "\n$1\n", $data);
     file_put_contents('tmp_' . $filename, $data);
     ob_start();
     include 'tmp_' . $filename;

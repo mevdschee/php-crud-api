@@ -11,7 +11,6 @@ namespace Tqdev\PhpCrudApi;
 
 interface RequestFactoryInterface
 {
-    
     public function createRequest(string $method, $uri): RequestInterface;
 }
 
@@ -19,7 +18,6 @@ interface RequestFactoryInterface
 
 interface ResponseFactoryInterface
 {
-    
     public function createResponse(int $code = 200, string $reasonPhrase = ''): ResponseInterface;
 }
 
@@ -27,7 +25,6 @@ interface ResponseFactoryInterface
 
 interface ServerRequestFactoryInterface
 {
-    
     public function createServerRequest(string $method, $uri, array $serverParams = []): ServerRequestInterface;
 }
 
@@ -35,7 +32,6 @@ interface ServerRequestFactoryInterface
 
 interface StreamFactoryInterface
 {
-    
     public function createStream(string $content = ''): StreamInterface;
 
     public function createStreamFromFile(string $filename, string $mode = 'r'): StreamInterface;
@@ -47,7 +43,6 @@ interface StreamFactoryInterface
 
 interface UploadedFileFactoryInterface
 {
-    
     public function createUploadedFile(
         StreamInterface $stream,
         int $size = null,
@@ -61,7 +56,6 @@ interface UploadedFileFactoryInterface
 
 interface UriFactoryInterface
 {
-    
     public function createUri(string $uri = ''): UriInterface;
 }
 
@@ -69,7 +63,6 @@ interface UriFactoryInterface
 
 interface MessageInterface
 {
-    
     public function getProtocolVersion();
 
     public function withProtocolVersion($version);
@@ -97,7 +90,6 @@ interface MessageInterface
 
 interface RequestInterface extends MessageInterface
 {
-    
     public function getRequestTarget();
 
     public function withRequestTarget($requestTarget);
@@ -115,7 +107,6 @@ interface RequestInterface extends MessageInterface
 
 interface ResponseInterface extends MessageInterface
 {
-    
     public function getStatusCode();
 
     public function withStatus($code, $reasonPhrase = '');
@@ -127,7 +118,6 @@ interface ResponseInterface extends MessageInterface
 
 interface ServerRequestInterface extends RequestInterface
 {
-    
     public function getServerParams();
 
     public function getCookieParams();
@@ -159,7 +149,6 @@ interface ServerRequestInterface extends RequestInterface
 
 interface StreamInterface
 {
-    
     public function __toString();
 
     public function close();
@@ -195,7 +184,6 @@ interface StreamInterface
 
 interface UploadedFileInterface
 {
-    
     public function getStream();
 
     public function moveTo($targetPath);
@@ -213,7 +201,6 @@ interface UploadedFileInterface
 
 interface UriInterface
 {
-    
     public function getScheme();
 
     public function getAuthority();
@@ -251,7 +238,6 @@ interface UriInterface
 
 interface RequestHandlerInterface
 {
-    
     public function handle(ServerRequestInterface $request): ResponseInterface;
 }
 
@@ -259,7 +245,6 @@ interface RequestHandlerInterface
 
 interface MiddlewareInterface
 {
-    
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface;
 }
 
@@ -325,7 +310,6 @@ final class Psr17Factory implements RequestFactoryInterface, ResponseFactoryInte
 
 trait MessageTrait
 {
-    
     private $headers = [];
 
     private $headerNames = [];
@@ -518,7 +502,6 @@ final class Request implements RequestInterface
 
 trait RequestTrait
 {
-    
     private $method;
 
     private $requestTarget;
@@ -819,7 +802,6 @@ final class ServerRequest implements ServerRequestInterface
 
 final class Stream implements StreamInterface
 {
-    
     private $stream;
 
     private $seekable;
@@ -1046,7 +1028,6 @@ final class Stream implements StreamInterface
 
 final class UploadedFile implements UploadedFileInterface
 {
-    
     private const ERRORS = [
         \UPLOAD_ERR_OK => 1,
         \UPLOAD_ERR_INI_SIZE => 1,
@@ -1675,7 +1656,6 @@ final class ServerRequestCreator implements ServerRequestCreatorInterface
 
 interface ServerRequestCreatorInterface
 {
-    
     public function fromGlobals(): ServerRequestInterface;
 
     public function fromArrays(
@@ -6098,7 +6078,6 @@ class ErrorDocument implements \JsonSerializable
 
 class ListDocument implements \JsonSerializable
 {
-
     private $records;
 
     private $results;
@@ -6139,7 +6118,6 @@ class ListDocument implements \JsonSerializable
 
 class ColumnIncluder
 {
-
     private function isMandatory(string $tableName, string $columnName, array $params): bool
     {
         return isset($params['mandatory']) && in_array($tableName . "." . $columnName, $params['mandatory']);
@@ -6203,7 +6181,6 @@ class ColumnIncluder
 
 class ErrorCode
 {
-
     private $code;
     private $message;
     private $status;
@@ -6285,7 +6262,6 @@ class ErrorCode
 
 class FilterInfo
 {
-
     private function addConditionFromFilterPath(PathTree $conditions, array $path, ReflectedTable $table, array $params)
     {
         $key = 'filter' . implode('', $path);
@@ -6349,7 +6325,6 @@ class HabtmValues
 
 class OrderingInfo
 {
-
     public function getColumnOrdering(ReflectedTable $table, array $params): array
     {
         $fields = array();
@@ -6394,7 +6369,6 @@ class OrderingInfo
 
 class PaginationInfo
 {
-
     public $DEFAULT_PAGE_SIZE = 20;
 
     public function hasPage(array $params): bool
@@ -6661,7 +6635,6 @@ class RecordService
 
 class RelationJoiner
 {
-
     private $reflection;
     private $columns;
 
