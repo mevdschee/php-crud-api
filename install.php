@@ -31,7 +31,6 @@ function patchDir(string $base, string $dir): int
             $patched = preg_replace('/\):\s*(\?[a-zA-Z]+|void)\s*\n/', ") /*:$1*/\n", $patched);
             $patched = preg_replace('/private const/', "/*private*/ const", $patched);
             if ($patched && $patched != $original) {
-                echo "$filename\n";
                 file_put_contents($filename, $patched);
                 $count++;
             }
@@ -50,7 +49,7 @@ function patch(string $base, array $dirs)
     $end = microtime(true);
     $time = ($end - $start) * 1000;
     if ($count) {
-        echo sprintf("%d files patched in %d ms\n", $count, $time);
+        fwrite(STDERR, sprintf("%d files patched in %d ms\n", $count, $time));
     }
 }
 
