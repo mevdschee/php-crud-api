@@ -430,7 +430,7 @@ trait MessageTrait
         return $new;
     }
 
-    private function setHeaders(array $headers): void
+    private function setHeaders(array $headers) /*:void*/
     {
         foreach ($headers as $header => $value) {
             $value = $this->validateAndTrimHeader($header, $value);
@@ -580,7 +580,7 @@ trait RequestTrait
         return $new;
     }
 
-    private function updateHostFromUri(): void
+    private function updateHostFromUri() /*:void*/
     {
         if ('' === $host = $this->uri->getHost()) {
             return;
@@ -606,7 +606,7 @@ final class Response implements ResponseInterface
 {
     use MessageTrait;
 
-    private const PHRASES = [
+    /*private*/ const PHRASES = [
         100 => 'Continue', 101 => 'Switching Protocols', 102 => 'Processing',
         200 => 'OK', 201 => 'Created', 202 => 'Accepted', 203 => 'Non-Authoritative Information', 204 => 'No Content', 205 => 'Reset Content', 206 => 'Partial Content', 207 => 'Multi-status', 208 => 'Already Reported',
         300 => 'Multiple Choices', 301 => 'Moved Permanently', 302 => 'Found', 303 => 'See Other', 304 => 'Not Modified', 305 => 'Use Proxy', 306 => 'Switch Proxy', 307 => 'Temporary Redirect',
@@ -820,7 +820,7 @@ final class Stream implements StreamInterface
 
     private $size;
 
-    private const READ_WRITE_HASH = [
+    /*private*/ const READ_WRITE_HASH = [
         'read' => [
             'r' => true, 'w+' => true, 'r+' => true, 'x+' => true, 'c+' => true,
             'rb' => true, 'w+b' => true, 'r+b' => true, 'x+b' => true,
@@ -884,7 +884,7 @@ final class Stream implements StreamInterface
         }
     }
 
-    public function close(): void
+    public function close() /*:void*/
     {
         if (isset($this->stream)) {
             if (\is_resource($this->stream)) {
@@ -908,7 +908,7 @@ final class Stream implements StreamInterface
         return $result;
     }
 
-    public function getSize(): ?int
+    public function getSize() /*:?int*/
     {
         if (null !== $this->size) {
             return $this->size;
@@ -951,7 +951,7 @@ final class Stream implements StreamInterface
         return $this->seekable;
     }
 
-    public function seek($offset, $whence = \SEEK_SET): void
+    public function seek($offset, $whence = \SEEK_SET) /*:void*/
     {
         if (!$this->seekable) {
             throw new \RuntimeException('Stream is not seekable');
@@ -962,7 +962,7 @@ final class Stream implements StreamInterface
         }
     }
 
-    public function rewind(): void
+    public function rewind() /*:void*/
     {
         $this->seek(0);
     }
@@ -1034,7 +1034,7 @@ final class Stream implements StreamInterface
 
 final class UploadedFile implements UploadedFileInterface
 {
-    private const ERRORS = [
+    /*private*/ const ERRORS = [
         \UPLOAD_ERR_OK => 1,
         \UPLOAD_ERR_INI_SIZE => 1,
         \UPLOAD_ERR_FORM_SIZE => 1,
@@ -1095,7 +1095,7 @@ final class UploadedFile implements UploadedFileInterface
         }
     }
 
-    private function validateActive(): void
+    private function validateActive() /*:void*/
     {
         if (\UPLOAD_ERR_OK !== $this->error) {
             throw new \RuntimeException('Cannot retrieve stream due to upload error');
@@ -1119,7 +1119,7 @@ final class UploadedFile implements UploadedFileInterface
         return Stream::create($resource);
     }
 
-    public function moveTo($targetPath): void
+    public function moveTo($targetPath) /*:void*/
     {
         $this->validateActive();
 
@@ -1160,12 +1160,12 @@ final class UploadedFile implements UploadedFileInterface
         return $this->error;
     }
 
-    public function getClientFilename(): ?string
+    public function getClientFilename() /*:?string*/
     {
         return $this->clientFilename;
     }
 
-    public function getClientMediaType(): ?string
+    public function getClientMediaType() /*:?string*/
     {
         return $this->clientMediaType;
     }
@@ -1175,11 +1175,11 @@ final class UploadedFile implements UploadedFileInterface
 
 final class Uri implements UriInterface
 {
-    private const SCHEMES = ['http' => 80, 'https' => 443];
+    /*private*/ const SCHEMES = ['http' => 80, 'https' => 443];
 
-    private const CHAR_UNRESERVED = 'a-zA-Z0-9_\-\.~';
+    /*private*/ const CHAR_UNRESERVED = 'a-zA-Z0-9_\-\.~';
 
-    private const CHAR_SUB_DELIMS = '!\$&\'\(\)\*\+,;=';
+    /*private*/ const CHAR_SUB_DELIMS = '!\$&\'\(\)\*\+,;=';
 
     private $scheme = '';
 
@@ -1253,7 +1253,7 @@ final class Uri implements UriInterface
         return $this->host;
     }
 
-    public function getPort(): ?int
+    public function getPort() /*:?int*/
     {
         return $this->port;
     }
@@ -1412,7 +1412,7 @@ final class Uri implements UriInterface
         return !isset(self::SCHEMES[$scheme]) || $port !== self::SCHEMES[$scheme];
     }
 
-    private function filterPort($port): ?int
+    private function filterPort($port) /*:?int*/
     {
         if (null === $port) {
             return null;
@@ -6571,7 +6571,7 @@ class RecordService
         return $this->reflection->getType($table);
     }
 
-    public function create(string $tableName, /* object */ $record, array $params)
+    public function create(string $tableName, /* object */ $record, array $params) /*: ?int*/
     {
         $this->sanitizeRecord($tableName, $record, '');
         $table = $this->reflection->getTable($tableName);
@@ -6593,7 +6593,7 @@ class RecordService
         return $records[0];
     }
 
-    public function update(string $tableName, string $id, /* object */ $record, array $params)
+    public function update(string $tableName, string $id, /* object */ $record, array $params) /*: ?int*/
     {
         $this->sanitizeRecord($tableName, $record, $id);
         $table = $this->reflection->getTable($tableName);
@@ -6601,13 +6601,13 @@ class RecordService
         return $this->db->updateSingle($table, $columnValues, $id);
     }
 
-    public function delete(string $tableName, string $id, array $params)
+    public function delete(string $tableName, string $id, array $params) /*: ?int*/
     {
         $table = $this->reflection->getTable($tableName);
         return $this->db->deleteSingle($table, $id);
     }
 
-    public function increment(string $tableName, string $id, /* object */ $record, array $params)
+    public function increment(string $tableName, string $id, /* object */ $record, array $params) /*: ?int*/
     {
         $this->sanitizeRecord($tableName, $record, $id);
         $table = $this->reflection->getTable($tableName);
@@ -6925,7 +6925,7 @@ class RelationJoiner
 
 // file: src/Tqdev/PhpCrudApi/Api.php
 
-class Api
+class Api implements RequestHandlerInterface
 {
     private $router;
     private $responder;

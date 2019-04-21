@@ -5,6 +5,15 @@ use Tqdev\PhpCrudApi\Database\GenericDB;
 use Tqdev\PhpCrudApi\RequestFactory;
 use Tqdev\PhpCrudApi\ResponseUtils;
 
+if (!file_exists('composer.phar')) {
+    $composer = file_get_contents('https://getcomposer.org/composer.phar');
+    file_put_contents('composer.phar', $composer);
+}
+if (!file_exists('vendor')) {
+    exec('php composer.phar install');
+}
+exec('php patch.php');
+
 require 'vendor/autoload.php';
 
 function runDir(Config $config, string $dir, array $matches, string $category): array
