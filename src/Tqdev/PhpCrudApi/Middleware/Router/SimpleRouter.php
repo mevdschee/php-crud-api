@@ -13,6 +13,7 @@ use Tqdev\PhpCrudApi\ResponseUtils;
 
 class SimpleRouter implements Router
 {
+    private $basePath;
     private $responder;
     private $cache;
     private $ttl;
@@ -22,8 +23,9 @@ class SimpleRouter implements Router
     private $routeHandlers;
     private $middlewares;
 
-    public function __construct(Responder $responder, Cache $cache, int $ttl, bool $debug)
+    public function __construct(string $basePath, Responder $responder, Cache $cache, int $ttl, bool $debug)
     {
+        $this->basePath = $basePath;
         $this->responder = $responder;
         $this->cache = $cache;
         $this->ttl = $ttl;
@@ -83,8 +85,26 @@ class SimpleRouter implements Router
         return $this->routes->match($path);
     }
 
+    private function removeBasePath(ServerRequestInterface $request): ServerRequestInterface
+    {
+        if ($this->basePath) {
+            $path = $request->getUri()->getPath();
+            $basePath = rtrim($this->basePath, '/');
+            if (substr($path, 0, strlen($basePath)) == $basePath) {
+                $path = substr($path, strlen($basePath));
+                $request = $request->withUri($request->getUri()->withPath($path));
+            }
+        } elseif (isset($_SERVER['PATH_INFO'])) {
+            $path = $_SERVER['PATH_INFO'];
+            $request = $request->withUri($request->getUri()->withPath($path));
+        }
+        return $request;
+    }
+
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
+        $request = $this->removeBasePath($request);
+
         if (count($this->middlewares)) {
             $handler = array_pop($this->middlewares);
             return $handler->process($request, $this);

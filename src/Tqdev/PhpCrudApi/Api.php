@@ -51,7 +51,7 @@ class Api implements RequestHandlerInterface
         $cache = CacheFactory::create($config);
         $reflection = new ReflectionService($db, $cache, $config->getCacheTime());
         $responder = new Responder();
-        $router = new SimpleRouter($responder, $cache, $config->getCacheTime(), $config->getDebug());
+        $router = new SimpleRouter($config->getBasePath(), $responder, $cache, $config->getCacheTime(), $config->getDebug());
         foreach ($config->getMiddlewares() as $middleware => $properties) {
             switch ($middleware) {
                 case 'cors':

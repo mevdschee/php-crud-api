@@ -4478,6 +4478,7 @@ interface Router extends RequestHandlerInterface
 
 class SimpleRouter implements Router
 {
+    private $basePath;
     private $responder;
     private $cache;
     private $ttl;
@@ -4487,8 +4488,9 @@ class SimpleRouter implements Router
     private $routeHandlers;
     private $middlewares;
 
-    public function __construct(Responder $responder, Cache $cache, int $ttl, bool $debug)
+    public function __construct(string $basePath, Responder $responder, Cache $cache, int $ttl, bool $debug)
     {
+        $this->basePath = $basePath;
         $this->responder = $responder;
         $this->cache = $cache;
         $this->ttl = $ttl;
@@ -4548,8 +4550,26 @@ class SimpleRouter implements Router
         return $this->routes->match($path);
     }
 
+    private function removeBasePath(ServerRequestInterface $request): ServerRequestInterface
+    {
+        if ($this->basePath) {
+            $path = $request->getUri()->getPath();
+            $basePath = rtrim($this->basePath, '/');
+            if (substr($path, 0, strlen($basePath)) == $basePath) {
+                $path = substr($path, strlen($basePath));
+                $request = $request->withUri($request->getUri()->withPath($path));
+            }
+        } elseif (isset($_SERVER['PATH_INFO'])) {
+            $path = $_SERVER['PATH_INFO'];
+            $request = $request->withUri($request->getUri()->withPath($path));
+        }
+        return $request;
+    }
+
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
+        $request = $this->removeBasePath($request);
+
         if (count($this->middlewares)) {
             $handler = array_pop($this->middlewares);
             return $handler->process($request, $this);
@@ -6948,7 +6968,7 @@ class Api implements RequestHandlerInterface
         $cache = CacheFactory::create($config);
         $reflection = new ReflectionService($db, $cache, $config->getCacheTime());
         $responder = new Responder();
-        $router = new SimpleRouter($responder, $cache, $config->getCacheTime(), $config->getDebug());
+        $router = new SimpleRouter($config->getBasePath(), $responder, $cache, $config->getCacheTime(), $config->getDebug());
         foreach ($config->getMiddlewares() as $middleware => $properties) {
             switch ($middleware) {
                 case 'cors':
@@ -7048,6 +7068,7 @@ class Config
         'cachePath' => '',
         'cacheTime' => 10,
         'debug' => false,
+        'basePath' => '',
         'openApiBase' => '{"info":{"title":"PHP-CRUD-API","version":"1.0.0"}}',
     ];
 
@@ -7184,6 +7205,11 @@ class Config
         return $this->values['debug'];
     }
 
+    public function getBasePath(): string
+    {
+        return $this->values['basePath'];
+    }
+
     public function getOpenApiBase(): array
     {
         return json_decode($this->values['openApiBase'], true);
@@ -7280,11 +7306,7 @@ class RequestUtils
 
     public static function getPathSegment(ServerRequestInterface $request, int $part): string
     {
-        if (isset($_SERVER['PATH_INFO'])) {
-            $path = $_SERVER['PATH_INFO'];
-        } else {
-            $path = $request->getUri()->getPath();
-        }
+        $path = $request->getUri()->getPath();
         $pathSegments = explode('/', rtrim($path, '/'));
         if ($part < 0 || $part >= count($pathSegments)) {
             return '';

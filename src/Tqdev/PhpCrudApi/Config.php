@@ -16,6 +16,7 @@ class Config
         'cachePath' => '',
         'cacheTime' => 10,
         'debug' => false,
+        'basePath' => '',
         'openApiBase' => '{"info":{"title":"PHP-CRUD-API","version":"1.0.0"}}',
     ];
 
@@ -150,6 +151,11 @@ class Config
     public function getDebug(): bool
     {
         return $this->values['debug'];
+    }
+
+    public function getBasePath(): string
+    {
+        return $this->values['basePath'];
     }
 
     public function getOpenApiBase(): array
