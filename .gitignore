@@ -1,3 +1,5 @@
-vendor/
 composer.phar
 composer.lock
+vendor/composer
+vendor/php-http
+.git
