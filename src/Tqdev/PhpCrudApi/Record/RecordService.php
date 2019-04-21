@@ -55,7 +55,7 @@ class RecordService
         return $this->reflection->getType($table);
     }
 
-    public function create(string $tableName, /* object */ $record, array $params)
+    public function create(string $tableName, /* object */ $record, array $params) /*: ?int*/
     {
         $this->sanitizeRecord($tableName, $record, '');
         $table = $this->reflection->getTable($tableName);
@@ -77,7 +77,7 @@ class RecordService
         return $records[0];
     }
 
-    public function update(string $tableName, string $id, /* object */ $record, array $params)
+    public function update(string $tableName, string $id, /* object */ $record, array $params) /*: ?int*/
     {
         $this->sanitizeRecord($tableName, $record, $id);
         $table = $this->reflection->getTable($tableName);
@@ -85,13 +85,13 @@ class RecordService
         return $this->db->updateSingle($table, $columnValues, $id);
     }
 
-    public function delete(string $tableName, string $id, array $params)
+    public function delete(string $tableName, string $id, array $params) /*: ?int*/
     {
         $table = $this->reflection->getTable($tableName);
         return $this->db->deleteSingle($table, $id);
     }
 
-    public function increment(string $tableName, string $id, /* object */ $record, array $params)
+    public function increment(string $tableName, string $id, /* object */ $record, array $params) /*: ?int*/
     {
         $this->sanitizeRecord($tableName, $record, $id);
         $table = $this->reflection->getTable($tableName);
