@@ -782,7 +782,7 @@ You may use the "customization" middleware to modify request and response and im
         $environment->start = microtime(true);
     },
     'customization.afterHandler' => function ($operation, $tableName, $response, $environment) {
-        $response->addHeader('X-Time-Taken', microtime(true) - $environment->start);
+        return $response->withHeader('X-Time-Taken', microtime(true) - $environment->start);
     },
 
 The above example will add a header "X-Time-Taken" with the number of seconds the API call has taken.
