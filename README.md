@@ -118,7 +118,7 @@ You can access the non-compiled code at the URL:
 
     http://localhost:8080/src/records/posts/1
 
-The non-compiled code resides in the "`src`" and "`vendor`" directories.
+The non-compiled code resides in the "`src`" and "`vendor`" directories. The "`vendor`" directory contains the dependencies.
 
 ### Updating dependencies
 
@@ -126,7 +126,7 @@ You can update all dependencies of this project using the following command:
 
     php update.php
 
-This script will install and run [Composer](https://getcomposer.org/) to update the required dependencies in the "`vendor`" directory.
+This script will install and run [Composer](https://getcomposer.org/) to update the dependencies.
 
 NB: The update script will also patch the dependencies in the vendor directory for PHP 7.0 compatibility.
 
