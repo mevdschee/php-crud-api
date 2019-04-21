@@ -120,7 +120,7 @@ You can access the non-compiled code at the URL:
 
 The non-compiled code resides in the "`src`" and "`vendor`" directories.
 
-## Dependencies
+### Updating dependencies
 
 You can update all dependencies of this project using the following command:
 
