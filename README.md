@@ -73,15 +73,15 @@ These are all the configuration options and their default value between brackets
 
 ## Compilation
 
-The code resides in the "`src`" directory. You can access it at the URL:
-
-    http://localhost:8080/src/records/posts/1
-
 You can compile all files into a single "`api.php`" file using:
 
     php build.php
 
-NB: The script appends the classes in alphabetical order (directories first).
+The non-compiled code resides in the "`src`" directory. You can access it at the URL:
+
+    http://localhost:8080/src/records/posts/1
+
+NB: The build script will install and run [Composer](https://getcomposer.org/) to install the required dependencies.
 
 ## Limitations
 
@@ -115,34 +115,10 @@ The following features are supported:
   - Spatial/GIS fields and filters supported with WKT
   - Generate API documentation using OpenAPI tools
   - Authentication via JWT token or username/password
-
-### Extra Features
-
-These features are new in v2 and were not included in v1:
-
-  - Does not reflect on every request (better performance)
-  - Complex filters (with both "and" & "or") are supported
-  - Support for output of database structure in JSON
-  - Support for boolean and binary data in all database engines
-  - Support for relational data on read (not only on list operation)
-  - Support for middleware to modify all operations (also list)
-  - Error reporting in JSON with corresponding HTTP status
-  - Support for basic authentication and via auth provider (JWT)
-  - Support for basic firewall functionality
-  - Prevent database scraping using list limits
-
-### Dropped features
-
-The following features of v1 were dropped in v2:
-
-  - ~~Streaming data, low memory footprint~~
-  - ~~Supports file upload from web forms (multipart/form-data)~~
-  - ~~Condensed JSON output: first row contains field names~~
-  - ~~Relation "transforms" (of condensed JSON) for PHP and JavaScript~~
-  - ~~Unstructured data support through JSON/JSONB~~
-  - ~~SQLite support~~
-
-NB: You can find v1 here: https://github.com/mevdschee/php-crud-api/tree/v1
+  - Support for reading database structure in JSON
+  - Support for modifying database structure using REST endpoint
+  - Security enhancing middleware is included
+  - Standard compliant: PSR-2, PSR-4, PSR-7, PSR-15 and PSR-17
 
 ## Middleware
 
