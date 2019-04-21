@@ -1,4 +1,7 @@
 <?php
+if (!file_exists('vendor')) {
+    include 'install.php';
+}
 
 function removeIgnored(string $dir, array &$entries, array $ignore)
 {
@@ -116,7 +119,5 @@ $ignore = [
 $priority = [
     'vendor/psr',
 ];
-
-exec('php test.php');
 
 run(__DIR__, ['vendor', 'src'], 'api.php', $ignore, $priority);

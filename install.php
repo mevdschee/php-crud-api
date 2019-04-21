@@ -1,6 +1,15 @@
 <?php
 
-function runDir(string $base, string $dir): int
+if (!file_exists('composer.phar')) {
+    $composer = file_get_contents('https://getcomposer.org/composer.phar');
+    file_put_contents('composer.phar', $composer);
+}
+if (!file_exists('vendor')) {
+    exec('php composer.phar install');
+    exec('php patch.php');
+}
+
+function patchDir(string $base, string $dir): int
 {
     $count = 0;
     $entries = scandir($dir);
@@ -10,7 +19,7 @@ function runDir(string $base, string $dir): int
         }
         $filename = "$base/$dir/$entry";
         if (is_dir($filename)) {
-            $count += runDir($base, "$dir/$entry");
+            $count += patchDir($base, "$dir/$entry");
         }
     }
     foreach ($entries as $entry) {
@@ -32,12 +41,12 @@ function runDir(string $base, string $dir): int
     return $count;
 }
 
-function run(string $base, array $dirs)
+function patch(string $base, array $dirs)
 {
     $start = microtime(true);
     $count = 0;
     foreach ($dirs as $dir) {
-        $count += runDir($base, $dir);
+        $count += patchDir($base, $dir);
     }
     $end = microtime(true);
     $time = ($end - $start) * 1000;
@@ -46,4 +55,4 @@ function run(string $base, array $dirs)
     }
 }
 
-run(__DIR__, ['vendor']);
+patch(__DIR__, ['vendor']);
