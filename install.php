@@ -1,5 +1,7 @@
 <?php
 
+// download composer and install dependencies
+
 if (!file_exists('composer.phar')) {
     $composer = file_get_contents('https://getcomposer.org/composer.phar');
     file_put_contents('composer.phar', $composer);
@@ -7,6 +9,8 @@ if (!file_exists('composer.phar')) {
 if (!file_exists('vendor')) {
     exec('php composer.phar install');
 }
+
+// patch files for PHP 7.0 compatibility
 
 function patchDir(string $base, string $dir): int
 {
