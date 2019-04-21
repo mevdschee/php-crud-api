@@ -29,7 +29,12 @@ class RequestUtils
 
     public static function getPathSegment(ServerRequestInterface $request, int $part): string
     {
-        $pathSegments = explode('/', rtrim($request->getUri()->getPath(), '/'));
+        if (isset($_SERVER['PATH_INFO'])) {
+            $path = $_SERVER['PATH_INFO'];
+        } else {
+            $path = $request->getUri()->getPath();
+        }
+        $pathSegments = explode('/', rtrim($path, '/'));
         if ($part < 0 || $part >= count($pathSegments)) {
             return '';
         }

@@ -8,6 +8,7 @@ use Tqdev\PhpCrudApi\Controller\Responder;
 use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
 use Tqdev\PhpCrudApi\Record\ErrorCode;
 use Tqdev\PhpCrudApi\Record\PathTree;
+use Tqdev\PhpCrudApi\RequestUtils;
 use Tqdev\PhpCrudApi\ResponseUtils;
 
 class SimpleRouter implements Router
@@ -73,8 +74,12 @@ class SimpleRouter implements Router
     private function getRouteNumbers(ServerRequestInterface $request): array
     {
         $method = strtoupper($request->getMethod());
-        $path = explode('/', trim($request->getRequestTarget(), '/'));
-        array_unshift($path, $method);
+        $path = array();
+        $segment = $method;
+        for ($i = 1; $segment; $i++) {
+            array_push($path, $segment);
+            $segment = RequestUtils::getPathSegment($request, $i);
+        }
         return $this->routes->match($path);
     }
 
@@ -87,7 +92,7 @@ class SimpleRouter implements Router
 
         $routeNumbers = $this->getRouteNumbers($request);
         if (count($routeNumbers) == 0) {
-            return $this->responder->error(ErrorCode::ROUTE_NOT_FOUND, $request->getRequestTarget());
+            return $this->responder->error(ErrorCode::ROUTE_NOT_FOUND, $request->getUri()->getPath());
         }
         try {
             $response = call_user_func($this->routeHandlers[$routeNumbers[0]], $request);

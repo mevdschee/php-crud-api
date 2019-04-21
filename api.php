@@ -4539,8 +4539,12 @@ class SimpleRouter implements Router
     private function getRouteNumbers(ServerRequestInterface $request): array
     {
         $method = strtoupper($request->getMethod());
-        $path = explode('/', trim($request->getRequestTarget(), '/'));
-        array_unshift($path, $method);
+        $path = array();
+        $segment = $method;
+        for ($i = 1; $segment; $i++) {
+            array_push($path, $segment);
+            $segment = RequestUtils::getPathSegment($request, $i);
+        }
         return $this->routes->match($path);
     }
 
@@ -4553,7 +4557,7 @@ class SimpleRouter implements Router
 
         $routeNumbers = $this->getRouteNumbers($request);
         if (count($routeNumbers) == 0) {
-            return $this->responder->error(ErrorCode::ROUTE_NOT_FOUND, $request->getRequestTarget());
+            return $this->responder->error(ErrorCode::ROUTE_NOT_FOUND, $request->getUri()->getPath());
         }
         try {
             $response = call_user_func($this->routeHandlers[$routeNumbers[0]], $request);
@@ -7217,16 +7221,6 @@ class RequestFactory
         $psr17Factory = new Psr17Factory();
         $creator = new ServerRequestCreator($psr17Factory, $psr17Factory, $psr17Factory, $psr17Factory);
         $serverRequest = $creator->fromGlobals();
-        $uri = '';
-        if (isset($_SERVER['PATH_INFO'])) {
-            $uri .= $_SERVER['PATH_INFO'];
-        }
-        if (isset($_SERVER['QUERY_STRING'])) {
-            $uri .= '?' . $_SERVER['QUERY_STRING'];
-        }
-        if ($uri) {
-            $serverRequest = $serverRequest->withUri($psr17Factory->createUri($uri));
-        }
         $body = file_get_contents('php://input');
         if ($body) {
             $serverRequest = $serverRequest->withParsedBody(self::parseBody($body));
@@ -7286,7 +7280,12 @@ class RequestUtils
 
     public static function getPathSegment(ServerRequestInterface $request, int $part): string
     {
-        $pathSegments = explode('/', rtrim($request->getUri()->getPath(), '/'));
+        if (isset($_SERVER['PATH_INFO'])) {
+            $path = $_SERVER['PATH_INFO'];
+        } else {
+            $path = $request->getUri()->getPath();
+        }
+        $pathSegments = explode('/', rtrim($path, '/'));
         if ($part < 0 || $part >= count($pathSegments)) {
             return '';
         }
