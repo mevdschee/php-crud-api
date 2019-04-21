@@ -81,7 +81,7 @@ The non-compiled code resides in the "`src`" directory. You can access it at the
 
     http://localhost:8080/src/records/posts/1
 
-NB: The build script will install and run [Composer](https://getcomposer.org/) to install the required dependencies.
+NB: The "`build.php`" script will install and run [Composer](https://getcomposer.org/) to install the required dependencies.
 
 ## Limitations
 
