@@ -5,9 +5,7 @@ use Tqdev\PhpCrudApi\Database\GenericDB;
 use Tqdev\PhpCrudApi\RequestFactory;
 use Tqdev\PhpCrudApi\ResponseUtils;
 
-spl_autoload_register(function ($class) {
-    include str_replace('\\', '/', "src\\$class.php");
-});
+require 'vendor/autoload.php';
 
 function runDir(Config $config, string $dir, array $matches, string $category): array
 {
