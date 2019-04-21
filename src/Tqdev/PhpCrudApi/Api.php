@@ -3,6 +3,7 @@ namespace Tqdev\PhpCrudApi;
 
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 use Tqdev\PhpCrudApi\Cache\CacheFactory;
 use Tqdev\PhpCrudApi\Column\DefinitionService;
 use Tqdev\PhpCrudApi\Column\ReflectionService;
@@ -31,7 +32,7 @@ use Tqdev\PhpCrudApi\Record\ErrorCode;
 use Tqdev\PhpCrudApi\Record\RecordService;
 use Tqdev\PhpCrudApi\ResponseUtils;
 
-class Api
+class Api implements RequestHandlerInterface
 {
     private $router;
     private $responder;
