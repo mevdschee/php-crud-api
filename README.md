@@ -4,12 +4,6 @@ Single file PHP 7 script that adds a REST API to a MySQL 5.6 InnoDB database. Po
 
 NB: This is the [TreeQL](https://treeql.org) reference implementation in PHP.
 
-You can easily integrate this project into the web framework of your choice, see:
-
-- [Automatic REST API for Laravel](https://tqdev.com/2019-automatic-rest-api-laravel)
-- [Automatic REST API for Symfony 4](https://tqdev.com/2019-automatic-rest-api-symfony)
-- [Automatic REST API for SlimPHP](https://tqdev.com/2019-automatic-api-slimphp-3)
-
 Related projects:
 
   - [PHP-API-AUTH](https://github.com/mevdschee/php-api-auth): Single file PHP script that is an authentication provider for PHP-CRUD-API
@@ -50,6 +44,12 @@ Test the script by opening the following URL:
     http://localhost:8080/api.php/records/posts/1
 
 Don't forget to modify the configuration at the bottom of the file.
+
+Alternatively you can integrate this project into the web framework of your choice, see:
+
+- [Automatic REST API for Laravel](https://tqdev.com/2019-automatic-rest-api-laravel)
+- [Automatic REST API for Symfony 4](https://tqdev.com/2019-automatic-rest-api-symfony)
+- [Automatic REST API for SlimPHP](https://tqdev.com/2019-automatic-api-slimphp-3)
 
 ## Configuration
 
