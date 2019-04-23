@@ -23,7 +23,7 @@ class ResponseUtils
     public static function addExceptionHeaders(ResponseInterface $response, \Throwable $e): ResponseInterface
     {
         $response = $response->withHeader('X-Exception-Name', get_class($e));
-        $response = $response->withHeader('X-Exception-Message', $e->getMessage());
+        $response = $response->withHeader('X-Exception-Message', preg_replace('|\n|', ' ', trim($e->getMessage())));
         $response = $response->withHeader('X-Exception-File', $e->getFile() . ':' . $e->getLine());
         return $response;
     }
