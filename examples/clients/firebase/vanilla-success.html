@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Success</title>
+
+    <script src="https://www.gstatic.com/firebasejs/6.0.2/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/6.0.2/firebase-auth.js"></script>
+
+    <script>
+        // Your web app's Firebase configuration
+        var firebaseConfig = {
+            apiKey: "",
+            authDomain: "",
+            databaseURL: "",
+            projectId: "",
+            storageBucket: "",
+            messagingSenderId: "",
+            appId: ""
+        };
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+    </script>
+
+    <script>
+        var url = '/api.php/records/posts?join=categories&join=tags&join=comments&filter=id,eq,1';
+
+        function requestAPI(accessToken) {
+            var req = new XMLHttpRequest();
+            req.onreadystatechange = function () {
+                if (req.readyState == 4) {
+                    try {
+                        document.getElementById('output').innerHTML = JSON.stringify(JSON.parse(req.responseText),
+                            undefined, 4);
+                    } catch (error) {
+                        document.getElementById('output').innerHTML = req.responseText;
+                    }
+                }
+            }
+            req.open("GET", url, true);
+            req.setRequestHeader('X-Authorization', 'Bearer ' + accessToken);
+            req.send();
+        }
+
+        function initApp() {
+            firebase.auth().onAuthStateChanged(function (user) {
+                if (user) {
+                    // User is signed in.
+                    var displayName = user.displayName;
+                    var email = user.email;
+                    var emailVerified = user.emailVerified;
+                    var photoURL = user.photoURL;
+                    var uid = user.uid;
+                    var phoneNumber = user.phoneNumber;
+                    var providerData = user.providerData;
+                    user.getIdToken().then(function (accessToken) {
+                        document.getElementById('sign-in-status').textContent = 'Signed in';
+                        document.getElementById('account-details').textContent = JSON.stringify({
+                            displayName: displayName,
+                            email: email,
+                            emailVerified: emailVerified,
+                            phoneNumber: phoneNumber,
+                            photoURL: photoURL,
+                            uid: uid,
+                            accessToken: accessToken,
+                            providerData: providerData
+                        }, undefined, 4);
+
+                        requestAPI(accessToken)
+                    });
+                } else {
+                    // User is signed out.
+                    document.getElementById('sign-in-status').textContent = 'Signed out';
+                    document.getElementById('account-details').textContent = 'null';
+                }
+            }, function (error) {
+                console.log(error);
+            });
+        };
+
+        window.addEventListener('load', initApp);
+    </script>
+</head>
+
+<body>
+    <h1>Firebase Login Success (or not)</h1>
+
+    <div id="sign-in-status"></div>
+    <pre id="account-details"></pre>
+
+    <pre id="output"></pre>
+</body>
+
+</html>
