@@ -1,11 +1,13 @@
 <html>
 <head>
-<meta charset="utf-8" /> 
+<meta charset="utf-8" />
 <script>
 var authUrl = 'https://php-crud-api.auth0.com/authorize'; // url of auth0 '/authorize' end-point
 var clientId = ''; // client id as defined in auth0
-var audience = ''; // api audience as defined in auth0
-window.onload = function () {
+var audience = 'https://your-php-crud-api/api.php'; // api audience as defined in auth0
+var url = '/api.php/records/posts?join=categories&join=tags&join=comments&filter=id,eq,1';
+
+function requestApi() {
     var match = RegExp('[#&]access_token=([^&]*)').exec(window.location.hash);
     var accessToken = match && decodeURIComponent(match[1].replace(/\+/g, ' '));
     if (!accessToken) {
@@ -16,18 +18,32 @@ window.onload = function () {
         req.onreadystatechange = function () {
             if (req.readyState==4) {
                 console.log(req.responseText);
-                document.getElementById('output').innerHTML = JSON.stringify(JSON.parse(req.responseText), undefined, 4);
+                try {
+                    document.getElementById('output').innerHTML = JSON.stringify(JSON.parse(req.responseText), undefined, 4);
+                } catch (error) {
+                    document.getElementById('output').innerHTML = req.responseText;
+                }
             }
         }
-        url = '/api.php/records/posts?join=categories&join=tags&join=comments&filter=id,eq,1';
         req.open("GET", url, true);
         req.setRequestHeader('X-Authorization', 'Bearer '+accessToken);
         req.send();
     }
 };
+
+window.onload = function() {
+    requestAPI()
+    document.getElementById('request-btn').onclick = function(e) {
+        e.preventDefault()
+        requestAPI()
+    }
+}
 </script>
 </head>
 <body>
+<p>
+    <button type="button" id="request-btn">Request API</button>
+</p>
 <pre id="output"></pre>
 </body>
 </html>
