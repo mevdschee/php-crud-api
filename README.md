@@ -650,6 +650,53 @@ This example sends the signed claims:
 
 NB: The JWT implementation only supports the RSA and HMAC based algorithms.
 
+##### Configure and test JWT authentication with Auth0
+
+First you need to create an account on [Auth0](https://auth0.com/auth/login).
+Once logged in, you have to create an application (its type does not matter). Collect the `Domain`
+and `Client ID` and keep them for a later use. Then, create an API: give it a name and fill the
+`identifier` field with your API endpoint's URL.
+
+Then you have to configure the `jwtAuth.secret` configuration in your `api.php` file.
+Don't fill it with the `secret` you will find in your Auth0 application settings but with **a
+public certificate**. To find it, go to the settings of your application, then in "Extra settings".
+You will now find a "Certificates" tab where you will find your Public Key in the Signing
+Certificate field.
+
+To test your integration, you can copy the [auth0/vanilla.html](examples/clients/auth0/vanilla.html)
+file. Be sure to fill these three variables:
+
+ - `authUrl` with your Auth0 domain
+ - `clientId` with your Client ID
+ - `audience` with the API URL you created in Auth0
+
+⚠️ If you don't fill the audience parameter, it will not work because you won't get a valid JWT.
+
+You can also change the `url` variable, used to test the API with authentication.
+
+[More info](https://auth0.com/docs/api-auth/tutorials/verify-access-token)
+
+##### Configure and test JWT authentication with Firebase
+
+First you need to create a Firebase project on the [Firebase console](https://console.firebase.google.com/).
+Add a web application to this project and grab the code snippet for later use.
+
+Then you have to configure the `jwtAuth.secret` configuration in your `api.php` file.
+Grab the public key via this [URL](https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com).
+There may be several certificates, just grab the one corresponding to your `kid` (if you don't
+know what it is, just test them all until you will be logged in).
+Now, just fill `jwtAuth.secret` with your public key.
+
+To test your integration, you can copy the [firebase/vanilla.html](examples/clients/firebase/vanilla.html)
+file and the [firebase/vanilla-success.html](examples/clients/firebase/vanilla-success.html) file,
+used as a "success" page and to display the API result.
+
+Replace, in both files, the Firebase configuration (`firebaseConfig` object).
+
+You can also change the `url` variable, used to test the API with authentication.
+
+[More info](https://firebase.google.com/docs/auth/admin/verify-id-tokens#verify_id_tokens_using_a_third-party_jwt_library)
+
 ## Authorizing operations
 
 The Authorization model acts on "operations". The most important ones are listed here:
