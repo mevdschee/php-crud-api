@@ -11,7 +11,7 @@ use Tqdev\PhpCrudApi\RequestUtils;
 
 class JwtAuthMiddleware extends Middleware
 {
-    private function getVerifiedClaims(string $token, int $time, int $leeway, int $ttl, string $secret, array $requirements): array
+    private function getVerifiedClaims(string $token, int $time, int $leeway, int $ttl, /* string or array */ $secret, array $requirements): array
     {
         $algorithms = array(
             'HS256' => 'sha256',
@@ -28,6 +28,11 @@ class JwtAuthMiddleware extends Middleware
         $header = json_decode(base64_decode(strtr($token[0], '-_', '+/')), true);
         if (!$secret) {
             return array();
+        } else if (is_array($secret)) {
+            if (!isset($header['kid']) || !isset($secret[$header['kid']])) {
+                return array();
+            }
+            $secret = $secret[$header['kid']];
         }
         if ($header['typ'] != 'JWT') {
             return array();
