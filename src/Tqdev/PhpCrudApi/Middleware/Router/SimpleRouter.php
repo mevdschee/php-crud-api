@@ -125,6 +125,8 @@ class SimpleRouter implements Router
                 $response = $this->responder->error(ErrorCode::DATA_INTEGRITY_VIOLATION, '');
             } elseif (strpos(strtolower($e->getMessage()), 'constraint') !== false) {
                 $response = $this->responder->error(ErrorCode::DATA_INTEGRITY_VIOLATION, '');
+            } else {
+                $response = $this->responder->error(ErrorCode::ERROR_NOT_FOUND, '');
             }
             if ($this->debug) {
                 $response = ResponseUtils::addExceptionHeaders($response, $e);
