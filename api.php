@@ -4590,6 +4590,8 @@ class SimpleRouter implements Router
                 $response = $this->responder->error(ErrorCode::DATA_INTEGRITY_VIOLATION, '');
             } elseif (strpos(strtolower($e->getMessage()), 'constraint') !== false) {
                 $response = $this->responder->error(ErrorCode::DATA_INTEGRITY_VIOLATION, '');
+            } else {
+                $response = $this->responder->error(ErrorCode::ERROR_NOT_FOUND, '');
             }
             if ($this->debug) {
                 $response = ResponseUtils::addExceptionHeaders($response, $e);
@@ -7430,7 +7432,7 @@ class ResponseUtils
     public static function addExceptionHeaders(ResponseInterface $response, \Throwable $e): ResponseInterface
     {
         $response = $response->withHeader('X-Exception-Name', get_class($e));
-        $response = $response->withHeader('X-Exception-Message', $e->getMessage());
+        $response = $response->withHeader('X-Exception-Message', preg_replace('|\n|', ' ', trim($e->getMessage())));
         $response = $response->withHeader('X-Exception-File', $e->getFile() . ':' . $e->getLine());
         return $response;
     }
