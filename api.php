@@ -2779,6 +2779,61 @@ class ColumnController
     }
 }
 
+// file: src/Tqdev/PhpCrudApi/Controller/GeoJsonController.php
+
+class GeoJsonController
+{
+    private $service;
+    private $responder;
+    private $geoJsonConverter;
+
+    public function __construct(Router $router, Responder $responder, GeoJsonService $service)
+    {
+        $router->register('GET', '/geojson/*', array($this, '_list'));
+        $router->register('GET', '/geojson/*/*', array($this, 'read'));
+        $this->service = $service;
+        $this->responder = $responder;
+    }
+
+    public function _list(ServerRequestInterface $request): ResponseInterface
+    {
+        $table = RequestUtils::getPathSegment($request, 2);
+        $params = RequestUtils::getParams($request);
+        if (!$this->service->hasTable($table)) {
+            return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $table);
+        }
+        return $this->responder->success($this->service->_list($table, $params));
+    }
+
+    public function read(ServerRequestInterface $request): ResponseInterface
+    {
+        $table = RequestUtils::getPathSegment($request, 2);
+        if (!$this->service->hasTable($table)) {
+            return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $table);
+        }
+        if ($this->service->getType($table) != 'table') {
+            return $this->responder->error(ErrorCode::OPERATION_NOT_SUPPORTED, __FUNCTION__);
+        }
+        $id = RequestUtils::getPathSegment($request, 3);
+        $params = RequestUtils::getParams($request);
+        if (strpos($id, ',') !== false) {
+            $ids = explode(',', $id);
+            $result = [];
+            for ($i = 0; $i < count($ids); $i++) {
+                array_push($result, $this->service->read($table, $ids[$i], $params));
+            }
+            return $this->responder->success($result);
+        } else {
+            $response = $this->service->read($table, $id, $params);
+            if ($response === null) {
+                return $this->responder->error(ErrorCode::RECORD_NOT_FOUND, $id);
+            }
+            return $this->responder->success($response);
+        }
+    }
+
+}
+
 // file: src/Tqdev/PhpCrudApi/Controller/OpenApiController.php
 
 class OpenApiController
@@ -4414,6 +4469,175 @@ class TypeConverter
             $jdbcType = $this->fromJdbc[$this->driver][$jdbcType];
         }
         return $jdbcType;
+    }
+}
+
+// file: src/Tqdev/PhpCrudApi/GeoJson/Feature.php
+
+class Feature implements \JsonSerializable
+{
+    private $properties;
+    private $geometry;
+
+    public function __construct(array $properties, Geometry $geometry)
+    {
+        $this->properties = $properties;
+        $this->geometry = $geometry;
+    }
+
+    public function serialize()
+    {
+        return [
+            'type' => 'Feature',
+            'properties' => $this->properties,
+            'geometry' => $this->geometry,
+        ];
+    }
+
+    public function jsonSerialize()
+    {
+        return $this->serialize();
+    }
+}
+
+// file: src/Tqdev/PhpCrudApi/GeoJson/FeatureCollection.php
+
+class FeatureCollection implements \JsonSerializable
+{
+    private $features;
+
+    public function __construct(array $features)
+    {
+        $this->features = $features;
+    }
+
+    public static function fromListDocument(ListDocument $records, string $geometryColumnName): FeatureCollection
+    {
+        $features = array();
+        foreach ($records->getRecords() as $record) {
+            if (isset($record[$geometryColumnName])) {
+                $geometry = Geometry::fromWkt($record[$geometryColumnName]);
+                unset($record[$geometryColumnName]);
+                $features[] = new Feature($record, $geometry);
+            }
+        }
+        return new FeatureCollection($features);
+    }
+
+    public function serialize()
+    {
+        return [
+            'type' => 'FeatureCollection',
+            'features' => $this->features,
+        ];
+    }
+
+    public function jsonSerialize()
+    {
+        return $this->serialize();
+    }
+}
+
+// file: src/Tqdev/PhpCrudApi/GeoJson/GeoJsonService.php
+
+class GeoJsonService
+{
+    private $reflection;
+    private $records;
+
+    public function __construct(ReflectionService $reflection, RecordService $records)
+    {
+        $this->reflection = $reflection;
+        $this->records = $records;
+    }
+
+    public function hasTable(string $table): bool
+    {
+        return $this->reflection->hasTable($table);
+    }
+
+    private function getGeometryColumnName(string $tableName, string $geometryParam): string
+    {
+        $table = $this->reflection->getTable($tableName);
+        foreach ($table->getColumnNames() as $columnName) {
+            if ($geometryParam && $geometryParam != $columnName) {
+                continue;
+            }
+            $column = $table->getColumn($columnName);
+            if ($column->isGeometry()) {
+                return $columnName;
+            }
+        }
+        return "";
+    }
+
+    public function _list(string $tableName, array $params): FeatureCollection
+    {
+        $geometryParam = isset($params['geometry']) ? $params['geometry'] : '';
+        $geometryColumnName = $this->getGeometryColumnName($tableName, $geometryParam);
+        $records = $this->records->_list($tableName, $params);
+        return FeatureCollection::fromListDocument($records, $geometryColumnName);
+    }
+
+    public function read(string $tableName, string $id, array $params) /*: ?object*/
+    {
+        return $this->records->read($tableName, $id, $params);
+    }
+}
+
+// file: src/Tqdev/PhpCrudApi/GeoJson/Geometry.php
+
+class Geometry implements \JsonSerializable
+{
+    private $type;
+    private $geometry;
+
+    public static $types = [
+        "Point",
+        "MultiPoint",
+        "LineString",
+        "MultiLineString",
+        "Polygon",
+        "MultiPolygon",
+        "GeometryCollection",
+    ];
+
+    public function __construct(string $type, array $coordinates)
+    {
+        $this->type = $type;
+        $this->coordinates = $coordinates;
+    }
+
+    public static function fromWkt(string $wkt): Geometry
+    {
+        $bracket = strpos($wkt, '(');
+        $type = strtoupper(trim(substr($wkt, 0, $bracket)));
+        foreach (Geometry::$types as $typeName) {
+            if (strtoupper($typeName) == $type) {
+                $type = $typeName;
+            }
+        }
+        $coordinates = substr($wkt, $bracket);
+        $coordinates = preg_replace('|([0-9\-\.]+ )+([0-9\-\.]+)|', '[\1\2]', $coordinates);
+        $coordinates = str_replace(['(', ')', ' '], ['[', ']', ','], $coordinates);
+        $coordinates = json_decode($coordinates);
+        if ($type == 'Point') {
+            $coordinates = $coordinates[0];
+        }
+        return new Geometry($type, $coordinates);
+    }
+
+    public function serialize()
+    {
+        return [
+            'type' => $this->type,
+            'coordinates' => $this->coordinates,
+        ];
+    }
+
+    public function jsonSerialize()
+    {
+        return $this->serialize();
     }
 }
 
@@ -7030,6 +7254,11 @@ class Api implements RequestHandlerInterface
                 case 'openapi':
                     $openApi = new OpenApiService($reflection, $config->getOpenApiBase());
                     new OpenApiController($router, $responder, $openApi);
+                    break;
+                case 'geojson':
+                    $records = new RecordService($db, $reflection);
+                    $geoJson = new GeoJsonService($reflection, $records);
+                    new GeoJsonController($router, $responder, $geoJson);
                     break;
             }
         }
