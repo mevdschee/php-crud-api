@@ -11,7 +11,7 @@ use Tqdev\PhpCrudApi\RequestUtils;
 
 class JwtAuthMiddleware extends Middleware
 {
-    private function getVerifiedClaims(string $token, int $time, int $leeway, int $ttl, /* string or array */ $secret, array $requirements): array
+    private function getVerifiedClaims(array $token, int $time, int $leeway, int $ttl, string $secret, array $requirements, string $algorithm): array
     {
         $algorithms = array(
             'HS256' => 'sha256',
@@ -21,23 +21,6 @@ class JwtAuthMiddleware extends Middleware
             'RS384' => 'sha384',
             'RS512' => 'sha512',
         );
-        $token = explode('.', $token);
-        if (count($token) < 3) {
-            return array();
-        }
-        $header = json_decode(base64_decode(strtr($token[0], '-_', '+/')), true);
-        if (!$secret) {
-            return array();
-        } else if (is_array($secret)) {
-            if (!isset($header['kid']) || !isset($secret[$header['kid']])) {
-                return array();
-            }
-            $secret = $secret[$header['kid']];
-        }
-        if ($header['typ'] != 'JWT') {
-            return array();
-        }
-        $algorithm = $header['alg'];
         if (!isset($algorithms[$algorithm])) {
             return array();
         }
@@ -45,7 +28,7 @@ class JwtAuthMiddleware extends Middleware
             return array();
         }
         $hmac = $algorithms[$algorithm];
-        $signature = base64_decode(strtr($token[2], '-_', '+/'));
+        $signature = $this->decodeTokenChunk($token[2], false);
         $data = "$token[0].$token[1]";
         switch ($algorithm[0]) {
             case 'H':
@@ -66,7 +49,7 @@ class JwtAuthMiddleware extends Middleware
                 }
                 break;
         }
-        $claims = json_decode(base64_decode(strtr($token[1], '-_', '+/')), true);
+        $claims = $this->decodeTokenChunk($token[1]);
         if (!$claims) {
             return array();
         }
@@ -107,10 +90,33 @@ class JwtAuthMiddleware extends Middleware
             'aud' => $this->getArrayProperty('audiences', ''),
             'iss' => $this->getArrayProperty('issuers', ''),
         );
-        if (!$secret) {
+        $token = explode('.', $token);
+        if (count($token) < 3) {
             return array();
         }
-        return $this->getVerifiedClaims($token, $time, $leeway, $ttl, $secret, $requirements);
+        $header = $this->decodeTokenChunk($token[0]);
+        if ($header['typ'] != 'JWT') {
+            return array();
+        }
+        if (!$secret) {
+            return array();
+        } else if (is_array($secret)) {
+            if (!isset($header['kid']) || !isset($secret[$header['kid']])) {
+                return array();
+            }
+            $secret = $secret[$header['kid']];
+        }
+        $algorithm = $header['alg'];
+        return $this->getVerifiedClaims($token, $time, $leeway, $ttl, $secret, $requirements, $algorithm);
+    }
+
+    private function decodeTokenChunk($tokenChunk, $isJson = true)
+    {
+        $decoded = base64_decode(strtr($tokenChunk, '-_', '+/'));
+        if ($isJson) {
+            $decoded = json_decode($decoded, true);
+        }
+        return $decoded;
     }
 
     private function getAuthorizationToken(ServerRequestInterface $request): string
