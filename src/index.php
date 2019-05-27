@@ -10,7 +10,6 @@ $config = new Config([
     'username' => 'php-crud-api',
     'password' => 'php-crud-api',
     'database' => 'php-crud-api',
-    'controllers' => 'openapi,records,geojson',
 ]);
 $request = RequestFactory::fromGlobals();
 $api = new Api($config);
