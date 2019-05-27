@@ -9,10 +9,12 @@ use Tqdev\PhpCrudApi\Column\DefinitionService;
 use Tqdev\PhpCrudApi\Column\ReflectionService;
 use Tqdev\PhpCrudApi\Controller\CacheController;
 use Tqdev\PhpCrudApi\Controller\ColumnController;
+use Tqdev\PhpCrudApi\Controller\GeoJsonController;
 use Tqdev\PhpCrudApi\Controller\OpenApiController;
 use Tqdev\PhpCrudApi\Controller\RecordController;
 use Tqdev\PhpCrudApi\Controller\Responder;
 use Tqdev\PhpCrudApi\Database\GenericDB;
+use Tqdev\PhpCrudApi\GeoJson\GeoJsonService;
 use Tqdev\PhpCrudApi\Middleware\AuthorizationMiddleware;
 use Tqdev\PhpCrudApi\Middleware\BasicAuthMiddleware;
 use Tqdev\PhpCrudApi\Middleware\CorsMiddleware;
@@ -111,6 +113,11 @@ class Api implements RequestHandlerInterface
                 case 'openapi':
                     $openApi = new OpenApiService($reflection, $config->getOpenApiBase());
                     new OpenApiController($router, $responder, $openApi);
+                    break;
+                case 'geojson':
+                    $records = new RecordService($db, $reflection);
+                    $geoJson = new GeoJsonService($reflection, $records);
+                    new GeoJsonController($router, $responder, $geoJson);
                     break;
             }
         }
