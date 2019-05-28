@@ -621,7 +621,16 @@ The GeoJSON support is a read-only view on the tables and records in GeoJSON for
 
 The "`/geojson`" endpoint will only show what is allowed in your session. It also supports a "geometry"
 parameter to indicate the name of the geometry column in case the table has more than one of them.
-Add the "geojson" controller in the configuration to enable this functionality.
+The following Geometry types are supported by the GeoJSON implementation:
+
+  - Point
+  - MultiPoint
+  - LineString
+  - MultiLineString
+  - Polygon
+  - MultiPolygon
+
+NB: You need to add the "geojson" controller in the configuration to enable the GeoJSON functionality.
 
 ### Authentication
 
