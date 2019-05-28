@@ -4479,7 +4479,7 @@ class Feature implements \JsonSerializable
     private $properties;
     private $geometry;
 
-    public function __construct(array $properties, Geometry $geometry)
+    public function __construct(array $properties, /*?Geometry*/ $geometry)
     {
         $this->properties = $properties;
         $this->geometry = $geometry;
@@ -4506,22 +4506,12 @@ class FeatureCollection implements \JsonSerializable
 {
     private $features;
 
-    public function __construct(array $features)
+    private $results;
+
+    public function __construct(array $features, int $results)
     {
         $this->features = $features;
-    }
-
-    public static function fromListDocument(ListDocument $records, string $geometryColumnName): FeatureCollection
-    {
-        $features = array();
-        foreach ($records->getRecords() as $record) {
-            if (isset($record[$geometryColumnName])) {
-                $geometry = Geometry::fromWkt($record[$geometryColumnName]);
-                unset($record[$geometryColumnName]);
-                $features[] = new Feature($record, $geometry);
-            }
-        }
-        return new FeatureCollection($features);
+        $this->results = $results;
     }
 
     public function serialize()
@@ -4529,12 +4519,15 @@ class FeatureCollection implements \JsonSerializable
         return [
             'type' => 'FeatureCollection',
             'features' => $this->features,
+            'results' => $this->results,
         ];
     }
 
     public function jsonSerialize()
     {
-        return $this->serialize();
+        return array_filter($this->serialize(), function ($v) {
+            return $v !== 0;
+        });
     }
 }
 
@@ -4556,6 +4549,11 @@ class GeoJsonService
         return $this->reflection->hasTable($table);
     }
 
+    public function getType(string $table): string
+    {
+        return $this->reflection->getType($table);
+    }
+
     private function getGeometryColumnName(string $tableName, string $geometryParam): string
     {
         $table = $this->reflection->getTable($tableName);
@@ -4571,17 +4569,35 @@ class GeoJsonService
         return "";
     }
 
-    public function _list(string $tableName, array $params): FeatureCollection
+    private function convertRecordToFeature( /*object*/$record, string $geometryColumnName)
     {
-        $geometryParam = isset($params['geometry']) ? $params['geometry'] : '';
-        $geometryColumnName = $this->getGeometryColumnName($tableName, $geometryParam);
-        $records = $this->records->_list($tableName, $params);
-        return FeatureCollection::fromListDocument($records, $geometryColumnName);
+        $geometry = null;
+        if (isset($record[$geometryColumnName])) {
+            $geometry = Geometry::fromWkt($record[$geometryColumnName]);
+        }
+        $properties = array_diff_key($record, [$geometryColumnName => true]);
+        return new Feature($properties, $geometry);
     }
 
-    public function read(string $tableName, string $id, array $params) /*: ?object*/
+    public function _list(string $tableName, array $params): FeatureCollection
     {
-        return $this->records->read($tableName, $id, $params);
+        $geometryParam = isset($params['geometry']) ? $params['geometry'][0] : '';
+        $geometryColumnName = $this->getGeometryColumnName($tableName, $geometryParam);
+        $records = $this->records->_list($tableName, $params);
+
+        $features = array();
+        foreach ($records->getRecords() as $record) {
+            $features[] = $this->convertRecordToFeature($record, $geometryColumnName);
+        }
+        return new FeatureCollection($features, $records->getResults());
+    }
+
+    public function read(string $tableName, string $id, array $params): Feature
+    {
+        $geometryParam = isset($params['geometry']) ? $params['geometry'][0] : '';
+        $geometryColumnName = $this->getGeometryColumnName($tableName, $geometryParam);
+        $record = $this->records->read($tableName, $id, $params);
+        return $this->convertRecordToFeature($record, $geometryColumnName);
     }
 }
 
@@ -4599,7 +4615,6 @@ class Geometry implements \JsonSerializable
         "MultiLineString",
         "Polygon",
         "MultiPolygon",
-        "GeometryCollection",
     ];
 
     public function __construct(string $type, array $coordinates)
@@ -4612,17 +4627,25 @@ class Geometry implements \JsonSerializable
     {
         $bracket = strpos($wkt, '(');
         $type = strtoupper(trim(substr($wkt, 0, $bracket)));
+        $supported = false;
         foreach (Geometry::$types as $typeName) {
             if (strtoupper($typeName) == $type) {
                 $type = $typeName;
+                $supported = true;
             }
         }
+        if (!$supported) {
+            throw new \Exception('Geometry type not supported: ' . $type);
+        }
         $coordinates = substr($wkt, $bracket);
-        $coordinates = preg_replace('|([0-9\-\.]+ )+([0-9\-\.]+)|', '[\1\2]', $coordinates);
-        $coordinates = str_replace(['(', ')', ' '], ['[', ']', ','], $coordinates);
+        if (substr($type, -5) != 'Point' || ($type == 'MultiPoint' && $coordinates[1] != '(')) {
+            $coordinates = preg_replace('|([0-9\-\.]+ )+([0-9\-\.]+)|', '[\1\2]', $coordinates);
+        }
+        $coordinates = str_replace(['(', ')', ', ', ' '], ['[', ']', ',', ','], $coordinates);
+        $json = $coordinates;
         $coordinates = json_decode($coordinates);
-        if ($type == 'Point') {
-            $coordinates = $coordinates[0];
+        if (!$coordinates) {
+            throw new \Exception('Could not decode WKT: ' . $wkt);
         }
         return new Geometry($type, $coordinates);
     }
