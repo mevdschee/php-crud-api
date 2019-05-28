@@ -610,6 +610,19 @@ For spatial support there is an extra set of filters that can be applied on geom
 
 These filters are based on OGC standards and so is the WKT specification in which the geometry columns are represented.
 
+#### GeoJSON
+
+The GeoJSON support is a read-only view on the tables and records in GeoJSON format. These requests are supported:
+
+    method path                  - operation - description
+    ----------------------------------------------------------------------------------------
+    GET    /geojson/{table}      - list      - lists records as a GeoJSON FeatureCollection
+    GET    /geojson/{table}/{id} - read      - reads a record by PK as a GeoJSON Feature
+
+The "`/geojson`" endpoint will only show what is allowed in your session. It also supports a "geometry"
+parameter to indicate the name of the geometry column in case the table has more than one of them.
+Add the "geojson" controller in the configuration to enable this functionality.
+
 ### Authentication
 
 Authentication is done by means of sending a "Authorization" header. It identifies the user and stores this in the `$_SESSION` super global. 
