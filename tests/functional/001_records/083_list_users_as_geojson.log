@@ -6,13 +6,13 @@ Content-Length: 269
 
 {"type":"FeatureCollection","features":[{"type":"Feature","properties":{"id":1,"username":"user1","password":"testtest2"},"geometry":{"type":"Point","coordinates":[30,20]}},{"type":"Feature","properties":{"id":2,"username":"user2","password":"pass2"},"geometry":null}]}
 ===
-GET /geojson/users?geometry=location
+GET /geojson/users?geometry=location&include=username
 ===
 200
 Content-Type: application/json
-Content-Length: 269
+Content-Length: 213
 
-{"type":"FeatureCollection","features":[{"type":"Feature","properties":{"id":1,"username":"user1","password":"testtest2"},"geometry":{"type":"Point","coordinates":[30,20]}},{"type":"Feature","properties":{"id":2,"username":"user2","password":"pass2"},"geometry":null}]}
+{"type":"FeatureCollection","features":[{"type":"Feature","properties":{"username":"user1"},"geometry":{"type":"Point","coordinates":[30,20]}},{"type":"Feature","properties":{"username":"user2"},"geometry":null}]}
 ===
 GET /geojson/users?geometry=notlocation
 ===

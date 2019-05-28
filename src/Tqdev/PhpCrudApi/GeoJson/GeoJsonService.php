@@ -55,6 +55,7 @@ class GeoJsonService
     {
         $geometryParam = isset($params['geometry']) ? $params['geometry'][0] : '';
         $geometryColumnName = $this->getGeometryColumnName($tableName, $geometryParam);
+        $params['mandatory'][] = $tableName . "." . $geometryColumnName;
         $records = $this->records->_list($tableName, $params);
 
         $features = array();
@@ -68,6 +69,7 @@ class GeoJsonService
     {
         $geometryParam = isset($params['geometry']) ? $params['geometry'][0] : '';
         $geometryColumnName = $this->getGeometryColumnName($tableName, $geometryParam);
+        $params['mandatory'][] = $tableName . "." . $geometryColumnName;
         $record = $this->records->read($tableName, $id, $params);
         return $this->convertRecordToFeature($record, $geometryColumnName);
     }
