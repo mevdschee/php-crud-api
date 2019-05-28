@@ -107,7 +107,7 @@ The following features are supported:
   - Relation detection with nested results (belongsTo, hasMany and HABTM)
   - Atomic increment support via PATCH (for counters)
   - Binary fields supported with base64 encoding
-  - Spatial/GIS fields and filters supported with WKT
+  - Spatial/GIS fields and filters supported with WKT and GeoJSON
   - Generate API documentation using OpenAPI tools
   - Authentication via JWT token or username/password
   - Support for reading database structure in JSON
