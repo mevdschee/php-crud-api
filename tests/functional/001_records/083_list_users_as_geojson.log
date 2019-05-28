@@ -6,6 +6,22 @@ Content-Length: 269
 
 {"type":"FeatureCollection","features":[{"type":"Feature","properties":{"id":1,"username":"user1","password":"testtest2"},"geometry":{"type":"Point","coordinates":[30,20]}},{"type":"Feature","properties":{"id":2,"username":"user2","password":"pass2"},"geometry":null}]}
 ===
+GET /geojson/users?geometry=location
+===
+200
+Content-Type: application/json
+Content-Length: 269
+
+{"type":"FeatureCollection","features":[{"type":"Feature","properties":{"id":1,"username":"user1","password":"testtest2"},"geometry":{"type":"Point","coordinates":[30,20]}},{"type":"Feature","properties":{"id":2,"username":"user2","password":"pass2"},"geometry":null}]}
+===
+GET /geojson/users?geometry=notlocation
+===
+200
+Content-Type: application/json
+Content-Length: 277
+
+{"type":"FeatureCollection","features":[{"type":"Feature","properties":{"id":1,"username":"user1","password":"testtest2","location":"POINT(30 20)"},"geometry":null},{"type":"Feature","properties":{"id":2,"username":"user2","password":"pass2","location":null},"geometry":null}]}
+===
 GET /geojson/users?page=1,1
 ===
 200

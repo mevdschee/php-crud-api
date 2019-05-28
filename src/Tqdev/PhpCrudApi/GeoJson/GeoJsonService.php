@@ -53,7 +53,7 @@ class GeoJsonService
 
     public function _list(string $tableName, array $params): FeatureCollection
     {
-        $geometryParam = isset($params['geometry']) ? $params['geometry'] : '';
+        $geometryParam = isset($params['geometry']) ? $params['geometry'][0] : '';
         $geometryColumnName = $this->getGeometryColumnName($tableName, $geometryParam);
         $records = $this->records->_list($tableName, $params);
 
@@ -66,7 +66,7 @@ class GeoJsonService
 
     public function read(string $tableName, string $id, array $params): Feature
     {
-        $geometryParam = isset($params['geometry']) ? $params['geometry'] : '';
+        $geometryParam = isset($params['geometry']) ? $params['geometry'][0] : '';
         $geometryColumnName = $this->getGeometryColumnName($tableName, $geometryParam);
         $record = $this->records->read($tableName, $id, $params);
         return $this->convertRecordToFeature($record, $geometryColumnName);
