@@ -6,7 +6,7 @@ class Feature implements \JsonSerializable
     private $properties;
     private $geometry;
 
-    public function __construct(array $properties, Geometry $geometry)
+    public function __construct(array $properties, /*?Geometry*/ $geometry)
     {
         $this->properties = $properties;
         $this->geometry = $geometry;

@@ -43,9 +43,12 @@ class GeoJsonService
 
     private function convertRecordToFeature( /*object*/$record, string $geometryColumnName)
     {
-        $geometry = Geometry::fromWkt($record[$geometryColumnName]);
-        unset($record[$geometryColumnName]);
-        return new Feature($record, $geometry);
+        $geometry = null;
+        if (isset($record[$geometryColumnName])) {
+            $geometry = Geometry::fromWkt($record[$geometryColumnName]);
+        }
+        $properties = array_diff_key($record, [$geometryColumnName => true]);
+        return new Feature($properties, $geometry);
     }
 
     public function _list(string $tableName, array $params): FeatureCollection
@@ -63,15 +66,11 @@ class GeoJsonService
         return new FeatureCollection($features);
     }
 
-    public function read(string $tableName, string $id, array $params) /*: ?Feature*/
+    public function read(string $tableName, string $id, array $params): Feature
     {
         $geometryParam = isset($params['geometry']) ? $params['geometry'] : '';
         $geometryColumnName = $this->getGeometryColumnName($tableName, $geometryParam);
         $record = $this->records->read($tableName, $id, $params);
-        if (!isset($record[$geometryColumnName])) {
-            print_r($record);
-            return null;
-        }
         return $this->convertRecordToFeature($record, $geometryColumnName);
     }
 }
