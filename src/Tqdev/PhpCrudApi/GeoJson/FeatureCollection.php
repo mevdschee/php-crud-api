@@ -5,9 +5,12 @@ class FeatureCollection implements \JsonSerializable
 {
     private $features;
 
-    public function __construct(array $features)
+    private $results;
+
+    public function __construct(array $features, int $results)
     {
         $this->features = $features;
+        $this->results = $results;
     }
 
     public function serialize()
@@ -15,11 +18,14 @@ class FeatureCollection implements \JsonSerializable
         return [
             'type' => 'FeatureCollection',
             'features' => $this->features,
+            'results' => $this->results,
         ];
     }
 
     public function jsonSerialize()
     {
-        return $this->serialize();
+        return array_filter($this->serialize(), function ($v) {
+            return $v !== 0;
+        });
     }
 }

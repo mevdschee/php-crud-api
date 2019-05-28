@@ -61,7 +61,7 @@ class GeoJsonService
         foreach ($records->getRecords() as $record) {
             $features[] = $this->convertRecordToFeature($record, $geometryColumnName);
         }
-        return new FeatureCollection($features);
+        return new FeatureCollection($features, $records->getResults());
     }
 
     public function read(string $tableName, string $id, array $params): Feature
