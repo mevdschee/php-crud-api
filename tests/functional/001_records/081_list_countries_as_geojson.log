@@ -1,63 +1,7 @@
-GET /geojson/countries/3
+GET /geojson/countries
 ===
 200
 Content-Type: application/json
-Content-Length: 105
+Content-Length: 1607
 
-{"type":"Feature","properties":{"id":3,"name":"Point"},"geometry":{"type":"Point","coordinates":[30,10]}}
-===
-GET /geojson/countries/4
-===
-200
-Content-Type: application/json
-Content-Length: 127
-
-{"type":"Feature","properties":{"id":4,"name":"Line"},"geometry":{"type":"LineString","coordinates":[[30,10],[10,30],[40,40]]}}
-===
-GET /geojson/countries/5
-===
-200
-Content-Type: application/json
-Content-Length: 143
-
-{"type":"Feature","properties":{"id":5,"name":"Poly1"},"geometry":{"type":"Polygon","coordinates":[[[30,10],[40,40],[20,40],[10,20],[30,10]]]}}
-===
-GET /geojson/countries/6
-===
-200
-Content-Type: application/json
-Content-Length: 177
-
-{"type":"Feature","properties":{"id":6,"name":"Poly2"},"geometry":{"type":"Polygon","coordinates":[[[35,10],[45,45],[15,40],[10,20],[35,10]],[[20,30],[35,35],[30,20],[20,30]]]}}
-===
-GET /geojson/countries/7
-===
-200
-Content-Type: application/json
-Content-Length: 137
-
-{"type":"Feature","properties":{"id":7,"name":"Mpoint"},"geometry":{"type":"MultiPoint","coordinates":[[10,40],[40,30],[20,20],[30,10]]}}
-===
-GET /geojson/countries/8
-===
-200
-Content-Type: application/json
-Content-Length: 169
-
-{"type":"Feature","properties":{"id":8,"name":"Mline"},"geometry":{"type":"MultiLineString","coordinates":[[[10,10],[20,20],[10,40]],[[40,40],[30,30],[40,20],[30,10]]]}}
-===
-GET /geojson/countries/9
-===
-200
-Content-Type: application/json
-Content-Length: 184
-
-{"type":"Feature","properties":{"id":9,"name":"Mpoly1"},"geometry":{"type":"MultiPolygon","coordinates":[[[[30,20],[45,40],[10,40],[30,20]]],[[[15,5],[40,10],[10,20],[5,10],[15,5]]]]}}
-===
-GET /geojson/countries/10
-===
-200
-Content-Type: application/json
-Content-Length: 229
-
-{"type":"Feature","properties":{"id":10,"name":"Mpoly2"},"geometry":{"type":"MultiPolygon","coordinates":[[[[40,40],[20,45],[45,30],[40,40]]],[[[20,35],[10,30],[10,10],[30,5],[45,20],[20,35]],[[30,20],[20,15],[20,25],[30,20]]]]}}
+{"type":"FeatureCollection","features":[{"type":"Feature","properties":{"id":1,"name":"Left"},"geometry":{"type":"Polygon","coordinates":[[[30,10],[40,40],[20,40],[10,20],[30,10]]]}},{"type":"Feature","properties":{"id":2,"name":"Right"},"geometry":{"type":"Polygon","coordinates":[[[70,10],[80,40],[60,40],[50,20],[70,10]]]}},{"type":"Feature","properties":{"id":3,"name":"Point"},"geometry":{"type":"Point","coordinates":[30,10]}},{"type":"Feature","properties":{"id":4,"name":"Line"},"geometry":{"type":"LineString","coordinates":[[30,10],[10,30],[40,40]]}},{"type":"Feature","properties":{"id":5,"name":"Poly1"},"geometry":{"type":"Polygon","coordinates":[[[30,10],[40,40],[20,40],[10,20],[30,10]]]}},{"type":"Feature","properties":{"id":6,"name":"Poly2"},"geometry":{"type":"Polygon","coordinates":[[[35,10],[45,45],[15,40],[10,20],[35,10]],[[20,30],[35,35],[30,20],[20,30]]]}},{"type":"Feature","properties":{"id":7,"name":"Mpoint"},"geometry":{"type":"MultiPoint","coordinates":[[10,40],[40,30],[20,20],[30,10]]}},{"type":"Feature","properties":{"id":8,"name":"Mline"},"geometry":{"type":"MultiLineString","coordinates":[[[10,10],[20,20],[10,40]],[[40,40],[30,30],[40,20],[30,10]]]}},{"type":"Feature","properties":{"id":9,"name":"Mpoly1"},"geometry":{"type":"MultiPolygon","coordinates":[[[[30,20],[45,40],[10,40],[30,20]]],[[[15,5],[40,10],[10,20],[5,10],[15,5]]]]}},{"type":"Feature","properties":{"id":10,"name":"Mpoly2"},"geometry":{"type":"MultiPolygon","coordinates":[[[[40,40],[20,45],[45,30],[40,40]]],[[[20,35],[10,30],[10,10],[30,5],[45,20],[20,35]],[[30,20],[20,15],[20,25],[30,20]]]]}}]}
