@@ -21,6 +21,11 @@ class GeoJsonService
         return $this->reflection->hasTable($table);
     }
 
+    public function getType(string $table): string
+    {
+        return $this->reflection->getType($table);
+    }
+
     private function getGeometryColumnName(string $tableName, string $geometryParam): string
     {
         $table = $this->reflection->getTable($tableName);
@@ -36,16 +41,37 @@ class GeoJsonService
         return "";
     }
 
+    private function convertRecordToFeature( /*object*/$record, string $geometryColumnName)
+    {
+        $geometry = Geometry::fromWkt($record[$geometryColumnName]);
+        unset($record[$geometryColumnName]);
+        return new Feature($record, $geometry);
+    }
+
     public function _list(string $tableName, array $params): FeatureCollection
     {
         $geometryParam = isset($params['geometry']) ? $params['geometry'] : '';
         $geometryColumnName = $this->getGeometryColumnName($tableName, $geometryParam);
         $records = $this->records->_list($tableName, $params);
-        return FeatureCollection::fromListDocument($records, $geometryColumnName);
+
+        $features = array();
+        foreach ($records->getRecords() as $record) {
+            if (isset($record[$geometryColumnName])) {
+                $features[] = $this->convertRecordToFeature($record, $geometryColumnName);
+            }
+        }
+        return new FeatureCollection($features);
     }
 
-    public function read(string $tableName, string $id, array $params) /*: ?object*/
+    public function read(string $tableName, string $id, array $params) /*: ?Feature*/
     {
-        return $this->records->read($tableName, $id, $params);
+        $geometryParam = isset($params['geometry']) ? $params['geometry'] : '';
+        $geometryColumnName = $this->getGeometryColumnName($tableName, $geometryParam);
+        $record = $this->records->read($tableName, $id, $params);
+        if (!isset($record[$geometryColumnName])) {
+            print_r($record);
+            return null;
+        }
+        return $this->convertRecordToFeature($record, $geometryColumnName);
     }
 }

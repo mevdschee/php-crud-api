@@ -32,12 +32,16 @@ class Geometry implements \JsonSerializable
             }
         }
         $coordinates = substr($wkt, $bracket);
-        $coordinates = preg_replace('|([0-9\-\.]+ )+([0-9\-\.]+)|', '[\1\2]', $coordinates);
-        $coordinates = str_replace(['(', ')', ' '], ['[', ']', ','], $coordinates);
-        $coordinates = json_decode($coordinates);
-        if ($type == 'Point') {
-            $coordinates = $coordinates[0];
+        if (substr($type, -5) != 'Point' || ($type == 'MultiPoint' && $coordinates[1] != '(')) {
+            $coordinates = preg_replace('|([0-9\-\.]+ )+([0-9\-\.]+)|', '[\1\2]', $coordinates);
         }
+        $coordinates = str_replace(['(', ')', ', ', ' '], ['[', ']', ',', ','], $coordinates);
+        $json = $coordinates;
+        $coordinates = json_decode($coordinates);
+        if (!$coordinates) {
+            echo $json;
+        }
+
         return new Geometry($type, $coordinates);
     }
 

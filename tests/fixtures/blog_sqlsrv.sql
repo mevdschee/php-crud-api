@@ -344,6 +344,22 @@ INSERT [countries] ([name], [shape]) VALUES (N'Left', N'POLYGON ((30 10, 40 40, 
 GO
 INSERT [countries] ([name], [shape]) VALUES (N'Right', N'POLYGON ((70 10, 80 40, 60 40, 50 20, 70 10))')
 GO
+INSERT [countries] ([name], [shape]) VALUES (N'Point', N'POINT (30 10)')
+GO
+INSERT [countries] ([name], [shape]) VALUES (N'Line', N'LINESTRING (30 10, 10 30, 40 40)')
+GO
+INSERT [countries] ([name], [shape]) VALUES (N'Poly1', N'POLYGON ((30 10, 40 40, 20 40, 10 20, 30 10))')
+GO
+INSERT [countries] ([name], [shape]) VALUES (N'Poly2', N'POLYGON ((35 10, 45 45, 15 40, 10 20, 35 10),(20 30, 35 35, 30 20, 20 30))')
+GO
+INSERT [countries] ([name], [shape]) VALUES (N'Mpoint', N'MULTIPOINT (10 40, 40 30, 20 20, 30 10)')
+GO
+INSERT [countries] ([name], [shape]) VALUES (N'Mline', N'MULTILINESTRING ((10 10, 20 20, 10 40),(40 40, 30 30, 40 20, 30 10))')
+GO
+INSERT [countries] ([name], [shape]) VALUES (N'Mpoly1', N'MULTIPOLYGON (((30 20, 45 40, 10 40, 30 20)),((15 5, 40 10, 10 20, 5 10, 15 5)))')
+GO
+INSERT [countries] ([name], [shape]) VALUES (N'Mpoly2', N'MULTIPOLYGON (((40 40, 20 45, 45 30, 40 40)),((20 35, 10 30, 10 10, 30 5, 45 20, 20 35),(30 20, 20 15, 20 25, 30 20)))')
+GO
 
 INSERT [events] ([name], [datetime], [visitors]) VALUES (N'Launch', N'2016-01-01 13:01:01', 0)
 GO

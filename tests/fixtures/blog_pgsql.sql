@@ -240,7 +240,15 @@ INSERT INTO "users" ("username", "password", "location") VALUES
 
 INSERT INTO "countries" ("name", "shape") VALUES
 ('Left',	ST_GeomFromText('POLYGON ((30 10, 40 40, 20 40, 10 20, 30 10))')),
-('Right',	ST_GeomFromText('POLYGON ((70 10, 80 40, 60 40, 50 20, 70 10))'));
+('Right',	ST_GeomFromText('POLYGON ((70 10, 80 40, 60 40, 50 20, 70 10))')),
+('Point',	ST_GeomFromText('POINT (30 10)')),
+('Line',	ST_GeomFromText('LINESTRING (30 10, 10 30, 40 40)')),
+('Poly1',	ST_GeomFromText('POLYGON ((30 10, 40 40, 20 40, 10 20, 30 10))')),
+('Poly2',	ST_GeomFromText('POLYGON ((35 10, 45 45, 15 40, 10 20, 35 10),(20 30, 35 35, 30 20, 20 30))')),
+('Mpoint',	ST_GeomFromText('MULTIPOINT (10 40, 40 30, 20 20, 30 10)')),
+('Mline',	ST_GeomFromText('MULTILINESTRING ((10 10, 20 20, 10 40),(40 40, 30 30, 40 20, 30 10))')),
+('Mpoly1',	ST_GeomFromText('MULTIPOLYGON (((30 20, 45 40, 10 40, 30 20)),((15 5, 40 10, 10 20, 5 10, 15 5)))')),
+('Mpoly2',	ST_GeomFromText('MULTIPOLYGON (((40 40, 20 45, 45 30, 40 40)),((20 35, 10 30, 10 10, 30 5, 45 20, 20 35),(30 20, 20 15, 20 25, 30 20)))'));
 
 --
 -- Data for Name: events; Type: TABLE DATA; Schema: public; Owner: postgres
