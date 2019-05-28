@@ -1,7 +1,0 @@
-GET /geojson/users
-===
-200
-Content-Type: application/json
-Content-Length: 174
-
-{"type":"FeatureCollection","features":[{"type":"Feature","properties":{"id":1,"username":"user1","password":"testtest2"},"geometry":{"type":"Point","coordinates":[30,20]}}]}

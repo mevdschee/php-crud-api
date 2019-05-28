@@ -59,9 +59,7 @@ class GeoJsonService
 
         $features = array();
         foreach ($records->getRecords() as $record) {
-            if (isset($record[$geometryColumnName])) {
-                $features[] = $this->convertRecordToFeature($record, $geometryColumnName);
-            }
+            $features[] = $this->convertRecordToFeature($record, $geometryColumnName);
         }
         return new FeatureCollection($features);
     }
