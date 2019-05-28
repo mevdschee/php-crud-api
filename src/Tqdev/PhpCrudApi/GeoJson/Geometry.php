@@ -13,7 +13,7 @@ class Geometry implements \JsonSerializable
         "MultiLineString",
         "Polygon",
         "MultiPolygon",
-        "GeometryCollection",
+        //"GeometryCollection",
     ];
 
     public function __construct(string $type, array $coordinates)
@@ -26,10 +26,15 @@ class Geometry implements \JsonSerializable
     {
         $bracket = strpos($wkt, '(');
         $type = strtoupper(trim(substr($wkt, 0, $bracket)));
+        $supported = false;
         foreach (Geometry::$types as $typeName) {
             if (strtoupper($typeName) == $type) {
                 $type = $typeName;
+                $supported = true;
             }
+        }
+        if (!$supported) {
+            throw new \Exception('Geometry type not supported: ' . $type);
         }
         $coordinates = substr($wkt, $bracket);
         if (substr($type, -5) != 'Point' || ($type == 'MultiPoint' && $coordinates[1] != '(')) {
@@ -39,9 +44,8 @@ class Geometry implements \JsonSerializable
         $json = $coordinates;
         $coordinates = json_decode($coordinates);
         if (!$coordinates) {
-            echo $json;
+            throw new \Exception('Could not decode WKT: ' . $wkt);
         }
-
         return new Geometry($type, $coordinates);
     }
 

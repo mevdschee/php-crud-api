@@ -360,6 +360,8 @@ INSERT [countries] ([name], [shape]) VALUES (N'Mpoly1', N'MULTIPOLYGON (((30 20,
 GO
 INSERT [countries] ([name], [shape]) VALUES (N'Mpoly2', N'MULTIPOLYGON (((40 40, 20 45, 45 30, 40 40)),((20 35, 10 30, 10 10, 30 5, 45 20, 20 35),(30 20, 20 15, 20 25, 30 20)))')
 GO
+INSERT [countries] ([name], [shape]) VALUES (N'Gcoll', N'GEOMETRYCOLLECTION(POINT(4 6),LINESTRING(4 6,7 10))')
+GO
 
 INSERT [events] ([name], [datetime], [visitors]) VALUES (N'Launch', N'2016-01-01 13:01:01', 0)
 GO
