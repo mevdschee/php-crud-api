@@ -7717,7 +7717,6 @@ $config = new Config([
     'username' => 'php-crud-api',
     'password' => 'php-crud-api',
     'database' => 'php-crud-api',
-    'controllers' => 'records,geojson',
 ]);
 $request = RequestFactory::fromGlobals();
 $api = new Api($config);
