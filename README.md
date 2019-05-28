@@ -619,7 +619,7 @@ The GeoJSON support is a read-only view on the tables and records in GeoJSON for
     GET    /geojson/{table}      - list      - lists records as a GeoJSON FeatureCollection
     GET    /geojson/{table}/{id} - read      - reads a record by primary key as a GeoJSON Feature
 
-The "`/geojson`" endpoint internally uses the "`/records`" endpoint and inherits all functionality, such as joins and filters.
+The "`/geojson`" endpoint uses the "`/records`" endpoint internally and inherits all functionality, such as joins and filters.
 It also supports a "geometry" parameter to indicate the name of the geometry column in case the table has more than one of them.
 The following Geometry types are supported by the GeoJSON implementation:
 
