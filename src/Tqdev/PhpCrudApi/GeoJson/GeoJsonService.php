@@ -47,7 +47,7 @@ class GeoJsonService
         return $geometryColumnName;
     }
 
-    private function setBoudingBoxFilter(array &$params)
+    private function setBoudingBoxFilter(string $geometryColumnName, array &$params)
     {
         $boundingBox = isset($params['bbox']) ? $params['bbox'][0] : '';
         if ($boundingBox) {
@@ -72,7 +72,7 @@ class GeoJsonService
     public function _list(string $tableName, array $params): FeatureCollection
     {
         $geometryColumnName = $this->getGeometryColumnName($tableName, $params);
-        $this->setBoudingBoxFilter($params);
+        $this->setBoudingBoxFilter($geometryColumnName, $params);
         $records = $this->records->_list($tableName, $params);
         $features = array();
         foreach ($records->getRecords() as $record) {
@@ -84,7 +84,7 @@ class GeoJsonService
     public function read(string $tableName, string $id, array $params): Feature
     {
         $geometryColumnName = $this->getGeometryColumnName($tableName, $params);
-        $this->setBoudingBoxFilter($params);
+        $this->setBoudingBoxFilter($geometryColumnName, $params);
         $record = $this->records->read($tableName, $id, $params);
         return $this->convertRecordToFeature($record, $geometryColumnName);
     }

@@ -621,6 +621,7 @@ The GeoJSON support is a read-only view on the tables and records in GeoJSON for
 
 The "`/geojson`" endpoint uses the "`/records`" endpoint internally and inherits all functionality, such as joins and filters.
 It also supports a "geometry" parameter to indicate the name of the geometry column in case the table has more than one of them.
+For map views it supports the "bbox" parameter in which you can specify upper-left and lower-right coordinates (comma separated).
 The following Geometry types are supported by the GeoJSON implementation:
 
   - Point

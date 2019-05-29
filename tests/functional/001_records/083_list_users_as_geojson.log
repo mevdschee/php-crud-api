@@ -29,3 +29,11 @@ Content-Type: application/json
 Content-Length: 186
 
 {"type":"FeatureCollection","features":[{"type":"Feature","properties":{"id":1,"username":"user1","password":"testtest2"},"geometry":{"type":"Point","coordinates":[30,20]}}],"results":2}
+===
+GET /geojson/users?bbox=29.99,19.99,30.01,20.01
+===
+200
+Content-Type: application/json
+Content-Length: 174
+
+{"type":"FeatureCollection","features":[{"type":"Feature","properties":{"id":1,"username":"user1","password":"testtest2"},"geometry":{"type":"Point","coordinates":[30,20]}}]}
