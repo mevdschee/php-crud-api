@@ -26,19 +26,37 @@ class GeoJsonService
         return $this->reflection->getType($table);
     }
 
-    private function getGeometryColumnName(string $tableName, string $geometryParam): string
+    private function getGeometryColumnName(string $tableName, array &$params): string
     {
+        $geometryParam = isset($params['geometry']) ? $params['geometry'][0] : '';
         $table = $this->reflection->getTable($tableName);
+        $geometryColumnName = '';
         foreach ($table->getColumnNames() as $columnName) {
             if ($geometryParam && $geometryParam != $columnName) {
                 continue;
             }
             $column = $table->getColumn($columnName);
             if ($column->isGeometry()) {
-                return $columnName;
+                $geometryColumnName = $columnName;
+                break;
             }
         }
-        return "";
+        if ($geometryColumnName) {
+            $params['mandatory'][] = $tableName . "." . $geometryColumnName;
+        }
+        return $geometryColumnName;
+    }
+
+    private function setBoudingBoxFilter(array &$params)
+    {
+        $boundingBox = isset($params['bbox']) ? $params['bbox'][0] : '';
+        if ($boundingBox) {
+            $c = explode(',', $boundingBox);
+            if (!isset($params['filter'])) {
+                $params['filter'] = array();
+            }
+            $params['filter'][] = "$geometryColumnName,swi,POLYGON(($c[0] $c[1],$c[2] $c[1],$c[2] $c[3],$c[0] $c[3],$c[0] $c[1]))";
+        }
     }
 
     private function convertRecordToFeature( /*object*/$record, string $geometryColumnName)
@@ -53,11 +71,9 @@ class GeoJsonService
 
     public function _list(string $tableName, array $params): FeatureCollection
     {
-        $geometryParam = isset($params['geometry']) ? $params['geometry'][0] : '';
-        $geometryColumnName = $this->getGeometryColumnName($tableName, $geometryParam);
-        $params['mandatory'][] = $tableName . "." . $geometryColumnName;
+        $geometryColumnName = $this->getGeometryColumnName($tableName, $params);
+        $this->setBoudingBoxFilter($params);
         $records = $this->records->_list($tableName, $params);
-
         $features = array();
         foreach ($records->getRecords() as $record) {
             $features[] = $this->convertRecordToFeature($record, $geometryColumnName);
@@ -67,9 +83,8 @@ class GeoJsonService
 
     public function read(string $tableName, string $id, array $params): Feature
     {
-        $geometryParam = isset($params['geometry']) ? $params['geometry'][0] : '';
-        $geometryColumnName = $this->getGeometryColumnName($tableName, $geometryParam);
-        $params['mandatory'][] = $tableName . "." . $geometryColumnName;
+        $geometryColumnName = $this->getGeometryColumnName($tableName, $params);
+        $this->setBoudingBoxFilter($params);
         $record = $this->records->read($tableName, $id, $params);
         return $this->convertRecordToFeature($record, $geometryColumnName);
     }
