@@ -55,7 +55,7 @@ class GeoJsonService
             if (!isset($params['filter'])) {
                 $params['filter'] = array();
             }
-            $params['filter'][] = "$geometryColumnName,swi,POLYGON(($c[0] $c[1],$c[2] $c[1],$c[2] $c[3],$c[0] $c[3],$c[0] $c[1]))";
+            $params['filter'][] = "$geometryColumnName,sin,POLYGON(($c[0] $c[1],$c[2] $c[1],$c[2] $c[3],$c[0] $c[3],$c[0] $c[1]))";
         }
     }
 
