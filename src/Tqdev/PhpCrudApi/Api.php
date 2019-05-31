@@ -119,6 +119,16 @@ class Api implements RequestHandlerInterface
                     $geoJson = new GeoJsonService($reflection, $records);
                     new GeoJsonController($router, $responder, $geoJson);
                     break;
+                default:
+                    $controllerChunks = explode(':', $controller);
+                    if (count($controllerChunks) === 2 && $controllerChunks[0] === 'custom') {
+                        $className = $controllerChunks[1];
+                        if (class_exists($className)) {
+                            $records = new RecordService($db, $reflection);
+                            new $className($router, $responder, $records);
+                        }
+                    }
+                    break;
             }
         }
         $this->router = $router;
