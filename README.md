@@ -620,7 +620,7 @@ The GeoJSON support is a read-only view on the tables and records in GeoJSON for
     GET    /geojson/{table}/{id} - read      - reads a record by primary key as a GeoJSON Feature
 
 The "`/geojson`" endpoint uses the "`/records`" endpoint internally and inherits all functionality, such as joins and filters.
-It also supports a "geometry" parameter to indicate the name of the geometry column in case the table has more than one of them.
+It also supports a "geometry" parameter to indicate the name of the geometry column in case the table has more than one.
 For map views it supports the "bbox" parameter in which you can specify upper-left and lower-right coordinates (comma separated).
 The following Geometry types are supported by the GeoJSON implementation:
 
@@ -708,7 +708,7 @@ Then you have to configure the `jwtAuth.secret` configuration in your `api.php` 
 Grab the public key via this [URL](https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com).
 There may be several certificates, just grab the one corresponding to your `kid` (if you don't
 know what it is, just test them all until you will be logged in).
-Now, just fill `jwtAuth.secret` with your public key.
+Now, just fill `jwtAuth.secret` with your public key.F
 
 To test your integration, you can copy the [firebase/vanilla.html](examples/clients/firebase/vanilla.html)
 file and the [firebase/vanilla-success.html](examples/clients/firebase/vanilla-success.html) file,
