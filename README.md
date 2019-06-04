@@ -852,7 +852,7 @@ The above example will add a header "X-Time-Taken" with the number of seconds th
 
 ### File uploads
 
-File uploads are supported through the [FileReader API](https://caniuse.com/#feat=filereader).
+File uploads are supported through the [FileReader API](https://caniuse.com/#feat=filereader), check out the [example](https://github.com/mevdschee/php-crud-api/blob/master/examples/clients/upload/vanilla.html).
 
 ## OpenAPI specification
 
