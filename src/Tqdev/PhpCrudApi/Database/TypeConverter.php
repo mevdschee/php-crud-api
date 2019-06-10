@@ -68,6 +68,7 @@ class TypeConverter
             'bit varying' => 'bit',
             'box' => 'geometry',
             'bytea' => 'blob',
+            'bpchar' => 'char',
             'character varying' => 'varchar',
             'character' => 'char',
             'cidr' => 'varchar',
