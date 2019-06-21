@@ -2818,9 +2818,9 @@ class GeoJsonController
         $params = RequestUtils::getParams($request);
         if (strpos($id, ',') !== false) {
             $ids = explode(',', $id);
-            $result = [];
+            $result = (object) array('type' => 'FeatureCollection', 'features' => array());
             for ($i = 0; $i < count($ids); $i++) {
-                array_push($result, $this->service->read($table, $ids[$i], $params));
+                array_push($result->features, $this->service->read($table, $ids[$i], $params));
             }
             return $this->responder->success($result);
         } else {
