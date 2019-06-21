@@ -10,23 +10,22 @@
 
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.5.1/dist/leaflet.css"/>
     <script src="https://unpkg.com/leaflet@1.5.1/dist/leaflet.js"></script>
-	<script src="https://labs.easyblog.it/maps/leaflet-layerjson/src/leaflet-layerjson.js"></script>
+	<script src="geojson-dynamic-layer.js"></script>
 </head>
 <body>
 
 <div id="mapid" style="width: 600px; height: 400px;"></div>
 <script>
-
-	var mymap = L.map('mapid').setView([20, 30], 12);
+	var mymap = L.map('mapid').setView([20, 30], 3);
 
 	L.tileLayer('https://services.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
-		maxZoom: 18,
+	 	maxZoom: 18,
 	}).addTo(mymap);
 
-    L.layerJSON({
-        url: "http://localhost:8000/api.php/geojson/users?filter=location,swi,POLYGON(({lon1} {lat1},{lon1} {lat2},{lon2} {lat2},{lon2} {lat1},{lon1} {lat1}))"
-    }).addTo(mymap);
-
+	L.geoJSONURL({
+		url: "http://localhost:8000/src/geojson/countries/1,2?bbox={bbox}",
+		//url: "http://localhost:8000/src/geojson/users?filter=location,swi,POLYGON(({lon1} {lat1},{lon1} {lat2},{lon2} {lat2},{lon2} {lat1},{lon1} {lat1}))",
+	}).addTo(mymap);
 </script>
 
 </body>
