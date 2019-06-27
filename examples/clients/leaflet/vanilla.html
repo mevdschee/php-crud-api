@@ -10,7 +10,8 @@
 
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.5.1/dist/leaflet.css"/>
     <script src="https://unpkg.com/leaflet@1.5.1/dist/leaflet.js"></script>
-	<script src="geojson-dynamic-layer.js"></script>
+	<script src="geojson-layer.js"></script>
+	<!--<script src="vector-tile-layer.js"></script>-->
 </head>
 <body>
 
@@ -22,9 +23,13 @@
 	 	maxZoom: 18,
 	}).addTo(mymap);
 
-	L.geoJSONURL({
+	L.geoJSONLayer({
 		url: "http://localhost:8000/api.php/geojson/countries/1,2?bbox={bbox}",
 	}).addTo(mymap);
+
+	// L.vectorTileLayer('http://localhost:8000/api.php/geojson/countries/1,2?tile={z},{y},{x}', {
+	// 	maxZoom: 18,
+	// }).addTo(mymap);
 </script>
 
 </body>
