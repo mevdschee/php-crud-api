@@ -57,6 +57,18 @@ class GeoJsonService
             }
             $params['filter'][] = "$geometryColumnName,sin,POLYGON(($c[0] $c[1],$c[2] $c[1],$c[2] $c[3],$c[0] $c[3],$c[0] $c[1]))";
         }
+        /*
+        $tile = isset($params['tile']) ? $params['tile'][0] : '';
+        if ($tile) {
+            
+            $n = pow(2, $zoom);
+            $lon_deg = $xtile / $n * 360.0 - 180.0;
+            $lat_deg = rad2deg(atan(sinh(pi() * (1 - 2 * $ytile / $n))));
+
+            calculates upperleft corner
+
+            $params['filter'][] = "$geometryColumnName,sin,POLYGON(($c[0] $c[1],$c[2] $c[1],$c[2] $c[3],$c[0] $c[3],$c[0] $c[1]))";
+        }*/
     }
 
     private function convertRecordToFeature( /*object*/$record, string $geometryColumnName)
