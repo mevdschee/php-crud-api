@@ -1,7 +1,7 @@
 /* global L */
 (function() {
 
-    L.vectorTileLayer = L.GeoJSON.extend({
+    L.VectorTileLayer = L.GeoJSON.extend({
 
     includes: L.Evented.prototype,
 
@@ -108,7 +108,7 @@ var total_tiles = width * height; // -> eg. 377
 });
 
 L.vectorTileLayer = function (options) {
-    return new L.vectorTileLayer(options);
+    return new L.VectorTileLayer(options);
 };
 
 }).call(this);
