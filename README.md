@@ -70,7 +70,7 @@ These are all the configuration options and their default value between brackets
 - "password": Password of the user connecting to the database (no default)
 - "database": Database the connecting is made to (no default)
 - "middlewares": List of middlewares to load (`cors`)
-- "controllers": List of controllers to load (`records,openapi`)
+- "controllers": List of controllers to load (`records,geojson,openapi`)
 - "openApiBase": OpenAPI info (`{"info":{"title":"PHP-CRUD-API","version":"1.0.0"}}`)
 - "cacheType": `TempFile`, `Redis`, `Memcache`, `Memcached` or `NoCache` (`TempFile`)
 - "cachePath": Path/address of the cache (defaults to system's temp directory)
@@ -631,7 +631,7 @@ The following Geometry types are supported by the GeoJSON implementation:
   - Polygon
   - MultiPolygon
 
-NB: You need to add the "geojson" controller in the configuration to enable the GeoJSON functionality.
+The GeoJSON functionality is enabled by default, but can be disabled using the "controllers" configuration.
 
 ### Authentication
 
