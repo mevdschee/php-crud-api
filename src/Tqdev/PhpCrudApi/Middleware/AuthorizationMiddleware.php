@@ -41,14 +41,15 @@ class AuthorizationMiddleware extends Middleware
         if (!$this->reflection->hasTable($tableName)) {
             return;
         }
+        $allowed = true;
         $tableHandler = $this->getProperty('tableHandler', '');
         if ($tableHandler) {
             $allowed = call_user_func($tableHandler, $operation, $tableName);
-            if (!$allowed) {
-                $this->reflection->removeTable($tableName);
-            } else {
-                $this->handleColumns($operation, $tableName);
-            }
+        }
+        if (!$allowed) {
+            $this->reflection->removeTable($tableName);
+        } else {
+            $this->handleColumns($operation, $tableName);
         }
     }
 
