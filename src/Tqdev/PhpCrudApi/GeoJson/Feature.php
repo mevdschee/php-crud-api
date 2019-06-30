@@ -3,22 +3,25 @@ namespace Tqdev\PhpCrudApi\GeoJson;
 
 class Feature implements \JsonSerializable
 {
+    private $id;
     private $properties;
     private $geometry;
 
-    public function __construct(array $properties, /*?Geometry*/ $geometry)
+    public function __construct(string $id, array $properties, /*?Geometry*/ $geometry)
     {
+        $this->id = $id;
         $this->properties = $properties;
         $this->geometry = $geometry;
     }
 
     public function serialize()
     {
-        return [
+        return array_filter([
             'type' => 'Feature',
+            'id' => $this->id,
             'properties' => $this->properties,
             'geometry' => $this->geometry,
-        ];
+        ]);
     }
 
     public function jsonSerialize()
