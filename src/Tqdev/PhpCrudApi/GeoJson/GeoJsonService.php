@@ -80,7 +80,7 @@ class GeoJsonService
 
     private function convertRecordToFeature( /*object*/$record, string $primaryKeyColumnName, string $geometryColumnName)
     {
-        $id = '';
+        $id = null;
         if ($primaryKeyColumnName) {
             $id = $record[$primaryKeyColumnName];
         }

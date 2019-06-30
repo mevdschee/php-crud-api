@@ -7,7 +7,7 @@ class Feature implements \JsonSerializable
     private $properties;
     private $geometry;
 
-    public function __construct(string $id, array $properties, /*?Geometry*/ $geometry)
+    public function __construct($id, array $properties, /*?Geometry*/ $geometry)
     {
         $this->id = $id;
         $this->properties = $properties;
@@ -16,12 +16,12 @@ class Feature implements \JsonSerializable
 
     public function serialize()
     {
-        return array_filter([
+        return [
             'type' => 'Feature',
             'id' => $this->id,
             'properties' => $this->properties,
             'geometry' => $this->geometry,
-        ]);
+        ];
     }
 
     public function jsonSerialize()
