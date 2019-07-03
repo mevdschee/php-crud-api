@@ -12,6 +12,7 @@
     <script src="https://unpkg.com/leaflet@1.5.1/dist/leaflet.js"></script>
 	<script src="geojson-layer.js"></script>
 	<script src="geojson-tile-layer.js"></script>
+	<!--<script src="geojson-tile-layer.js"></script>-->
 </head>
 <body>
 
@@ -19,15 +20,15 @@
 <script>
 	var mymap = L.map('mapid').setView([20, 30], 3);
 
-	//L.tileLayer('https://services.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
-	// 	maxZoom: 18,
-	//}).addTo(mymap);
+	L.tileLayer('https://services.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
+		maxZoom: 18,
+	}).addTo(mymap);
 
-	//L.geoJSONLayer('http://localhost:8000/api.php/geojson/countries/1,2?bbox={bbox}', {
-	// 	maxZoom: 18,
-	//}).addTo(mymap);
+	L.geoJSONLayer('http://localhost:8000/api.php/geojson/users?bbox={bbox}', {
+		maxZoom: 18,
+	}).addTo(mymap);
 
-	L.geoJSONTileLayer('http://localhost:8000/api.php/geojson/countries/1,2?tile={z},{y},{x}', {
+	L.geoJSONTileLayer('http://localhost:8000/src/geojson/countries?filter=id,lt,3&tile={z},{x},{y}', {
 		maxZoom: 18,
 	}).addTo(mymap);
 </script>
