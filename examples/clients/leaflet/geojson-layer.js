@@ -5,43 +5,41 @@
 
         includes: L.Evented.prototype,
 
+        url: null,
         map: null,
 
-        options: {
-        },
-
-        initialize(extraOptions, options) {
+        initialize(url, options) {
+            this.url = url;
             L.GeoJSON.prototype.initialize.call(this, [], options);
-            L.Util.setOptions(this, extraOptions);
         },
 
-        _reload: function() {
+        reloadMap: function() {
             if (this.map) {
-                var url = this._expand(this.options.url);
-                this._ajax('GET', url, false, this._update.bind(this));
+                var url = this.expandUrl(this.url);
+                this.ajaxRequest('GET', url, false, this.updateLayers.bind(this));
             }
         },
 
-        _update: function(geoData) {
+        updateLayers: function(geoData) {
             this.clearLayers();
             this.addData(geoData);
         },
 
-        onAdd: function(map) {
+        onAdd(map) {
             L.GeoJSON.prototype.onAdd.call(this, map); 
             this.map = map;
-            map.on('moveend zoomend refresh', this._reload, this);
-            this._reload();
+            map.on('moveend zoomend refresh', this.reloadMap, this);
+            this.reloadMap();
         },
 
-        onRemove: function(map) {
-            map.off('moveend zoomend refresh', this._reload, this);
+        onRemove(map) {
+            map.off('moveend zoomend refresh', this.reloadMap, this);
             this.map = null;
             L.GeoJSON.prototype.onRemove.call(this, map);
         },
 
-        _expand: function(template) {
-            var bbox = this._map.getBounds();
+        expandUrl: function(template) {
+            var bbox = this.map.getBounds();
             var southWest = bbox.getSouthWest();
             var northEast = bbox.getNorthEast();
             var bboxStr = bbox.toBBoxString();
@@ -55,7 +53,7 @@
             return L.Util.template(template, coords);
         },
 
-        _ajax: function(method, url, data, callback) {
+        ajaxRequest: function(method, url, data, callback) {
             var request = new XMLHttpRequest();
             request.open(method, url, true);
             request.onreadystatechange = function() {
@@ -74,8 +72,8 @@
 
     });
 
-    L.geoJSONLayer = function (options) {
-        return new L.GeoJSONLayer(options);
+    L.geoJSONLayer = function (url, options) {
+        return new L.GeoJSONLayer(url, options);
     };
 
 })();

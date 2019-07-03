@@ -19,12 +19,12 @@
 <script>
 	var mymap = L.map('mapid').setView([20, 30], 3);
 
-	L.tileLayer('https://services.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
-	 	maxZoom: 18,
-	}).addTo(mymap);
+	//L.tileLayer('https://services.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
+	// 	maxZoom: 18,
+	//}).addTo(mymap);
 
-	//L.geoJSONLayer({
-	//	url: "http://localhost:8000/api.php/geojson/countries/1,2?bbox={bbox}",
+	//L.geoJSONLayer('http://localhost:8000/api.php/geojson/countries/1,2?bbox={bbox}', {
+	// 	maxZoom: 18,
 	//}).addTo(mymap);
 
 	L.geoJSONTileLayer('http://localhost:8000/api.php/geojson/countries/1,2?tile={z},{y},{x}', {
