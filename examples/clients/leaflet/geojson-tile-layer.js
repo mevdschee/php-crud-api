@@ -8,11 +8,13 @@
         url: null,
         layer: null,
         features: null,
+        cache: null,
 
         initialize(url, options) {
             this.url = url;
             this.layer = new L.GeoJSON(null, options);
             this.features = {};
+            this.cache = {};
             L.GridLayer.prototype.initialize.call(this, options);
         },
 
@@ -20,11 +22,15 @@
             var tile = L.DomUtil.create('div', 'leaflet-tile');
             tile.style['box-shadow'] = 'inset 0 0 2px #f00';
             var url = L.Util.template(this.url, coords);
-            this.ajaxRequest('GET', url, false, this.updateLayers.bind(this));
+            if (this.cache[url]) {
+                this.updateLayers(url, this.cache[url]);
+            } else {
+                this.ajaxRequest('GET', url, false, this.updateLayers.bind(this, url));
+            }
             return tile;
         },
 
-        updateLayers: function(geoData) {
+        updateLayers: function(url, geoData) {
             if (geoData.type == 'FeatureCollection'){
                 for (var i=0;i<geoData.features.length;i++) {
                     var id = geoData.features[i].id;
@@ -33,7 +39,10 @@
                         this.features[id] = true;
                     }
                 }
-            }            
+            }
+            if (!this.cache[url]) {
+                this.cache[url] = geoData;
+            }
         },
 
         onAdd(map) {
