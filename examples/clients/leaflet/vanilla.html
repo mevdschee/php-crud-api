@@ -28,6 +28,7 @@
 	}).addTo(mymap);
 
 	L.geoJSONTileLayer('http://localhost:8000/src/geojson/countries?filter=id,lt,3&tile={z},{x},{y}', {
+		minZoom: 3,
 		maxZoom: 18,
 	}).addTo(mymap);
 </script>

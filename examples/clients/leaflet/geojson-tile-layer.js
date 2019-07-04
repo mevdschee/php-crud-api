@@ -32,12 +32,13 @@
 
         updateLayers: function(url, geoData) {
             if (geoData.type == 'FeatureCollection'){
-                for (var i=0;i<geoData.features.length;i++) {
-                    var id = geoData.features[i].id;
-                    if (!this.features[id]) {
-                        this.layer.addData(geoData.features[i]);
-                        this.features[id] = true;
-                    }
+                geoData = geoData.features;
+            }
+            for (var i=0;i<geoData.length;i++) {
+                var id = geoData[i].id;
+                if (!this.features[id]) {
+                    this.layer.addData(geoData[i]);
+                    this.features[id] = true;
                 }
             }
             if (!this.cache[url]) {
@@ -49,9 +50,11 @@
             L.GridLayer.prototype.onAdd.call(this, map); 
             map.addLayer(this.layer);
             this.map = map;
+            map.on('zoomanim', this.onZoomAnim.bind(this));
         },
 
         onRemove(map) {
+            map.off('zoomanim', this.onZoomAnim.bind(this));
             this.map = null;
             map.removeLayer(this.layer)
             L.GridLayer.prototype.onRemove.call(this, map);
@@ -72,6 +75,16 @@
                 request.send();
             }		
             return request;
+        },
+
+        onZoomAnim: function (e) {
+            var zoom = e.zoom;
+            if ((this.options.maxZoom && zoom > this.options.maxZoom) ||
+                (this.options.minZoom && zoom < this.options.minZoom)) {
+                this.map.removeLayer(this.layer);
+            } else {
+                this.map.addLayer(this.layer);
+            }
         },
 
     });
