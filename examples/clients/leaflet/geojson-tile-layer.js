@@ -25,7 +25,7 @@
         createTile: function (coords) {
             var tile = L.DomUtil.create('div', 'leaflet-tile');
             tile.style['box-shadow'] = 'inset 0 0 2px #f00';
-            var url = L.Util.template(this.url, coords);
+            var url = this._expandUrl(this.url, coords);
             if (this.cache[url]) {
                 this._updateLayers(url, this.cache[url]);
             } else {
@@ -51,6 +51,36 @@
         //
         // Custom methods
         //
+        _expandUrl: function(template, coords) {
+            // from: https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames#Implementations
+            var tile2lon = function(x,z) {
+                return (x/Math.pow(2,z)*360-180);
+            };
+            var tile2lat = function(y,z) {
+                var n=Math.PI-2*Math.PI*y/Math.pow(2,z);
+                return (180/Math.PI*Math.atan(0.5*(Math.exp(n)-Math.exp(-n))));
+            };
+            // from: https://leafletjs.com/reference-1.5.0.html#map-methods-for-getting-map-state
+            var southWest = L.latLng(
+                tile2lat(coords.y+1, coords.z),
+                tile2lon(coords.x+1, coords.z)
+            );
+            var northEast = L.latLng(
+                tile2lat(coords.y, coords.z),
+                tile2lon(coords.x, coords.z)
+            );
+            // from: "toBBoxString()" on https://leafletjs.com/reference-1.5.0.html#latlngbounds
+            var bboxStr = [southWest.lng,southWest.lat,northEast.lng,northEast.lat].join(',');
+            coords = Object.assign(coords, {
+                lat1: southWest.lat,
+                lon1: southWest.lng,
+                lat2: northEast.lat,
+                lon2: northEast.lng,
+                bbox: bboxStr
+            });
+            return L.Util.template(template, coords);
+        },
+
         _updateLayers: function(url, geoData) {
             if (geoData.type == 'FeatureCollection'){
                 geoData = geoData.features;
