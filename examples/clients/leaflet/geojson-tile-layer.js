@@ -6,10 +6,14 @@
         includes: L.Evented.prototype,
 
         url: null,
+        map: null,
         layer: null,
         features: null,
         cache: null,
 
+        //
+        // Leaflet layer methods
+        //
         initialize(url, options) {
             this.url = url;
             this.layer = new L.GeoJSON(null, options);
@@ -23,14 +27,31 @@
             tile.style['box-shadow'] = 'inset 0 0 2px #f00';
             var url = L.Util.template(this.url, coords);
             if (this.cache[url]) {
-                this.updateLayers(url, this.cache[url]);
+                this._updateLayers(url, this.cache[url]);
             } else {
-                this.ajaxRequest('GET', url, false, this.updateLayers.bind(this, url));
+                this._ajaxRequest('GET', url, false, this._updateLayers.bind(this, url));
             }
             return tile;
         },
 
-        updateLayers: function(url, geoData) {
+        onAdd(map) {
+            L.GridLayer.prototype.onAdd.call(this, map); 
+            map.addLayer(this.layer);
+            this.map = map;
+            map.on('zoomanim', this._onZoomAnim.bind(this));
+        },
+
+        onRemove(map) {
+            map.off('zoomanim', this._onZoomAnim.bind(this));
+            this.map = null;
+            map.removeLayer(this.layer)
+            L.GridLayer.prototype.onRemove.call(this, map);
+        },
+
+        //
+        // Custom methods
+        //
+        _updateLayers: function(url, geoData) {
             if (geoData.type == 'FeatureCollection'){
                 geoData = geoData.features;
             }
@@ -46,21 +67,7 @@
             }
         },
 
-        onAdd(map) {
-            L.GridLayer.prototype.onAdd.call(this, map); 
-            map.addLayer(this.layer);
-            this.map = map;
-            map.on('zoomanim', this.onZoomAnim.bind(this));
-        },
-
-        onRemove(map) {
-            map.off('zoomanim', this.onZoomAnim.bind(this));
-            this.map = null;
-            map.removeLayer(this.layer)
-            L.GridLayer.prototype.onRemove.call(this, map);
-        },
-
-        ajaxRequest: function(method, url, data, callback) {
+        _ajaxRequest: function(method, url, data, callback) {
             var request = new XMLHttpRequest();
             request.open(method, url, true);
             request.onreadystatechange = function() {
@@ -77,7 +84,7 @@
             return request;
         },
 
-        onZoomAnim: function (e) {
+        _onZoomAnim: function (e) {
             var zoom = e.zoom;
             if ((this.options.maxZoom && zoom > this.options.maxZoom) ||
                 (this.options.minZoom && zoom < this.options.minZoom)) {
@@ -85,12 +92,11 @@
             } else {
                 this.map.addLayer(this.layer);
             }
-        },
-
+        }
     });
 
     L.geoJSONTileLayer = function (url, options) {
         return new L.GeoJSONTileLayer(url, options);
     };
 
-}).call(this);
+})();
