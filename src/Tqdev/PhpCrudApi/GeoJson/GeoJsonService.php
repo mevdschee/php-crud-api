@@ -119,7 +119,6 @@ class GeoJsonService
     public function read(string $tableName, string $id, array $params): Feature
     {
         $geometryColumnName = $this->getGeometryColumnName($tableName, $params);
-        $this->setBoudingBoxFilter($geometryColumnName, $params);
         $primaryKeyColumnName = $this->getPrimaryKeyColumnName($tableName, $params);
         $record = $this->records->read($tableName, $id, $params);
         return $this->convertRecordToFeature($record, $primaryKeyColumnName, $geometryColumnName);
