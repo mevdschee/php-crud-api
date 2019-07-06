@@ -10,7 +10,7 @@
         layer: null,
         features: null,
         cache: null,
-
+    
         //
         // Leaflet layer methods
         //
@@ -21,33 +21,39 @@
             this.cache = {};
             L.GridLayer.prototype.initialize.call(this, options);
         },
-
-        createTile: function (coords) {
+    
+        createTile(coords, done) {
             var tile = L.DomUtil.create('div', 'leaflet-tile');
             tile.style['box-shadow'] = 'inset 0 0 2px #f00';
             var url = this._expandUrl(this.url, coords);
-            if (this.cache[url]) {
-                this._updateLayers(url, this.cache[url]);
+            if (this.cache[coords]) {
+                done.call(this);
             } else {
-                this._ajaxRequest('GET', url, false, this._updateLayers.bind(this, url));
+                this._ajaxRequest('GET', url, false, this._updateCache.bind(this, done, coords));
             }
             return tile;
         },
-
+    
         onAdd(map) {
             L.GridLayer.prototype.onAdd.call(this, map); 
             map.addLayer(this.layer);
             this.map = map;
             map.on('zoomanim', this._onZoomAnim.bind(this));
+            this.on('loading', this._onLoading.bind(this));
+            this.on('tileload', this._onTileLoad.bind(this));
+            this.on('tileunload', this._onTileUnLoad.bind(this));
         },
-
+    
         onRemove(map) {
+            this.off('tileunload', this._onTileUnLoad.bind(this));
+            this.off('tileload', this._onTileLoad.bind(this));
+            this.off('loading', this._onLoading.bind(this));
             map.off('zoomanim', this._onZoomAnim.bind(this));
             this.map = null;
             map.removeLayer(this.layer)
             L.GridLayer.prototype.onRemove.call(this, map);
         },
-
+    
         //
         // Custom methods
         //
@@ -80,23 +86,53 @@
             });
             return L.Util.template(template, coords);
         },
-
-        _updateLayers: function(url, geoData) {
+    
+        _hashCode: function(str) {
+            var hash = 0, i, chr;
+            if (str.length === 0) return hash;
+            for (i = 0; i < str.length; i++) {
+                chr   = str.charCodeAt(i);
+                hash  = ((hash << 5) - hash) + chr;
+                hash |= 0; // Convert to 32bit integer
+            }
+            return hash;
+        },
+    
+        _updateTiles: function() {
+            this.layer.clearLayers();
+            this.features = {};
+            for (var coords in this.cache) {
+                if (this.cache.hasOwnProperty(coords)) {
+                    this._drawTile(coords);
+                }
+            }
+        },
+    
+        _drawTile(coords) {
+            var geoData = this.cache[coords];
             if (geoData.type == 'FeatureCollection'){
                 geoData = geoData.features;
             }
             for (var i=0;i<geoData.length;i++) {
+                if (!geoData[i].id) {
+                    geoData[i].id = this._hashCode(JSON.stringify(geoData[i].geometry));
+                }
                 var id = geoData[i].id;
                 if (!this.features[id]) {
                     this.layer.addData(geoData[i]);
                     this.features[id] = true;
                 }
             }
-            if (!this.cache[url]) {
-                this.cache[url] = geoData;
+            if (!this.cache[coords]) {
+                this.cache[coords] = geoData;
             }
         },
-
+    
+        _updateCache: function(done, coords, geoData) {
+            this.cache[coords] = geoData;
+            done.call(this);
+        },
+    
         _ajaxRequest: function(method, url, data, callback) {
             var request = new XMLHttpRequest();
             request.open(method, url, true);
@@ -113,16 +149,32 @@
             }		
             return request;
         },
-
+    
         _onZoomAnim: function (e) {
             var zoom = e.zoom;
             if ((this.options.maxZoom && zoom > this.options.maxZoom) ||
                 (this.options.minZoom && zoom < this.options.minZoom)) {
                 this.map.removeLayer(this.layer);
+                this.cache = {};
+                this.layer.clearLayers();
             } else {
+                this._updateTiles();
                 this.map.addLayer(this.layer);
             }
-        }
+        },
+        
+        _onLoading: function (e) {
+            this._updateTiles();
+        },
+    
+        _onTileLoad: function (e) {
+            this._drawTile(e.coords);
+        },
+            
+        _onTileUnLoad: function (e) {
+            delete this.cache[e.coords]
+        },
+    
     });
 
     L.geoJSONTileLayer = function (url, options) {
