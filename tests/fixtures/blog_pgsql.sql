@@ -232,7 +232,7 @@ INSERT INTO "tags" ("name", "is_important") VALUES
 
 INSERT INTO "users" ("username", "password", "location") VALUES
 ('user1',	'pass1',	NULL),
-('user2',	'pass2',	NULL);
+('user2',	'$2y$10$cg7/nswxVZ0cmVIsMB/pVOh1OfcHScBJGq7Xu4KF9dFEQgRZ8HWe.',	NULL);
 
 --
 -- Data for Name: countries; Type: TABLE DATA; Schema: public; Owner: postgres

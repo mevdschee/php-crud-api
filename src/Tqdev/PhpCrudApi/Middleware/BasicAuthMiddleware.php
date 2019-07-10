@@ -79,7 +79,9 @@ class BasicAuthMiddleware extends Middleware
     public function process(ServerRequestInterface $request, RequestHandlerInterface $next): ResponseInterface
     {
         if (session_status() == PHP_SESSION_NONE) {
-            session_start();
+            if (!headers_sent()) {
+                session_start();
+            }
         }
         $credentials = $this->getAuthorizationCredentials($request);
         if ($credentials) {

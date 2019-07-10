@@ -125,7 +125,9 @@ class JwtAuthMiddleware extends Middleware
     public function process(ServerRequestInterface $request, RequestHandlerInterface $next): ResponseInterface
     {
         if (session_status() == PHP_SESSION_NONE) {
-            session_start();
+            if (!headers_sent()) {
+                session_start();
+            }
         }
         $token = $this->getAuthorizationToken($request);
         if ($token) {

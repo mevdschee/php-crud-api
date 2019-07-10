@@ -337,7 +337,7 @@ GO
 
 INSERT [users] ([username], [password], [location]) VALUES (N'user1', N'pass1', NULL)
 GO
-INSERT [users] ([username], [password], [location]) VALUES (N'user2', N'pass2', NULL)
+INSERT [users] ([username], [password], [location]) VALUES (N'user2', N'$2y$10$cg7/nswxVZ0cmVIsMB/pVOh1OfcHScBJGq7Xu4KF9dFEQgRZ8HWe.', NULL)
 GO
 
 INSERT [countries] ([name], [shape]) VALUES (N'Left', N'POLYGON ((30 10, 40 40, 20 40, 10 20, 30 10))')

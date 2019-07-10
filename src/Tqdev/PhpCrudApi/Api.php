@@ -19,6 +19,7 @@ use Tqdev\PhpCrudApi\Middleware\AuthorizationMiddleware;
 use Tqdev\PhpCrudApi\Middleware\BasicAuthMiddleware;
 use Tqdev\PhpCrudApi\Middleware\CorsMiddleware;
 use Tqdev\PhpCrudApi\Middleware\CustomizationMiddleware;
+use Tqdev\PhpCrudApi\Middleware\DbAuthMiddleware;
 use Tqdev\PhpCrudApi\Middleware\FirewallMiddleware;
 use Tqdev\PhpCrudApi\Middleware\IpAddressMiddleware;
 use Tqdev\PhpCrudApi\Middleware\JoinLimitsMiddleware;
@@ -67,6 +68,9 @@ class Api implements RequestHandlerInterface
                     break;
                 case 'jwtAuth':
                     new JwtAuthMiddleware($router, $responder, $properties);
+                    break;
+                case 'dbAuth':
+                    new DbAuthMiddleware($router, $responder, $properties, $reflection, $db);
                     break;
                 case 'validation':
                     new ValidationMiddleware($router, $responder, $properties, $reflection);
