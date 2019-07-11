@@ -5235,8 +5235,14 @@ class DbAuthMiddleware extends Middleware
             $passwordColumnName = $this->getProperty('passwordColumn', 'password');
             $passwordColumn = $table->getColumn($passwordColumnName);
             $condition = new ColumnCondition($usernameColumn, 'eq', $username);
-            $columnNames = $table->getColumnNames();
-            $users = $this->db->selectAll($table, $columnNames, $condition, [], 0, -1);
+            $returnedColumns = $this->getProperty('returnedColumns', '');
+            if (!$returnedColumns) {
+                $columnNames = $table->getColumnNames();
+            } else {
+                $columnNames = array_map('trim', explode(',', $returnedColumns));
+                $columnNames[] = $passwordColumnName;
+            }
+            $users = $this->db->selectAll($table, $columnNames, $condition, [], 0, 1);
             foreach ($users as $user) {
                 if (password_verify($password, $user[$passwordColumnName]) == 1) {
                     if (!headers_sent()) {
@@ -5253,7 +5259,9 @@ class DbAuthMiddleware extends Middleware
             if (isset($_SESSION['user'])) {
                 $user = $_SESSION['user'];
                 unset($_SESSION['user']);
-                session_destroy();
+                if (session_status() != PHP_SESSION_NONE) {
+                    session_destroy();
+                }
                 return $this->responder->success($user);
             }
             return $this->responder->error(ErrorCode::AUTHENTICATION_REQUIRED, '');
