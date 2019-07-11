@@ -644,11 +644,11 @@ Currently there are three types of authentication supported. They all store the 
 This variable can be used in the authorization handlers to decide wether or not sombeody should have read or write access to certain tables, columns or records.
 The following overview shows the kinds of authentication middleware that you can enable.
 
-| Name     | Middleware | Authenticated via      | Users are stored in | Session variable      |
-| -------- | ---------- | ---------------------- | ------------------- | --------------------- |
-| Database | dbAuth     | '/login' endpoint      | Database table      | $_SESSION['user']     |
-| Basic    | basicAuth  | 'Authorization' header | '.htpasswd' file    | $_SESSION['username'] |
-| JWT      | jwtAuth    | 'Authorization' header | identity provider   | $_SESSION['claims']   |
+| Name     | Middleware | Authenticated via      | Users are stored in | Session variable        |
+| -------- | ---------- | ---------------------- | ------------------- | ----------------------- |
+| Database | dbAuth     | '/login' endpoint      | database table      | `$_SESSION['user']`     |
+| Basic    | basicAuth  | 'Authorization' header | '.htpasswd' file    | `$_SESSION['username']` |
+| JWT      | jwtAuth    | 'Authorization' header | identity provider   | `$_SESSION['claims']`   |
 
 Below you find more information on each of the authentication types.
 
