@@ -145,6 +145,7 @@ You can enable the following middleware using the "middlewares" config parameter
 - "cors": Support for CORS requests (enabled by default)
 - "xsrf": Block XSRF attacks using the 'Double Submit Cookie' method
 - "ajaxOnly": Restrict non-AJAX requests to prevent XSRF attacks
+- "dbAuth": Support for "Database Authentication"
 - "jwtAuth": Support for "JWT Authentication"
 - "basicAuth": Support for "Basic Authentication"
 - "authorization": Restrict access to certain tables or columns
