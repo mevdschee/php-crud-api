@@ -171,24 +171,24 @@
     },
     {
         "name": "psr/http-factory",
-        "version": "1.0.0",
-        "version_normalized": "1.0.0.0",
+        "version": "1.0.1",
+        "version_normalized": "1.0.1.0",
         "source": {
             "type": "git",
             "url": "https://github.com/php-fig/http-factory.git",
-            "reference": "378bfe27931ecc54ff824a20d6f6bfc303bbd04c"
+            "reference": "12ac7fcd07e5b077433f5f2bee95b3a771bf61be"
         },
         "dist": {
             "type": "zip",
-            "url": "https://api.github.com/repos/php-fig/http-factory/zipball/378bfe27931ecc54ff824a20d6f6bfc303bbd04c",
-            "reference": "378bfe27931ecc54ff824a20d6f6bfc303bbd04c",
+            "url": "https://api.github.com/repos/php-fig/http-factory/zipball/12ac7fcd07e5b077433f5f2bee95b3a771bf61be",
+            "reference": "12ac7fcd07e5b077433f5f2bee95b3a771bf61be",
             "shasum": ""
         },
         "require": {
             "php": ">=7.0.0",
             "psr/http-message": "^1.0"
         },
-        "time": "2018-07-30T21:54:04+00:00",
+        "time": "2019-04-30T12:38:16+00:00",
         "type": "library",
         "extra": {
             "branch-alias": {
