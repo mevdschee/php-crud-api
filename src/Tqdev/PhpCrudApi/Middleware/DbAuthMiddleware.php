@@ -17,12 +17,14 @@ class DbAuthMiddleware extends Middleware
 {
     private $reflection;
     private $db;
+    private $ordering;
 
     public function __construct(Router $router, Responder $responder, array $properties, ReflectionService $reflection, GenericDB $db)
     {
         parent::__construct($router, $responder, $properties);
         $this->reflection = $reflection;
         $this->db = $db;
+        $this->ordering = new OrderingInfo();
     }
 
     public function process(ServerRequestInterface $request, RequestHandlerInterface $next): ResponseInterface
@@ -52,7 +54,8 @@ class DbAuthMiddleware extends Middleware
                 $columnNames = array_map('trim', explode(',', $returnedColumns));
                 $columnNames[] = $passwordColumnName;
             }
-            $users = $this->db->selectAll($table, $columnNames, $condition, [], 0, 1);
+            $columnOrdering = $this->ordering->getDefaultColumnOrdering($table);
+            $users = $this->db->selectAll($table, $columnNames, $condition, $columnOrdering, 0, 1);
             foreach ($users as $user) {
                 if (password_verify($password, $user[$passwordColumnName]) == 1) {
                     if (!headers_sent()) {

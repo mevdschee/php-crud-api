@@ -4,14 +4,15 @@ namespace Tqdev\PhpCrudApi\Record;
 use Tqdev\PhpCrudApi\Column\ReflectionService;
 use Tqdev\PhpCrudApi\Column\Reflection\ReflectedTable;
 use Tqdev\PhpCrudApi\Database\GenericDB;
+use Tqdev\PhpCrudApi\Middleware\Communication\VariableStore;
 use Tqdev\PhpCrudApi\Record\Condition\ColumnCondition;
 use Tqdev\PhpCrudApi\Record\Condition\OrCondition;
-use Tqdev\PhpCrudApi\Middleware\Communication\VariableStore;
 
 class RelationJoiner
 {
 
     private $reflection;
+    private $ordering;
     private $columns;
 
     public function __construct(ReflectionService $reflection, ColumnIncluder $columns)
@@ -95,7 +96,7 @@ class RelationJoiner
         foreach ($joins->getKeys() as $t2Name) {
 
             $t2 = $this->reflection->getTable($t2Name);
-            
+
             $belongsTo = count($t1->getFksTo($t2->getName())) > 0;
             $hasMany = count($t2->getFksTo($t1->getName())) > 0;
             if (!$belongsTo && !$hasMany) {
@@ -113,11 +114,11 @@ class RelationJoiner
             if ($belongsTo) {
                 $fkValues = $this->getFkEmptyValues($t1, $t2, $records);
                 $this->addFkRecords($t2, $fkValues, $params, $db, $newRecords);
-            } 
+            }
             if ($hasMany) {
                 $pkValues = $this->getPkEmptyValues($t1, $records);
                 $this->addPkRecords($t1, $t2, $pkValues, $params, $db, $newRecords);
-            } 
+            }
             if ($hasAndBelongsToMany) {
                 $habtmValues = $this->getHabtmEmptyValues($t1, $t2, $t3, $db, $records);
                 $this->addFkRecords($t2, $habtmValues->fkValues, $params, $db, $newRecords);
@@ -128,11 +129,11 @@ class RelationJoiner
             if ($fkValues != null) {
                 $this->fillFkValues($t2, $newRecords, $fkValues);
                 $this->setFkValues($t1, $t2, $records, $fkValues);
-            } 
+            }
             if ($pkValues != null) {
                 $this->fillPkValues($t1, $t2, $newRecords, $pkValues);
                 $this->setPkValues($t1, $t2, $records, $pkValues);
-            } 
+            }
             if ($habtmValues != null) {
                 $this->fillFkValues($t2, $newRecords, $habtmValues->fkValues);
                 $this->setHabtmValues($t1, $t2, $records, $habtmValues);
