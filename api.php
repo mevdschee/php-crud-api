@@ -5207,12 +5207,14 @@ class DbAuthMiddleware extends Middleware
 {
     private $reflection;
     private $db;
+    private $ordering;
 
     public function __construct(Router $router, Responder $responder, array $properties, ReflectionService $reflection, GenericDB $db)
     {
         parent::__construct($router, $responder, $properties);
         $this->reflection = $reflection;
         $this->db = $db;
+        $this->ordering = new OrderingInfo();
     }
 
     public function process(ServerRequestInterface $request, RequestHandlerInterface $next): ResponseInterface
@@ -5242,7 +5244,8 @@ class DbAuthMiddleware extends Middleware
                 $columnNames = array_map('trim', explode(',', $returnedColumns));
                 $columnNames[] = $passwordColumnName;
             }
-            $users = $this->db->selectAll($table, $columnNames, $condition, [], 0, 1);
+            $columnOrdering = $this->ordering->getDefaultColumnOrdering($table);
+            $users = $this->db->selectAll($table, $columnNames, $condition, $columnOrdering, 0, 1);
             foreach ($users as $user) {
                 if (password_verify($password, $user[$passwordColumnName]) == 1) {
                     if (!headers_sent()) {
@@ -7051,6 +7054,7 @@ class RecordService
 class RelationJoiner
 {
     private $reflection;
+    private $ordering;
     private $columns;
 
     public function __construct(ReflectionService $reflection, ColumnIncluder $columns)
@@ -7134,7 +7138,7 @@ class RelationJoiner
         foreach ($joins->getKeys() as $t2Name) {
 
             $t2 = $this->reflection->getTable($t2Name);
-            
+
             $belongsTo = count($t1->getFksTo($t2->getName())) > 0;
             $hasMany = count($t2->getFksTo($t1->getName())) > 0;
             if (!$belongsTo && !$hasMany) {
@@ -7152,11 +7156,11 @@ class RelationJoiner
             if ($belongsTo) {
                 $fkValues = $this->getFkEmptyValues($t1, $t2, $records);
                 $this->addFkRecords($t2, $fkValues, $params, $db, $newRecords);
-            } 
+            }
             if ($hasMany) {
                 $pkValues = $this->getPkEmptyValues($t1, $records);
                 $this->addPkRecords($t1, $t2, $pkValues, $params, $db, $newRecords);
-            } 
+            }
             if ($hasAndBelongsToMany) {
                 $habtmValues = $this->getHabtmEmptyValues($t1, $t2, $t3, $db, $records);
                 $this->addFkRecords($t2, $habtmValues->fkValues, $params, $db, $newRecords);
@@ -7167,11 +7171,11 @@ class RelationJoiner
             if ($fkValues != null) {
                 $this->fillFkValues($t2, $newRecords, $fkValues);
                 $this->setFkValues($t1, $t2, $records, $fkValues);
-            } 
+            }
             if ($pkValues != null) {
                 $this->fillPkValues($t1, $t2, $newRecords, $pkValues);
                 $this->setPkValues($t1, $t2, $records, $pkValues);
-            } 
+            }
             if ($habtmValues != null) {
                 $this->fillFkValues($t2, $newRecords, $habtmValues->fkValues);
                 $this->setHabtmValues($t1, $t2, $records, $habtmValues);
