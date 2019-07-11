@@ -11,6 +11,7 @@ use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
 use Tqdev\PhpCrudApi\Middleware\Router\Router;
 use Tqdev\PhpCrudApi\Record\Condition\ColumnCondition;
 use Tqdev\PhpCrudApi\Record\ErrorCode;
+use Tqdev\PhpCrudApi\Record\OrderingInfo;
 use Tqdev\PhpCrudApi\RequestUtils;
 
 class DbAuthMiddleware extends Middleware
