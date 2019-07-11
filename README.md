@@ -173,6 +173,11 @@ You can tune the middleware behavior using middleware specific configuration par
 - "ajaxOnly.excludeMethods": The methods that do not require AJAX ("OPTIONS,GET")
 - "ajaxOnly.headerName": The name of the required header ("X-Requested-With")
 - "ajaxOnly.headerValue": The value of the required header ("XMLHttpRequest")
+- "dbAuth.mode": Set to "optional" if you want to allow anonymous access ("required")
+- "dbAuth.usersTable": The table that is used to store the users in ("users")
+- "dbAuth.usernameColumn": The users table column that holds usernames ("username")
+- "dbAuth.passwordColumn": The users table column that holds passwords ("password")
+- "dbAuth.returnedColumns": The columns returned on successful login, empty means 'all' ("")
 - "jwtAuth.mode": Set to "optional" if you want to allow anonymous access ("required")
 - "jwtAuth.header": Name of the header containing the JWT token ("X-Authorization")
 - "jwtAuth.leeway": The acceptable number of seconds of clock skew ("5")
@@ -635,13 +640,48 @@ The GeoJSON functionality is enabled by default, but can be disabled using the "
 
 ### Authentication
 
-Authentication is done by means of sending a "Authorization" header. It identifies the user and stores this in the `$_SESSION` super global. 
+Currently there are three types of authentication supported. They all store the authenticated user in the `$_SESSION` super global.
 This variable can be used in the authorization handlers to decide wether or not sombeody should have read or write access to certain tables, columns or records.
-Currently there are two types of authentication supported: "Basic" and "JWT". This functionality is enabled by adding the 'basicAuth' and/or 'jwtAuth' middleware.
+The following overview shows the kinds of authentication middleware that you can enable.
+
+| Name     | Middleware | Authenticated via      | Users are stored in | Session variable      |
+| -------- | ---------- | ---------------------- | ------------------- | --------------------- |
+| Database | dbAuth     | '/login' endpoint      | Database table      | $_SESSION['user']     |
+| Basic    | basicAuth  | 'Authorization' header | '.htpasswd' file    | $_SESSION['username'] |
+| JWT      | jwtAuth    | 'Authorization' header | identity provider   | $_SESSION['claims']   |
+
+Below you find more information on each of the authentication types.
+
+#### Database authentication
+
+The database authentication middleware defines two new routes:
+
+    method path       - parameters               - description
+    ----------------------------------------------------------------------------------------
+    POST   /login     - username + password      - logs a user in by username and password
+    POST   /logout    -                          - logs out the currently logged in user
+
+A user can be logged in by sending it's username and password to the login endpoint (in JSON format).
+The authenticated user (with all it's properties) will be stored in the `$_SESSION['user']` variable.
+The user can be logged out by sending a POST request with an empty body to the logout endpoint.
+The passwords are stored as hashes in the password column in the users table. To generate the hash value
+for the password 'pass2' you can run on the command line:
+
+    php -r 'echo password_hash("pass2", PASSWORD_DEFAULT)."\n";'
+
+It is IMPORTANT to restrict access to the users table using the 'authorization' middleware, otherwise all 
+users can freely add, modify or delete any account! The minimal configuration is shown below:
+
+    'middlewares' => 'dbAuth,authorization',
+    'authorization.tableHandler' => function ($operation, $tableName) {
+        return $tableName != 'users';
+    },
+
+Note that this middleware uses session cookies and stores the logged in state on the server.
 
 #### Basic authentication
 
-The Basic type supports a file that holds the users and their (hashed) passwords separated by a colon (':'). 
+The Basic type supports a file (by default '.htpasswd') that holds the users and their (hashed) passwords separated by a colon (':'). 
 When the passwords are entered in plain text they fill be automatically hashed.
 The authenticated username will be stored in the `$_SESSION['username']` variable.
 You need to send an "Authorization" header containing a base64 url encoded and colon separated username and password after the word "Basic".

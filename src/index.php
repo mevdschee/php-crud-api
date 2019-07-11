@@ -10,6 +10,10 @@ $config = new Config([
     'username' => 'php-crud-api',
     'password' => 'php-crud-api',
     'database' => 'php-crud-api',
+    'middlewares' => 'dbAuth,authorization',
+    'authorization.tableHandler' => function ($operation, $tableName) {
+        return $tableName != 'users';
+    },
 ]);
 $request = RequestFactory::fromGlobals();
 $api = new Api($config);

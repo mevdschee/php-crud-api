@@ -13,9 +13,9 @@ Content-Type: application/json
 ===
 200
 Content-Type: application/json
-Content-Length: 43
+Content-Length: 27
 
-{"id":2,"username":"user2","location":null}
+{"id":2,"username":"user2"}
 ===
 GET /records/invisibles/e42c77c6-06a4-4502-816c-d112c7142e6d
 ===
@@ -48,9 +48,9 @@ POST /logout
 ===
 200
 Content-Type: application/json
-Content-Length: 43
+Content-Length: 27
 
-{"id":2,"username":"user2","location":null}
+{"id":2,"username":"user2"}
 ===
 GET /records/invisibles/e42c77c6-06a4-4502-816c-d112c7142e6d
 ===

@@ -6,6 +6,7 @@ $settings = [
     'controllers' => 'records,columns,cache,openapi,geojson',
     'middlewares' => 'cors,dbAuth,jwtAuth,basicAuth,authorization,validation,ipAddress,sanitation,multiTenancy,pageLimits,joinLimits,customization',
     'dbAuth.mode' => 'optional',
+    'dbAuth.returnedColumns' => 'id,username,password',
     'jwtAuth.mode' => 'optional',
     'jwtAuth.time' => '1538207605',
     'jwtAuth.secret' => 'axpIrCGNGqxzx2R9dtXLIPUSqPo778uhb8CA0F4Hx',
