@@ -25,7 +25,7 @@ class SimpleRouter implements Router
 
     public function __construct(string $basePath, Responder $responder, Cache $cache, int $ttl, bool $debug)
     {
-        $this->basePath = $basePath;
+        $this->basePath = $this->detectBasePath($basePath);
         $this->responder = $responder;
         $this->cache = $cache;
         $this->ttl = $ttl;
@@ -34,6 +34,21 @@ class SimpleRouter implements Router
         $this->routes = $this->loadPathTree();
         $this->routeHandlers = [];
         $this->middlewares = array();
+    }
+
+    private function detectBasePath(string $basePath): string
+    {
+        if ($basePath) {
+            return $basePath;
+        }
+        if (isset($_SERVER['PATH_INFO'])) {
+            $fullPath = array_shift(explode('?',$_SERVER['REQUEST_URI']));
+            $path = $_SERVER['PATH_INFO'];
+            if (substr($fullPath, -1*strlen($path)) == $path) {
+                return substr($fullPath, 0, -1*strlen($path));
+            }
+        }
+        return '';
     }
 
     private function loadPathTree(): PathTree
@@ -99,6 +114,11 @@ class SimpleRouter implements Router
             $request = $request->withUri($request->getUri()->withPath($path));
         }
         return $request;
+    }
+
+    public function getBasePath(): string
+    {
+        return $this->basePath;
     }
 
     public function handle(ServerRequestInterface $request): ResponseInterface
