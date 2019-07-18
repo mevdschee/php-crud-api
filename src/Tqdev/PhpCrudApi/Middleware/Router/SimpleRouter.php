@@ -41,15 +41,20 @@ class SimpleRouter implements Router
         if ($basePath) {
             return $basePath;
         }
-        $fullPath = explode('?', $_SERVER['REQUEST_URI'])[0];
-        $path = $_SERVER['PATH_INFO'];
-        if (!$path) {
+        if (isset($_SERVER['REQUEST_URI'])) {
+            $fullPath = explode('?', $_SERVER['REQUEST_URI'])[0];
+            if (isset($_SERVER['PATH_INFO'])) {
+                $path = $_SERVER['PATH_INFO'];
+                if (!$path) {
+                    return $_SERVER['PHP_SELF'];
+                }
+                if (substr($fullPath, -1 * strlen($path)) == $path) {
+                    return substr($fullPath, 0, -1 * strlen($path));
+                }
+            }
             return $fullPath;
         }
-        if (substr($fullPath, -1 * strlen($path)) == $path) {
-            return substr($fullPath, 0, -1 * strlen($path));
-        }
-        return $_SERVER['PHP_SELF'];
+        return '/';
     }
 
     private function loadPathTree(): PathTree
