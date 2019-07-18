@@ -42,7 +42,7 @@ class SimpleRouter implements Router
             return $basePath;
         }
         if (isset($_SERVER['REQUEST_URI'])) {
-            $fullPath = explode('?', $_SERVER['REQUEST_URI'])[0];
+            $fullPath = urldecode(explode('?', $_SERVER['REQUEST_URI'])[0]);
             if (isset($_SERVER['PATH_INFO'])) {
                 $path = $_SERVER['PATH_INFO'];
                 if (substr($fullPath, -1 * strlen($path)) == $path) {
