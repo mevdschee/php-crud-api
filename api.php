@@ -7474,18 +7474,25 @@ class Api implements RequestHandlerInterface
         return $object;
     }
 
-    public function handle(ServerRequestInterface $request): ResponseInterface
+    private function addParsedBody(ServerRequestInterface $request): ServerRequestInterface
     {
-        $response = null;
         $body = $request->getBody();
         if ($body->isReadable() && $body->isSeekable()) {
             $contents = $body->getContents();
             $body->rewind();
-            $parsedBody = $this->parseBody($contents);
-            $request = $request->withParsedBody($parsedBody);
+            if ($contents) {
+                $parsedBody = $this->parseBody($contents);
+                $request = $request->withParsedBody($parsedBody);
+            }
         }
+        return $request;
+    }
+
+    public function handle(ServerRequestInterface $request): ResponseInterface
+    {
+        $response = null;
         try {
-            $response = $this->router->route($request);
+            $response = $this->router->route($this->addParsedBody($request));
         } catch (\Throwable $e) {
             $response = $this->responder->error(ErrorCode::ERROR_NOT_FOUND, $e->getMessage());
             if ($this->debug) {
