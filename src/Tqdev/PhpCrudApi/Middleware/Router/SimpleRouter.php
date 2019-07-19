@@ -71,7 +71,11 @@ class SimpleRouter implements Router
         $routeNumber = count($this->routeHandlers);
         $this->routeHandlers[$routeNumber] = $handler;
         if ($this->registration) {
-            $parts = explode('/', trim($path, '/'));
+            $path = trim($path, '/');
+            $parts = array();
+            if ($path) {
+                $parts = explode('/', $path);
+            }
             array_unshift($parts, $method);
             $this->routes->put($parts, $routeNumber);
         }
