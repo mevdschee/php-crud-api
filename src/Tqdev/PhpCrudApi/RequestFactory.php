@@ -12,7 +12,7 @@ class RequestFactory
         $psr17Factory = new Psr17Factory();
         $creator = new ServerRequestCreator($psr17Factory, $psr17Factory, $psr17Factory, $psr17Factory);
         $serverRequest = $creator->fromGlobals();
-        $stream = $psr17Factory->createStreamFromResource('php://input');
+        $stream = $psr17Factory->createStreamFromFile('php://input');
         $serverRequest = $serverRequest->withBody($stream);
         return $serverRequest;
     }
