@@ -131,9 +131,38 @@ class Api implements RequestHandlerInterface
         $this->debug = $config->getDebug();
     }
 
+    private function parseBody(string $body) /*: ?object*/
+    {
+        $first = substr($body, 0, 1);
+        if ($first == '[' || $first == '{') {
+            $object = json_decode($body);
+            $causeCode = json_last_error();
+            if ($causeCode !== JSON_ERROR_NONE) {
+                $object = null;
+            }
+        } else {
+            parse_str($body, $input);
+            foreach ($input as $key => $value) {
+                if (substr($key, -9) == '__is_null') {
+                    $input[substr($key, 0, -9)] = null;
+                    unset($input[$key]);
+                }
+            }
+            $object = (object) $input;
+        }
+        return $object;
+    }
+
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
         $response = null;
+        $body = $request->getBody();
+        if ($body->isReadable() && $body->isSeekable()) {
+            $contents = $body->getContents();
+            $body->rewind();
+            $parsedBody = $this->parseBody($contents);
+            $request = $request->withParsedBody($parsedBody);
+        }
         try {
             $response = $this->router->route($request);
         } catch (\Throwable $e) {

@@ -7,37 +7,13 @@ use Psr\Http\Message\ServerRequestInterface;
 
 class RequestFactory
 {
-    private static function parseBody(string $body) /*: ?object*/
-    {
-        $first = substr($body, 0, 1);
-        if ($first == '[' || $first == '{') {
-            $object = json_decode($body);
-            $causeCode = json_last_error();
-            if ($causeCode !== JSON_ERROR_NONE) {
-                $object = null;
-            }
-        } else {
-            parse_str($body, $input);
-            foreach ($input as $key => $value) {
-                if (substr($key, -9) == '__is_null') {
-                    $input[substr($key, 0, -9)] = null;
-                    unset($input[$key]);
-                }
-            }
-            $object = (object) $input;
-        }
-        return $object;
-    }
-
     public static function fromGlobals(): ServerRequestInterface
     {
         $psr17Factory = new Psr17Factory();
         $creator = new ServerRequestCreator($psr17Factory, $psr17Factory, $psr17Factory, $psr17Factory);
         $serverRequest = $creator->fromGlobals();
-        $body = file_get_contents('php://input');
-        if ($body) {
-            $serverRequest = $serverRequest->withParsedBody(self::parseBody($body));
-        }
+        $stream = $psr17Factory->createStreamFromResource('php://input');
+        $serverRequest = $serverRequest->withBody($stream);
         return $serverRequest;
     }
 
@@ -60,7 +36,6 @@ class RequestFactory
             $stream = $psr17Factory->createStream($body);
             $stream->rewind();
             $serverRequest = $serverRequest->withBody($stream);
-            $serverRequest = $serverRequest->withParsedBody(self::parseBody($body));
         }
         return $serverRequest;
     }
