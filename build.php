@@ -31,12 +31,10 @@ function runDir(string $base, string $dir, array &$lines, array $ignore): int
                 continue;
             }
             $data = file_get_contents($filename);
-            $data = trim(preg_replace('/\s*<\?php\s+/s', '', $data, 1));
+            $data = preg_replace('/\s*<\?php\s+/s', '', $data, 1);
+            $data = preg_replace('/^.*?(vendor\/autoload|declare\s*\(\s*strict_types\s*=\s*1).*?$/m', '', $data);
             array_push($lines, "// file: $dir/$entry");
-            foreach (explode("\n", $data) as $line) {
-                if (preg_match('/vendor\/autoload|declare\s*\(\s*strict_types\s*=\s*1/', $line)) {
-                    continue;
-                }
+            foreach (explode("\n", trim($data)) as $line) {
                 if ($line) {
                     $line = '    ' . $line;
                 }
