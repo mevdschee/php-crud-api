@@ -9,27 +9,12 @@ function removeIgnored(string $dir, array &$entries, array $ignore)
     }
 }
 
-function prioritySort(string $dir, array &$entries)
-{
-    $first = array();
-    foreach ($entries as $i => $entry) {
-        if (isset($priority[$dir . '/' . $entry])) {
-            array_push($first, $entry);
-            unset($entries[$i]);
-        }
-    }
-    sort($entries);
-    foreach ($first as $entry) {
-        array_unshift($entries, $entry);
-    }
-}
-
 function runDir(string $base, string $dir, array &$lines, array $ignore): int
 {
     $count = 0;
     $entries = scandir($dir);
     removeIgnored($dir, $entries, $ignore);
-    prioritySort($dir, $entries);
+    sort($entries);
     foreach ($entries as $entry) {
         if ($entry === '.' || $entry === '..') {
             continue;
@@ -46,13 +31,20 @@ function runDir(string $base, string $dir, array &$lines, array $ignore): int
                 continue;
             }
             $data = file_get_contents($filename);
-            $data = preg_replace('|/\*\*.*?\*/|s', '', $data);
+            $data = trim(preg_replace('/\s*<\?php\s+/s', '', $data, 1));
             array_push($lines, "// file: $dir/$entry");
             foreach (explode("\n", $data) as $line) {
-                if (!preg_match('/^<\?php|^namespace |^use |vendor\/autoload|declare\s*\(\s*strict_types\s*=\s*1|^\s*\/\//', $line)) {
-                    array_push($lines, $line);
+                if (preg_match('/vendor\/autoload|declare\s*\(\s*strict_types\s*=\s*1/', $line)) {
+                    continue;
                 }
+                if ($line) {
+                    $line = '    ' . $line;
+                }
+                $line = preg_replace('/^\s*(namespace[^;]+);/', '\1 {', $line);
+                array_push($lines, $line);
             }
+            array_push($lines, '}');
+            array_push($lines, '');
             $count++;
         }
     }
@@ -74,8 +66,6 @@ function addHeader(array &$lines)
  * - vendor/nyholm/*: Tobias Nyholm
  *   https://github.com/Nyholm
  **/
-
-namespace Tqdev\PhpCrudApi;
 
 EOF;
     foreach (explode("\n", $head) as $line) {
