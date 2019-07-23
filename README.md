@@ -1003,6 +1003,7 @@ NB: Any non-error response will have status: 200 OK
 
 I am testing mainly on Ubuntu and I have the following test setups:
 
+  - (Docker) Debian 10 with PHP 7.3, MariaDB 10.3, PostgreSQL 11.4 (PostGIS 2.5)
   - (Docker) Debian 9 with PHP 7.0, MariaDB 10.1, PostgreSQL 9.6 (PostGIS 2.3)
   - (Docker) Ubuntu 16.04 with PHP 7.0, MariaDB 10.0, PostgreSQL 9.5 (PostGIS 2.2) and SQL Server 2017
   - (Docker) Ubuntu 18.04 with PHP 7.2, MySQL 5.7, PostgreSQL 10.4 (PostGIS 2.4)
