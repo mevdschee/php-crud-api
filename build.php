@@ -9,34 +9,19 @@ function removeIgnored(string $dir, array &$entries, array $ignore)
     }
 }
 
-function prioritySort(string $dir, array &$entries, array $priority)
-{
-    $first = array();
-    foreach ($entries as $i => $entry) {
-        if (isset($priority[$dir . '/' . $entry])) {
-            array_push($first, $entry);
-            unset($entries[$i]);
-        }
-    }
-    sort($entries);
-    foreach ($first as $entry) {
-        array_unshift($entries, $entry);
-    }
-}
-
-function runDir(string $base, string $dir, array &$lines, array $ignore, array $priority): int
+function runDir(string $base, string $dir, array &$lines, array $ignore): int
 {
     $count = 0;
     $entries = scandir($dir);
     removeIgnored($dir, $entries, $ignore);
-    prioritySort($dir, $entries, $priority);
+    sort($entries);
     foreach ($entries as $entry) {
         if ($entry === '.' || $entry === '..') {
             continue;
         }
         $filename = "$base/$dir/$entry";
         if (is_dir($filename)) {
-            $count += runDir($base, "$dir/$entry", $lines, $ignore, $priority);
+            $count += runDir($base, "$dir/$entry", $lines, $ignore);
         }
     }
     foreach ($entries as $entry) {
@@ -46,13 +31,18 @@ function runDir(string $base, string $dir, array &$lines, array $ignore, array $
                 continue;
             }
             $data = file_get_contents($filename);
-            $data = preg_replace('|/\*\*.*?\*/|s', '', $data);
+            $data = preg_replace('/\s*<\?php\s+/s', '', $data, 1);
+            $data = preg_replace('/^.*?(vendor\/autoload|declare\s*\(\s*strict_types\s*=\s*1).*?$/m', '', $data);
             array_push($lines, "// file: $dir/$entry");
-            foreach (explode("\n", $data) as $line) {
-                if (!preg_match('/^<\?php|^namespace |^use |vendor\/autoload|declare\s*\(\s*strict_types\s*=\s*1|^\s*\/\//', $line)) {
-                    array_push($lines, $line);
+            foreach (explode("\n", trim($data)) as $line) {
+                if ($line) {
+                    $line = '    ' . $line;
                 }
+                $line = preg_replace('/^\s*(namespace[^;]+);/', '\1 {', $line);
+                array_push($lines, $line);
             }
+            array_push($lines, '}');
+            array_push($lines, '');
             $count++;
         }
     }
@@ -75,24 +65,21 @@ function addHeader(array &$lines)
  *   https://github.com/Nyholm
  **/
 
-namespace Tqdev\PhpCrudApi;
-
 EOF;
     foreach (explode("\n", $head) as $line) {
         array_push($lines, $line);
     }
 }
 
-function run(string $base, array $dirs, string $filename, array $ignore, array $priority)
+function run(string $base, array $dirs, string $filename, array $ignore)
 {
     $lines = [];
     $start = microtime(true);
     addHeader($lines);
     $ignore = array_flip($ignore);
-    $priority = array_flip($priority);
     $count = 0;
     foreach ($dirs as $dir) {
-        $count += runDir($base, $dir, $lines, $ignore, $priority);
+        $count += runDir($base, $dir, $lines, $ignore);
     }
     $data = implode("\n", $lines);
     $data = preg_replace('/\n({)?\s*\n\s*\n/', "\n$1\n", $data);
@@ -107,14 +94,7 @@ function run(string $base, array $dirs, string $filename, array $ignore, array $
 }
 
 $ignore = [
-    'vendor/autoload.php',
-    'vendor/composer',
-    'vendor/php-http',
     'vendor/nyholm/psr7/src/Factory/HttplugFactory.php',
 ];
 
-$priority = [
-    'vendor/psr',
-];
-
-run(__DIR__, ['vendor', 'src'], 'api.php', $ignore, $priority);
+run(__DIR__, ['vendor/psr', 'vendor/nyholm', 'src'], 'api.php', $ignore);
