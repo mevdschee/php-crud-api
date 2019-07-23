@@ -1059,6 +1059,17 @@ Install docker using the following commands and then logout and login for the ch
 To run the docker tests run "build_all.sh" and "run_all.sh" from the docker directory. The output should be:
 
     ================================================
+    Debian 10 (PHP 7.3)
+    ================================================
+    [1/4] Starting MariaDB 10.3 ..... done
+    [2/4] Starting PostgreSQL 11.4 .. done
+    [3/4] Starting SQLServer 2017 ... skipped
+    [4/4] Cloning PHP-CRUD-API v2 ... skipped
+    ------------------------------------------------
+    mysql: 100 tests ran in 3623 ms, 0 failed
+    pgsql: 100 tests ran in 1310 ms, 0 failed
+    sqlsrv: skipped, driver not loaded
+    ================================================
     Debian 9 (PHP 7.0)
     ================================================
     [1/4] Starting MariaDB 10.1 ..... done
@@ -1066,8 +1077,8 @@ To run the docker tests run "build_all.sh" and "run_all.sh" from the docker dire
     [3/4] Starting SQLServer 2017 ... skipped
     [4/4] Cloning PHP-CRUD-API v2 ... skipped
     ------------------------------------------------
-    mysql: 95 tests ran in 2651 ms, 0 failed
-    pgsql: 95 tests ran in 573 ms, 0 failed
+    mysql: 100 tests ran in 4844 ms, 0 failed
+    pgsql: 100 tests ran in 1394 ms, 0 failed
     sqlsrv: skipped, driver not loaded
     ================================================
     Ubuntu 16.04 (PHP 7.0)
@@ -1077,9 +1088,9 @@ To run the docker tests run "build_all.sh" and "run_all.sh" from the docker dire
     [3/4] Starting SQLServer 2017 ... done
     [4/4] Cloning PHP-CRUD-API v2 ... skipped
     ------------------------------------------------
-    mysql: 95 tests ran in 2670 ms, 0 failed
-    pgsql: 95 tests ran in 550 ms, 0 failed
-    sqlsrv: 95 tests ran in 6624 ms, 0 failed
+    mysql: 100 tests ran in 4932 ms, 0 failed
+    pgsql: 100 tests ran in 1394 ms, 0 failed
+    sqlsrv: 100 tests ran in 50977 ms, 0 failed
     ================================================
     Ubuntu 18.04 (PHP 7.2)
     ================================================
@@ -1088,11 +1099,11 @@ To run the docker tests run "build_all.sh" and "run_all.sh" from the docker dire
     [3/4] Starting SQLServer 2017 ... skipped
     [4/4] Cloning PHP-CRUD-API v2 ... skipped
     ------------------------------------------------
-    mysql: 95 tests ran in 3186 ms, 0 failed
-    pgsql: 95 tests ran in 556 ms, 0 failed
+    mysql: 100 tests ran in 4327 ms, 0 failed
+    pgsql: 100 tests ran in 1396 ms, 0 failed
     sqlsrv: skipped, driver not loaded
 
-The above test run (including starting up the databases) takes less than one minute on my machine.
+The above test run (including starting up the databases) takes less than 5 minutes on my slow laptop.
 
     $ ./run.sh 
     1) debian9
