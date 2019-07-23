@@ -1106,10 +1106,11 @@ To run the docker tests run "build_all.sh" and "run_all.sh" from the docker dire
 The above test run (including starting up the databases) takes less than 5 minutes on my slow laptop.
 
     $ ./run.sh 
-    1) debian9
-    2) ubuntu16
-    3) ubuntu18
-    > 3
+    1) debian10
+    2) debian9
+    3) ubuntu16
+    4) ubuntu18
+    > 4
     ================================================
     Ubuntu 18.04 (PHP 7.2)
     ================================================
@@ -1118,8 +1119,8 @@ The above test run (including starting up the databases) takes less than 5 minut
     [3/4] Starting SQLServer 2017 ... skipped
     [4/4] Cloning PHP-CRUD-API v2 ... skipped
     ------------------------------------------------
-    mysql: 95 tests ran in 3186 ms, 0 failed
-    pgsql: 95 tests ran in 556 ms, 0 failed
+    mysql: 100 tests ran in 4327 ms, 0 failed
+    pgsql: 100 tests ran in 1396 ms, 0 failed
     sqlsrv: skipped, driver not loaded
     root@b7ab9472e08f:/php-crud-api# 
 
