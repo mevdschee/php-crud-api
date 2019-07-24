@@ -71,7 +71,7 @@ class GenericDB
         $this->database = $database;
         $dsn = $this->getDsn($address, $port, $database);
         $options = $this->getOptions();
-        $this->pdo = new \PDO($dsn, $username, $password, $options);
+        $this->pdo = new LazyPdo($dsn, $username, $password, $options);
         $commands = $this->getCommands();
         foreach ($commands as $command) {
             $this->pdo->query($command);

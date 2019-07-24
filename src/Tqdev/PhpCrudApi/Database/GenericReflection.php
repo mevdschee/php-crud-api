@@ -1,6 +1,8 @@
 <?php
 namespace Tqdev\PhpCrudApi\Database;
 
+use Tqdev\PhpCrudApi\Database\LazyPdo;
+
 class GenericReflection
 {
     private $pdo;
@@ -8,7 +10,7 @@ class GenericReflection
     private $database;
     private $typeConverter;
 
-    public function __construct(\PDO $pdo, string $driver, string $database)
+    public function __construct(LazyPdo $pdo, string $driver, string $database)
     {
         $this->pdo = $pdo;
         $this->driver = $driver;

@@ -3,6 +3,7 @@ namespace Tqdev\PhpCrudApi\Database;
 
 use Tqdev\PhpCrudApi\Column\Reflection\ReflectedColumn;
 use Tqdev\PhpCrudApi\Column\Reflection\ReflectedTable;
+use Tqdev\PhpCrudApi\Database\LazyPdo;
 
 class GenericDefinition
 {
@@ -12,7 +13,7 @@ class GenericDefinition
     private $typeConverter;
     private $reflection;
 
-    public function __construct(\PDO $pdo, string $driver, string $database)
+    public function __construct(LazyPdo $pdo, string $driver, string $database)
     {
         $this->pdo = $pdo;
         $this->driver = $driver;
