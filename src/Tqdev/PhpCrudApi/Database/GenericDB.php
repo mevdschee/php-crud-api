@@ -83,7 +83,7 @@ class GenericDB
         $this->converter = new DataConverter($driver);
     }
 
-    public function pdo(): \PDO
+    public function pdo(): LazyPdo
     {
         return $this->pdo;
     }

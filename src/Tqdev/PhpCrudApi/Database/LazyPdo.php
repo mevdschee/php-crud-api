@@ -27,21 +27,14 @@ class LazyPdo extends \PDO
         return $this->pdo;
     }
 
-    public function setUser(/*?string*/ $user): bool
+    public function reauthenticate(/*?string*/ $user, /*?string*/ $password): bool
     {
-        if ($this->pdo) {
-            return false;
-        }
         $this->user = $user;
-        return true;
-    }
-
-    public function setPassword(/*?string*/ $password): bool
-    {
-        if ($this->pdo) {
-            return false;
-        }
         $this->password = $password;
+        if ($this->pdo) {
+            $this->pdo = new \PDO($this->dsn, $this->user, $this->password, $this->options);
+            return false; 
+        }
         return true;
     }
     
