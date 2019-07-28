@@ -5171,7 +5171,11 @@ namespace Tqdev\PhpCrudApi\Database {
     class GenericDB
     {
         private $driver;
+        private $address;
+        private $port;
         private $database;
+        private $username;
+        private $password;
         private $pdo;
         private $reflection;
         private $definition;
@@ -5179,15 +5183,15 @@ namespace Tqdev\PhpCrudApi\Database {
         private $columns;
         private $converter;
 
-        private function getDsn(string $address, int $port, string $database): string
+        private function getDsn(): string
         {
             switch ($this->driver) {
                 case 'mysql':
-                    return "$this->driver:host=$address;port=$port;dbname=$database;charset=utf8mb4";
+                    return "$this->driver:host=$this->address;port=$this->port;dbname=$this->database;charset=utf8mb4";
                 case 'pgsql':
-                    return "$this->driver:host=$address port=$port dbname=$database options='--client_encoding=UTF8'";
+                    return "$this->driver:host=$this->address port=$this->port dbname=$this->database options='--client_encoding=UTF8'";
                 case 'sqlsrv':
-                    return "$this->driver:Server=$address,$port;Database=$database";
+                    return "$this->driver:Server=$this->address,$this->port;Database=$this->database";
             }
         }
 
@@ -5235,22 +5239,58 @@ namespace Tqdev\PhpCrudApi\Database {
             }
         }
 
-        public function __construct(string $driver, string $address, int $port, string $database, string $username, string $password)
+        private function initPdo(): bool
         {
-            $this->driver = $driver;
-            $this->database = $database;
-            $dsn = $this->getDsn($address, $port, $database);
-            $options = $this->getOptions();
-            $this->pdo = new LazyPdo($dsn, $username, $password, $options);
+            if ($this->pdo) {
+                $result = $this->pdo->reconstruct($this->getDsn(), $this->username, $this->password, $this->getOptions());
+            } else {
+                $this->pdo = new LazyPdo($this->getDsn(), $this->username, $this->password, $this->getOptions());
+                $result = true;
+            }
             $commands = $this->getCommands();
             foreach ($commands as $command) {
                 $this->pdo->addInitCommand($command);
             }
-            $this->reflection = new GenericReflection($this->pdo, $driver, $database);
-            $this->definition = new GenericDefinition($this->pdo, $driver, $database);
-            $this->conditions = new ConditionsBuilder($driver);
-            $this->columns = new ColumnsBuilder($driver);
-            $this->converter = new DataConverter($driver);
+            $this->reflection = new GenericReflection($this->pdo, $this->driver, $this->database);
+            $this->definition = new GenericDefinition($this->pdo, $this->driver, $this->database);
+            $this->conditions = new ConditionsBuilder($this->driver);
+            $this->columns = new ColumnsBuilder($this->driver);
+            $this->converter = new DataConverter($this->driver);
+            return $result;
+        }
+
+        public function __construct(string $driver, string $address, int $port, string $database, string $username, string $password)
+        {
+            $this->driver = $driver;
+            $this->address = $address;
+            $this->port = $port;
+            $this->database = $database;
+            $this->username = $username;
+            $this->password = $password;
+            $this->initPdo();
+        }
+
+        public function reconstruct(string $driver, string $address, int $port, string $database, string $username, string $password): bool
+        {
+            if ($driver) {
+                $this->driver = $driver;
+            }
+            if ($address) {
+                $this->address = $address;
+            }
+            if ($port) {
+                $this->port = $port;
+            }
+            if ($database) {
+                $this->database = $database;
+            }
+            if ($username) {
+                $this->username = $username;
+            }
+            if ($password) {
+                $this->password = $password;
+            }
+            return $this->initPdo();
         }
 
         public function pdo(): LazyPdo
@@ -6036,15 +6076,18 @@ namespace Tqdev\PhpCrudApi\Database {
             return $this->pdo;
         }
 
-        public function reauthenticate(/*?string*/$user, /*?string*/ $password): bool
+        public function reconstruct(string $dsn, /*?string*/ $user = null, /*?string*/ $password = null, array $options = array()): bool
         {
+            $this->dsn = $dsn;
             $this->user = $user;
             $this->password = $password;
+            $this->options = $options;
+            $this->commands = array();
             if ($this->pdo) {
                 $this->pdo = null;
-                return false;
+                return true;
             }
-            return true;
+            return false;
         }
 
         public function inTransaction(): bool
@@ -7739,7 +7782,7 @@ namespace Tqdev\PhpCrudApi\Middleware {
     }
 }
 
-// file: src/Tqdev/PhpCrudApi/Middleware/ReAuthMiddleware.php
+// file: src/Tqdev/PhpCrudApi/Middleware/ReconnectMiddleware.php
 namespace Tqdev\PhpCrudApi\Middleware {
 
     use Psr\Http\Message\ResponseInterface;
@@ -7751,7 +7794,7 @@ namespace Tqdev\PhpCrudApi\Middleware {
     use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
     use Tqdev\PhpCrudApi\Middleware\Router\Router;
 
-    class ReAuthMiddleware extends Middleware
+    class ReconnectMiddleware extends Middleware
     {
         private $reflection;
         private $db;
@@ -7761,6 +7804,42 @@ namespace Tqdev\PhpCrudApi\Middleware {
             parent::__construct($router, $responder, $properties);
             $this->reflection = $reflection;
             $this->db = $db;
+        }
+
+        private function getDriver(): string
+        {
+            $driverHandler = $this->getProperty('driverHandler', '');
+            if ($driverHandler) {
+                return call_user_func($driverHandler);
+            }
+            return '';
+        }
+
+        private function getAddress(): string
+        {
+            $addressHandler = $this->getProperty('addressHandler', '');
+            if ($addressHandler) {
+                return call_user_func($addressHandler);
+            }
+            return '';
+        }
+
+        private function getPort(): int
+        {
+            $portHandler = $this->getProperty('portHandler', '');
+            if ($portHandler) {
+                return call_user_func($portHandler);
+            }
+            return 0;
+        }
+
+        private function getDatabase(): string
+        {
+            $databaseHandler = $this->getProperty('databaseHandler', '');
+            if ($databaseHandler) {
+                return call_user_func($databaseHandler);
+            }
+            return '';
         }
 
         private function getUsername(): string
@@ -7783,10 +7862,14 @@ namespace Tqdev\PhpCrudApi\Middleware {
 
         public function process(ServerRequestInterface $request, RequestHandlerInterface $next): ResponseInterface
         {
+            $driver = $this->getDriver();
+            $address = $this->getAddress();
+            $port = $this->getPort();
+            $database = $this->getDatabase();
             $username = $this->getUsername();
             $password = $this->getPassword();
-            if ($username && $password) {
-                $this->db->pdo()->reauthenticate($username, $password);
+            if ($driver || $address || $port || $database || $username || $password) {
+                $this->db->reconstruct($driver, $address, $port, $database, $username, $password);
             }
             return $next->handle($request);
         }
@@ -9577,7 +9660,7 @@ namespace Tqdev\PhpCrudApi {
     use Tqdev\PhpCrudApi\Middleware\IpAddressMiddleware;
     use Tqdev\PhpCrudApi\Middleware\JoinLimitsMiddleware;
     use Tqdev\PhpCrudApi\Middleware\JwtAuthMiddleware;
-    use Tqdev\PhpCrudApi\Middleware\ReAuthMiddleware;
+    use Tqdev\PhpCrudApi\Middleware\ReconnectMiddleware;
     use Tqdev\PhpCrudApi\Middleware\MultiTenancyMiddleware;
     use Tqdev\PhpCrudApi\Middleware\PageLimitsMiddleware;
     use Tqdev\PhpCrudApi\Middleware\Router\SimpleRouter;
@@ -9627,8 +9710,8 @@ namespace Tqdev\PhpCrudApi {
                     case 'dbAuth':
                         new DbAuthMiddleware($router, $responder, $properties, $reflection, $db);
                         break;
-                    case 'reAuth':
-                        new ReAuthMiddleware($router, $responder, $properties, $reflection, $db);
+                    case 'reconnect':
+                        new ReconnectMiddleware($router, $responder, $properties, $reflection, $db);
                         break;
                     case 'validation':
                         new ValidationMiddleware($router, $responder, $properties, $reflection);

@@ -11,7 +11,7 @@ use Tqdev\PhpCrudApi\Database\GenericDB;
 use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
 use Tqdev\PhpCrudApi\Middleware\Router\Router;
 
-class ReAuthMiddleware extends Middleware
+class ReconnectMiddleware extends Middleware
 {
     private $reflection;
     private $db;
@@ -21,6 +21,42 @@ class ReAuthMiddleware extends Middleware
         parent::__construct($router, $responder, $properties);
         $this->reflection = $reflection;
         $this->db = $db;
+    }
+
+    private function getDriver(): string
+    {
+        $driverHandler = $this->getProperty('driverHandler', '');
+        if ($driverHandler) {
+            return call_user_func($driverHandler);
+        }
+        return '';
+    }
+
+    private function getAddress(): string
+    {
+        $addressHandler = $this->getProperty('addressHandler', '');
+        if ($addressHandler) {
+            return call_user_func($addressHandler);
+        }
+        return '';
+    }
+
+    private function getPort(): int
+    {
+        $portHandler = $this->getProperty('portHandler', '');
+        if ($portHandler) {
+            return call_user_func($portHandler);
+        }
+        return 0;
+    }
+
+    private function getDatabase(): string
+    {
+        $databaseHandler = $this->getProperty('databaseHandler', '');
+        if ($databaseHandler) {
+            return call_user_func($databaseHandler);
+        }
+        return '';
     }
 
     private function getUsername(): string
@@ -43,10 +79,14 @@ class ReAuthMiddleware extends Middleware
 
     public function process(ServerRequestInterface $request, RequestHandlerInterface $next): ResponseInterface
     {
+        $driver = $this->getDriver();
+        $address = $this->getAddress();
+        $port = $this->getPort();
+        $database = $this->getDatabase();
         $username = $this->getUsername();
         $password = $this->getPassword();
-        if ($username && $password) {
-            $this->db->pdo()->reauthenticate($username, $password);
+        if ($driver || $address || $port || $database || $username || $password) {
+            $this->db->reconstruct($driver, $address, $port, $database, $username, $password);
         }
         return $next->handle($request);
     }

@@ -148,6 +148,7 @@ You can enable the following middleware using the "middlewares" config parameter
 - "dbAuth": Support for "Database Authentication"
 - "jwtAuth": Support for "JWT Authentication"
 - "basicAuth": Support for "Basic Authentication"
+- "reconnect": Reconnect to the database with different parameters
 - "authorization": Restrict access to certain tables or columns
 - "validation": Return input validation errors for custom rules
 - "ipAddress": Fill a protected field with the IP address on create
@@ -190,6 +191,12 @@ You can tune the middleware behavior using middleware specific configuration par
 - "basicAuth.mode": Set to "optional" if you want to allow anonymous access ("required")
 - "basicAuth.realm": Text to prompt when showing login ("Username and password required")
 - "basicAuth.passwordFile": The file to read for username/password combinations (".htpasswd")
+- "reconnect.driverHandler": Handler to implement retrieval of the database driver ("")
+- "reconnect.addressHandler": Handler to implement retrieval of the database address ("")
+- "reconnect.portHandler": Handler to implement retrieval of the database port ("")
+- "reconnect.databaseHandler": Handler to implement retrieval of the database name ("")
+- "reconnect.usernameHandler": Handler to implement retrieval of the database username ("")
+- "reconnect.passwordHandler": Handler to implement retrieval of the database password ("")
 - "authorization.tableHandler": Handler to implement table authorization rules ("")
 - "authorization.columnHandler": Handler to implement column authorization rules ("")
 - "authorization.recordHandler": Handler to implement record authorization filter rules ("")
@@ -850,6 +857,10 @@ You can parse this output to make form fields show up with a red border and thei
 
 ### Multi-tenancy support
 
+Two forms of multi-tenancy are supported:
+
+#### Multi-tenancy middleware
+
 You may use the "multiTenancy" middleware when you have a multi-tenant database. 
 If your tenants are identified by the "customer_id" column you can use the following handler:
 
@@ -859,6 +870,10 @@ If your tenants are identified by the "customer_id" column you can use the follo
 
 This construct adds a filter requiring "customer_id" to be "12" to every operation (except for "create").
 It also sets the column "customer_id" on "create" to "12" and removes the column from any other write operation.
+
+#### Reconnect middleware
+
+
 
 ### Prevent database scraping
 

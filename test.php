@@ -77,20 +77,28 @@ function runTest(Config $config, string $file, string $category): int
     return $success;
 }
 
+function getDatabase(Config $config)
+{
+    if (!isset($config->getMiddlewares()['reconnect']['databaseHandler'])) {
+        return $config->getDatabase();
+    }
+    return $config->getMiddlewares()['reconnect']['databaseHandler']();
+}
+
 function getUsername(Config $config)
 {
-    if (!isset($config->getMiddlewares()['reAuth']['usernameHandler'])) {
+    if (!isset($config->getMiddlewares()['reconnect']['usernameHandler'])) {
         return $config->getUsername();
     }
-    return $config->getMiddlewares()['reAuth']['usernameHandler']();
+    return $config->getMiddlewares()['reconnect']['usernameHandler']();
 }
 
 function getPassword(Config $config)
 {
-    if (!isset($config->getMiddlewares()['reAuth']['passwordHandler'])) {
+    if (!isset($config->getMiddlewares()['reconnect']['passwordHandler'])) {
         return $config->getPassword();
     }
-    return $config->getMiddlewares()['reAuth']['passwordHandler']();
+    return $config->getMiddlewares()['reconnect']['passwordHandler']();
 }
 
 
@@ -103,7 +111,7 @@ function loadFixture(string $dir, Config $config)
         $config->getDriver(),
         $config->getAddress(),
         $config->getPort(),
-        $config->getDatabase(),
+        getDatabase($config),
         getUsername($config),
         getPassword($config)
     );
