@@ -768,7 +768,7 @@ You can also change the `url` variable, used to test the API with authentication
 
 [More info](https://firebase.google.com/docs/auth/admin/verify-id-tokens#verify_id_tokens_using_a_third-party_jwt_library)
 
-## Authorizing operations
+### Authorizing operations
 
 The Authorization model acts on "operations". The most important ones are listed here:
 
@@ -814,6 +814,23 @@ The above example will disallow access to user records where the username is 'ad
 This construct adds a filter to every executed query. 
 
 NB: You need to handle the creation of invalid records with a validation (or sanitation) handler.
+
+### SQL GRANT authorization
+
+You can alternatively use database permissons (SQL GRANT statements) to define the authorization model. In this case you
+should not use the "authorization" middleware, but you do need to use the "reconnect" middleware. The handlers of the
+"reconnect" middleware allow you to specify the correct username and password, like this:
+
+    'reconnect.usernameHandler' => function () {
+        return 'mevdschee';
+    },
+    'reconnect.passwordHandler' => function () {
+        return 'secret123';
+    },
+
+This will make the API connect to the database specifying "mevdschee" as the username and "secret123" as the password.
+
+NB: You may want to retrieve the username and password from the session (the "$_SESSION" variable).
 
 ### Sanitizing input
 
