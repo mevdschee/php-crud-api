@@ -1,4 +1,5 @@
 <?php
+
 namespace Tqdev\PhpCrudApi\Database;
 
 class LazyPdo extends \PDO
@@ -6,7 +7,8 @@ class LazyPdo extends \PDO
     private $dsn;
     private $user;
     private $password;
-    private $options = array();
+    private $options;
+    private $commands;
 
     private $pdo = null;
 
@@ -16,28 +18,37 @@ class LazyPdo extends \PDO
         $this->user = $user;
         $this->password = $password;
         $this->options = $options;
+        $this->commands = array();
         // explicitly NOT calling super::__construct
+    }
+
+    public function addInitCommand(string $command)/*: void*/
+    {
+        $this->commands[] = $command;
     }
 
     private function pdo()
     {
         if (!$this->pdo) {
             $this->pdo = new \PDO($this->dsn, $this->user, $this->password, $this->options);
+            foreach ($this->commands as $command) {
+                $this->pdo->query($command);
+            }
         }
         return $this->pdo;
     }
 
-    public function reauthenticate(/*?string*/ $user, /*?string*/ $password): bool
+    public function reauthenticate(/*?string*/$user, /*?string*/ $password): bool
     {
         $this->user = $user;
         $this->password = $password;
         if ($this->pdo) {
-            $this->pdo = new \PDO($this->dsn, $this->user, $this->password, $this->options);
-            return false; 
+            $this->pdo = null;
+            return false;
         }
         return true;
     }
-    
+
     public function inTransaction(): bool
     {
         // Do not call parent method if there is no pdo object
@@ -46,7 +57,7 @@ class LazyPdo extends \PDO
 
     public function setAttribute($attribute, $value): bool
     {
-        if ($this->pdo) { 
+        if ($this->pdo) {
             return $this->pdo()->setAttribute($attribute, $value);
         }
         $this->options[$attribute] = $value;

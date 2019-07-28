@@ -1,4 +1,5 @@
 <?php
+
 namespace Tqdev\PhpCrudApi\Database;
 
 use Tqdev\PhpCrudApi\Column\Reflection\ReflectedTable;
@@ -20,25 +21,30 @@ class GenericDB
     private function getDsn(string $address, int $port, string $database): string
     {
         switch ($this->driver) {
-            case 'mysql':return "$this->driver:host=$address;port=$port;dbname=$database;charset=utf8mb4";
-            case 'pgsql':return "$this->driver:host=$address port=$port dbname=$database options='--client_encoding=UTF8'";
-            case 'sqlsrv':return "$this->driver:Server=$address,$port;Database=$database";
+            case 'mysql':
+                return "$this->driver:host=$address;port=$port;dbname=$database;charset=utf8mb4";
+            case 'pgsql':
+                return "$this->driver:host=$address port=$port dbname=$database options='--client_encoding=UTF8'";
+            case 'sqlsrv':
+                return "$this->driver:Server=$address,$port;Database=$database";
         }
     }
 
     private function getCommands(): array
     {
         switch ($this->driver) {
-            case 'mysql':return [
+            case 'mysql':
+                return [
                     'SET SESSION sql_warnings=1;',
                     'SET NAMES utf8mb4;',
                     'SET SESSION sql_mode = "ANSI,TRADITIONAL";',
                 ];
-            case 'pgsql':return [
+            case 'pgsql':
+                return [
                     "SET NAMES 'UTF8';",
                 ];
-            case 'sqlsrv':return [
-                ];
+            case 'sqlsrv':
+                return [];
         }
     }
 
@@ -49,16 +55,19 @@ class GenericDB
             \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
         );
         switch ($this->driver) {
-            case 'mysql':return $options + [
+            case 'mysql':
+                return $options + [
                     \PDO::ATTR_EMULATE_PREPARES => false,
                     \PDO::MYSQL_ATTR_FOUND_ROWS => true,
                     \PDO::ATTR_PERSISTENT => true,
                 ];
-            case 'pgsql':return $options + [
+            case 'pgsql':
+                return $options + [
                     \PDO::ATTR_EMULATE_PREPARES => false,
                     \PDO::ATTR_PERSISTENT => true,
                 ];
-            case 'sqlsrv':return $options + [
+            case 'sqlsrv':
+                return $options + [
                     \PDO::SQLSRV_ATTR_DIRECT_QUERY => false,
                     \PDO::SQLSRV_ATTR_FETCHES_NUMERIC_TYPE => true,
                 ];
@@ -74,7 +83,7 @@ class GenericDB
         $this->pdo = new LazyPdo($dsn, $username, $password, $options);
         $commands = $this->getCommands();
         foreach ($commands as $command) {
-            $this->pdo->query($command);
+            $this->pdo->addInitCommand($command);
         }
         $this->reflection = new GenericReflection($this->pdo, $driver, $database);
         $this->definition = new GenericDefinition($this->pdo, $driver, $database);

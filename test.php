@@ -1,4 +1,5 @@
 <?php
+
 use Tqdev\PhpCrudApi\Api;
 use Tqdev\PhpCrudApi\Config;
 use Tqdev\PhpCrudApi\Database\GenericDB;
@@ -76,6 +77,23 @@ function runTest(Config $config, string $file, string $category): int
     return $success;
 }
 
+function getUsername(Config $config)
+{
+    if (!isset($config->getMiddlewares()['reAuth']['usernameHandler'])) {
+        return $config->getUsername();
+    }
+    return $config->getMiddlewares()['reAuth']['usernameHandler']();
+}
+
+function getPassword(Config $config)
+{
+    if (!isset($config->getMiddlewares()['reAuth']['passwordHandler'])) {
+        return $config->getPassword();
+    }
+    return $config->getMiddlewares()['reAuth']['passwordHandler']();
+}
+
+
 function loadFixture(string $dir, Config $config)
 {
     $driver = $config->getDriver();
@@ -86,8 +104,8 @@ function loadFixture(string $dir, Config $config)
         $config->getAddress(),
         $config->getPort(),
         $config->getDatabase(),
-        $config->getUsername(),
-        $config->getPassword()
+        getUsername($config),
+        getPassword($config)
     );
     $pdo = $db->pdo();
     $file = preg_replace('/--.*$/m', '', $file);

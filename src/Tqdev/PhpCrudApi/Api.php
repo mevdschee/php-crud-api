@@ -1,4 +1,5 @@
 <?php
+
 namespace Tqdev\PhpCrudApi;
 
 use Psr\Http\Message\ResponseInterface;
@@ -24,6 +25,7 @@ use Tqdev\PhpCrudApi\Middleware\FirewallMiddleware;
 use Tqdev\PhpCrudApi\Middleware\IpAddressMiddleware;
 use Tqdev\PhpCrudApi\Middleware\JoinLimitsMiddleware;
 use Tqdev\PhpCrudApi\Middleware\JwtAuthMiddleware;
+use Tqdev\PhpCrudApi\Middleware\ReAuthMiddleware;
 use Tqdev\PhpCrudApi\Middleware\MultiTenancyMiddleware;
 use Tqdev\PhpCrudApi\Middleware\PageLimitsMiddleware;
 use Tqdev\PhpCrudApi\Middleware\Router\SimpleRouter;
@@ -72,6 +74,9 @@ class Api implements RequestHandlerInterface
                     break;
                 case 'dbAuth':
                     new DbAuthMiddleware($router, $responder, $properties, $reflection, $db);
+                    break;
+                case 'reAuth':
+                    new ReAuthMiddleware($router, $responder, $properties, $reflection, $db);
                     break;
                 case 'validation':
                     new ValidationMiddleware($router, $responder, $properties, $reflection);

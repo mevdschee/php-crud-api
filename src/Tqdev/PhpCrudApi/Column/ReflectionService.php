@@ -1,4 +1,5 @@
 <?php
+
 namespace Tqdev\PhpCrudApi\Column;
 
 use Tqdev\PhpCrudApi\Cache\Cache;
@@ -19,8 +20,16 @@ class ReflectionService
         $this->db = $db;
         $this->cache = $cache;
         $this->ttl = $ttl;
-        $this->database = $this->loadDatabase(true);
+        $this->database = null;
         $this->tables = [];
+    }
+
+    private function database(): ReflectedDatabase
+    {
+        if (!$this->database) {
+            $this->database = $this->loadDatabase(true);
+        }
+        return $this->database;
     }
 
     private function loadDatabase(bool $useCache): ReflectedDatabase
@@ -42,7 +51,7 @@ class ReflectionService
         if ($data != '') {
             $table = ReflectedTable::fromJson(json_decode(gzuncompress($data)));
         } else {
-            $tableType = $this->database->getType($tableName);
+            $tableType = $this->database()->getType($tableName);
             $table = ReflectedTable::fromReflection($this->db->reflection(), $tableName, $tableType);
             $data = gzcompress(json_encode($table, JSON_UNESCAPED_UNICODE));
             $this->cache->set("ReflectedTable($tableName)", $data, $this->ttl);
@@ -62,12 +71,12 @@ class ReflectionService
 
     public function hasTable(string $tableName): bool
     {
-        return $this->database->hasTable($tableName);
+        return $this->database()->hasTable($tableName);
     }
 
     public function getType(string $tableName): string
     {
-        return $this->database->getType($tableName);
+        return $this->database()->getType($tableName);
     }
 
     public function getTable(string $tableName): ReflectedTable
@@ -80,18 +89,17 @@ class ReflectionService
 
     public function getTableNames(): array
     {
-        return $this->database->getTableNames();
+        return $this->database()->getTableNames();
     }
 
     public function getDatabaseName(): string
     {
-        return $this->database->getName();
+        return $this->database()->getName();
     }
 
     public function removeTable(string $tableName): bool
     {
         unset($this->tables[$tableName]);
-        return $this->database->removeTable($tableName);
+        return $this->database()->removeTable($tableName);
     }
-
 }
