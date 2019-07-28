@@ -859,10 +859,15 @@ You can parse this output to make form fields show up with a red border and thei
 
 Two forms of multi-tenancy are supported:
 
+ - Single database, where every table has a tenant column (using the "multiTenancy" middleware).
+ - Multi database, where every tenant has it's own database (using the "reconnect" middleware).
+
+Below is an explanation of the corresponding middlewares.
+
 #### Multi-tenancy middleware
 
-You may use the "multiTenancy" middleware when you have a multi-tenant database. 
-If your tenants are identified by the "customer_id" column you can use the following handler:
+You may use the "multiTenancy" middleware when you have a single multi-tenant database. 
+If your tenants are identified by the "customer_id" column, then you can use the following handler:
 
     'multiTenancy.handler' => function ($operation, $tableName) {
         return ['customer_id' => 12];
@@ -871,9 +876,21 @@ If your tenants are identified by the "customer_id" column you can use the follo
 This construct adds a filter requiring "customer_id" to be "12" to every operation (except for "create").
 It also sets the column "customer_id" on "create" to "12" and removes the column from any other write operation.
 
+NB: You may want to retrieve the customer id from the session (the "$_SESSION" variable).
+
 #### Reconnect middleware
 
+You may use the "reconnect" middleware when you have a separate database for each tenant.
+If the tenant has it's own database named "customer_12", then you can use the following handler:
 
+    'reconnect.databaseHandler' => function () {
+        return 'customer_12';
+    },
+
+This will make the API reconnect to the database specifying "customer_12" as the database name. If you don't want
+to use the same credentials, then you should also implement the "usernameHandler" and "passwordHandler".
+
+NB: You may want to retrieve the database name from the session (the "$_SESSION" variable).
 
 ### Prevent database scraping
 
