@@ -4102,8 +4102,16 @@ namespace Tqdev\PhpCrudApi\Column {
             $this->db = $db;
             $this->cache = $cache;
             $this->ttl = $ttl;
-            $this->database = $this->loadDatabase(true);
+            $this->database = null;
             $this->tables = [];
+        }
+
+        private function database(): ReflectedDatabase
+        {
+            if (!$this->database) {
+                $this->database = $this->loadDatabase(true);
+            }
+            return $this->database;
         }
 
         private function loadDatabase(bool $useCache): ReflectedDatabase
@@ -4125,7 +4133,7 @@ namespace Tqdev\PhpCrudApi\Column {
             if ($data != '') {
                 $table = ReflectedTable::fromJson(json_decode(gzuncompress($data)));
             } else {
-                $tableType = $this->database->getType($tableName);
+                $tableType = $this->database()->getType($tableName);
                 $table = ReflectedTable::fromReflection($this->db->reflection(), $tableName, $tableType);
                 $data = gzcompress(json_encode($table, JSON_UNESCAPED_UNICODE));
                 $this->cache->set("ReflectedTable($tableName)", $data, $this->ttl);
@@ -4145,12 +4153,12 @@ namespace Tqdev\PhpCrudApi\Column {
 
         public function hasTable(string $tableName): bool
         {
-            return $this->database->hasTable($tableName);
+            return $this->database()->hasTable($tableName);
         }
 
         public function getType(string $tableName): string
         {
-            return $this->database->getType($tableName);
+            return $this->database()->getType($tableName);
         }
 
         public function getTable(string $tableName): ReflectedTable
@@ -4163,20 +4171,19 @@ namespace Tqdev\PhpCrudApi\Column {
 
         public function getTableNames(): array
         {
-            return $this->database->getTableNames();
+            return $this->database()->getTableNames();
         }
 
         public function getDatabaseName(): string
         {
-            return $this->database->getName();
+            return $this->database()->getName();
         }
 
         public function removeTable(string $tableName): bool
         {
             unset($this->tables[$tableName]);
-            return $this->database->removeTable($tableName);
+            return $this->database()->removeTable($tableName);
         }
-
     }
 }
 
@@ -5175,25 +5182,30 @@ namespace Tqdev\PhpCrudApi\Database {
         private function getDsn(string $address, int $port, string $database): string
         {
             switch ($this->driver) {
-                case 'mysql':return "$this->driver:host=$address;port=$port;dbname=$database;charset=utf8mb4";
-                case 'pgsql':return "$this->driver:host=$address port=$port dbname=$database options='--client_encoding=UTF8'";
-                case 'sqlsrv':return "$this->driver:Server=$address,$port;Database=$database";
+                case 'mysql':
+                    return "$this->driver:host=$address;port=$port;dbname=$database;charset=utf8mb4";
+                case 'pgsql':
+                    return "$this->driver:host=$address port=$port dbname=$database options='--client_encoding=UTF8'";
+                case 'sqlsrv':
+                    return "$this->driver:Server=$address,$port;Database=$database";
             }
         }
 
         private function getCommands(): array
         {
             switch ($this->driver) {
-                case 'mysql':return [
+                case 'mysql':
+                    return [
                         'SET SESSION sql_warnings=1;',
                         'SET NAMES utf8mb4;',
                         'SET SESSION sql_mode = "ANSI,TRADITIONAL";',
                     ];
-                case 'pgsql':return [
+                case 'pgsql':
+                    return [
                         "SET NAMES 'UTF8';",
                     ];
-                case 'sqlsrv':return [
-                    ];
+                case 'sqlsrv':
+                    return [];
             }
         }
 
@@ -5204,16 +5216,19 @@ namespace Tqdev\PhpCrudApi\Database {
                 \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
             );
             switch ($this->driver) {
-                case 'mysql':return $options + [
+                case 'mysql':
+                    return $options + [
                         \PDO::ATTR_EMULATE_PREPARES => false,
                         \PDO::MYSQL_ATTR_FOUND_ROWS => true,
                         \PDO::ATTR_PERSISTENT => true,
                     ];
-                case 'pgsql':return $options + [
+                case 'pgsql':
+                    return $options + [
                         \PDO::ATTR_EMULATE_PREPARES => false,
                         \PDO::ATTR_PERSISTENT => true,
                     ];
-                case 'sqlsrv':return $options + [
+                case 'sqlsrv':
+                    return $options + [
                         \PDO::SQLSRV_ATTR_DIRECT_QUERY => false,
                         \PDO::SQLSRV_ATTR_FETCHES_NUMERIC_TYPE => true,
                     ];
@@ -5229,7 +5244,7 @@ namespace Tqdev\PhpCrudApi\Database {
             $this->pdo = new LazyPdo($dsn, $username, $password, $options);
             $commands = $this->getCommands();
             foreach ($commands as $command) {
-                $this->pdo->query($command);
+                $this->pdo->addInitCommand($command);
             }
             $this->reflection = new GenericReflection($this->pdo, $driver, $database);
             $this->definition = new GenericDefinition($this->pdo, $driver, $database);
@@ -5238,7 +5253,7 @@ namespace Tqdev\PhpCrudApi\Database {
             $this->converter = new DataConverter($driver);
         }
 
-        public function pdo(): \PDO
+        public function pdo(): LazyPdo
         {
             return $this->pdo;
         }
@@ -5990,7 +6005,8 @@ namespace Tqdev\PhpCrudApi\Database {
         private $dsn;
         private $user;
         private $password;
-        private $options = array();
+        private $options;
+        private $commands;
 
         private $pdo = null;
 
@@ -6000,35 +6016,37 @@ namespace Tqdev\PhpCrudApi\Database {
             $this->user = $user;
             $this->password = $password;
             $this->options = $options;
+            $this->commands = array();
             // explicitly NOT calling super::__construct
+        }
+
+        public function addInitCommand(string $command)/*: void*/
+        {
+            $this->commands[] = $command;
         }
 
         private function pdo()
         {
             if (!$this->pdo) {
                 $this->pdo = new \PDO($this->dsn, $this->user, $this->password, $this->options);
+                foreach ($this->commands as $command) {
+                    $this->pdo->query($command);
+                }
             }
             return $this->pdo;
         }
 
-        public function setUser(/*?string*/ $user): bool
+        public function reauthenticate(/*?string*/$user, /*?string*/ $password): bool
         {
+            $this->user = $user;
+            $this->password = $password;
             if ($this->pdo) {
+                $this->pdo = null;
                 return false;
             }
-            $this->user = $user;
             return true;
         }
 
-        public function setPassword(/*?string*/ $password): bool
-        {
-            if ($this->pdo) {
-                return false;
-            }
-            $this->password = $password;
-            return true;
-        }
-        
         public function inTransaction(): bool
         {
             // Do not call parent method if there is no pdo object
@@ -6037,7 +6055,7 @@ namespace Tqdev\PhpCrudApi\Database {
 
         public function setAttribute($attribute, $value): bool
         {
-            if ($this->pdo) { 
+            if ($this->pdo) {
                 return $this->pdo()->setAttribute($attribute, $value);
             }
             $this->options[$attribute] = $value;
@@ -6096,7 +6114,7 @@ namespace Tqdev\PhpCrudApi\Database {
 
         public function query(string $statement): \PDOStatement
         {
-            return call_user_func_array(array($this->pdo(), __FUNCTION__), func_get_args());
+            return call_user_func_array(array($this->pdo(), 'query'), func_get_args());
         }
     }
 }
@@ -7715,6 +7733,60 @@ namespace Tqdev\PhpCrudApi\Middleware {
                     $params['size'] = array(min($params['size'][0], $maxSize));
                 }
                 $request = RequestUtils::setParams($request, $params);
+            }
+            return $next->handle($request);
+        }
+    }
+}
+
+// file: src/Tqdev/PhpCrudApi/Middleware/ReAuthMiddleware.php
+namespace Tqdev\PhpCrudApi\Middleware {
+
+    use Psr\Http\Message\ResponseInterface;
+    use Psr\Http\Message\ServerRequestInterface;
+    use Psr\Http\Server\RequestHandlerInterface;
+    use Tqdev\PhpCrudApi\Column\ReflectionService;
+    use Tqdev\PhpCrudApi\Controller\Responder;
+    use Tqdev\PhpCrudApi\Database\GenericDB;
+    use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
+    use Tqdev\PhpCrudApi\Middleware\Router\Router;
+
+    class ReAuthMiddleware extends Middleware
+    {
+        private $reflection;
+        private $db;
+
+        public function __construct(Router $router, Responder $responder, array $properties, ReflectionService $reflection, GenericDB $db)
+        {
+            parent::__construct($router, $responder, $properties);
+            $this->reflection = $reflection;
+            $this->db = $db;
+        }
+
+        private function getUsername(): string
+        {
+            $usernameHandler = $this->getProperty('usernameHandler', '');
+            if ($usernameHandler) {
+                return call_user_func($usernameHandler);
+            }
+            return '';
+        }
+
+        private function getPassword(): string
+        {
+            $passwordHandler = $this->getProperty('passwordHandler', '');
+            if ($passwordHandler) {
+                return call_user_func($passwordHandler);
+            }
+            return '';
+        }
+
+        public function process(ServerRequestInterface $request, RequestHandlerInterface $next): ResponseInterface
+        {
+            $username = $this->getUsername();
+            $password = $this->getPassword();
+            if ($username && $password) {
+                $this->db->pdo()->reauthenticate($username, $password);
             }
             return $next->handle($request);
         }
@@ -9505,6 +9577,7 @@ namespace Tqdev\PhpCrudApi {
     use Tqdev\PhpCrudApi\Middleware\IpAddressMiddleware;
     use Tqdev\PhpCrudApi\Middleware\JoinLimitsMiddleware;
     use Tqdev\PhpCrudApi\Middleware\JwtAuthMiddleware;
+    use Tqdev\PhpCrudApi\Middleware\ReAuthMiddleware;
     use Tqdev\PhpCrudApi\Middleware\MultiTenancyMiddleware;
     use Tqdev\PhpCrudApi\Middleware\PageLimitsMiddleware;
     use Tqdev\PhpCrudApi\Middleware\Router\SimpleRouter;
@@ -9553,6 +9626,9 @@ namespace Tqdev\PhpCrudApi {
                         break;
                     case 'dbAuth':
                         new DbAuthMiddleware($router, $responder, $properties, $reflection, $db);
+                        break;
+                    case 'reAuth':
+                        new ReAuthMiddleware($router, $responder, $properties, $reflection, $db);
                         break;
                     case 'validation':
                         new ValidationMiddleware($router, $responder, $properties, $reflection);
