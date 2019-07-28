@@ -306,4 +306,15 @@ class GenericDB
         $stmt->execute($parameters);
         return $stmt;
     }
+
+    public function getCacheKey(): string
+    {
+        return md5(json_encode([
+            $this->driver,
+            $this->address,
+            $this->port,
+            $this->database,
+            $this->username
+        ]));
+    }
 }

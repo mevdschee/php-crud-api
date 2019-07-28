@@ -53,7 +53,7 @@ class Api implements RequestHandlerInterface
             $config->getUsername(),
             $config->getPassword()
         );
-        $prefix = sprintf('phpcrudapi-%s-%s-%s-', $config->getDriver(), $config->getDatabase(), substr(md5(__FILE__), 0, 8));
+        $prefix = sprintf('phpcrudapi-%s-', substr(md5(__FILE__), 0, 8));
         $cache = CacheFactory::create($config->getCacheType(), $prefix, $config->getCachePath());
         $reflection = new ReflectionService($db, $cache, $config->getCacheTime());
         $responder = new JsonResponder();

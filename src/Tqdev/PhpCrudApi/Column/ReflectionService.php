@@ -34,27 +34,29 @@ class ReflectionService
 
     private function loadDatabase(bool $useCache): ReflectedDatabase
     {
-        $data = $useCache ? $this->cache->get('ReflectedDatabase') : '';
+        $key = sprintf('%s-ReflectedDatabase', $this->db->getCacheKey());
+        $data = $useCache ? $this->cache->get($key) : '';
         if ($data != '') {
             $database = ReflectedDatabase::fromJson(json_decode(gzuncompress($data)));
         } else {
             $database = ReflectedDatabase::fromReflection($this->db->reflection());
             $data = gzcompress(json_encode($database, JSON_UNESCAPED_UNICODE));
-            $this->cache->set('ReflectedDatabase', $data, $this->ttl);
+            $this->cache->set($key, $data, $this->ttl);
         }
         return $database;
     }
 
     private function loadTable(string $tableName, bool $useCache): ReflectedTable
     {
-        $data = $useCache ? $this->cache->get("ReflectedTable($tableName)") : '';
+        $key = sprintf('%s-ReflectedTable(%s)', $this->db->getCacheKey(), $tableName);
+        $data = $useCache ? $this->cache->get($key) : '';
         if ($data != '') {
             $table = ReflectedTable::fromJson(json_decode(gzuncompress($data)));
         } else {
             $tableType = $this->database()->getType($tableName);
             $table = ReflectedTable::fromReflection($this->db->reflection(), $tableName, $tableType);
             $data = gzcompress(json_encode($table, JSON_UNESCAPED_UNICODE));
-            $this->cache->set("ReflectedTable($tableName)", $data, $this->ttl);
+            $this->cache->set($key, $data, $this->ttl);
         }
         return $table;
     }

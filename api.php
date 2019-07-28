@@ -4116,27 +4116,29 @@ namespace Tqdev\PhpCrudApi\Column {
 
         private function loadDatabase(bool $useCache): ReflectedDatabase
         {
-            $data = $useCache ? $this->cache->get('ReflectedDatabase') : '';
+            $key = sprintf('%s-ReflectedDatabase', $this->db->getCacheKey());
+            $data = $useCache ? $this->cache->get($key) : '';
             if ($data != '') {
                 $database = ReflectedDatabase::fromJson(json_decode(gzuncompress($data)));
             } else {
                 $database = ReflectedDatabase::fromReflection($this->db->reflection());
                 $data = gzcompress(json_encode($database, JSON_UNESCAPED_UNICODE));
-                $this->cache->set('ReflectedDatabase', $data, $this->ttl);
+                $this->cache->set($key, $data, $this->ttl);
             }
             return $database;
         }
 
         private function loadTable(string $tableName, bool $useCache): ReflectedTable
         {
-            $data = $useCache ? $this->cache->get("ReflectedTable($tableName)") : '';
+            $key = sprintf('%s-ReflectedTable(%s)', $this->db->getCacheKey(), $tableName);
+            $data = $useCache ? $this->cache->get($key) : '';
             if ($data != '') {
                 $table = ReflectedTable::fromJson(json_decode(gzuncompress($data)));
             } else {
                 $tableType = $this->database()->getType($tableName);
                 $table = ReflectedTable::fromReflection($this->db->reflection(), $tableName, $tableType);
                 $data = gzcompress(json_encode($table, JSON_UNESCAPED_UNICODE));
-                $this->cache->set("ReflectedTable($tableName)", $data, $this->ttl);
+                $this->cache->set($key, $data, $this->ttl);
             }
             return $table;
         }
@@ -5466,6 +5468,17 @@ namespace Tqdev\PhpCrudApi\Database {
             //echo "- $sql -- " . json_encode($parameters, JSON_UNESCAPED_UNICODE) . "\n";
             $stmt->execute($parameters);
             return $stmt;
+        }
+
+        public function getCacheKey(): string
+        {
+            return md5(json_encode([
+                $this->driver,
+                $this->address,
+                $this->port,
+                $this->database,
+                $this->username
+            ]));
         }
     }
 }
@@ -9688,7 +9701,7 @@ namespace Tqdev\PhpCrudApi {
                 $config->getUsername(),
                 $config->getPassword()
             );
-            $prefix = sprintf('phpcrudapi-%s-%s-%s-', $config->getDriver(), $config->getDatabase(), substr(md5(__FILE__), 0, 8));
+            $prefix = sprintf('phpcrudapi-%s-', substr(md5(__FILE__), 0, 8));
             $cache = CacheFactory::create($config->getCacheType(), $prefix, $config->getCachePath());
             $reflection = new ReflectionService($db, $cache, $config->getCacheTime());
             $responder = new JsonResponder();
