@@ -34,11 +34,14 @@ function runDir(string $base, string $dir, array &$lines, array $ignore): int
             $data = preg_replace('/\s*<\?php\s+/s', '', $data, 1);
             $data = preg_replace('/^.*?(vendor\/autoload|declare\s*\(\s*strict_types\s*=\s*1).*?$/m', '', $data);
             array_push($lines, "// file: $dir/$entry");
+            if (!preg_match('/^\s*(namespace[^;]*);/', $data)){
+                $data = "namespace;\n".$data;
+            }
             foreach (explode("\n", trim($data)) as $line) {
                 if ($line) {
                     $line = '    ' . $line;
                 }
-                $line = preg_replace('/^\s*(namespace[^;]+);/', '\1 {', $line);
+                $line = preg_replace('/^\s*(namespace[^;]*);/', '\1 {', $line);
                 array_push($lines, $line);
             }
             array_push($lines, '}');
