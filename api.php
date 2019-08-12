@@ -3385,7 +3385,7 @@ namespace Tqdev\PhpCrudApi\Cache {
 
     class TempFileCache implements Cache
     {
-        public const SUFFIX = 'cache';
+        const SUFFIX = 'cache';
 
         private $path;
         private $segments;
@@ -3534,9 +3534,9 @@ namespace Tqdev\PhpCrudApi\Column\Reflection {
 
     class ReflectedColumn implements \JsonSerializable
     {
-        public const DEFAULT_LENGTH = 255;
-        public const DEFAULT_PRECISION = 19;
-        public const DEFAULT_SCALE = 4;
+        const DEFAULT_LENGTH = 255;
+        const DEFAULT_PRECISION = 19;
+        const DEFAULT_SCALE = 4;
 
         private $name;
         private $type;
@@ -8865,27 +8865,27 @@ namespace Tqdev\PhpCrudApi\Record {
         private $message;
         private $status;
 
-        public const ERROR_NOT_FOUND = 9999;
-        public const ROUTE_NOT_FOUND = 1000;
-        public const TABLE_NOT_FOUND = 1001;
-        public const ARGUMENT_COUNT_MISMATCH = 1002;
-        public const RECORD_NOT_FOUND = 1003;
-        public const ORIGIN_FORBIDDEN = 1004;
-        public const COLUMN_NOT_FOUND = 1005;
-        public const TABLE_ALREADY_EXISTS = 1006;
-        public const COLUMN_ALREADY_EXISTS = 1007;
-        public const HTTP_MESSAGE_NOT_READABLE = 1008;
-        public const DUPLICATE_KEY_EXCEPTION = 1009;
-        public const DATA_INTEGRITY_VIOLATION = 1010;
-        public const AUTHENTICATION_REQUIRED = 1011;
-        public const AUTHENTICATION_FAILED = 1012;
-        public const INPUT_VALIDATION_FAILED = 1013;
-        public const OPERATION_FORBIDDEN = 1014;
-        public const OPERATION_NOT_SUPPORTED = 1015;
-        public const TEMPORARY_OR_PERMANENTLY_BLOCKED = 1016;
-        public const BAD_OR_MISSING_XSRF_TOKEN = 1017;
-        public const ONLY_AJAX_REQUESTS_ALLOWED = 1018;
-        public const PAGINATION_FORBIDDEN = 1019;
+        const ERROR_NOT_FOUND = 9999;
+        const ROUTE_NOT_FOUND = 1000;
+        const TABLE_NOT_FOUND = 1001;
+        const ARGUMENT_COUNT_MISMATCH = 1002;
+        const RECORD_NOT_FOUND = 1003;
+        const ORIGIN_FORBIDDEN = 1004;
+        const COLUMN_NOT_FOUND = 1005;
+        const TABLE_ALREADY_EXISTS = 1006;
+        const COLUMN_ALREADY_EXISTS = 1007;
+        const HTTP_MESSAGE_NOT_READABLE = 1008;
+        const DUPLICATE_KEY_EXCEPTION = 1009;
+        const DATA_INTEGRITY_VIOLATION = 1010;
+        const AUTHENTICATION_REQUIRED = 1011;
+        const AUTHENTICATION_FAILED = 1012;
+        const INPUT_VALIDATION_FAILED = 1013;
+        const OPERATION_FORBIDDEN = 1014;
+        const OPERATION_NOT_SUPPORTED = 1015;
+        const TEMPORARY_OR_PERMANENTLY_BLOCKED = 1016;
+        const BAD_OR_MISSING_XSRF_TOKEN = 1017;
+        const ONLY_AJAX_REQUESTS_ALLOWED = 1018;
+        const PAGINATION_FORBIDDEN = 1019;
 
         private $values = [
             9999 => ["%s", ResponseFactory::INTERNAL_SERVER_ERROR],
@@ -9133,7 +9133,7 @@ namespace Tqdev\PhpCrudApi\Record {
 
     class PathTree implements \JsonSerializable
     {
-        public const WILDCARD = '*';
+        const WILDCARD = '*';
 
         private $tree;
 
@@ -10134,14 +10134,14 @@ namespace Tqdev\PhpCrudApi {
 
     class ResponseFactory
     {
-        public const OK = 200;
-        public const UNAUTHORIZED = 401;
-        public const FORBIDDEN = 403;
-        public const NOT_FOUND = 404;
-        public const METHOD_NOT_ALLOWED = 405;
-        public const CONFLICT = 409;
-        public const UNPROCESSABLE_ENTITY = 422;
-        public const INTERNAL_SERVER_ERROR = 500;
+        const OK = 200;
+        const UNAUTHORIZED = 401;
+        const FORBIDDEN = 403;
+        const NOT_FOUND = 404;
+        const METHOD_NOT_ALLOWED = 405;
+        const CONFLICT = 409;
+        const UNPROCESSABLE_ENTITY = 422;
+        const INTERNAL_SERVER_ERROR = 500;
 
         public static function fromHtml(int $status, string $html): ResponseInterface
         {

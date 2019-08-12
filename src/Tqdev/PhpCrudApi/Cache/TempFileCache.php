@@ -4,7 +4,7 @@ namespace Tqdev\PhpCrudApi\Cache;
 
 class TempFileCache implements Cache
 {
-    public const SUFFIX = 'cache';
+    const SUFFIX = 'cache';
 
     private $path;
     private $segments;

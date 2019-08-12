@@ -6,9 +6,9 @@ use Tqdev\PhpCrudApi\Database\GenericReflection;
 
 class ReflectedColumn implements \JsonSerializable
 {
-    public const DEFAULT_LENGTH = 255;
-    public const DEFAULT_PRECISION = 19;
-    public const DEFAULT_SCALE = 4;
+    const DEFAULT_LENGTH = 255;
+    const DEFAULT_PRECISION = 19;
+    const DEFAULT_SCALE = 4;
 
     private $name;
     private $type;

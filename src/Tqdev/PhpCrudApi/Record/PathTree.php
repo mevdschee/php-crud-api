@@ -4,7 +4,7 @@ namespace Tqdev\PhpCrudApi\Record;
 
 class PathTree implements \JsonSerializable
 {
-    public const WILDCARD = '*';
+    const WILDCARD = '*';
 
     private $tree;
 
