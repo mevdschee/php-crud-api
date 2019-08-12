@@ -1,4 +1,5 @@
 <?php
+
 namespace Tqdev\PhpCrudApi\Record;
 
 use Tqdev\PhpCrudApi\Column\ReflectionService;

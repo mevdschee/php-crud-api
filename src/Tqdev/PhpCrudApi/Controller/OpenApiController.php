@@ -1,4 +1,5 @@
 <?php
+
 namespace Tqdev\PhpCrudApi\Controller;
 
 use Psr\Http\Message\ResponseInterface;
@@ -22,5 +23,4 @@ class OpenApiController
     {
         return $this->responder->success($this->openApi->get());
     }
-
 }

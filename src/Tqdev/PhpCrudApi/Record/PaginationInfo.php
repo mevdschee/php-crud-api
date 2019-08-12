@@ -1,9 +1,9 @@
 <?php
+
 namespace Tqdev\PhpCrudApi\Record;
 
 class PaginationInfo
 {
-
     public $DEFAULT_PAGE_SIZE = 20;
 
     public function hasPage(array $params): bool
@@ -66,5 +66,4 @@ class PaginationInfo
         }
         return $pageLimit;
     }
-
 }

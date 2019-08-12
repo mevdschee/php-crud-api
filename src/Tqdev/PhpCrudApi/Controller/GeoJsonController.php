@@ -1,4 +1,5 @@
 <?php
+
 namespace Tqdev\PhpCrudApi\Controller;
 
 use Psr\Http\Message\ResponseInterface;
@@ -58,5 +59,4 @@ class GeoJsonController
             return $this->responder->success($response);
         }
     }
-
 }

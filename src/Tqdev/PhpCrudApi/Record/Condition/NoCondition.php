@@ -1,4 +1,5 @@
 <?php
+
 namespace Tqdev\PhpCrudApi\Record\Condition;
 
 class NoCondition extends Condition
@@ -17,5 +18,4 @@ class NoCondition extends Condition
     {
         return $this;
     }
-
 }

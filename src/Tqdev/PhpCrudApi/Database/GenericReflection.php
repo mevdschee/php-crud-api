@@ -1,4 +1,5 @@
 <?php
+
 namespace Tqdev\PhpCrudApi\Database;
 
 use Tqdev\PhpCrudApi\Database\LazyPdo;

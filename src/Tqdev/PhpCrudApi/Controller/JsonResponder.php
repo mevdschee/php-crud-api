@@ -1,4 +1,5 @@
 <?php
+
 namespace Tqdev\PhpCrudApi\Controller;
 
 use Psr\Http\Message\ResponseInterface;
@@ -20,5 +21,4 @@ class JsonResponder implements Responder
     {
         return ResponseFactory::fromObject(ResponseFactory::OK, $result);
     }
-
 }

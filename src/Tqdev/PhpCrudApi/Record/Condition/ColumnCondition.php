@@ -1,4 +1,5 @@
 <?php
+
 namespace Tqdev\PhpCrudApi\Record\Condition;
 
 use Tqdev\PhpCrudApi\Column\Reflection\ReflectedColumn;

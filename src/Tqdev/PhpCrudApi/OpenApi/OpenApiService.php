@@ -1,4 +1,5 @@
 <?php
+
 namespace Tqdev\PhpCrudApi\OpenApi;
 
 use Tqdev\PhpCrudApi\Column\ReflectionService;
@@ -17,5 +18,4 @@ class OpenApiService
     {
         return $this->builder->build();
     }
-
 }

@@ -1,4 +1,5 @@
 <?php
+
 namespace Tqdev\PhpCrudApi\Database;
 
 use Tqdev\PhpCrudApi\Column\Reflection\ReflectedColumn;
@@ -60,5 +61,4 @@ class ColumnConverter
         }
         return $value;
     }
-
 }

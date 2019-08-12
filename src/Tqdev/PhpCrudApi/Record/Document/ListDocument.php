@@ -1,9 +1,9 @@
 <?php
+
 namespace Tqdev\PhpCrudApi\Record\Document;
 
 class ListDocument implements \JsonSerializable
 {
-
     private $records;
 
     private $results;

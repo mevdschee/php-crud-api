@@ -1,4 +1,5 @@
 <?php
+
 namespace Tqdev\PhpCrudApi\Record\Condition;
 
 class NotCondition extends Condition

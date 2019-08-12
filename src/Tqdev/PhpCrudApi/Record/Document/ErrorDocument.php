@@ -1,4 +1,5 @@
 <?php
+
 namespace Tqdev\PhpCrudApi\Record\Document;
 
 use Tqdev\PhpCrudApi\Record\ErrorCode;

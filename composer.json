@@ -50,5 +50,5 @@
     },
     "autoload": {
         "psr-4": { "Tqdev\\PhpCrudApi\\": "src/Tqdev/PhpCrudApi" }
-    }   
+    }
 }

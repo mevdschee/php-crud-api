@@ -1,4 +1,5 @@
 <?php
+
 namespace Tqdev\PhpCrudApi\Middleware;
 
 use Psr\Http\Message\ResponseInterface;

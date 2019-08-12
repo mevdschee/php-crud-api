@@ -1,4 +1,5 @@
 <?php
+
 namespace Tqdev\PhpCrudApi\Middleware\Base;
 
 use Psr\Http\Server\MiddlewareInterface;

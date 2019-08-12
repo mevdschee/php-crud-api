@@ -1,4 +1,5 @@
 <?php
+
 namespace Tqdev\PhpCrudApi\Column;
 
 use Tqdev\PhpCrudApi\Column\Reflection\ReflectedColumn;
@@ -97,7 +98,7 @@ class DefinitionService
         return true;
     }
 
-    public function addTable( /* object */$definition)
+    public function addTable(/* object */$definition)
     {
         $newTable = ReflectedTable::fromJson($definition);
         if (!$this->db->definition()->addTable($newTable)) {
@@ -154,5 +155,4 @@ class DefinitionService
         }
         return true;
     }
-
 }

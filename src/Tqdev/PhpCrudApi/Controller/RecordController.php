@@ -1,4 +1,5 @@
 <?php
+
 namespace Tqdev\PhpCrudApi\Controller;
 
 use Psr\Http\Message\ResponseInterface;
@@ -175,5 +176,4 @@ class RecordController
             return $this->responder->success($this->service->increment($table, $id, $record, $params));
         }
     }
-
 }

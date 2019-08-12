@@ -1,4 +1,5 @@
 <?php
+
 namespace Tqdev\PhpCrudApi\Record;
 
 use Tqdev\PhpCrudApi\Column\Reflection\ReflectedTable;
@@ -9,7 +10,6 @@ use Tqdev\PhpCrudApi\Record\Condition\OrCondition;
 
 class FilterInfo
 {
-
     private function addConditionFromFilterPath(PathTree $conditions, array $path, ReflectedTable $table, array $params)
     {
         $key = 'filter' . implode('', $path);
@@ -52,5 +52,4 @@ class FilterInfo
     {
         return $this->combinePathTreeOfConditions($this->getConditionsAsPathTree($table, $params));
     }
-
 }

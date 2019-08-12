@@ -1,4 +1,5 @@
 <?php
+
 namespace Tqdev\PhpCrudApi\Record\Condition;
 
 use Tqdev\PhpCrudApi\Column\Reflection\ReflectedTable;
@@ -64,5 +65,4 @@ abstract class Condition
         }
         return $condition;
     }
-
 }

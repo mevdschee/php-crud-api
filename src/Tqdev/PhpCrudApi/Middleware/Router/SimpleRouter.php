@@ -1,4 +1,5 @@
 <?php
+
 namespace Tqdev\PhpCrudApi\Middleware\Router;
 
 use Psr\Http\Message\ResponseInterface;
@@ -156,5 +157,4 @@ class SimpleRouter implements Router
         }
         return $response;
     }
-
 }

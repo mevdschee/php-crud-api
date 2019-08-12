@@ -1,4 +1,5 @@
 <?php
+
 namespace Tqdev\PhpCrudApi;
 
 use Psr\Http\Message\ServerRequestInterface;
@@ -94,5 +95,4 @@ class RequestUtils
         }
         return $allTableNames;
     }
-
 }

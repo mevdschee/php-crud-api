@@ -1,4 +1,5 @@
 <?php
+
 namespace Tqdev\PhpCrudApi\Cache;
 
 class MemcachedCache extends MemcacheCache

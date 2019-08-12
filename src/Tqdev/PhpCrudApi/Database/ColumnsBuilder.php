@@ -1,4 +1,5 @@
 <?php
+
 namespace Tqdev\PhpCrudApi\Database;
 
 use Tqdev\PhpCrudApi\Column\Reflection\ReflectedColumn;
@@ -105,5 +106,4 @@ class ColumnsBuilder
         }
         return implode(',', $results);
     }
-
 }

@@ -1,4 +1,5 @@
 <?php
+
 namespace Tqdev\PhpCrudApi\Cache;
 
 class NoCache implements Cache

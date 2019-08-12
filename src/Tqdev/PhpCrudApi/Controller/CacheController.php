@@ -1,4 +1,5 @@
 <?php
+
 namespace Tqdev\PhpCrudApi\Controller;
 
 use Psr\Http\Message\ResponseInterface;
@@ -22,5 +23,4 @@ class CacheController
     {
         return $this->responder->success($this->cache->clear());
     }
-
 }

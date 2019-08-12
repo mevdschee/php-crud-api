@@ -1,9 +1,10 @@
 <?php
+
 namespace Tqdev\PhpCrudApi\Cache;
 
 class TempFileCache implements Cache
 {
-    const SUFFIX = 'cache';
+    public const SUFFIX = 'cache';
 
     private $path;
     private $segments;

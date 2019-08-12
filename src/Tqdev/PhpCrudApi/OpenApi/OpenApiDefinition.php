@@ -1,4 +1,5 @@
 <?php
+
 namespace Tqdev\PhpCrudApi\OpenApi;
 
 class OpenApiDefinition implements \JsonSerializable

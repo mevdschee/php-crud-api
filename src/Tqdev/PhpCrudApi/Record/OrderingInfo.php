@@ -1,11 +1,11 @@
 <?php
+
 namespace Tqdev\PhpCrudApi\Record;
 
 use Tqdev\PhpCrudApi\Column\Reflection\ReflectedTable;
 
 class OrderingInfo
 {
-
     public function getColumnOrdering(ReflectedTable $table, array $params): array
     {
         $fields = array();

@@ -1,4 +1,5 @@
 <?php
+
 namespace Tqdev\PhpCrudApi\Cache;
 
 interface Cache

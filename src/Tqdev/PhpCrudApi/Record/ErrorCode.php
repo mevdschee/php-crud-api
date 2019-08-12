@@ -1,36 +1,36 @@
 <?php
+
 namespace Tqdev\PhpCrudApi\Record;
 
 use Tqdev\PhpCrudApi\ResponseFactory;
 
 class ErrorCode
 {
-
     private $code;
     private $message;
     private $status;
 
-    const ERROR_NOT_FOUND = 9999;
-    const ROUTE_NOT_FOUND = 1000;
-    const TABLE_NOT_FOUND = 1001;
-    const ARGUMENT_COUNT_MISMATCH = 1002;
-    const RECORD_NOT_FOUND = 1003;
-    const ORIGIN_FORBIDDEN = 1004;
-    const COLUMN_NOT_FOUND = 1005;
-    const TABLE_ALREADY_EXISTS = 1006;
-    const COLUMN_ALREADY_EXISTS = 1007;
-    const HTTP_MESSAGE_NOT_READABLE = 1008;
-    const DUPLICATE_KEY_EXCEPTION = 1009;
-    const DATA_INTEGRITY_VIOLATION = 1010;
-    const AUTHENTICATION_REQUIRED = 1011;
-    const AUTHENTICATION_FAILED = 1012;
-    const INPUT_VALIDATION_FAILED = 1013;
-    const OPERATION_FORBIDDEN = 1014;
-    const OPERATION_NOT_SUPPORTED = 1015;
-    const TEMPORARY_OR_PERMANENTLY_BLOCKED = 1016;
-    const BAD_OR_MISSING_XSRF_TOKEN = 1017;
-    const ONLY_AJAX_REQUESTS_ALLOWED = 1018;
-    const PAGINATION_FORBIDDEN = 1019;
+    public const ERROR_NOT_FOUND = 9999;
+    public const ROUTE_NOT_FOUND = 1000;
+    public const TABLE_NOT_FOUND = 1001;
+    public const ARGUMENT_COUNT_MISMATCH = 1002;
+    public const RECORD_NOT_FOUND = 1003;
+    public const ORIGIN_FORBIDDEN = 1004;
+    public const COLUMN_NOT_FOUND = 1005;
+    public const TABLE_ALREADY_EXISTS = 1006;
+    public const COLUMN_ALREADY_EXISTS = 1007;
+    public const HTTP_MESSAGE_NOT_READABLE = 1008;
+    public const DUPLICATE_KEY_EXCEPTION = 1009;
+    public const DATA_INTEGRITY_VIOLATION = 1010;
+    public const AUTHENTICATION_REQUIRED = 1011;
+    public const AUTHENTICATION_FAILED = 1012;
+    public const INPUT_VALIDATION_FAILED = 1013;
+    public const OPERATION_FORBIDDEN = 1014;
+    public const OPERATION_NOT_SUPPORTED = 1015;
+    public const TEMPORARY_OR_PERMANENTLY_BLOCKED = 1016;
+    public const BAD_OR_MISSING_XSRF_TOKEN = 1017;
+    public const ONLY_AJAX_REQUESTS_ALLOWED = 1018;
+    public const PAGINATION_FORBIDDEN = 1019;
 
     private $values = [
         9999 => ["%s", ResponseFactory::INTERNAL_SERVER_ERROR],
@@ -80,5 +80,4 @@ class ErrorCode
     {
         return $this->status;
     }
-
 }

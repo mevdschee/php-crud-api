@@ -1,13 +1,14 @@
 <?php
+
 namespace Tqdev\PhpCrudApi\Column\Reflection;
 
 use Tqdev\PhpCrudApi\Database\GenericReflection;
 
 class ReflectedColumn implements \JsonSerializable
 {
-    const DEFAULT_LENGTH = 255;
-    const DEFAULT_PRECISION = 19;
-    const DEFAULT_SCALE = 4;
+    public const DEFAULT_LENGTH = 255;
+    public const DEFAULT_PRECISION = 19;
+    public const DEFAULT_SCALE = 4;
 
     private $name;
     private $type;
@@ -44,7 +45,7 @@ class ReflectedColumn implements \JsonSerializable
         return new ReflectedColumn($name, $type, $length, $precision, $scale, $nullable, $pk, $fk);
     }
 
-    public static function fromJson( /* object */$json): ReflectedColumn
+    public static function fromJson(/* object */$json): ReflectedColumn
     {
         $name = $json->name;
         $type = $json->type;

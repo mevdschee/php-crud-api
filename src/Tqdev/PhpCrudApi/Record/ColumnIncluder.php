@@ -1,18 +1,24 @@
 <?php
+
 namespace Tqdev\PhpCrudApi\Record;
 
 use Tqdev\PhpCrudApi\Column\Reflection\ReflectedTable;
 
 class ColumnIncluder
 {
-
     private function isMandatory(string $tableName, string $columnName, array $params): bool
     {
         return isset($params['mandatory']) && in_array($tableName . "." . $columnName, $params['mandatory']);
     }
 
-    private function select(string $tableName, bool $primaryTable, array $params, string $paramName,
-        array $columnNames, bool $include): array{
+    private function select(
+        string $tableName,
+        bool $primaryTable,
+        array $params,
+        string $paramName,
+        array $columnNames,
+        bool $include
+    ): array {
         if (!isset($params[$paramName])) {
             return $columnNames;
         }
@@ -62,5 +68,4 @@ class ColumnIncluder
         }
         return $results;
     }
-
 }

@@ -1,13 +1,14 @@
 <?php
+
 namespace Tqdev\PhpCrudApi\Record;
 
 class PathTree implements \JsonSerializable
 {
-    const WILDCARD = '*';
+    public const WILDCARD = '*';
 
     private $tree;
 
-    public function __construct( /* object */&$tree = null)
+    public function __construct(/* object */&$tree = null)
     {
         if (!$tree) {
             $tree = $this->newTree();
@@ -58,7 +59,7 @@ class PathTree implements \JsonSerializable
         foreach ($path as $key) {
             if (isset($tree->branches->$key)) {
                 $tree = &$tree->branches->$key;
-            } else if (isset($tree->branches->$star)) {
+            } elseif (isset($tree->branches->$star)) {
                 $tree = &$tree->branches->$star;
             } else {
                 return [];
@@ -67,7 +68,7 @@ class PathTree implements \JsonSerializable
         return $tree->values;
     }
 
-    public static function fromJson( /* object */$tree): PathTree
+    public static function fromJson(/* object */$tree): PathTree
     {
         return new PathTree($tree);
     }

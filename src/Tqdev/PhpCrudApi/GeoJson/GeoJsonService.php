@@ -1,4 +1,5 @@
 <?php
+
 namespace Tqdev\PhpCrudApi\GeoJson;
 
 use Tqdev\PhpCrudApi\Column\ReflectionService;
@@ -78,7 +79,7 @@ class GeoJsonService
         return [$lon, $lat];
     }
 
-    private function convertRecordToFeature( /*object*/$record, string $primaryKeyColumnName, string $geometryColumnName)
+    private function convertRecordToFeature(/*object*/$record, string $primaryKeyColumnName, string $geometryColumnName)
     {
         $id = null;
         if ($primaryKeyColumnName) {

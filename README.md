@@ -114,7 +114,7 @@ The following features are supported:
   - Support for reading database structure in JSON
   - Support for modifying database structure using REST endpoint
   - Security enhancing middleware is included
-  - Standard compliant: PSR-2, PSR-4, PSR-7, PSR-15 and PSR-17
+  - Standard compliant: PSR-4, PSR-7, PSR-12, PSR-15 and PSR-17
 
 ## Compilation
 

@@ -1,9 +1,10 @@
 <?php
+
 namespace Tqdev\PhpCrudApi\Middleware\Communication;
 
 class VariableStore
 {
-    static $values = array();
+    public static $values = array();
 
     public static function get(string $key)
     {

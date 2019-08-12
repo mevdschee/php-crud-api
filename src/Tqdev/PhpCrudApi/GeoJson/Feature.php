@@ -1,4 +1,5 @@
 <?php
+
 namespace Tqdev\PhpCrudApi\GeoJson;
 
 class Feature implements \JsonSerializable

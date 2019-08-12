@@ -1,4 +1,5 @@
 <?php
+
 namespace Tqdev\PhpCrudApi\Database;
 
 use Tqdev\PhpCrudApi\Column\Reflection\ReflectedColumn;
@@ -35,9 +36,9 @@ class GenericDefinition
         $type = $this->typeConverter->fromJdbc($column->getType());
         if ($column->hasPrecision() && $column->hasScale()) {
             $size = '(' . $column->getPrecision() . ',' . $column->getScale() . ')';
-        } else if ($column->hasPrecision()) {
+        } elseif ($column->hasPrecision()) {
             $size = '(' . $column->getPrecision() . ')';
-        } else if ($column->hasLength()) {
+        } elseif ($column->hasLength()) {
             $size = '(' . $column->getLength() . ')';
         } else {
             $size = '';

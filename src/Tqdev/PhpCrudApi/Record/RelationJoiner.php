@@ -1,8 +1,9 @@
 <?php
+
 namespace Tqdev\PhpCrudApi\Record;
 
-use Tqdev\PhpCrudApi\Column\ReflectionService;
 use Tqdev\PhpCrudApi\Column\Reflection\ReflectedTable;
+use Tqdev\PhpCrudApi\Column\ReflectionService;
 use Tqdev\PhpCrudApi\Database\GenericDB;
 use Tqdev\PhpCrudApi\Middleware\Communication\VariableStore;
 use Tqdev\PhpCrudApi\Record\Condition\ColumnCondition;
@@ -10,7 +11,6 @@ use Tqdev\PhpCrudApi\Record\Condition\OrCondition;
 
 class RelationJoiner
 {
-
     private $reflection;
     private $ordering;
     private $columns;
@@ -92,9 +92,7 @@ class RelationJoiner
 
     private function addJoinsForTables(ReflectedTable $t1, PathTree $joins, array &$records, array $params, GenericDB $db)
     {
-
         foreach ($joins->getKeys() as $t2Name) {
-
             $t2 = $this->reflection->getTable($t2Name);
 
             $belongsTo = count($t1->getFksTo($t2->getName())) > 0;
