@@ -3385,7 +3385,7 @@ namespace Tqdev\PhpCrudApi\Cache {
 
     class TempFileCache implements Cache
     {
-        const SUFFIX = 'cache';
+        public const SUFFIX = 'cache';
 
         private $path;
         private $segments;
@@ -3534,9 +3534,9 @@ namespace Tqdev\PhpCrudApi\Column\Reflection {
 
     class ReflectedColumn implements \JsonSerializable
     {
-        const DEFAULT_LENGTH = 255;
-        const DEFAULT_PRECISION = 19;
-        const DEFAULT_SCALE = 4;
+        public const DEFAULT_LENGTH = 255;
+        public const DEFAULT_PRECISION = 19;
+        public const DEFAULT_SCALE = 4;
 
         private $name;
         private $type;
@@ -3573,7 +3573,7 @@ namespace Tqdev\PhpCrudApi\Column\Reflection {
             return new ReflectedColumn($name, $type, $length, $precision, $scale, $nullable, $pk, $fk);
         }
 
-        public static function fromJson( /* object */$json): ReflectedColumn
+        public static function fromJson(/* object */$json): ReflectedColumn
         {
             $name = $json->name;
             $type = $json->type;
@@ -3727,7 +3727,7 @@ namespace Tqdev\PhpCrudApi\Column\Reflection {
             return new ReflectedDatabase($tableTypes);
         }
 
-        public static function fromJson( /* object */$json): ReflectedDatabase
+        public static function fromJson(/* object */$json): ReflectedDatabase
         {
             $tableTypes = (array) $json->tables;
             return new ReflectedDatabase($tableTypes);
@@ -3837,7 +3837,7 @@ namespace Tqdev\PhpCrudApi\Column\Reflection {
             return new ReflectedTable($name, $type, array_values($columns));
         }
 
-        public static function fromJson( /* object */$json): ReflectedTable
+        public static function fromJson(/* object */$json): ReflectedTable
         {
             $name = $json->name;
             $type = $json->type;
@@ -4020,7 +4020,7 @@ namespace Tqdev\PhpCrudApi\Column {
             return true;
         }
 
-        public function addTable( /* object */$definition)
+        public function addTable(/* object */$definition)
         {
             $newTable = ReflectedTable::fromJson($definition);
             if (!$this->db->definition()->addTable($newTable)) {
@@ -4077,7 +4077,6 @@ namespace Tqdev\PhpCrudApi\Column {
             }
             return true;
         }
-
     }
 }
 
@@ -4213,7 +4212,6 @@ namespace Tqdev\PhpCrudApi\Controller {
         {
             return $this->responder->success($this->cache->clear());
         }
-
     }
 }
 
@@ -4440,7 +4438,6 @@ namespace Tqdev\PhpCrudApi\Controller {
                 return $this->responder->success($response);
             }
         }
-
     }
 }
 
@@ -4466,7 +4463,6 @@ namespace Tqdev\PhpCrudApi\Controller {
         {
             return ResponseFactory::fromObject(ResponseFactory::OK, $result);
         }
-
     }
 }
 
@@ -4494,7 +4490,6 @@ namespace Tqdev\PhpCrudApi\Controller {
         {
             return $this->responder->success($this->openApi->get());
         }
-
     }
 }
 
@@ -4675,7 +4670,6 @@ namespace Tqdev\PhpCrudApi\Controller {
                 return $this->responder->success($this->service->increment($table, $id, $record, $params));
             }
         }
-
     }
 }
 
@@ -4689,7 +4683,6 @@ namespace Tqdev\PhpCrudApi\Controller {
         public function error(int $error, string $argument, $details = null): ResponseInterface;
 
         public function success($result): ResponseInterface;
-
     }
 }
 
@@ -4755,7 +4748,6 @@ namespace Tqdev\PhpCrudApi\Database {
             }
             return $value;
         }
-
     }
 }
 
@@ -4866,7 +4858,6 @@ namespace Tqdev\PhpCrudApi\Database {
             }
             return implode(',', $results);
         }
-
     }
 }
 
@@ -5520,9 +5511,9 @@ namespace Tqdev\PhpCrudApi\Database {
             $type = $this->typeConverter->fromJdbc($column->getType());
             if ($column->hasPrecision() && $column->hasScale()) {
                 $size = '(' . $column->getPrecision() . ',' . $column->getScale() . ')';
-            } else if ($column->hasPrecision()) {
+            } elseif ($column->hasPrecision()) {
                 $size = '(' . $column->getPrecision() . ')';
-            } else if ($column->hasLength()) {
+            } elseif ($column->hasLength()) {
                 $size = '(' . $column->getLength() . ')';
             } else {
                 $size = '';
@@ -6516,7 +6507,7 @@ namespace Tqdev\PhpCrudApi\GeoJson {
             return [$lon, $lat];
         }
 
-        private function convertRecordToFeature( /*object*/$record, string $primaryKeyColumnName, string $geometryColumnName)
+        private function convertRecordToFeature(/*object*/$record, string $primaryKeyColumnName, string $geometryColumnName)
         {
             $id = null;
             if ($primaryKeyColumnName) {
@@ -6667,7 +6658,7 @@ namespace Tqdev\PhpCrudApi\Middleware\Communication {
 
     class VariableStore
     {
-        static $values = array();
+        public static $values = array();
 
         public static function get(string $key)
         {
@@ -6860,7 +6851,6 @@ namespace Tqdev\PhpCrudApi\Middleware\Router {
             }
             return $response;
         }
-
     }
 }
 
@@ -7371,8 +7361,8 @@ namespace Tqdev\PhpCrudApi\Middleware {
     use Psr\Http\Message\ResponseInterface;
     use Psr\Http\Message\ServerRequestInterface;
     use Psr\Http\Server\RequestHandlerInterface;
-    use Tqdev\PhpCrudApi\Column\ReflectionService;
     use Tqdev\PhpCrudApi\Column\Reflection\ReflectedTable;
+    use Tqdev\PhpCrudApi\Column\ReflectionService;
     use Tqdev\PhpCrudApi\Controller\Responder;
     use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
     use Tqdev\PhpCrudApi\Middleware\Router\Router;
@@ -7895,8 +7885,8 @@ namespace Tqdev\PhpCrudApi\Middleware {
     use Psr\Http\Message\ResponseInterface;
     use Psr\Http\Message\ServerRequestInterface;
     use Psr\Http\Server\RequestHandlerInterface;
-    use Tqdev\PhpCrudApi\Column\ReflectionService;
     use Tqdev\PhpCrudApi\Column\Reflection\ReflectedTable;
+    use Tqdev\PhpCrudApi\Column\ReflectionService;
     use Tqdev\PhpCrudApi\Controller\Responder;
     use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
     use Tqdev\PhpCrudApi\Middleware\Router\Router;
@@ -7959,8 +7949,8 @@ namespace Tqdev\PhpCrudApi\Middleware {
     use Psr\Http\Message\ResponseInterface;
     use Psr\Http\Message\ServerRequestInterface;
     use Psr\Http\Server\RequestHandlerInterface;
-    use Tqdev\PhpCrudApi\Column\ReflectionService;
     use Tqdev\PhpCrudApi\Column\Reflection\ReflectedTable;
+    use Tqdev\PhpCrudApi\Column\ReflectionService;
     use Tqdev\PhpCrudApi\Controller\Responder;
     use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
     use Tqdev\PhpCrudApi\Middleware\Router\Router;
@@ -8476,7 +8466,6 @@ namespace Tqdev\PhpCrudApi\OpenApi {
         {
             return $this->builder->build();
         }
-
     }
 }
 
@@ -8618,7 +8607,6 @@ namespace Tqdev\PhpCrudApi\Record\Condition {
             }
             return $condition;
         }
-
     }
 }
 
@@ -8641,7 +8629,6 @@ namespace Tqdev\PhpCrudApi\Record\Condition {
         {
             return $this;
         }
-
     }
 }
 
@@ -8758,7 +8745,6 @@ namespace Tqdev\PhpCrudApi\Record\Document {
 
     class ListDocument implements \JsonSerializable
     {
-
         private $records;
 
         private $results;
@@ -8803,14 +8789,19 @@ namespace Tqdev\PhpCrudApi\Record {
 
     class ColumnIncluder
     {
-
         private function isMandatory(string $tableName, string $columnName, array $params): bool
         {
             return isset($params['mandatory']) && in_array($tableName . "." . $columnName, $params['mandatory']);
         }
 
-        private function select(string $tableName, bool $primaryTable, array $params, string $paramName,
-            array $columnNames, bool $include): array{
+        private function select(
+            string $tableName,
+            bool $primaryTable,
+            array $params,
+            string $paramName,
+            array $columnNames,
+            bool $include
+        ): array {
             if (!isset($params[$paramName])) {
                 return $columnNames;
             }
@@ -8860,7 +8851,6 @@ namespace Tqdev\PhpCrudApi\Record {
             }
             return $results;
         }
-
     }
 }
 
@@ -8871,32 +8861,31 @@ namespace Tqdev\PhpCrudApi\Record {
 
     class ErrorCode
     {
-
         private $code;
         private $message;
         private $status;
 
-        const ERROR_NOT_FOUND = 9999;
-        const ROUTE_NOT_FOUND = 1000;
-        const TABLE_NOT_FOUND = 1001;
-        const ARGUMENT_COUNT_MISMATCH = 1002;
-        const RECORD_NOT_FOUND = 1003;
-        const ORIGIN_FORBIDDEN = 1004;
-        const COLUMN_NOT_FOUND = 1005;
-        const TABLE_ALREADY_EXISTS = 1006;
-        const COLUMN_ALREADY_EXISTS = 1007;
-        const HTTP_MESSAGE_NOT_READABLE = 1008;
-        const DUPLICATE_KEY_EXCEPTION = 1009;
-        const DATA_INTEGRITY_VIOLATION = 1010;
-        const AUTHENTICATION_REQUIRED = 1011;
-        const AUTHENTICATION_FAILED = 1012;
-        const INPUT_VALIDATION_FAILED = 1013;
-        const OPERATION_FORBIDDEN = 1014;
-        const OPERATION_NOT_SUPPORTED = 1015;
-        const TEMPORARY_OR_PERMANENTLY_BLOCKED = 1016;
-        const BAD_OR_MISSING_XSRF_TOKEN = 1017;
-        const ONLY_AJAX_REQUESTS_ALLOWED = 1018;
-        const PAGINATION_FORBIDDEN = 1019;
+        public const ERROR_NOT_FOUND = 9999;
+        public const ROUTE_NOT_FOUND = 1000;
+        public const TABLE_NOT_FOUND = 1001;
+        public const ARGUMENT_COUNT_MISMATCH = 1002;
+        public const RECORD_NOT_FOUND = 1003;
+        public const ORIGIN_FORBIDDEN = 1004;
+        public const COLUMN_NOT_FOUND = 1005;
+        public const TABLE_ALREADY_EXISTS = 1006;
+        public const COLUMN_ALREADY_EXISTS = 1007;
+        public const HTTP_MESSAGE_NOT_READABLE = 1008;
+        public const DUPLICATE_KEY_EXCEPTION = 1009;
+        public const DATA_INTEGRITY_VIOLATION = 1010;
+        public const AUTHENTICATION_REQUIRED = 1011;
+        public const AUTHENTICATION_FAILED = 1012;
+        public const INPUT_VALIDATION_FAILED = 1013;
+        public const OPERATION_FORBIDDEN = 1014;
+        public const OPERATION_NOT_SUPPORTED = 1015;
+        public const TEMPORARY_OR_PERMANENTLY_BLOCKED = 1016;
+        public const BAD_OR_MISSING_XSRF_TOKEN = 1017;
+        public const ONLY_AJAX_REQUESTS_ALLOWED = 1018;
+        public const PAGINATION_FORBIDDEN = 1019;
 
         private $values = [
             9999 => ["%s", ResponseFactory::INTERNAL_SERVER_ERROR],
@@ -8946,7 +8935,6 @@ namespace Tqdev\PhpCrudApi\Record {
         {
             return $this->status;
         }
-
     }
 }
 
@@ -8961,7 +8949,6 @@ namespace Tqdev\PhpCrudApi\Record {
 
     class FilterInfo
     {
-
         private function addConditionFromFilterPath(PathTree $conditions, array $path, ReflectedTable $table, array $params)
         {
             $key = 'filter' . implode('', $path);
@@ -9004,7 +8991,6 @@ namespace Tqdev\PhpCrudApi\Record {
         {
             return $this->combinePathTreeOfConditions($this->getConditionsAsPathTree($table, $params));
         }
-
     }
 }
 
@@ -9031,7 +9017,6 @@ namespace Tqdev\PhpCrudApi\Record {
 
     class OrderingInfo
     {
-
         public function getColumnOrdering(ReflectedTable $table, array $params): array
         {
             $fields = array();
@@ -9078,7 +9063,6 @@ namespace Tqdev\PhpCrudApi\Record {
 
     class PaginationInfo
     {
-
         public $DEFAULT_PAGE_SIZE = 20;
 
         public function hasPage(array $params): bool
@@ -9141,7 +9125,6 @@ namespace Tqdev\PhpCrudApi\Record {
             }
             return $pageLimit;
         }
-
     }
 }
 
@@ -9150,11 +9133,11 @@ namespace Tqdev\PhpCrudApi\Record {
 
     class PathTree implements \JsonSerializable
     {
-        const WILDCARD = '*';
+        public const WILDCARD = '*';
 
         private $tree;
 
-        public function __construct( /* object */&$tree = null)
+        public function __construct(/* object */&$tree = null)
         {
             if (!$tree) {
                 $tree = $this->newTree();
@@ -9205,7 +9188,7 @@ namespace Tqdev\PhpCrudApi\Record {
             foreach ($path as $key) {
                 if (isset($tree->branches->$key)) {
                     $tree = &$tree->branches->$key;
-                } else if (isset($tree->branches->$star)) {
+                } elseif (isset($tree->branches->$star)) {
                     $tree = &$tree->branches->$star;
                 } else {
                     return [];
@@ -9214,7 +9197,7 @@ namespace Tqdev\PhpCrudApi\Record {
             return $tree->values;
         }
 
-        public static function fromJson( /* object */$tree): PathTree
+        public static function fromJson(/* object */$tree): PathTree
         {
             return new PathTree($tree);
         }
@@ -9353,8 +9336,8 @@ namespace Tqdev\PhpCrudApi\Record {
 // file: src/Tqdev/PhpCrudApi/Record/RelationJoiner.php
 namespace Tqdev\PhpCrudApi\Record {
 
-    use Tqdev\PhpCrudApi\Column\ReflectionService;
     use Tqdev\PhpCrudApi\Column\Reflection\ReflectedTable;
+    use Tqdev\PhpCrudApi\Column\ReflectionService;
     use Tqdev\PhpCrudApi\Database\GenericDB;
     use Tqdev\PhpCrudApi\Middleware\Communication\VariableStore;
     use Tqdev\PhpCrudApi\Record\Condition\ColumnCondition;
@@ -9362,7 +9345,6 @@ namespace Tqdev\PhpCrudApi\Record {
 
     class RelationJoiner
     {
-
         private $reflection;
         private $ordering;
         private $columns;
@@ -9444,9 +9426,7 @@ namespace Tqdev\PhpCrudApi\Record {
 
         private function addJoinsForTables(ReflectedTable $t1, PathTree $joins, array &$records, array $params, GenericDB $db)
         {
-
             foreach ($joins->getKeys() as $t2Name) {
-
                 $t2 = $this->reflection->getTable($t2Name);
 
                 $belongsTo = count($t1->getFksTo($t2->getName())) > 0;
@@ -9673,9 +9653,9 @@ namespace Tqdev\PhpCrudApi {
     use Tqdev\PhpCrudApi\Middleware\IpAddressMiddleware;
     use Tqdev\PhpCrudApi\Middleware\JoinLimitsMiddleware;
     use Tqdev\PhpCrudApi\Middleware\JwtAuthMiddleware;
-    use Tqdev\PhpCrudApi\Middleware\ReconnectMiddleware;
     use Tqdev\PhpCrudApi\Middleware\MultiTenancyMiddleware;
     use Tqdev\PhpCrudApi\Middleware\PageLimitsMiddleware;
+    use Tqdev\PhpCrudApi\Middleware\ReconnectMiddleware;
     use Tqdev\PhpCrudApi\Middleware\Router\SimpleRouter;
     use Tqdev\PhpCrudApi\Middleware\SanitationMiddleware;
     use Tqdev\PhpCrudApi\Middleware\ValidationMiddleware;
@@ -10006,8 +9986,8 @@ namespace Tqdev\PhpCrudApi {
 // file: src/Tqdev/PhpCrudApi/RequestFactory.php
 namespace Tqdev\PhpCrudApi {
 
-    use Nyholm\Psr7Server\ServerRequestCreator;
     use Nyholm\Psr7\Factory\Psr17Factory;
+    use Nyholm\Psr7Server\ServerRequestCreator;
     use Psr\Http\Message\ServerRequestInterface;
 
     class RequestFactory
@@ -10143,7 +10123,6 @@ namespace Tqdev\PhpCrudApi {
             }
             return $allTableNames;
         }
-
     }
 }
 
@@ -10155,14 +10134,14 @@ namespace Tqdev\PhpCrudApi {
 
     class ResponseFactory
     {
-        const OK = 200;
-        const UNAUTHORIZED = 401;
-        const FORBIDDEN = 403;
-        const NOT_FOUND = 404;
-        const METHOD_NOT_ALLOWED = 405;
-        const CONFLICT = 409;
-        const UNPROCESSABLE_ENTITY = 422;
-        const INTERNAL_SERVER_ERROR = 500;
+        public const OK = 200;
+        public const UNAUTHORIZED = 401;
+        public const FORBIDDEN = 403;
+        public const NOT_FOUND = 404;
+        public const METHOD_NOT_ALLOWED = 405;
+        public const CONFLICT = 409;
+        public const UNPROCESSABLE_ENTITY = 422;
+        public const INTERNAL_SERVER_ERROR = 500;
 
         public static function fromHtml(int $status, string $html): ResponseInterface
         {
@@ -10192,7 +10171,6 @@ namespace Tqdev\PhpCrudApi {
             $psr17Factory = new Psr17Factory();
             return $psr17Factory->createResponse($status);
         }
-
     }
 }
 
