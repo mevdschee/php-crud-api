@@ -46,11 +46,7 @@ class JwtAuthMiddleware extends Middleware
         switch ($algorithm[0]) {
             case 'H':
                 $hash = hash_hmac($hmac, $data, $secret, true);
-                if (function_exists('hash_equals')) {
-                    $equals = hash_equals($signature, $hash);
-                } else {
-                    $equals = $signature == $hash;
-                }
+                $equals = hash_equals($hash, $signature);
                 if (!$equals) {
                     return array();
                 }
