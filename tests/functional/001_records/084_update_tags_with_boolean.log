@@ -1,0 +1,43 @@
+GET /records/tags/1
+===
+200
+Content-Type: application/json
+Content-Length: 44
+
+{"id":1,"name":"funny","is_important":false}
+===
+PUT /records/tags/1
+
+{"id":1,"name":"funny","is_important":true}
+===
+200
+Content-Type: application/json
+Content-Length: 1
+
+1
+===
+GET /records/tags/1
+===
+200
+Content-Type: application/json
+Content-Length: 43
+
+{"id":1,"name":"funny","is_important":true}
+===
+PUT /records/tags/1
+
+{"id":1,"name":"funny","is_important":false}
+===
+200
+Content-Type: application/json
+Content-Length: 1
+
+1
+===
+GET /records/tags/1
+===
+200
+Content-Type: application/json
+Content-Length: 44
+
+{"id":1,"name":"funny","is_important":false}

@@ -56,6 +56,8 @@ class DataConverter
     private function convertInputValue($conversion, $value)
     {
         switch ($conversion) {
+            case 'boolean':
+                return $value ? 1 : 0;
             case 'base64url_to_base64':
                 return str_pad(strtr($value, '-_', '+/'), ceil(strlen($value) / 4) * 4, '=', STR_PAD_RIGHT);
         }
@@ -64,6 +66,9 @@ class DataConverter
 
     private function getInputValueConversion(ReflectedColumn $column): string
     {
+        if ($column->isBoolean()) {
+            return 'boolean';
+        }
         if ($column->isBinary()) {
             return 'base64url_to_base64';
         }
