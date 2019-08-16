@@ -49,7 +49,7 @@ Alternatively you can integrate this project into the web framework of your choi
 
 - [Automatic REST API for Laravel](https://tqdev.com/2019-automatic-rest-api-laravel)
 - [Automatic REST API for Symfony 4](https://tqdev.com/2019-automatic-rest-api-symfony)
-- [Automatic REST API for SlimPHP](https://tqdev.com/2019-automatic-api-slimphp-3)
+- [Automatic REST API for SlimPHP 4](https://tqdev.com/2019-automatic-api-slimphp-4)
 
 ## Configuration
 
