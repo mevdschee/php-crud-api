@@ -160,14 +160,20 @@ class Api implements RequestHandlerInterface
 
     private function addParsedBody(ServerRequestInterface $request): ServerRequestInterface
     {
-        $body = $request->getBody();
-        if ($body->isReadable() && $body->isSeekable()) {
-            $contents = $body->getContents();
-            $body->rewind();
-            if ($contents) {
-                $parsedBody = $this->parseBody($contents);
-                $request = $request->withParsedBody($parsedBody);
+        $contents = '';
+        $parsedBody = $request->getParsedBody();
+        if ($parsedBody) {
+            $contents = json_encode($parsedBody);
+        } else {
+            $body = $request->getBody();
+            if ($body->isReadable() && $body->isSeekable()) {
+                $contents = $body->getContents();
+                $body->rewind();
             }
+        }
+        if ($contents) {
+            $parsedBody = $this->parseBody($contents);
+            $request = $request->withParsedBody($parsedBody);
         }
         return $request;
     }
