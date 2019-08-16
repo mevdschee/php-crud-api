@@ -5131,6 +5131,8 @@ namespace Tqdev\PhpCrudApi\Database {
         private function convertInputValue($conversion, $value)
         {
             switch ($conversion) {
+                case 'boolean':
+                    return $value ? 1 : 0;
                 case 'base64url_to_base64':
                     return str_pad(strtr($value, '-_', '+/'), ceil(strlen($value) / 4) * 4, '=', STR_PAD_RIGHT);
             }
@@ -5139,6 +5141,9 @@ namespace Tqdev\PhpCrudApi\Database {
 
         private function getInputValueConversion(ReflectedColumn $column): string
         {
+            if ($column->isBoolean()) {
+                return 'boolean';
+            }
             if ($column->isBinary()) {
                 return 'base64url_to_base64';
             }
@@ -9793,18 +9798,28 @@ namespace Tqdev\PhpCrudApi {
 
         private function addParsedBody(ServerRequestInterface $request): ServerRequestInterface
         {
-            $contents = '';
             $parsedBody = $request->getParsedBody();
             if ($parsedBody) {
-                $contents = json_encode($parsedBody);
+                $request = $this->applySlim3Hack($request);
             } else {
                 $body = $request->getBody();
                 if ($body->isReadable() && $body->isSeekable()) {
                     $contents = $body->getContents();
                     $body->rewind();
+                    if ($contents) {
+                        $parsedBody = $this->parseBody($contents);
+                        $request = $request->withParsedBody($parsedBody);
+                    }
                 }
             }
-            if ($contents) {
+            return $request;
+        }
+
+        private function applySlim3Hack(ServerRequestInterface $request): ServerRequestInterface
+        {
+            if (get_class($request) == 'Slim\Http\Request') {
+                $parsedBody = $request->getParsedBody();
+                $contents = json_encode($parsedBody);
                 $parsedBody = $this->parseBody($contents);
                 $request = $request->withParsedBody($parsedBody);
             }

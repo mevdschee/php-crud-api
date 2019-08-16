@@ -160,18 +160,28 @@ class Api implements RequestHandlerInterface
 
     private function addParsedBody(ServerRequestInterface $request): ServerRequestInterface
     {
-        $contents = '';
         $parsedBody = $request->getParsedBody();
         if ($parsedBody) {
-            $contents = json_encode($parsedBody);
+            $request = $this->applySlim3Hack($request);
         } else {
             $body = $request->getBody();
             if ($body->isReadable() && $body->isSeekable()) {
                 $contents = $body->getContents();
                 $body->rewind();
+                if ($contents) {
+                    $parsedBody = $this->parseBody($contents);
+                    $request = $request->withParsedBody($parsedBody);
+                }
             }
         }
-        if ($contents) {
+        return $request;
+    }
+
+    private function applySlim3Hack(ServerRequestInterface $request): ServerRequestInterface
+    {
+        if (get_class($request) == 'Slim\Http\Request') {
+            $parsedBody = $request->getParsedBody();
+            $contents = json_encode($parsedBody);
             $parsedBody = $this->parseBody($contents);
             $request = $request->withParsedBody($parsedBody);
         }
