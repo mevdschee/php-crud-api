@@ -14,7 +14,7 @@ class TypeConverter
     private $fromJdbc = [
         'mysql' => [
             'clob' => 'longtext',
-            'boolean' => 'bit',
+            'boolean' => 'tinyint',
             'blob' => 'longblob',
             'timestamp' => 'datetime',
         ],
@@ -47,7 +47,8 @@ class TypeConverter
             'timestamp_with_timezone' => 'timestamp',
         ],
         'mysql' => [
-            'bit' => 'boolean',
+            'tinyint(1)' => 'boolean',
+            'bit(1)' => 'boolean',
             'tinyblob' => 'blob',
             'mediumblob' => 'blob',
             'longblob' => 'blob',
