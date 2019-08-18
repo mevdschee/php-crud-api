@@ -16,6 +16,12 @@ class ResponseFactory
     const UNPROCESSABLE_ENTITY = 422;
     const INTERNAL_SERVER_ERROR = 500;
 
+    public static function fromCsv(int $status, string $csv): ResponseInterface
+    {
+        $response = self::from($status, 'text/csv', $csv);
+        return $response->withHeader('Content-Type', 'text/csv');
+    }
+
     public static function fromHtml(int $status, string $html): ResponseInterface
     {
         return self::from($status, 'text/html', $html);
