@@ -6765,7 +6765,7 @@ namespace Tqdev\PhpCrudApi\Middleware\Router {
 
         public function __construct(string $basePath, Responder $responder, Cache $cache, int $ttl, bool $debug)
         {
-            $this->basePath = $this->detectBasePath($basePath);
+            $this->basePath = rtrim($this->detectBasePath($basePath), '/');
             $this->responder = $responder;
             $this->cache = $cache;
             $this->ttl = $ttl;
@@ -6850,9 +6850,8 @@ namespace Tqdev\PhpCrudApi\Middleware\Router {
         private function removeBasePath(ServerRequestInterface $request): ServerRequestInterface
         {
             $path = $request->getUri()->getPath();
-            $basePath = rtrim($this->basePath, '/');
-            if (substr($path, 0, strlen($basePath)) == $basePath) {
-                $path = substr($path, strlen($basePath));
+            if (substr($path, 0, strlen($this->basePath)) == $this->basePath) {
+                $path = substr($path, strlen($this->basePath));
                 $request = $request->withUri($request->getUri()->withPath($path));
             }
             return $request;
