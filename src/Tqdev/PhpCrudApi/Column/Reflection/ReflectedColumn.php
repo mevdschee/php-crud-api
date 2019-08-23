@@ -32,13 +32,55 @@ class ReflectedColumn implements \JsonSerializable
         $this->sanitize();
     }
 
+    private static function parseColumnType(string $columnType, int &$length, int &$precision, int &$scale) /*: void*/
+    {
+        if (!$columnType) {
+            return;
+        }
+        $pos = strpos($columnType, '(');
+        if ($pos) {
+            $dataSize = rtrim(substr($columnType, $pos + 1), ')');
+            if ($length) {
+                $length = (int) $dataSize;
+            } else {
+                $pos = strpos($dataSize, ',');
+                if ($pos) {
+                    $precision = (int) substr($dataSize, 0, $pos);
+                    $scale = (int) substr($dataSize, $pos + 1);
+                } else {
+                    $precision = (int) $dataSize;
+                    $scale = 0;
+                }
+            }
+        }
+    }
+
+    private static function getDataSize(int $length, int $precision, int $scale): string
+    {
+        $dataSize = '';
+        if ($length) {
+            $dataSize = $length;
+        } elseif ($precision) {
+            if ($scale) {
+                $dataSize = $precision . ',' . $scale;
+            } else {
+                $dataSize = $precision;
+            }
+        }
+        return $dataSize;
+    }
+
     public static function fromReflection(GenericReflection $reflection, array $columnResult): ReflectedColumn
     {
         $name = $columnResult['COLUMN_NAME'];
+        $dataType = $columnResult['DATA_TYPE'];
         $length = (int) $columnResult['CHARACTER_MAXIMUM_LENGTH'];
-        $type = $reflection->toJdbcType($columnResult['DATA_TYPE'], $length);
         $precision = (int) $columnResult['NUMERIC_PRECISION'];
         $scale = (int) $columnResult['NUMERIC_SCALE'];
+        $columnType = $columnResult['COLUMN_TYPE'];
+        self::parseColumnType($columnType, $length, $precision, $scale);
+        $dataSize = self::getDataSize($length, $precision, $scale);
+        $type = $reflection->toJdbcType($dataType, $dataSize);
         $nullable = in_array(strtoupper($columnResult['IS_NULLABLE']), ['TRUE', 'YES', 'T', 'Y', '1']);
         $pk = false;
         $fk = '';

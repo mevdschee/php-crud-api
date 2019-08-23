@@ -3560,13 +3560,54 @@ namespace Tqdev\PhpCrudApi\Column\Reflection {
             $this->sanitize();
         }
 
+        private static function parseColumnType(string $columnType, int &$length, int &$precision, int &$scale) /*: void*/
+        {
+            $pos = strpos($columnType, '(');
+            if ($pos) {
+                $dataSize = rtrim(substr($columnType, $pos + 1), ')');
+                if ($length) {
+                    $length = (int) $dataSize;
+                } else {
+                    $pos = strpos($dataSize, ',');
+                    if ($pos) {
+                        $precision = (int) substr($dataSize, 0, $pos);
+                        $scale = (int) substr($dataSize, $pos + 1);
+                    } else {
+                        $precision = (int) $dataSize;
+                        $scale = 0;
+                    }
+                }
+            }
+        }
+
+        private static function getDataSize(int $length, int $precision, int $scale): string
+        {
+            $dataSize = '';
+            if ($length) {
+                $dataSize = $length;
+            } elseif ($precision) {
+                if ($scale) {
+                    $dataSize = $precision . ',' . $scale;
+                } else {
+                    $dataSize = $precision;
+                }
+            }
+            return $dataSize;
+        }
+
         public static function fromReflection(GenericReflection $reflection, array $columnResult): ReflectedColumn
         {
             $name = $columnResult['COLUMN_NAME'];
+            $dataType = $columnResult['DATA_TYPE'];
             $length = (int) $columnResult['CHARACTER_MAXIMUM_LENGTH'];
-            $type = $reflection->toJdbcType($columnResult['DATA_TYPE'], $length);
             $precision = (int) $columnResult['NUMERIC_PRECISION'];
             $scale = (int) $columnResult['NUMERIC_SCALE'];
+            $columnType = $columnResult['COLUMN_TYPE'];
+            if ($columnType) {
+                self::parseColumnType($columnType, $length, $precision, $scale);
+            }
+            $dataSize = self::getDataSize($length, $precision, $scale);
+            $type = $reflection->toJdbcType($dataType, $dataSize);
             $nullable = in_array(strtoupper($columnResult['IS_NULLABLE']), ['TRUE', 'YES', 'T', 'Y', '1']);
             $pk = false;
             $fk = '';
@@ -4107,9 +4148,10 @@ namespace Tqdev\PhpCrudApi\Column {
 
         private function database(): ReflectedDatabase
         {
-            if (!$this->database) {
-                $this->database = $this->loadDatabase(true);
+            if ($this->database) {
+                return $this->database;
             }
+            $this->database = $this->loadDatabase(true);
             return $this->database;
         }
 
@@ -5961,11 +6003,11 @@ namespace Tqdev\PhpCrudApi\Database {
         {
             switch ($this->driver) {
                 case 'mysql':
-                    return 'SELECT "COLUMN_NAME", "IS_NULLABLE", "DATA_TYPE", if ("DATA_TYPE"=\'tinyint\' OR "DATA_TYPE"=\'bit\',SUBSTRING_INDEX(SUBSTRING_INDEX("COLUMN_TYPE",\'(\',-1),\')\',1),"CHARACTER_MAXIMUM_LENGTH") as "CHARACTER_MAXIMUM_LENGTH", "NUMERIC_PRECISION", "NUMERIC_SCALE" FROM "INFORMATION_SCHEMA"."COLUMNS" WHERE "TABLE_NAME" = ? AND "TABLE_SCHEMA" = ?';
+                    return 'SELECT "COLUMN_NAME", "IS_NULLABLE", "DATA_TYPE", "CHARACTER_MAXIMUM_LENGTH" as "CHARACTER_MAXIMUM_LENGTH", "NUMERIC_PRECISION", "NUMERIC_SCALE", "COLUMN_TYPE" FROM "INFORMATION_SCHEMA"."COLUMNS" WHERE "TABLE_NAME" = ? AND "TABLE_SCHEMA" = ?';
                 case 'pgsql':
-                    return 'SELECT a.attname AS "COLUMN_NAME", case when a.attnotnull then \'NO\' else \'YES\' end as "IS_NULLABLE", pg_catalog.format_type(a.atttypid, -1) as "DATA_TYPE", case when a.atttypmod < 0 then NULL else a.atttypmod-4 end as "CHARACTER_MAXIMUM_LENGTH", case when a.atttypid != 1700 then NULL else ((a.atttypmod - 4) >> 16) & 65535 end as "NUMERIC_PRECISION", case when a.atttypid != 1700 then NULL else (a.atttypmod - 4) & 65535 end as "NUMERIC_SCALE" FROM pg_attribute a JOIN pg_class pgc ON pgc.oid = a.attrelid WHERE pgc.relname = ? AND \'\' <> ? AND a.attnum > 0 AND NOT a.attisdropped;';
+                    return 'SELECT a.attname AS "COLUMN_NAME", case when a.attnotnull then \'NO\' else \'YES\' end as "IS_NULLABLE", pg_catalog.format_type(a.atttypid, -1) as "DATA_TYPE", case when a.atttypmod < 0 then NULL else a.atttypmod-4 end as "CHARACTER_MAXIMUM_LENGTH", case when a.atttypid != 1700 then NULL else ((a.atttypmod - 4) >> 16) & 65535 end as "NUMERIC_PRECISION", case when a.atttypid != 1700 then NULL else (a.atttypmod - 4) & 65535 end as "NUMERIC_SCALE", \'\' AS "COLUMN_TYPE" FROM pg_attribute a JOIN pg_class pgc ON pgc.oid = a.attrelid WHERE pgc.relname = ? AND \'\' <> ? AND a.attnum > 0 AND NOT a.attisdropped;';
                 case 'sqlsrv':
-                    return 'SELECT c.name AS "COLUMN_NAME", c.is_nullable AS "IS_NULLABLE", t.Name AS "DATA_TYPE", (c.max_length/2) AS "CHARACTER_MAXIMUM_LENGTH", c.precision AS "NUMERIC_PRECISION", c.scale AS "NUMERIC_SCALE" FROM sys.columns c INNER JOIN sys.types t ON c.user_type_id = t.user_type_id WHERE c.object_id = OBJECT_ID(?) AND \'\' <> ?';
+                    return 'SELECT c.name AS "COLUMN_NAME", c.is_nullable AS "IS_NULLABLE", t.Name AS "DATA_TYPE", (c.max_length/2) AS "CHARACTER_MAXIMUM_LENGTH", c.precision AS "NUMERIC_PRECISION", c.scale AS "NUMERIC_SCALE", \'\' AS "COLUMN_TYPE" FROM sys.columns c INNER JOIN sys.types t ON c.user_type_id = t.user_type_id WHERE c.object_id = OBJECT_ID(?) AND \'\' <> ?';
             }
         }
 
@@ -6070,7 +6112,7 @@ namespace Tqdev\PhpCrudApi\Database {
             return $foreignKeys;
         }
 
-        public function toJdbcType(string $type, int $size): string
+        public function toJdbcType(string $type, string $size): string
         {
             return $this->typeConverter->toJdbc($type, $size);
         }
@@ -6377,7 +6419,7 @@ namespace Tqdev\PhpCrudApi\Database {
             'geometry' => true,
         ];
 
-        public function toJdbc(string $type, int $size): string
+        public function toJdbc(string $type, string $size): string
         {
             $jdbcType = strtolower($type);
             if (isset($this->toJdbc[$this->driver]["$jdbcType($size)"])) {
@@ -10299,6 +10341,7 @@ namespace Tqdev\PhpCrudApi {
         'username' => 'php-crud-api',
         'password' => 'php-crud-api',
         'database' => 'php-crud-api',
+        'controllers' => 'records,columns,openapi',
     ]);
     $request = RequestFactory::fromGlobals();
     $api = new Api($config);
