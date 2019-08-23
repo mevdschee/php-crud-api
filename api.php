@@ -3562,6 +3562,9 @@ namespace Tqdev\PhpCrudApi\Column\Reflection {
 
         private static function parseColumnType(string $columnType, int &$length, int &$precision, int &$scale) /*: void*/
         {
+            if (!$columnType) {
+                return;
+            }
             $pos = strpos($columnType, '(');
             if ($pos) {
                 $dataSize = rtrim(substr($columnType, $pos + 1), ')');
@@ -3603,9 +3606,7 @@ namespace Tqdev\PhpCrudApi\Column\Reflection {
             $precision = (int) $columnResult['NUMERIC_PRECISION'];
             $scale = (int) $columnResult['NUMERIC_SCALE'];
             $columnType = $columnResult['COLUMN_TYPE'];
-            if ($columnType) {
-                self::parseColumnType($columnType, $length, $precision, $scale);
-            }
+            self::parseColumnType($columnType, $length, $precision, $scale);
             $dataSize = self::getDataSize($length, $precision, $scale);
             $type = $reflection->toJdbcType($dataType, $dataSize);
             $nullable = in_array(strtoupper($columnResult['IS_NULLABLE']), ['TRUE', 'YES', 'T', 'Y', '1']);
@@ -10341,7 +10342,6 @@ namespace Tqdev\PhpCrudApi {
         'username' => 'php-crud-api',
         'password' => 'php-crud-api',
         'database' => 'php-crud-api',
-        'controllers' => 'records,columns,openapi',
     ]);
     $request = RequestFactory::fromGlobals();
     $api = new Api($config);

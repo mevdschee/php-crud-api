@@ -13,7 +13,6 @@ $config = new Config([
     'username' => 'php-crud-api',
     'password' => 'php-crud-api',
     'database' => 'php-crud-api',
-    'controllers' => 'records,columns,openapi',
 ]);
 $request = RequestFactory::fromGlobals();
 $api = new Api($config);
