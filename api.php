@@ -8150,7 +8150,6 @@ namespace Tqdev\PhpCrudApi\Middleware {
 namespace Tqdev\PhpCrudApi\OpenApi {
 
     use Tqdev\PhpCrudApi\Column\ReflectionService;
-    use Tqdev\PhpCrudApi\Middleware\Communication\VariableStore;
     use Tqdev\PhpCrudApi\OpenApi\OpenApiDefinition;
 
     class OpenApiBuilder
