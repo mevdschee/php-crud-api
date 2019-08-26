@@ -8156,6 +8156,123 @@ namespace Tqdev\PhpCrudApi\OpenApi {
     class OpenApiBuilder
     {
         private $openapi;
+        private $records;
+        private $columns;
+
+        public function __construct(ReflectionService $reflection, $base)
+        {
+            $this->openapi = new OpenApiDefinition($base);
+            $this->records = new OpenApiRecordsBuilder($this->openapi, $reflection);
+            $this->columns = new OpenApiColumnsBuilder($this->openapi, $reflection);
+        }
+
+        private function getServerUrl(): string
+        {
+            $protocol = @$_SERVER['HTTP_X_FORWARDED_PROTO'] ?: @$_SERVER['REQUEST_SCHEME'] ?: ((isset($_SERVER["HTTPS"]) && $_SERVER["HTTPS"] == "on") ? "https" : "http");
+            $port = @intval($_SERVER['HTTP_X_FORWARDED_PORT']) ?: @intval($_SERVER["SERVER_PORT"]) ?: (($protocol === 'https') ? 443 : 80);
+            $host = @explode(":", $_SERVER['HTTP_HOST'])[0] ?: @$_SERVER['SERVER_NAME'] ?: @$_SERVER['SERVER_ADDR'];
+            $port = ($protocol === 'https' && $port === 443) || ($protocol === 'http' && $port === 80) ? '' : ':' . $port;
+            $path = @trim(substr($_SERVER['REQUEST_URI'], 0, strpos($_SERVER['REQUEST_URI'], '/openapi')), '/');
+            return sprintf('%s://%s%s/%s', $protocol, $host, $port, $path);
+        }
+
+        public function build() /*: void */
+        {
+            $this->openapi->set("openapi", "3.0.0");
+            if (!$this->openapi->has("servers") && isset($_SERVER['REQUEST_URI'])) {
+                $this->openapi->set("servers|0|url", $this->getServerUrl());
+            }
+            $this->records->build();
+        }
+
+        public function getDefinition(): OpenApiDefinition
+        {
+            return $this->openapi;
+        }
+    }
+}
+
+// file: src/Tqdev/PhpCrudApi/OpenApi/OpenApiColumnsBuilder.php
+namespace Tqdev\PhpCrudApi\OpenApi {
+
+    use Tqdev\PhpCrudApi\Column\ReflectionService;
+    use Tqdev\PhpCrudApi\Middleware\Communication\VariableStore;
+    use Tqdev\PhpCrudApi\OpenApi\OpenApiDefinition;
+
+    class OpenApiColumnsBuilder
+    {
+        private $openapi;
+        private $reflection;
+
+        public function __construct(OpenApiDefinition $openapi, ReflectionService $reflection)
+        {
+            $this->openapi = $openapi;
+            $this->reflection = $reflection;
+        }
+
+        public function build() /*: void*/
+        {
+        }
+    }
+}
+
+// file: src/Tqdev/PhpCrudApi/OpenApi/OpenApiDefinition.php
+namespace Tqdev\PhpCrudApi\OpenApi {
+
+    class OpenApiDefinition implements \JsonSerializable
+    {
+        private $root;
+
+        public function __construct($base)
+        {
+            $this->root = $base;
+        }
+
+        public function set(string $path, $value) /*: void*/
+        {
+            $parts = explode('|', trim($path, '|'));
+            $current = &$this->root;
+            while (count($parts) > 0) {
+                $part = array_shift($parts);
+                if (!isset($current[$part])) {
+                    $current[$part] = [];
+                }
+                $current = &$current[$part];
+            }
+            $current = $value;
+        }
+
+        public function has(string $path): bool
+        {
+            $parts = explode('|', trim($path, '|'));
+            $current = &$this->root;
+            while (count($parts) > 0) {
+                $part = array_shift($parts);
+                if (!isset($current[$part])) {
+                    return false;
+                }
+                $current = &$current[$part];
+            }
+            return true;
+        }
+
+        public function jsonSerialize()
+        {
+            return $this->root;
+        }
+    }
+}
+
+// file: src/Tqdev/PhpCrudApi/OpenApi/OpenApiRecordsBuilder.php
+namespace Tqdev\PhpCrudApi\OpenApi {
+
+    use Tqdev\PhpCrudApi\Column\ReflectionService;
+    use Tqdev\PhpCrudApi\Middleware\Communication\VariableStore;
+    use Tqdev\PhpCrudApi\OpenApi\OpenApiDefinition;
+
+    class OpenApiRecordsBuilder
+    {
+        private $openapi;
         private $reflection;
         private $operations = [
             'list' => 'get',
@@ -8182,20 +8299,10 @@ namespace Tqdev\PhpCrudApi\OpenApi {
             'boolean' => ['type' => 'boolean'],
         ];
 
-        public function __construct(ReflectionService $reflection, $base)
+        public function __construct(OpenApiDefinition $openapi, ReflectionService $reflection)
         {
+            $this->openapi = $openapi;
             $this->reflection = $reflection;
-            $this->openapi = new OpenApiDefinition($base);
-        }
-
-        private function getServerUrl(): string
-        {
-            $protocol = @$_SERVER['HTTP_X_FORWARDED_PROTO'] ?: @$_SERVER['REQUEST_SCHEME'] ?: ((isset($_SERVER["HTTPS"]) && $_SERVER["HTTPS"] == "on") ? "https" : "http");
-            $port = @intval($_SERVER['HTTP_X_FORWARDED_PORT']) ?: @intval($_SERVER["SERVER_PORT"]) ?: (($protocol === 'https') ? 443 : 80);
-            $host = @explode(":", $_SERVER['HTTP_HOST'])[0] ?: @$_SERVER['SERVER_NAME'] ?: @$_SERVER['SERVER_ADDR'];
-            $port = ($protocol === 'https' && $port === 443) || ($protocol === 'http' && $port === 80) ? '' : ':' . $port;
-            $path = @trim(substr($_SERVER['REQUEST_URI'], 0, strpos($_SERVER['REQUEST_URI'], '/openapi')), '/');
-            return sprintf('%s://%s%s/%s', $protocol, $host, $port, $path);
         }
 
         private function getAllTableReferences(): array
@@ -8217,12 +8324,8 @@ namespace Tqdev\PhpCrudApi\OpenApi {
             return $tableReferences;
         }
 
-        public function build(): OpenApiDefinition
+        public function build() /*: void*/
         {
-            $this->openapi->set("openapi", "3.0.0");
-            if (!$this->openapi->has("servers") && isset($_SERVER['REQUEST_URI'])) {
-                $this->openapi->set("servers|0|url", $this->getServerUrl());
-            }
             $tableNames = $this->reflection->getTableNames();
             foreach ($tableNames as $tableName) {
                 $this->setPath($tableName);
@@ -8247,7 +8350,6 @@ namespace Tqdev\PhpCrudApi\OpenApi {
             foreach ($tableNames as $index => $tableName) {
                 $this->setTag($index, $tableName);
             }
-            return $this->openapi;
         }
 
         private function isOperationOnTableAllowed(string $operation, string $tableName): bool
@@ -8479,53 +8581,6 @@ namespace Tqdev\PhpCrudApi\OpenApi {
         {
             $this->openapi->set("tags|$index|name", "$tableName");
             $this->openapi->set("tags|$index|description", "$tableName operations");
-        }
-    }
-}
-
-// file: src/Tqdev/PhpCrudApi/OpenApi/OpenApiDefinition.php
-namespace Tqdev\PhpCrudApi\OpenApi {
-
-    class OpenApiDefinition implements \JsonSerializable
-    {
-        private $root;
-
-        public function __construct($base)
-        {
-            $this->root = $base;
-        }
-
-        public function set(string $path, $value) /*: void*/
-        {
-            $parts = explode('|', trim($path, '|'));
-            $current = &$this->root;
-            while (count($parts) > 0) {
-                $part = array_shift($parts);
-                if (!isset($current[$part])) {
-                    $current[$part] = [];
-                }
-                $current = &$current[$part];
-            }
-            $current = $value;
-        }
-
-        public function has(string $path): bool
-        {
-            $parts = explode('|', trim($path, '|'));
-            $current = &$this->root;
-            while (count($parts) > 0) {
-                $part = array_shift($parts);
-                if (!isset($current[$part])) {
-                    return false;
-                }
-                $current = &$current[$part];
-            }
-            return true;
-        }
-
-        public function jsonSerialize()
-        {
-            return $this->root;
         }
     }
 }
