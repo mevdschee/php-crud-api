@@ -8175,17 +8175,13 @@ namespace Tqdev\PhpCrudApi\OpenApi {
             return sprintf('%s://%s%s/%s', $protocol, $host, $port, $path);
         }
 
-        public function build() /*: void */
+        public function build(): OpenApiDefinition
         {
             $this->openapi->set("openapi", "3.0.0");
             if (!$this->openapi->has("servers") && isset($_SERVER['REQUEST_URI'])) {
                 $this->openapi->set("servers|0|url", $this->getServerUrl());
             }
             $this->records->build();
-        }
-
-        public function getDefinition(): OpenApiDefinition
-        {
             return $this->openapi;
         }
     }
