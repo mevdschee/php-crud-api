@@ -26,9 +26,10 @@ class ReflectionService
 
     private function database(): ReflectedDatabase
     {
-        if (!$this->database) {
-            $this->database = $this->loadDatabase(true);
+        if ($this->database) {
+            return $this->database;
         }
+        $this->database = $this->loadDatabase(true);
         return $this->database;
     }
 

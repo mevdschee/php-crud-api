@@ -166,7 +166,7 @@ class TypeConverter
         'geometry' => true,
     ];
 
-    public function toJdbc(string $type, int $size): string
+    public function toJdbc(string $type, string $size): string
     {
         $jdbcType = strtolower($type);
         if (isset($this->toJdbc[$this->driver]["$jdbcType($size)"])) {

@@ -3560,13 +3560,55 @@ namespace Tqdev\PhpCrudApi\Column\Reflection {
             $this->sanitize();
         }
 
+        private static function parseColumnType(string $columnType, int &$length, int &$precision, int &$scale) /*: void*/
+        {
+            if (!$columnType) {
+                return;
+            }
+            $pos = strpos($columnType, '(');
+            if ($pos) {
+                $dataSize = rtrim(substr($columnType, $pos + 1), ')');
+                if ($length) {
+                    $length = (int) $dataSize;
+                } else {
+                    $pos = strpos($dataSize, ',');
+                    if ($pos) {
+                        $precision = (int) substr($dataSize, 0, $pos);
+                        $scale = (int) substr($dataSize, $pos + 1);
+                    } else {
+                        $precision = (int) $dataSize;
+                        $scale = 0;
+                    }
+                }
+            }
+        }
+
+        private static function getDataSize(int $length, int $precision, int $scale): string
+        {
+            $dataSize = '';
+            if ($length) {
+                $dataSize = $length;
+            } elseif ($precision) {
+                if ($scale) {
+                    $dataSize = $precision . ',' . $scale;
+                } else {
+                    $dataSize = $precision;
+                }
+            }
+            return $dataSize;
+        }
+
         public static function fromReflection(GenericReflection $reflection, array $columnResult): ReflectedColumn
         {
             $name = $columnResult['COLUMN_NAME'];
+            $dataType = $columnResult['DATA_TYPE'];
             $length = (int) $columnResult['CHARACTER_MAXIMUM_LENGTH'];
-            $type = $reflection->toJdbcType($columnResult['DATA_TYPE'], $length);
             $precision = (int) $columnResult['NUMERIC_PRECISION'];
             $scale = (int) $columnResult['NUMERIC_SCALE'];
+            $columnType = $columnResult['COLUMN_TYPE'];
+            self::parseColumnType($columnType, $length, $precision, $scale);
+            $dataSize = self::getDataSize($length, $precision, $scale);
+            $type = $reflection->toJdbcType($dataType, $dataSize);
             $nullable = in_array(strtoupper($columnResult['IS_NULLABLE']), ['TRUE', 'YES', 'T', 'Y', '1']);
             $pk = false;
             $fk = '';
@@ -4107,9 +4149,10 @@ namespace Tqdev\PhpCrudApi\Column {
 
         private function database(): ReflectedDatabase
         {
-            if (!$this->database) {
-                $this->database = $this->loadDatabase(true);
+            if ($this->database) {
+                return $this->database;
             }
+            $this->database = $this->loadDatabase(true);
             return $this->database;
         }
 
@@ -5961,11 +6004,11 @@ namespace Tqdev\PhpCrudApi\Database {
         {
             switch ($this->driver) {
                 case 'mysql':
-                    return 'SELECT "COLUMN_NAME", "IS_NULLABLE", "DATA_TYPE", if ("DATA_TYPE"=\'tinyint\' OR "DATA_TYPE"=\'bit\',SUBSTRING_INDEX(SUBSTRING_INDEX("COLUMN_TYPE",\'(\',-1),\')\',1),"CHARACTER_MAXIMUM_LENGTH") as "CHARACTER_MAXIMUM_LENGTH", "NUMERIC_PRECISION", "NUMERIC_SCALE" FROM "INFORMATION_SCHEMA"."COLUMNS" WHERE "TABLE_NAME" = ? AND "TABLE_SCHEMA" = ?';
+                    return 'SELECT "COLUMN_NAME", "IS_NULLABLE", "DATA_TYPE", "CHARACTER_MAXIMUM_LENGTH" as "CHARACTER_MAXIMUM_LENGTH", "NUMERIC_PRECISION", "NUMERIC_SCALE", "COLUMN_TYPE" FROM "INFORMATION_SCHEMA"."COLUMNS" WHERE "TABLE_NAME" = ? AND "TABLE_SCHEMA" = ?';
                 case 'pgsql':
-                    return 'SELECT a.attname AS "COLUMN_NAME", case when a.attnotnull then \'NO\' else \'YES\' end as "IS_NULLABLE", pg_catalog.format_type(a.atttypid, -1) as "DATA_TYPE", case when a.atttypmod < 0 then NULL else a.atttypmod-4 end as "CHARACTER_MAXIMUM_LENGTH", case when a.atttypid != 1700 then NULL else ((a.atttypmod - 4) >> 16) & 65535 end as "NUMERIC_PRECISION", case when a.atttypid != 1700 then NULL else (a.atttypmod - 4) & 65535 end as "NUMERIC_SCALE" FROM pg_attribute a JOIN pg_class pgc ON pgc.oid = a.attrelid WHERE pgc.relname = ? AND \'\' <> ? AND a.attnum > 0 AND NOT a.attisdropped;';
+                    return 'SELECT a.attname AS "COLUMN_NAME", case when a.attnotnull then \'NO\' else \'YES\' end as "IS_NULLABLE", pg_catalog.format_type(a.atttypid, -1) as "DATA_TYPE", case when a.atttypmod < 0 then NULL else a.atttypmod-4 end as "CHARACTER_MAXIMUM_LENGTH", case when a.atttypid != 1700 then NULL else ((a.atttypmod - 4) >> 16) & 65535 end as "NUMERIC_PRECISION", case when a.atttypid != 1700 then NULL else (a.atttypmod - 4) & 65535 end as "NUMERIC_SCALE", \'\' AS "COLUMN_TYPE" FROM pg_attribute a JOIN pg_class pgc ON pgc.oid = a.attrelid WHERE pgc.relname = ? AND \'\' <> ? AND a.attnum > 0 AND NOT a.attisdropped;';
                 case 'sqlsrv':
-                    return 'SELECT c.name AS "COLUMN_NAME", c.is_nullable AS "IS_NULLABLE", t.Name AS "DATA_TYPE", (c.max_length/2) AS "CHARACTER_MAXIMUM_LENGTH", c.precision AS "NUMERIC_PRECISION", c.scale AS "NUMERIC_SCALE" FROM sys.columns c INNER JOIN sys.types t ON c.user_type_id = t.user_type_id WHERE c.object_id = OBJECT_ID(?) AND \'\' <> ?';
+                    return 'SELECT c.name AS "COLUMN_NAME", c.is_nullable AS "IS_NULLABLE", t.Name AS "DATA_TYPE", (c.max_length/2) AS "CHARACTER_MAXIMUM_LENGTH", c.precision AS "NUMERIC_PRECISION", c.scale AS "NUMERIC_SCALE", \'\' AS "COLUMN_TYPE" FROM sys.columns c INNER JOIN sys.types t ON c.user_type_id = t.user_type_id WHERE c.object_id = OBJECT_ID(?) AND \'\' <> ?';
             }
         }
 
@@ -6070,7 +6113,7 @@ namespace Tqdev\PhpCrudApi\Database {
             return $foreignKeys;
         }
 
-        public function toJdbcType(string $type, int $size): string
+        public function toJdbcType(string $type, string $size): string
         {
             return $this->typeConverter->toJdbc($type, $size);
         }
@@ -6377,7 +6420,7 @@ namespace Tqdev\PhpCrudApi\Database {
             'geometry' => true,
         ];
 
-        public function toJdbc(string $type, int $size): string
+        public function toJdbc(string $type, string $size): string
         {
             $jdbcType = strtolower($type);
             if (isset($this->toJdbc[$this->driver]["$jdbcType($size)"])) {
@@ -6765,7 +6808,7 @@ namespace Tqdev\PhpCrudApi\Middleware\Router {
 
         public function __construct(string $basePath, Responder $responder, Cache $cache, int $ttl, bool $debug)
         {
-            $this->basePath = $this->detectBasePath($basePath);
+            $this->basePath = rtrim($this->detectBasePath($basePath), '/');
             $this->responder = $responder;
             $this->cache = $cache;
             $this->ttl = $ttl;
@@ -6850,9 +6893,8 @@ namespace Tqdev\PhpCrudApi\Middleware\Router {
         private function removeBasePath(ServerRequestInterface $request): ServerRequestInterface
         {
             $path = $request->getUri()->getPath();
-            $basePath = rtrim($this->basePath, '/');
-            if (substr($path, 0, strlen($basePath)) == $basePath) {
-                $path = substr($path, strlen($basePath));
+            if (substr($path, 0, strlen($this->basePath)) == $this->basePath) {
+                $path = substr($path, strlen($this->basePath));
                 $request = $request->withUri($request->getUri()->withPath($path));
             }
             return $request;
@@ -8108,10 +8150,122 @@ namespace Tqdev\PhpCrudApi\Middleware {
 namespace Tqdev\PhpCrudApi\OpenApi {
 
     use Tqdev\PhpCrudApi\Column\ReflectionService;
-    use Tqdev\PhpCrudApi\Middleware\Communication\VariableStore;
     use Tqdev\PhpCrudApi\OpenApi\OpenApiDefinition;
 
     class OpenApiBuilder
+    {
+        private $openapi;
+        private $records;
+        private $columns;
+
+        public function __construct(ReflectionService $reflection, $base)
+        {
+            $this->openapi = new OpenApiDefinition($base);
+            $this->records = new OpenApiRecordsBuilder($this->openapi, $reflection);
+            $this->columns = new OpenApiColumnsBuilder($this->openapi, $reflection);
+        }
+
+        private function getServerUrl(): string
+        {
+            $protocol = @$_SERVER['HTTP_X_FORWARDED_PROTO'] ?: @$_SERVER['REQUEST_SCHEME'] ?: ((isset($_SERVER["HTTPS"]) && $_SERVER["HTTPS"] == "on") ? "https" : "http");
+            $port = @intval($_SERVER['HTTP_X_FORWARDED_PORT']) ?: @intval($_SERVER["SERVER_PORT"]) ?: (($protocol === 'https') ? 443 : 80);
+            $host = @explode(":", $_SERVER['HTTP_HOST'])[0] ?: @$_SERVER['SERVER_NAME'] ?: @$_SERVER['SERVER_ADDR'];
+            $port = ($protocol === 'https' && $port === 443) || ($protocol === 'http' && $port === 80) ? '' : ':' . $port;
+            $path = @trim(substr($_SERVER['REQUEST_URI'], 0, strpos($_SERVER['REQUEST_URI'], '/openapi')), '/');
+            return sprintf('%s://%s%s/%s', $protocol, $host, $port, $path);
+        }
+
+        public function build(): OpenApiDefinition
+        {
+            $this->openapi->set("openapi", "3.0.0");
+            if (!$this->openapi->has("servers") && isset($_SERVER['REQUEST_URI'])) {
+                $this->openapi->set("servers|0|url", $this->getServerUrl());
+            }
+            $this->records->build();
+            return $this->openapi;
+        }
+    }
+}
+
+// file: src/Tqdev/PhpCrudApi/OpenApi/OpenApiColumnsBuilder.php
+namespace Tqdev\PhpCrudApi\OpenApi {
+
+    use Tqdev\PhpCrudApi\Column\ReflectionService;
+    use Tqdev\PhpCrudApi\Middleware\Communication\VariableStore;
+    use Tqdev\PhpCrudApi\OpenApi\OpenApiDefinition;
+
+    class OpenApiColumnsBuilder
+    {
+        private $openapi;
+        private $reflection;
+
+        public function __construct(OpenApiDefinition $openapi, ReflectionService $reflection)
+        {
+            $this->openapi = $openapi;
+            $this->reflection = $reflection;
+        }
+
+        public function build() /*: void*/
+        {
+        }
+    }
+}
+
+// file: src/Tqdev/PhpCrudApi/OpenApi/OpenApiDefinition.php
+namespace Tqdev\PhpCrudApi\OpenApi {
+
+    class OpenApiDefinition implements \JsonSerializable
+    {
+        private $root;
+
+        public function __construct($base)
+        {
+            $this->root = $base;
+        }
+
+        public function set(string $path, $value) /*: void*/
+        {
+            $parts = explode('|', trim($path, '|'));
+            $current = &$this->root;
+            while (count($parts) > 0) {
+                $part = array_shift($parts);
+                if (!isset($current[$part])) {
+                    $current[$part] = [];
+                }
+                $current = &$current[$part];
+            }
+            $current = $value;
+        }
+
+        public function has(string $path): bool
+        {
+            $parts = explode('|', trim($path, '|'));
+            $current = &$this->root;
+            while (count($parts) > 0) {
+                $part = array_shift($parts);
+                if (!isset($current[$part])) {
+                    return false;
+                }
+                $current = &$current[$part];
+            }
+            return true;
+        }
+
+        public function jsonSerialize()
+        {
+            return $this->root;
+        }
+    }
+}
+
+// file: src/Tqdev/PhpCrudApi/OpenApi/OpenApiRecordsBuilder.php
+namespace Tqdev\PhpCrudApi\OpenApi {
+
+    use Tqdev\PhpCrudApi\Column\ReflectionService;
+    use Tqdev\PhpCrudApi\Middleware\Communication\VariableStore;
+    use Tqdev\PhpCrudApi\OpenApi\OpenApiDefinition;
+
+    class OpenApiRecordsBuilder
     {
         private $openapi;
         private $reflection;
@@ -8140,20 +8294,10 @@ namespace Tqdev\PhpCrudApi\OpenApi {
             'boolean' => ['type' => 'boolean'],
         ];
 
-        public function __construct(ReflectionService $reflection, $base)
+        public function __construct(OpenApiDefinition $openapi, ReflectionService $reflection)
         {
+            $this->openapi = $openapi;
             $this->reflection = $reflection;
-            $this->openapi = new OpenApiDefinition($base);
-        }
-
-        private function getServerUrl(): string
-        {
-            $protocol = @$_SERVER['HTTP_X_FORWARDED_PROTO'] ?: @$_SERVER['REQUEST_SCHEME'] ?: ((isset($_SERVER["HTTPS"]) && $_SERVER["HTTPS"] == "on") ? "https" : "http");
-            $port = @intval($_SERVER['HTTP_X_FORWARDED_PORT']) ?: @intval($_SERVER["SERVER_PORT"]) ?: (($protocol === 'https') ? 443 : 80);
-            $host = @explode(":", $_SERVER['HTTP_HOST'])[0] ?: @$_SERVER['SERVER_NAME'] ?: @$_SERVER['SERVER_ADDR'];
-            $port = ($protocol === 'https' && $port === 443) || ($protocol === 'http' && $port === 80) ? '' : ':' . $port;
-            $path = @trim(substr($_SERVER['REQUEST_URI'], 0, strpos($_SERVER['REQUEST_URI'], '/openapi')), '/');
-            return sprintf('%s://%s%s/%s', $protocol, $host, $port, $path);
         }
 
         private function getAllTableReferences(): array
@@ -8175,12 +8319,8 @@ namespace Tqdev\PhpCrudApi\OpenApi {
             return $tableReferences;
         }
 
-        public function build(): OpenApiDefinition
+        public function build() /*: void*/
         {
-            $this->openapi->set("openapi", "3.0.0");
-            if (!$this->openapi->has("servers") && isset($_SERVER['REQUEST_URI'])) {
-                $this->openapi->set("servers|0|url", $this->getServerUrl());
-            }
             $tableNames = $this->reflection->getTableNames();
             foreach ($tableNames as $tableName) {
                 $this->setPath($tableName);
@@ -8205,7 +8345,6 @@ namespace Tqdev\PhpCrudApi\OpenApi {
             foreach ($tableNames as $index => $tableName) {
                 $this->setTag($index, $tableName);
             }
-            return $this->openapi;
         }
 
         private function isOperationOnTableAllowed(string $operation, string $tableName): bool
@@ -8260,13 +8399,13 @@ namespace Tqdev\PhpCrudApi\OpenApi {
                     $this->openapi->set("paths|$path|$method|parameters|$p|\$ref", "#/components/parameters/$parameter");
                 }
                 if (in_array($operation, ['create', 'update', 'increment'])) {
-                    $this->openapi->set("paths|$path|$method|requestBody|\$ref", "#/components/requestBodies/$operation-" . urlencode($tableName));
+                    $this->openapi->set("paths|$path|$method|requestBody|\$ref", "#/components/requestBodies/$operation-" . rawurlencode($tableName));
                 }
                 $this->openapi->set("paths|$path|$method|tags|0", "$tableName");
                 $this->openapi->set("paths|$path|$method|description", "$operation $tableName");
                 switch ($operation) {
                     case 'list':
-                        $this->openapi->set("paths|$path|$method|responses|200|\$ref", "#/components/responses/$operation-" . urlencode($tableName));
+                        $this->openapi->set("paths|$path|$method|responses|200|\$ref", "#/components/responses/$operation-" . rawurlencode($tableName));
                         break;
                     case 'create':
                         if ($pk->getType() == 'integer') {
@@ -8276,7 +8415,7 @@ namespace Tqdev\PhpCrudApi\OpenApi {
                         }
                         break;
                     case 'read':
-                        $this->openapi->set("paths|$path|$method|responses|200|\$ref", "#/components/responses/$operation-" . urlencode($tableName));
+                        $this->openapi->set("paths|$path|$method|responses|200|\$ref", "#/components/responses/$operation-" . rawurlencode($tableName));
                         break;
                     case 'update':
                     case 'delete':
@@ -8358,7 +8497,7 @@ namespace Tqdev\PhpCrudApi\OpenApi {
                 } else {
                     $this->openapi->set("components|responses|$operation-$tableName|description", "single $tableName record");
                 }
-                $this->openapi->set("components|responses|$operation-$tableName|content|application/json|schema|\$ref", "#/components/schemas/$operation-" . urlencode($tableName));
+                $this->openapi->set("components|responses|$operation-$tableName|content|application/json|schema|\$ref", "#/components/schemas/$operation-" . rawurlencode($tableName));
             }
         }
 
@@ -8374,7 +8513,7 @@ namespace Tqdev\PhpCrudApi\OpenApi {
                         continue;
                     }
                     $this->openapi->set("components|requestBodies|$operation-$tableName|description", "single $tableName record");
-                    $this->openapi->set("components|requestBodies|$operation-$tableName|content|application/json|schema|\$ref", "#/components/schemas/$operation-" . urlencode($tableName));
+                    $this->openapi->set("components|requestBodies|$operation-$tableName|content|application/json|schema|\$ref", "#/components/schemas/$operation-" . rawurlencode($tableName));
                 }
             }
         }
@@ -8437,53 +8576,6 @@ namespace Tqdev\PhpCrudApi\OpenApi {
         {
             $this->openapi->set("tags|$index|name", "$tableName");
             $this->openapi->set("tags|$index|description", "$tableName operations");
-        }
-    }
-}
-
-// file: src/Tqdev/PhpCrudApi/OpenApi/OpenApiDefinition.php
-namespace Tqdev\PhpCrudApi\OpenApi {
-
-    class OpenApiDefinition implements \JsonSerializable
-    {
-        private $root;
-
-        public function __construct($base)
-        {
-            $this->root = $base;
-        }
-
-        public function set(string $path, $value) /*: void*/
-        {
-            $parts = explode('|', trim($path, '|'));
-            $current = &$this->root;
-            while (count($parts) > 0) {
-                $part = array_shift($parts);
-                if (!isset($current[$part])) {
-                    $current[$part] = [];
-                }
-                $current = &$current[$part];
-            }
-            $current = $value;
-        }
-
-        public function has(string $path): bool
-        {
-            $parts = explode('|', trim($path, '|'));
-            $current = &$this->root;
-            while (count($parts) > 0) {
-                $part = array_shift($parts);
-                if (!isset($current[$part])) {
-                    return false;
-                }
-                $current = &$current[$part];
-            }
-            return true;
-        }
-
-        public function jsonSerialize()
-        {
-            return $this->root;
         }
     }
 }
@@ -10199,6 +10291,12 @@ namespace Tqdev\PhpCrudApi {
         const CONFLICT = 409;
         const UNPROCESSABLE_ENTITY = 422;
         const INTERNAL_SERVER_ERROR = 500;
+
+        public static function fromCsv(int $status, string $csv): ResponseInterface
+        {
+            $response = self::from($status, 'text/csv', $csv);
+            return $response->withHeader('Content-Type', 'text/csv');
+        }
 
         public static function fromHtml(int $status, string $html): ResponseInterface
         {
