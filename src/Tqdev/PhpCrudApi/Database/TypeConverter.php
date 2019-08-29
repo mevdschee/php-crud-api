@@ -63,6 +63,7 @@ class TypeConverter
             'datetime' => 'timestamp',
             'year' => 'integer',
             'enum' => 'varchar',
+            'set' => 'varchar',
             'json' => 'clob',
         ],
         'pgsql' => [
