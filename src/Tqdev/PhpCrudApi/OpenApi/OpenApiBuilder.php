@@ -35,6 +35,7 @@ class OpenApiBuilder
             $this->openapi->set("servers|0|url", $this->getServerUrl());
         }
         $this->records->build();
+        //$this->columns->build();
         return $this->openapi;
     }
 }
