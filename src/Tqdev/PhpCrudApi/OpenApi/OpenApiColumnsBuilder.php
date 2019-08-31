@@ -101,8 +101,31 @@ class OpenApiColumnsBuilder
                 $operationType = $operation . ucfirst($type);
                 $prefix = "components|schemas|$operationType";
                 $this->openapi->set("$prefix|type", "object");
-                $this->openapi->set("$prefix|properties|name|type", 'string');
-                $this->openapi->set("$prefix|properties|type|type", 'string');
+                switch ($type) {
+                    case 'database':
+                        $this->openapi->set("$prefix|properties|tables|type", 'array');
+                        $this->openapi->set("$prefix|properties|tables|items|\$ref", "#/components/responses/readTable");
+                        break;
+                    case 'table':
+                        $this->openapi->set("$prefix|properties|name|type", 'string');
+                        $this->openapi->set("$prefix|properties|type|type", 'string');
+                        $this->openapi->set("$prefix|properties|columns|type", 'array');
+                        $this->openapi->set("$prefix|properties|columns|items|\$ref", "#/components/responses/readColumn");
+                        break;
+                    case 'column':
+                        $this->openapi->set("$prefix|properties|name|type", 'string');
+                        $this->openapi->set("$prefix|properties|type|type", 'string');
+                        $this->openapi->set("$prefix|properties|length|type", 'integer');
+                        $this->openapi->set("$prefix|properties|length|format", "int64");
+                        $this->openapi->set("$prefix|properties|precision|type", 'integer');
+                        $this->openapi->set("$prefix|properties|precision|format", "int64");
+                        $this->openapi->set("$prefix|properties|scale|type", 'integer');
+                        $this->openapi->set("$prefix|properties|scale|format", "int64");
+                        $this->openapi->set("$prefix|properties|nullable|type", 'boolean');
+                        $this->openapi->set("$prefix|properties|pk|type", 'boolean');
+                        $this->openapi->set("$prefix|properties|fk|type", 'string');
+                        break;
+                }
             }
         }
     }
