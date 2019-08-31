@@ -9,101 +9,151 @@ use Tqdev\PhpCrudApi\OpenApi\OpenApiDefinition;
 class OpenApiColumnsBuilder
 {
     private $openapi;
-    private $reflection;
     private $operations = [
-        'list' => 'get',
-        'create' => 'post',
-        'read' => 'get',
-        'update' => 'put',
-        'delete' => 'delete',
+        'database' => [
+            'read' => 'get',
+        ],
+        'table' => [
+            'create' => 'post',
+            'read' => 'get',
+            'update' => 'put', //rename
+            'delete' => 'delete',
+        ],
+        'column' => [
+            'create' => 'post',
+            'read' => 'get',
+            'update' => 'put',
+            'delete' => 'delete',
+        ]
     ];
 
-    public function __construct(OpenApiDefinition $openapi, ReflectionService $reflection)
+    public function __construct(OpenApiDefinition $openapi)
     {
         $this->openapi = $openapi;
-        $this->reflection = $reflection;
     }
 
     public function build() /*: void*/
     {
-        $tableNames = $this->reflection->getTableNames();
-        foreach ($tableNames as $tableName) {
-            $this->setPath($tableName);
+        $this->setPaths();
+        $this->openapi->set("components|responses|boolSuccess|description", "boolean indicating success or failure");
+        $this->openapi->set("components|responses|boolSuccess|content|application/json|schema|type", "boolean");
+        $this->setComponentSchema();
+        $this->setComponentResponse();
+        $this->setComponentRequestBody();
+        $this->setComponentParameters();
+        foreach (array_keys($this->operations) as $index => $type) {
+            $this->setTag($index, $type);
         }
     }
 
-    private function isOperationOnTableAllowed(string $operation, string $tableName): bool
+    private function setPaths() /*: void*/
     {
-        $tableHandler = VariableStore::get('authorization.tableHandler');
-        if (!$tableHandler) {
-            return true;
-        }
-        return (bool) call_user_func($tableHandler, $operation, $tableName);
-    }
-
-    private function isOperationOnColumnAllowed(string $operation, string $tableName, string $columnName): bool
-    {
-        $columnHandler = VariableStore::get('authorization.columnHandler');
-        if (!$columnHandler) {
-            return true;
-        }
-        return (bool) call_user_func($columnHandler, $operation, $tableName, $columnName);
-    }
-
-    private function setPath(string $tableName) /*: void*/
-    {
-        $table = $this->reflection->getTable($tableName);
-        $type = $table->getType();
-        foreach ($this->operations as $operation => $method) {
-            if ($type != 'table' && $method != 'get') {
-                continue;
-            }
-            $action = $operation == 'get' ? 'reflect' : 'remodel';
-            if (!$this->isOperationOnTableAllowed($action, $tableName)) {
-                continue;
-            }
-            $parameters = [];
-            if (in_array($operation, ['list', 'create'])) {
-                $path = sprintf('/records/%s', $tableName);
-                if ($operation == 'list') {
-                    $parameters = ['filter', 'include', 'exclude', 'order', 'size', 'page', 'join'];
+        foreach (array_keys($this->operations) as $type) {
+            foreach ($this->operations[$type] as $operation => $method) {
+                $parameters = [];
+                switch ($type) {
+                    case 'database':
+                        $path = '/columns';
+                        break;
+                    case 'table':
+                        $path = $operation == 'create' ? '/columns' : '/columns/{table}';
+                        break;
+                    case 'column':
+                        $path = $operation == 'create' ? '/columns/{table}' : '/columns/{table}/{column}';
+                        break;
                 }
-            } else {
-                $path = sprintf('/records/%s/{%s}', $tableName);
-                if ($operation == 'read') {
-                    $parameters = ['pk', 'include', 'exclude', 'join'];
-                } else {
-                    $parameters = ['pk'];
+                if (strpos($path, '{table}')) {
+                    $parameters[] = 'table';
+                }
+                if (strpos($path, '{column}')) {
+                    $parameters[] = 'column';
+                }
+                foreach ($parameters as $p => $parameter) {
+                    $this->openapi->set("paths|$path|$method|parameters|$p|\$ref", "#/components/parameters/$parameter");
+                }
+                $operationType = $operation . ucfirst($type);
+                if (in_array($operation, ['create', 'update'])) {
+                    $this->openapi->set("paths|$path|$method|requestBody|\$ref", "#/components/requestBodies/$operationType");
+                }
+                $this->openapi->set("paths|$path|$method|tags|0", "$type");
+                $this->openapi->set("paths|$path|$method|description", "$operation $type");
+                switch ($operation) {
+                    case 'read':
+                        $this->openapi->set("paths|$path|$method|responses|200|\$ref", "#/components/responses/$operationType");
+                        break;
+                    case 'create':
+                    case 'update':
+                    case 'delete':
+                        $this->openapi->set("paths|$path|$method|responses|200|\$ref", "#/components/responses/boolSuccess");
+                        break;
                 }
             }
-            foreach ($parameters as $p => $parameter) {
-                $this->openapi->set("paths|$path|$method|parameters|$p|\$ref", "#/components/parameters/$parameter");
-            }
-            if (in_array($operation, ['create', 'update', 'increment'])) {
-                $this->openapi->set("paths|$path|$method|requestBody|\$ref", "#/components/requestBodies/$operation-" . rawurlencode($tableName));
-            }
-            $this->openapi->set("paths|$path|$method|tags|0", "$tableName");
-            $this->openapi->set("paths|$path|$method|description", "$operation $tableName");
-            switch ($operation) {
-                case 'list':
-                    $this->openapi->set("paths|$path|$method|responses|200|\$ref", "#/components/responses/$operation-" . rawurlencode($tableName));
-                    break;
-                case 'create':
-                    if ($pk->getType() == 'integer') {
-                        $this->openapi->set("paths|$path|$method|responses|200|\$ref", "#/components/responses/pk_integer");
-                    } else {
-                        $this->openapi->set("paths|$path|$method|responses|200|\$ref", "#/components/responses/pk_string");
-                    }
-                    break;
-                case 'read':
-                    $this->openapi->set("paths|$path|$method|responses|200|\$ref", "#/components/responses/$operation-" . rawurlencode($tableName));
-                    break;
-                case 'update':
-                case 'delete':
-                case 'increment':
-                    $this->openapi->set("paths|$path|$method|responses|200|\$ref", "#/components/responses/rows_affected");
-                    break;
+        }
+    }
+
+    private function setComponentSchema() /*: void*/
+    {
+        foreach (array_keys($this->operations) as $type) {
+            foreach (array_keys($this->operations[$type]) as $operation) {
+                if ($operation == 'delete') {
+                    continue;
+                }
+                $operationType = $operation . ucfirst($type);
+                $prefix = "components|schemas|$operationType";
+                $this->openapi->set("$prefix|type", "object");
+                $this->openapi->set("$prefix|properties|name|type", 'string');
+                $this->openapi->set("$prefix|properties|type|type", 'string');
             }
         }
+    }
+
+    private function setComponentResponse() /*: void*/
+    {
+        foreach (array_keys($this->operations) as $type) {
+            foreach (array_keys($this->operations[$type]) as $operation) {
+                if ($operation != 'read') {
+                    continue;
+                }
+                $operationType = $operation . ucfirst($type);
+                $this->openapi->set("components|responses|$operationType|description", "single $type record");
+                $this->openapi->set("components|responses|$operationType|content|application/json|schema|\$ref", "#/components/schemas/$operationType");
+            }
+        }
+    }
+
+    private function setComponentRequestBody() /*: void*/
+    {
+        foreach (array_keys($this->operations) as $type) {
+            foreach (array_keys($this->operations[$type]) as $operation) {
+                if (!in_array($operation, ['create', 'update'])) {
+                    continue;
+                }
+                $operationType = $operation . ucfirst($type);
+                $this->openapi->set("components|requestBodies|$operationType|description", "single $type record");
+                $this->openapi->set("components|requestBodies|$operationType|content|application/json|schema|\$ref", "#/components/schemas/$operationType");
+            }
+        }
+    }
+
+
+    private function setComponentParameters() /*: void*/
+    {
+        $this->openapi->set("components|parameters|table|name", "table");
+        $this->openapi->set("components|parameters|table|in", "path");
+        $this->openapi->set("components|parameters|table|schema|type", "string");
+        $this->openapi->set("components|parameters|table|description", "table name");
+        $this->openapi->set("components|parameters|table|required", true);
+
+        $this->openapi->set("components|parameters|column|name", "column");
+        $this->openapi->set("components|parameters|column|in", "path");
+        $this->openapi->set("components|parameters|column|schema|type", "string");
+        $this->openapi->set("components|parameters|column|description", "column name");
+        $this->openapi->set("components|parameters|column|required", true);
+    }
+
+    private function setTag(int $index, string $type) /*: void*/
+    {
+        $this->openapi->set("tags|$index|name", "$type");
+        $this->openapi->set("tags|$index|description", "$type operations");
     }
 }
