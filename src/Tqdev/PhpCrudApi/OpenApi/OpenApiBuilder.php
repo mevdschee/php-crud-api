@@ -11,11 +11,11 @@ class OpenApiBuilder
     private $records;
     private $columns;
 
-    public function __construct(ReflectionService $reflection, $base)
+    public function __construct(ReflectionService $reflection, array $base, array $controllers)
     {
         $this->openapi = new OpenApiDefinition($base);
-        $this->records = new OpenApiRecordsBuilder($this->openapi, $reflection);
-        $this->columns = new OpenApiColumnsBuilder($this->openapi);
+        $this->records = in_array('records', $controllers) ? new OpenApiRecordsBuilder($this->openapi, $reflection) : null;
+        $this->columns = in_array('columns', $controllers) ? new OpenApiColumnsBuilder($this->openapi) : null;
     }
 
     private function getServerUrl(): string
@@ -34,8 +34,12 @@ class OpenApiBuilder
         if (!$this->openapi->has("servers") && isset($_SERVER['REQUEST_URI'])) {
             $this->openapi->set("servers|0|url", $this->getServerUrl());
         }
-        $this->records->build();
-        //$this->columns->build();
+        if ($this->records) {
+            $this->records->build();
+        }
+        if ($this->columns) {
+            $this->columns->build();
+        }
         return $this->openapi;
     }
 }

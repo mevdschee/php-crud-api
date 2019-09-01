@@ -76,7 +76,11 @@ class OpenApiColumnsBuilder
                     $this->openapi->set("paths|$path|$method|requestBody|\$ref", "#/components/requestBodies/$operationType");
                 }
                 $this->openapi->set("paths|$path|$method|tags|0", "$type");
-                $this->openapi->set("paths|$path|$method|description", "$operation $type");
+                if ($operationType == 'updateTable') {
+                    $this->openapi->set("paths|$path|$method|description", "rename table");
+                } else {
+                    $this->openapi->set("paths|$path|$method|description", "$operation $type");
+                }
                 switch ($operation) {
                     case 'read':
                         $this->openapi->set("paths|$path|$method|responses|200|\$ref", "#/components/responses/$operationType");
@@ -104,15 +108,23 @@ class OpenApiColumnsBuilder
                 switch ($type) {
                     case 'database':
                         $this->openapi->set("$prefix|properties|tables|type", 'array');
-                        $this->openapi->set("$prefix|properties|tables|items|\$ref", "#/components/responses/readTable");
+                        $this->openapi->set("$prefix|properties|tables|items|\$ref", "#/components/schemas/readTable");
                         break;
                     case 'table':
-                        $this->openapi->set("$prefix|properties|name|type", 'string');
-                        $this->openapi->set("$prefix|properties|type|type", 'string');
-                        $this->openapi->set("$prefix|properties|columns|type", 'array');
-                        $this->openapi->set("$prefix|properties|columns|items|\$ref", "#/components/responses/readColumn");
+                        if ($operation == 'update') {
+                            $this->openapi->set("$prefix|required", ['name']);
+                            $this->openapi->set("$prefix|properties|name|type", 'string');
+                        } else {
+                            $this->openapi->set("$prefix|properties|name|type", 'string');
+                            if ($operation == 'read') {
+                                $this->openapi->set("$prefix|properties|type|type", 'string');
+                            }
+                            $this->openapi->set("$prefix|properties|columns|type", 'array');
+                            $this->openapi->set("$prefix|properties|columns|items|\$ref", "#/components/schemas/readColumn");
+                        }
                         break;
                     case 'column':
+                        $this->openapi->set("$prefix|required", ['name', 'type']);
                         $this->openapi->set("$prefix|properties|name|type", 'string');
                         $this->openapi->set("$prefix|properties|type|type", 'string');
                         $this->openapi->set("$prefix|properties|length|type", 'integer');

@@ -121,7 +121,7 @@ class Api implements RequestHandlerInterface
                     new CacheController($router, $responder, $cache);
                     break;
                 case 'openapi':
-                    $openApi = new OpenApiService($reflection, $config->getOpenApiBase());
+                    $openApi = new OpenApiService($reflection, $config->getOpenApiBase(), $config->getControllers());
                     new OpenApiController($router, $responder, $openApi);
                     break;
                 case 'geojson':

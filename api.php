@@ -8159,11 +8159,11 @@ namespace Tqdev\PhpCrudApi\OpenApi {
         private $records;
         private $columns;
 
-        public function __construct(ReflectionService $reflection, $base)
+        public function __construct(ReflectionService $reflection, array $base, array $controllers)
         {
             $this->openapi = new OpenApiDefinition($base);
-            $this->records = new OpenApiRecordsBuilder($this->openapi, $reflection);
-            $this->columns = new OpenApiColumnsBuilder($this->openapi);
+            $this->records = in_array('records', $controllers) ? new OpenApiRecordsBuilder($this->openapi, $reflection) : null;
+            $this->columns = in_array('columns', $controllers) ? new OpenApiColumnsBuilder($this->openapi) : null;
         }
 
         private function getServerUrl(): string
@@ -8182,8 +8182,12 @@ namespace Tqdev\PhpCrudApi\OpenApi {
             if (!$this->openapi->has("servers") && isset($_SERVER['REQUEST_URI'])) {
                 $this->openapi->set("servers|0|url", $this->getServerUrl());
             }
-            $this->records->build();
-            //$this->columns->build();
+            if ($this->records) {
+                $this->records->build();
+            }
+            if ($this->columns) {
+                $this->columns->build();
+            }
             return $this->openapi;
         }
     }
@@ -8266,7 +8270,11 @@ namespace Tqdev\PhpCrudApi\OpenApi {
                         $this->openapi->set("paths|$path|$method|requestBody|\$ref", "#/components/requestBodies/$operationType");
                     }
                     $this->openapi->set("paths|$path|$method|tags|0", "$type");
-                    $this->openapi->set("paths|$path|$method|description", "$operation $type");
+                    if ($operationType == 'updateTable') {
+                        $this->openapi->set("paths|$path|$method|description", "rename table");
+                    } else {
+                        $this->openapi->set("paths|$path|$method|description", "$operation $type");
+                    }
                     switch ($operation) {
                         case 'read':
                             $this->openapi->set("paths|$path|$method|responses|200|\$ref", "#/components/responses/$operationType");
@@ -8294,15 +8302,23 @@ namespace Tqdev\PhpCrudApi\OpenApi {
                     switch ($type) {
                         case 'database':
                             $this->openapi->set("$prefix|properties|tables|type", 'array');
-                            $this->openapi->set("$prefix|properties|tables|items|\$ref", "#/components/responses/readTable");
+                            $this->openapi->set("$prefix|properties|tables|items|\$ref", "#/components/schemas/readTable");
                             break;
                         case 'table':
-                            $this->openapi->set("$prefix|properties|name|type", 'string');
-                            $this->openapi->set("$prefix|properties|type|type", 'string');
-                            $this->openapi->set("$prefix|properties|columns|type", 'array');
-                            $this->openapi->set("$prefix|properties|columns|items|\$ref", "#/components/responses/readColumn");
+                            if ($operation == 'update') {
+                                $this->openapi->set("$prefix|required", ['name']);
+                                $this->openapi->set("$prefix|properties|name|type", 'string');
+                            } else {
+                                $this->openapi->set("$prefix|properties|name|type", 'string');
+                                if ($operation == 'read') {
+                                    $this->openapi->set("$prefix|properties|type|type", 'string');
+                                }
+                                $this->openapi->set("$prefix|properties|columns|type", 'array');
+                                $this->openapi->set("$prefix|properties|columns|items|\$ref", "#/components/schemas/readColumn");
+                            }
                             break;
                         case 'column':
+                            $this->openapi->set("$prefix|required", ['name', 'type']);
                             $this->openapi->set("$prefix|properties|name|type", 'string');
                             $this->openapi->set("$prefix|properties|type|type", 'string');
                             $this->openapi->set("$prefix|properties|length|type", 'integer');
@@ -8378,7 +8394,7 @@ namespace Tqdev\PhpCrudApi\OpenApi {
     {
         private $root;
 
-        public function __construct($base)
+        public function __construct(array $base)
         {
             $this->root = $base;
         }
@@ -8750,9 +8766,9 @@ namespace Tqdev\PhpCrudApi\OpenApi {
     {
         private $builder;
 
-        public function __construct(ReflectionService $reflection, array $base)
+        public function __construct(ReflectionService $reflection, array $base, array $controllers)
         {
-            $this->builder = new OpenApiBuilder($reflection, $base);
+            $this->builder = new OpenApiBuilder($reflection, $base, $controllers);
         }
 
         public function get(): OpenApiDefinition
@@ -10042,7 +10058,7 @@ namespace Tqdev\PhpCrudApi {
                         new CacheController($router, $responder, $cache);
                         break;
                     case 'openapi':
-                        $openApi = new OpenApiService($reflection, $config->getOpenApiBase());
+                        $openApi = new OpenApiService($reflection, $config->getOpenApiBase(), $config->getControllers());
                         new OpenApiController($router, $responder, $openApi);
                         break;
                     case 'geojson':
