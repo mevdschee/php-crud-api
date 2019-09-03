@@ -10068,6 +10068,12 @@ namespace Tqdev\PhpCrudApi {
                         break;
                 }
             }
+            foreach ($config->getCustomControllers() as $className) {
+                if (class_exists($className)) {
+                    $records = new RecordService($db, $reflection);
+                    new $className($router, $responder, $records);
+                }
+            }
             $this->router = $router;
             $this->responder = $responder;
             $this->debug = $config->getDebug();
@@ -10155,6 +10161,7 @@ namespace Tqdev\PhpCrudApi {
             'database' => null,
             'middlewares' => 'cors',
             'controllers' => 'records,geojson,openapi',
+            'customControllers' => '',
             'cacheType' => 'TempFile',
             'cachePath' => '',
             'cacheTime' => 10,
@@ -10174,18 +10181,24 @@ namespace Tqdev\PhpCrudApi {
         private function getDefaultPort(string $driver): int
         {
             switch ($driver) {
-                case 'mysql':return 3306;
-                case 'pgsql':return 5432;
-                case 'sqlsrv':return 1433;
+                case 'mysql':
+                    return 3306;
+                case 'pgsql':
+                    return 5432;
+                case 'sqlsrv':
+                    return 1433;
             }
         }
 
         private function getDefaultAddress(string $driver): string
         {
             switch ($driver) {
-                case 'mysql':return 'localhost';
-                case 'pgsql':return 'localhost';
-                case 'sqlsrv':return 'localhost';
+                case 'mysql':
+                    return 'localhost';
+                case 'pgsql':
+                    return 'localhost';
+                case 'sqlsrv':
+                    return 'localhost';
             }
         }
 
@@ -10273,7 +10286,12 @@ namespace Tqdev\PhpCrudApi {
 
         public function getControllers(): array
         {
-            return array_map('trim', explode(',', $this->values['controllers']));
+            return array_filter(array_map('trim', explode(',', $this->values['controllers'])));
+        }
+
+        public function getCustomControllers(): array
+        {
+            return array_filter(array_map('trim', explode(',', $this->values['customControllers'])));
         }
 
         public function getCacheType(): string

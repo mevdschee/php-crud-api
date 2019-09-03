@@ -131,6 +131,12 @@ class Api implements RequestHandlerInterface
                     break;
             }
         }
+        foreach ($config->getCustomControllers() as $className) {
+            if (class_exists($className)) {
+                $records = new RecordService($db, $reflection);
+                new $className($router, $responder, $records);
+            }
+        }
         $this->router = $router;
         $this->responder = $responder;
         $this->debug = $config->getDebug();
