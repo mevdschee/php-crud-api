@@ -616,7 +616,7 @@ You can tune the middleware behavior using middleware specific configuration par
 - "jwtAuth.header": Name of the header containing the JWT token ("X-Authorization")
 - "jwtAuth.leeway": The acceptable number of seconds of clock skew ("5")
 - "jwtAuth.ttl": The number of seconds the token is valid ("30")
-- "jwtAuth.secret": The shared secret used to sign the JWT token with ("")
+- "jwtAuth.secrets": The shared secret(s) used to sign the JWT token with ("")
 - "jwtAuth.algorithms": The algorithms that are allowed, empty means 'all' ("")
 - "jwtAuth.audiences": The audiences that are allowed, empty means 'all' ("")
 - "jwtAuth.issuers": The issuers that are allowed, empty means 'all' ("")
@@ -731,7 +731,7 @@ Once logged in, you have to create an application (its type does not matter). Co
 and `Client ID` and keep them for a later use. Then, create an API: give it a name and fill the
 `identifier` field with your API endpoint's URL.
 
-Then you have to configure the `jwtAuth.secret` configuration in your `api.php` file.
+Then you have to configure the `jwtAuth.secrets` configuration in your `api.php` file.
 Don't fill it with the `secret` you will find in your Auth0 application settings but with **a
 public certificate**. To find it, go to the settings of your application, then in "Extra settings".
 You will now find a "Certificates" tab where you will find your Public Key in the Signing
@@ -755,11 +755,11 @@ You can also change the `url` variable, used to test the API with authentication
 First you need to create a Firebase project on the [Firebase console](https://console.firebase.google.com/).
 Add a web application to this project and grab the code snippet for later use.
 
-Then you have to configure the `jwtAuth.secret` configuration in your `api.php` file.
+Then you have to configure the `jwtAuth.secrets` configuration in your `api.php` file.
 Grab the public key via this [URL](https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com).
 There may be several certificates, just grab the one corresponding to your `kid` (if you don't
 know what it is, just test them all until you will be logged in).
-Now, just fill `jwtAuth.secret` with your public key.F
+Now, just fill `jwtAuth.secrets` with your public key.
 
 To test your integration, you can copy the [firebase/vanilla.html](examples/clients/firebase/vanilla.html)
 file and the [firebase/vanilla-success.html](examples/clients/firebase/vanilla-success.html) file,
