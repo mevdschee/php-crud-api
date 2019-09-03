@@ -6,7 +6,7 @@ class OpenApiDefinition implements \JsonSerializable
 {
     private $root;
 
-    public function __construct($base)
+    public function __construct(array $base)
     {
         $this->root = $base;
     }

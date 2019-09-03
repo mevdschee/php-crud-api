@@ -9,9 +9,9 @@ class OpenApiService
 {
     private $builder;
 
-    public function __construct(ReflectionService $reflection, array $base)
+    public function __construct(ReflectionService $reflection, array $base, array $controllers, array $customBuilders)
     {
-        $this->builder = new OpenApiBuilder($reflection, $base);
+        $this->builder = new OpenApiBuilder($reflection, $base, $controllers, $customBuilders);
     }
 
     public function get(): OpenApiDefinition

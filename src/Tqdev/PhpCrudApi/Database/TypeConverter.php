@@ -63,6 +63,7 @@ class TypeConverter
             'datetime' => 'timestamp',
             'year' => 'integer',
             'enum' => 'varchar',
+            'set' => 'varchar',
             'json' => 'clob',
         ],
         'pgsql' => [
@@ -102,7 +103,7 @@ class TypeConverter
         ],
         // source: https://docs.microsoft.com/en-us/sql/connect/jdbc/using-basic-data-types?view=sql-server-2017
         'sqlsrv' => [
-            'varbinary(0)' => 'blob',
+            'varbinary()' => 'blob',
             'bit' => 'boolean',
             'datetime' => 'timestamp',
             'datetime2' => 'timestamp',
