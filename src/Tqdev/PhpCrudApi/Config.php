@@ -14,6 +14,7 @@ class Config
         'middlewares' => 'cors',
         'controllers' => 'records,geojson,openapi',
         'customControllers' => '',
+        'customOpenApiBuilders' => '',
         'cacheType' => 'TempFile',
         'cachePath' => '',
         'cacheTime' => 10,
@@ -144,6 +145,11 @@ class Config
     public function getCustomControllers(): array
     {
         return array_filter(array_map('trim', explode(',', $this->values['customControllers'])));
+    }
+
+    public function getCustomOpenApiBuilders(): array
+    {
+        return array_filter(array_map('trim', explode(',', $this->values['customOpenApiBuilders'])));
     }
 
     public function getCacheType(): string

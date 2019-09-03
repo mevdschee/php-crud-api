@@ -7590,7 +7590,6 @@ namespace Tqdev\PhpCrudApi\Middleware {
     use Psr\Http\Message\ResponseInterface;
     use Psr\Http\Message\ServerRequestInterface;
     use Psr\Http\Server\RequestHandlerInterface;
-    use Tqdev\PhpCrudApi\Controller\Responder;
     use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
     use Tqdev\PhpCrudApi\Record\ErrorCode;
     use Tqdev\PhpCrudApi\RequestUtils;
@@ -7616,7 +7615,7 @@ namespace Tqdev\PhpCrudApi\Middleware {
             if (isset($header['kid'])) {
                 $kid = $header['kid'];
             }
-            if (!$secrets[$kid]) {
+            if (!isset($secrets[$kid])) {
                 return array();
             }
             $secret = $secrets[$kid];
@@ -7684,14 +7683,14 @@ namespace Tqdev\PhpCrudApi\Middleware {
             $leeway = (int) $this->getProperty('leeway', '5');
             $ttl = (int) $this->getProperty('ttl', '30');
             $secrets = $this->getMapProperty('secrets', '');
+            if (!$secrets) {
+                $secrets = [$this->getProperty('secret', '')];
+            }
             $requirements = array(
                 'alg' => $this->getArrayProperty('algorithms', ''),
                 'aud' => $this->getArrayProperty('audiences', ''),
                 'iss' => $this->getArrayProperty('issuers', ''),
             );
-            if (!$secrets) {
-                return array();
-            }
             return $this->getVerifiedClaims($token, $time, $leeway, $ttl, $secrets, $requirements);
         }
 
@@ -8178,12 +8177,17 @@ namespace Tqdev\PhpCrudApi\OpenApi {
         private $openapi;
         private $records;
         private $columns;
+        private $builders;
 
-        public function __construct(ReflectionService $reflection, array $base, array $controllers)
+        public function __construct(ReflectionService $reflection, array $base, array $controllers, array $builders)
         {
             $this->openapi = new OpenApiDefinition($base);
             $this->records = in_array('records', $controllers) ? new OpenApiRecordsBuilder($this->openapi, $reflection) : null;
             $this->columns = in_array('columns', $controllers) ? new OpenApiColumnsBuilder($this->openapi) : null;
+            $this->builders = array();
+            foreach ($builders as $className) {
+                $this->builders[] = new $className($this->openapi, $reflection);
+            }
         }
 
         private function getServerUrl(): string
@@ -8208,6 +8212,9 @@ namespace Tqdev\PhpCrudApi\OpenApi {
             if ($this->columns) {
                 $this->columns->build();
             }
+            foreach ($this->builders as $builder) {
+                $builder->build();
+            }
             return $this->openapi;
         }
     }
@@ -8216,8 +8223,6 @@ namespace Tqdev\PhpCrudApi\OpenApi {
 // file: src/Tqdev/PhpCrudApi/OpenApi/OpenApiColumnsBuilder.php
 namespace Tqdev\PhpCrudApi\OpenApi {
 
-    use Tqdev\PhpCrudApi\Column\ReflectionService;
-    use Tqdev\PhpCrudApi\Middleware\Communication\VariableStore;
     use Tqdev\PhpCrudApi\OpenApi\OpenApiDefinition;
 
     class OpenApiColumnsBuilder
@@ -8786,9 +8791,9 @@ namespace Tqdev\PhpCrudApi\OpenApi {
     {
         private $builder;
 
-        public function __construct(ReflectionService $reflection, array $base, array $controllers)
+        public function __construct(ReflectionService $reflection, array $base, array $controllers, array $customBuilders)
         {
-            $this->builder = new OpenApiBuilder($reflection, $base, $controllers);
+            $this->builder = new OpenApiBuilder($reflection, $base, $controllers, $customBuilders);
         }
 
         public function get(): OpenApiDefinition
@@ -10078,7 +10083,7 @@ namespace Tqdev\PhpCrudApi {
                         new CacheController($router, $responder, $cache);
                         break;
                     case 'openapi':
-                        $openApi = new OpenApiService($reflection, $config->getOpenApiBase(), $config->getControllers());
+                        $openApi = new OpenApiService($reflection, $config->getOpenApiBase(), $config->getControllers(), $config->getCustomOpenApiBuilders());
                         new OpenApiController($router, $responder, $openApi);
                         break;
                     case 'geojson':
@@ -10182,6 +10187,7 @@ namespace Tqdev\PhpCrudApi {
             'middlewares' => 'cors',
             'controllers' => 'records,geojson,openapi',
             'customControllers' => '',
+            'customOpenApiBuilders' => '',
             'cacheType' => 'TempFile',
             'cachePath' => '',
             'cacheTime' => 10,
@@ -10312,6 +10318,11 @@ namespace Tqdev\PhpCrudApi {
         public function getCustomControllers(): array
         {
             return array_filter(array_map('trim', explode(',', $this->values['customControllers'])));
+        }
+
+        public function getCustomOpenApiBuilders(): array
+        {
+            return array_filter(array_map('trim', explode(',', $this->values['customOpenApiBuilders'])));
         }
 
         public function getCacheType(): string
