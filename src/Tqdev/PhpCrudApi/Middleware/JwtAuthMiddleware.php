@@ -5,7 +5,6 @@ namespace Tqdev\PhpCrudApi\Middleware;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
-use Tqdev\PhpCrudApi\Controller\Responder;
 use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
 use Tqdev\PhpCrudApi\Record\ErrorCode;
 use Tqdev\PhpCrudApi\RequestUtils;
@@ -31,7 +30,7 @@ class JwtAuthMiddleware extends Middleware
         if (isset($header['kid'])) {
             $kid = $header['kid'];
         }
-        if (!$secrets[$kid]) {
+        if (!isset($secrets[$kid])) {
             return array();
         }
         $secret = $secrets[$kid];
@@ -99,14 +98,14 @@ class JwtAuthMiddleware extends Middleware
         $leeway = (int) $this->getProperty('leeway', '5');
         $ttl = (int) $this->getProperty('ttl', '30');
         $secrets = $this->getMapProperty('secrets', '');
+        if (!$secrets) {
+            $secrets = [$this->getProperty('secret', '')];
+        }
         $requirements = array(
             'alg' => $this->getArrayProperty('algorithms', ''),
             'aud' => $this->getArrayProperty('audiences', ''),
             'iss' => $this->getArrayProperty('issuers', ''),
         );
-        if (!$secrets) {
-            return array();
-        }
         return $this->getVerifiedClaims($token, $time, $leeway, $ttl, $secrets, $requirements);
     }
 
