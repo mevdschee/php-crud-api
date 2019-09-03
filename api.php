@@ -6735,6 +6735,21 @@ namespace Tqdev\PhpCrudApi\Middleware\Base {
             return array_filter(array_map('trim', explode(',', $this->getProperty($key, $default))));
         }
 
+        protected function getMapProperty(string $key, string $default): array
+        {
+            $pairs = $this->getArrayProperty($key, $default);
+            $result = array();
+            foreach ($pairs as $pair) {
+                if (strpos($pair, ':')) {
+                    list($k, $v) = explode(':', $pair, 2);
+                    $result[trim($k)] = trim($v);
+                } else {
+                    $result[] = trim($pair);
+                }
+            }
+            return $result;
+        }
+
         protected function getProperty(string $key, $default)
         {
             return isset($this->properties[$key]) ? $this->properties[$key] : $default;
@@ -7582,7 +7597,7 @@ namespace Tqdev\PhpCrudApi\Middleware {
 
     class JwtAuthMiddleware extends Middleware
     {
-        private function getVerifiedClaims(string $token, int $time, int $leeway, int $ttl, string $secret, array $requirements): array
+        private function getVerifiedClaims(string $token, int $time, int $leeway, int $ttl, array $secrets, array $requirements): array
         {
             $algorithms = array(
                 'HS256' => 'sha256',
@@ -7597,9 +7612,14 @@ namespace Tqdev\PhpCrudApi\Middleware {
                 return array();
             }
             $header = json_decode(base64_decode(strtr($token[0], '-_', '+/')), true);
-            if (!$secret) {
+            $kid = 0;
+            if (isset($header['kid'])) {
+                $kid = $header['kid'];
+            }
+            if (!$secrets[$kid]) {
                 return array();
             }
+            $secret = $secrets[$kid];
             if ($header['typ'] != 'JWT') {
                 return array();
             }
@@ -7663,16 +7683,16 @@ namespace Tqdev\PhpCrudApi\Middleware {
             $time = (int) $this->getProperty('time', time());
             $leeway = (int) $this->getProperty('leeway', '5');
             $ttl = (int) $this->getProperty('ttl', '30');
-            $secret = $this->getProperty('secret', '');
+            $secrets = $this->getMapProperty('secrets', '');
             $requirements = array(
                 'alg' => $this->getArrayProperty('algorithms', ''),
                 'aud' => $this->getArrayProperty('audiences', ''),
                 'iss' => $this->getArrayProperty('issuers', ''),
             );
-            if (!$secret) {
+            if (!$secrets) {
                 return array();
             }
-            return $this->getVerifiedClaims($token, $time, $leeway, $ttl, $secret, $requirements);
+            return $this->getVerifiedClaims($token, $time, $leeway, $ttl, $secrets, $requirements);
         }
 
         private function getAuthorizationToken(ServerRequestInterface $request): string

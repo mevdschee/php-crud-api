@@ -24,6 +24,21 @@ abstract class Middleware implements MiddlewareInterface
         return array_filter(array_map('trim', explode(',', $this->getProperty($key, $default))));
     }
 
+    protected function getMapProperty(string $key, string $default): array
+    {
+        $pairs = $this->getArrayProperty($key, $default);
+        $result = array();
+        foreach ($pairs as $pair) {
+            if (strpos($pair, ':')) {
+                list($k, $v) = explode(':', $pair, 2);
+                $result[trim($k)] = trim($v);
+            } else {
+                $result[] = trim($pair);
+            }
+        }
+        return $result;
+    }
+
     protected function getProperty(string $key, $default)
     {
         return isset($this->properties[$key]) ? $this->properties[$key] : $default;
