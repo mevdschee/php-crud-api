@@ -91,11 +91,11 @@ class ReflectedColumn implements \JsonSerializable
     {
         $name = $json->name;
         $type = $json->type;
-        $length = isset($json->length) ? $json->length : 0;
-        $precision = isset($json->precision) ? $json->precision : 0;
-        $scale = isset($json->scale) ? $json->scale : 0;
-        $nullable = isset($json->nullable) ? $json->nullable : false;
-        $pk = isset($json->pk) ? $json->pk : false;
+        $length = isset($json->length) ? (int) $json->length : 0;
+        $precision = isset($json->precision) ? (int) $json->precision : 0;
+        $scale = isset($json->scale) ? (int) $json->scale : 0;
+        $nullable = isset($json->nullable) ? (bool) $json->nullable : false;
+        $pk = isset($json->pk) ? (bool) $json->pk : false;
         $fk = isset($json->fk) ? $json->fk : '';
         return new ReflectedColumn($name, $type, $length, $precision, $scale, $nullable, $pk, $fk);
     }
