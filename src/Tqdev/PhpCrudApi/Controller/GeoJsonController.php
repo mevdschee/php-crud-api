@@ -13,7 +13,6 @@ class GeoJsonController
 {
     private $service;
     private $responder;
-    private $geoJsonConverter;
 
     public function __construct(Router $router, Responder $responder, GeoJsonService $service)
     {
