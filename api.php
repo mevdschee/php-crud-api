@@ -4435,7 +4435,6 @@ namespace Tqdev\PhpCrudApi\Controller {
     {
         private $service;
         private $responder;
-        private $geoJsonConverter;
 
         public function __construct(Router $router, Responder $responder, GeoJsonService $service)
         {
@@ -10131,7 +10130,7 @@ namespace Tqdev\PhpCrudApi {
         {
             $parsedBody = $request->getParsedBody();
             if ($parsedBody) {
-                $request = $this->applySlim3Hack($request);
+                $request = $this->applySlimHack($request);
             } else {
                 $body = $request->getBody();
                 if ($body->isReadable() && $body->isSeekable()) {
@@ -10146,9 +10145,10 @@ namespace Tqdev\PhpCrudApi {
             return $request;
         }
 
-        private function applySlim3Hack(ServerRequestInterface $request): ServerRequestInterface
+        private function applySlimHack(ServerRequestInterface $request): ServerRequestInterface
         {
-            if (get_class($request) == 'Slim\Http\Request') {
+            $class = get_class($request);
+            if (in_array($class, ['Slim\Http\Request', 'Slim\Http\Request'])) {
                 $parsedBody = $request->getParsedBody();
                 $contents = json_encode($parsedBody);
                 $parsedBody = $this->parseBody($contents);
