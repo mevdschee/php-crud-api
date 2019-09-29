@@ -8,16 +8,16 @@
     "packages": [
         {
             "name": "nyholm/psr7",
-            "version": "1.1.0",
+            "version": "1.2.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/Nyholm/psr7.git",
-                "reference": "701fe7ea8c12c07b985b156d589134d328160cf7"
+                "reference": "55ff6b76573f5b242554c9775792bd59fb52e11c"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Nyholm/psr7/zipball/701fe7ea8c12c07b985b156d589134d328160cf7",
-                "reference": "701fe7ea8c12c07b985b156d589134d328160cf7",
+                "url": "https://api.github.com/repos/Nyholm/psr7/zipball/55ff6b76573f5b242554c9775792bd59fb52e11c",
+                "reference": "55ff6b76573f5b242554c9775792bd59fb52e11c",
                 "shasum": ""
             },
             "require": {
@@ -66,7 +66,7 @@
                 "psr-17",
                 "psr-7"
             ],
-            "time": "2019-02-16T17:20:43+00:00"
+            "time": "2019-09-05T13:24:16+00:00"
         },
         {
             "name": "nyholm/psr7-server",

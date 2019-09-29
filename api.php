@@ -1498,6 +1498,11 @@ namespace Nyholm\Psr7\Factory {
 
         public function createResponse(int $code = 200, string $reasonPhrase = ''): ResponseInterface
         {
+            if (2 > \func_num_args()) {
+                // This will make the Response class to use a custom reasonPhrase
+                $reasonPhrase = null;
+            }
+
             return new Response($code, [], null, '1.1', $reasonPhrase);
         }
 
@@ -1951,7 +1956,7 @@ namespace Nyholm\Psr7 {
             if (null === $reason && isset(self::PHRASES[$this->statusCode])) {
                 $this->reasonPhrase = self::PHRASES[$status];
             } else {
-                $this->reasonPhrase = $reason;
+                $this->reasonPhrase = $reason ?? '';
             }
 
             $this->protocol = $version;
@@ -2226,7 +2231,7 @@ namespace Nyholm\Psr7 {
                 $new = new self();
                 $new->stream = $body;
                 $meta = \stream_get_meta_data($new->stream);
-                $new->seekable = $meta['seekable'];
+                $new->seekable = $meta['seekable'] && 0 === \fseek($new->stream, 0, \SEEK_CUR);
                 $new->readable = isset(self::READ_WRITE_HASH['read'][$meta['mode']]);
                 $new->writable = isset(self::READ_WRITE_HASH['write'][$meta['mode']]);
                 $new->uri = $new->getMetadata('uri');
@@ -2854,8 +2859,8 @@ namespace Nyholm\Psr7 {
             }
 
             $port = (int) $port;
-            if (1 > $port || 0xffff < $port) {
-                throw new \InvalidArgumentException(\sprintf('Invalid port: %d. Must be between 1 and 65535', $port));
+            if (0 > $port || 0xffff < $port) {
+                throw new \InvalidArgumentException(\sprintf('Invalid port: %d. Must be between 0 and 65535', $port));
             }
 
             return self::isNonStandardPort($this->scheme, $port) ? $port : null;
@@ -10618,6 +10623,7 @@ namespace Tqdev\PhpCrudApi {
         'username' => 'php-crud-api',
         'password' => 'php-crud-api',
         'database' => 'php-crud-api',
+        'controllers' => 'records,columns'
     ]);
     $request = RequestFactory::fromGlobals();
     $api = new Api($config);
