@@ -127,6 +127,10 @@ You can compile all files into a single "`api.php`" file using:
 
     php build.php
 
+NB: The install script will patch the dependencies in the vendor directory for PHP 7.0 compatibility.
+
+### Development
+
 You can access the non-compiled code at the URL:
 
     http://localhost:8080/src/records/posts/1
@@ -141,7 +145,7 @@ You can update all dependencies of this project using the following command:
 
 This script will install and run [Composer](https://getcomposer.org/) to update the dependencies.
 
-NB: The update script will also patch the dependencies in the vendor directory for PHP 7.0 compatibility.
+NB: The update script will patch the dependencies in the vendor directory for PHP 7.0 compatibility.
 
 ## TreeQL, a pragmatic GraphQL
 
