@@ -186,7 +186,7 @@ class Api implements RequestHandlerInterface
     private function applySlimHack(ServerRequestInterface $request): ServerRequestInterface
     {
         $class = get_class($request);
-        if (in_array($class, ['Slim\Http\Request', 'Slim\Http\Request'])) {
+        if (substr($class, 0, 9) == 'Slim\Http') {
             $parsedBody = $request->getParsedBody();
             $contents = json_encode($parsedBody);
             $parsedBody = $this->parseBody($contents);
