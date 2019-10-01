@@ -171,9 +171,14 @@ class Api implements RequestHandlerInterface
             $request = $this->applySlim3Hack($request);
         } else {
             $body = $request->getBody();
-            if ($body->isReadable() && $body->isSeekable()) {
+            if ($body->isReadable()) {
+                if ($body->isSeekable()) {
+                    $body->rewind();
+                }
                 $contents = $body->getContents();
-                $body->rewind();
+                if ($body->isSeekable()) {
+                    $body->rewind();
+                }
                 if ($contents) {
                     $parsedBody = $this->parseBody($contents);
                     $request = $request->withParsedBody($parsedBody);
