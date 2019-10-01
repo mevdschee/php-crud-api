@@ -168,7 +168,7 @@ class Api implements RequestHandlerInterface
     {
         $parsedBody = $request->getParsedBody();
         if ($parsedBody) {
-            $request = $this->applySlim3Hack($request);
+            $request = $this->applySlimHack($request);
         } else {
             $body = $request->getBody();
             if ($body->isReadable()) {
@@ -188,9 +188,10 @@ class Api implements RequestHandlerInterface
         return $request;
     }
 
-    private function applySlim3Hack(ServerRequestInterface $request): ServerRequestInterface
+    private function applySlimHack(ServerRequestInterface $request): ServerRequestInterface
     {
-        if (get_class($request) == 'Slim\Http\Request') {
+        $class = get_class($request);
+        if (substr($class, 0, 9) == 'Slim\Http') {
             $parsedBody = $request->getParsedBody();
             $contents = json_encode($parsedBody);
             $parsedBody = $this->parseBody($contents);
