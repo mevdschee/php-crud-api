@@ -637,6 +637,7 @@ You can tune the middleware behavior using middleware specific configuration par
 - "reconnect.addressHandler": Handler to implement retrieval of the database address ("")
 - "reconnect.portHandler": Handler to implement retrieval of the database port ("")
 - "reconnect.databaseHandler": Handler to implement retrieval of the database name ("")
+- "reconnect.tablesHandler": Handler to implement retrieval of the table names ("")
 - "reconnect.usernameHandler": Handler to implement retrieval of the database username ("")
 - "reconnect.passwordHandler": Handler to implement retrieval of the database password ("")
 - "authorization.tableHandler": Handler to implement table authorization rules ("")
