@@ -70,6 +70,7 @@ These are all the configuration options and their default value between brackets
 - "username": Username of the user connecting to the database (no default)
 - "password": Password of the user connecting to the database (no default)
 - "database": Database the connecting is made to (no default)
+- "tables": Comma separated list of tables to publish (defaults to 'all')
 - "middlewares": List of middlewares to load (`cors`)
 - "controllers": List of controllers to load (`records,geojson,openapi`)
 - "openApiBase": OpenAPI info (`{"info":{"title":"PHP-CRUD-API","version":"1.0.0"}}`)
