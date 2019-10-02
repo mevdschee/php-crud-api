@@ -5228,6 +5228,7 @@ namespace Tqdev\PhpCrudApi\Database {
         private $address;
         private $port;
         private $database;
+        private $tables;
         private $username;
         private $password;
         private $pdo;
@@ -5305,26 +5306,27 @@ namespace Tqdev\PhpCrudApi\Database {
             foreach ($commands as $command) {
                 $this->pdo->addInitCommand($command);
             }
-            $this->reflection = new GenericReflection($this->pdo, $this->driver, $this->database);
-            $this->definition = new GenericDefinition($this->pdo, $this->driver, $this->database);
+            $this->reflection = new GenericReflection($this->pdo, $this->driver, $this->database, $this->tables);
+            $this->definition = new GenericDefinition($this->pdo, $this->driver, $this->database, $this->tables);
             $this->conditions = new ConditionsBuilder($this->driver);
             $this->columns = new ColumnsBuilder($this->driver);
             $this->converter = new DataConverter($this->driver);
             return $result;
         }
 
-        public function __construct(string $driver, string $address, int $port, string $database, string $username, string $password)
+        public function __construct(string $driver, string $address, int $port, string $database, array $tables, string $username, string $password)
         {
             $this->driver = $driver;
             $this->address = $address;
             $this->port = $port;
             $this->database = $database;
+            $this->tables = $tables;
             $this->username = $username;
             $this->password = $password;
             $this->initPdo();
         }
 
-        public function reconstruct(string $driver, string $address, int $port, string $database, string $username, string $password): bool
+        public function reconstruct(string $driver, string $address, int $port, string $database, array $tables, string $username, string $password): bool
         {
             if ($driver) {
                 $this->driver = $driver;
@@ -5337,6 +5339,9 @@ namespace Tqdev\PhpCrudApi\Database {
             }
             if ($database) {
                 $this->database = $database;
+            }
+            if ($tables) {
+                $this->tables = $tables;
             }
             if ($username) {
                 $this->username = $username;
@@ -5529,6 +5534,7 @@ namespace Tqdev\PhpCrudApi\Database {
                 $this->address,
                 $this->port,
                 $this->database,
+                $this->tables,
                 $this->username
             ]));
         }
@@ -5550,13 +5556,13 @@ namespace Tqdev\PhpCrudApi\Database {
         private $typeConverter;
         private $reflection;
 
-        public function __construct(LazyPdo $pdo, string $driver, string $database)
+        public function __construct(LazyPdo $pdo, string $driver, string $database, array $tables)
         {
             $this->pdo = $pdo;
             $this->driver = $driver;
             $this->database = $database;
             $this->typeConverter = new TypeConverter($driver);
-            $this->reflection = new GenericReflection($pdo, $driver, $database);
+            $this->reflection = new GenericReflection($pdo, $driver, $database, $tables);
         }
 
         private function quote(string $identifier): string
@@ -5970,13 +5976,15 @@ namespace Tqdev\PhpCrudApi\Database {
         private $pdo;
         private $driver;
         private $database;
+        private $tables;
         private $typeConverter;
 
-        public function __construct(LazyPdo $pdo, string $driver, string $database)
+        public function __construct(LazyPdo $pdo, string $driver, string $database, array $tables)
         {
             $this->pdo = $pdo;
             $this->driver = $driver;
             $this->database = $database;
+            $this->tables = $tables;
             $this->typeConverter = new TypeConverter($driver);
         }
 
@@ -6049,6 +6057,10 @@ namespace Tqdev\PhpCrudApi\Database {
         {
             $sql = $this->getTablesSQL();
             $results = $this->query($sql, [$this->database]);
+            $tables = $this->tables;
+            $results = array_filter($results, function ($v) use ($tables) {
+                return !$tables || in_array($v['TABLE_NAME'], $tables);
+            });
             foreach ($results as &$result) {
                 switch ($this->driver) {
                     case 'mysql':
@@ -7953,6 +7965,15 @@ namespace Tqdev\PhpCrudApi\Middleware {
             return '';
         }
 
+        private function getTables(): array
+        {
+            $tablesHandler = $this->getProperty('tablesHandler', '');
+            if ($tablesHandler) {
+                return call_user_func($tablesHandler);
+            }
+            return [];
+        }
+
         private function getUsername(): string
         {
             $usernameHandler = $this->getProperty('usernameHandler', '');
@@ -7977,10 +7998,11 @@ namespace Tqdev\PhpCrudApi\Middleware {
             $address = $this->getAddress();
             $port = $this->getPort();
             $database = $this->getDatabase();
+            $tables = $this->getTables();
             $username = $this->getUsername();
             $password = $this->getPassword();
-            if ($driver || $address || $port || $database || $username || $password) {
-                $this->db->reconstruct($driver, $address, $port, $database, $username, $password);
+            if ($driver || $address || $port || $database || $tables || $username || $password) {
+                $this->db->reconstruct($driver, $address, $port, $database, $tables, $username, $password);
             }
             return $next->handle($request);
         }
@@ -10017,6 +10039,7 @@ namespace Tqdev\PhpCrudApi {
                 $config->getAddress(),
                 $config->getPort(),
                 $config->getDatabase(),
+                $config->getTables(),
                 $config->getUsername(),
                 $config->getPassword()
             );
@@ -10195,6 +10218,7 @@ namespace Tqdev\PhpCrudApi {
             'username' => null,
             'password' => null,
             'database' => null,
+            'tables' => '',
             'middlewares' => 'cors',
             'controllers' => 'records,geojson,openapi',
             'customControllers' => '',
@@ -10314,6 +10338,11 @@ namespace Tqdev\PhpCrudApi {
         public function getDatabase(): string
         {
             return $this->values['database'];
+        }
+
+        public function getTables(): array
+        {
+            return array_filter(array_map('trim', explode(',', $this->values['tables'])));
         }
 
         public function getMiddlewares(): array
@@ -10627,8 +10656,7 @@ namespace Tqdev\PhpCrudApi {
     $config = new Config([
         'username' => 'php-crud-api',
         'password' => 'php-crud-api',
-        'database' => 'php-crud-api',
-        'controllers' => 'records,columns'
+        'database' => 'php-crud-api'
     ]);
     $request = RequestFactory::fromGlobals();
     $api = new Api($config);

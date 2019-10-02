@@ -13,6 +13,7 @@ class GenericDB
     private $address;
     private $port;
     private $database;
+    private $tables;
     private $username;
     private $password;
     private $pdo;
@@ -90,26 +91,27 @@ class GenericDB
         foreach ($commands as $command) {
             $this->pdo->addInitCommand($command);
         }
-        $this->reflection = new GenericReflection($this->pdo, $this->driver, $this->database);
-        $this->definition = new GenericDefinition($this->pdo, $this->driver, $this->database);
+        $this->reflection = new GenericReflection($this->pdo, $this->driver, $this->database, $this->tables);
+        $this->definition = new GenericDefinition($this->pdo, $this->driver, $this->database, $this->tables);
         $this->conditions = new ConditionsBuilder($this->driver);
         $this->columns = new ColumnsBuilder($this->driver);
         $this->converter = new DataConverter($this->driver);
         return $result;
     }
 
-    public function __construct(string $driver, string $address, int $port, string $database, string $username, string $password)
+    public function __construct(string $driver, string $address, int $port, string $database, array $tables, string $username, string $password)
     {
         $this->driver = $driver;
         $this->address = $address;
         $this->port = $port;
         $this->database = $database;
+        $this->tables = $tables;
         $this->username = $username;
         $this->password = $password;
         $this->initPdo();
     }
 
-    public function reconstruct(string $driver, string $address, int $port, string $database, string $username, string $password): bool
+    public function reconstruct(string $driver, string $address, int $port, string $database, array $tables, string $username, string $password): bool
     {
         if ($driver) {
             $this->driver = $driver;
@@ -122,6 +124,9 @@ class GenericDB
         }
         if ($database) {
             $this->database = $database;
+        }
+        if ($tables) {
+            $this->tables = $tables;
         }
         if ($username) {
             $this->username = $username;
@@ -314,6 +319,7 @@ class GenericDB
             $this->address,
             $this->port,
             $this->database,
+            $this->tables,
             $this->username
         ]));
     }
