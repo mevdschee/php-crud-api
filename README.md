@@ -94,7 +94,7 @@ These limitation and constrains apply:
 
 The following features are supported:
 
-  - Single PHP file, easy to deploy.
+  - Composer install or single PHP file, easy to deploy.
   - Very little code, easy to adapt and maintain
   - Supports POST variables as input (x-www-form-urlencoded)
   - Supports a JSON object as input
