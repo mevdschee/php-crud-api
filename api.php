@@ -8616,7 +8616,7 @@ namespace Tqdev\PhpCrudApi\OpenApi {
                         $parameters = ['filter', 'include', 'exclude', 'order', 'size', 'page', 'join'];
                     }
                 } else {
-                    $path = sprintf('/records/%s/{%s}', $tableName, $pkName);
+                    $path = sprintf('/records/%s/{%s}', $tableName, 'id'); // $pkName);
                     if ($operation == 'read') {
                         $parameters = ['pk', 'include', 'exclude', 'join'];
                     } else {
