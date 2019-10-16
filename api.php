@@ -8322,7 +8322,7 @@ namespace Tqdev\PhpCrudApi\OpenApi {
                         $this->openapi->set("paths|$path|$method|requestBody|\$ref", "#/components/requestBodies/$operationType");
                     }
                     $this->openapi->set("paths|$path|$method|tags|0", "$type");
-                    $this->openapi->set("paths|$path|$method|operationId", "$operation"."_"."$type");
+                    $this->openapi->set("paths|$path|$method|operationId", "$operation" . "_" . "$type");
                     if ($operationType == 'updateTable') {
                         $this->openapi->set("paths|$path|$method|description", "rename table");
                     } else {
@@ -8617,7 +8617,7 @@ namespace Tqdev\PhpCrudApi\OpenApi {
                         $parameters = ['filter', 'include', 'exclude', 'order', 'size', 'page', 'join'];
                     }
                 } else {
-                    $path = sprintf('/records/%s/{%s}', $tableName, 'id'); // $pkName);
+                    $path = sprintf('/records/%s/{id}', $tableName);
                     if ($operation == 'read') {
                         $parameters = ['pk', 'include', 'exclude', 'join'];
                     } else {
@@ -8631,7 +8631,7 @@ namespace Tqdev\PhpCrudApi\OpenApi {
                     $this->openapi->set("paths|$path|$method|requestBody|\$ref", "#/components/requestBodies/$operation-" . rawurlencode($tableName));
                 }
                 $this->openapi->set("paths|$path|$method|tags|0", "$tableName");
-                $this->openapi->set("paths|$path|$method|operationId", "$operation"."_"."$tableName");
+                $this->openapi->set("paths|$path|$method|operationId", "$operation" . "_" . "$tableName");
                 $this->openapi->set("paths|$path|$method|description", "$operation $tableName");
                 switch ($operation) {
                     case 'list':
