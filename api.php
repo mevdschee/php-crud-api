@@ -10492,6 +10492,7 @@ namespace Tqdev\PhpCrudApi {
                     return 'document';
                 case 'columns':
                     return $method == 'get' ? 'reflect' : 'remodel';
+                case 'geojson':
                 case 'records':
                     switch ($method) {
                         case 'POST':
