@@ -10160,7 +10160,7 @@ namespace Tqdev\PhpCrudApi {
         {
             $parsedBody = $request->getParsedBody();
             if ($parsedBody) {
-                $request = $this->applySlimHack($request);
+                $request = $this->applyParsedBodyHack($request);
             } else {
                 $body = $request->getBody();
                 if ($body->isReadable()) {
@@ -10180,10 +10180,10 @@ namespace Tqdev\PhpCrudApi {
             return $request;
         }
 
-        private function applySlimHack(ServerRequestInterface $request): ServerRequestInterface
+        private function applyParsedBodyHack(ServerRequestInterface $request): ServerRequestInterface
         {
             $class = get_class($request);
-            if (substr($class, 0, 9) == 'Slim\Http') {
+            if (substr($class, 0, 9) == 'Slim\Http' || substr($class, 0, 14) == 'Zend\Diactoros') {
                 $parsedBody = $request->getParsedBody();
                 $contents = json_encode($parsedBody);
                 $parsedBody = $this->parseBody($contents);
