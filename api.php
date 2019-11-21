@@ -10182,14 +10182,10 @@ namespace Tqdev\PhpCrudApi {
 
         private function applyParsedBodyHack(ServerRequestInterface $request): ServerRequestInterface
         {
-            $class = get_class($request);
-            if (substr($class, 0, 9) == 'Slim\Http' || substr($class, 0, 14) == 'Zend\Diactoros') {
-                $parsedBody = $request->getParsedBody();
-                $contents = json_encode($parsedBody);
-                $parsedBody = $this->parseBody($contents);
-                $request = $request->withParsedBody($parsedBody);
-            }
-            return $request;
+            $parsedBody = $request->getParsedBody();
+            $contents = json_encode($parsedBody);
+            $parsedBody = $this->parseBody($contents);
+            return $request->withParsedBody($parsedBody);
         }
 
         public function handle(ServerRequestInterface $request): ResponseInterface
