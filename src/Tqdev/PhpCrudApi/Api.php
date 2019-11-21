@@ -192,9 +192,12 @@ class Api implements RequestHandlerInterface
     private function applyParsedBodyHack(ServerRequestInterface $request): ServerRequestInterface
     {
         $parsedBody = $request->getParsedBody();
-        $contents = json_encode($parsedBody);
-        $parsedBody = $this->parseBody($contents);
-        return $request->withParsedBody($parsedBody);
+        if (is_array($parsedBody)) { // is it really?
+            $contents = json_encode($parsedBody);
+            $parsedBody = $this->parseBody($contents);
+            $request = $request->withParsedBody($parsedBody);
+        }
+        return $request;
     }
 
     public function handle(ServerRequestInterface $request): ResponseInterface
