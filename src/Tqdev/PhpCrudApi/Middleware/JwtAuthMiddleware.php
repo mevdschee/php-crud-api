@@ -127,6 +127,10 @@ class JwtAuthMiddleware extends Middleware
     {
         if (session_status() == PHP_SESSION_NONE) {
             if (!headers_sent()) {
+                $sessionName = $this->getProperty('sessionName', '');
+                if ($sessionName) {
+                    session_name($sessionName);
+                }
                 session_start();
             }
         }
