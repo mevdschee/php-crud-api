@@ -2941,7 +2941,7 @@ namespace Nyholm\Psr7Server {
 
             $headers = \function_exists('getallheaders') ? getallheaders() : static::getHeadersFromServer($_SERVER);
 
-            return $this->fromArrays($server, $headers, $_COOKIE, $_GET, $_POST, $_FILES, fopen('php://input', 'r') ?: null);
+            return $this->fromArrays($server, $headers, $_COOKIE, $_GET, $_POST, $_FILES, \fopen('php://input', 'r') ?: null);
         }
 
         /**
@@ -3132,20 +3132,28 @@ namespace Nyholm\Psr7Server {
         {
             $uri = $this->uriFactory->createUri('');
 
-            if (isset($server['REQUEST_SCHEME'])) {
-                $uri = $uri->withScheme($server['REQUEST_SCHEME']);
-            } elseif (isset($server['HTTPS'])) {
-                $uri = $uri->withScheme('on' === $server['HTTPS'] ? 'https' : 'http');
+            if (isset($server['HTTP_X_FORWARDED_PROTO'])) {
+                $uri = $uri->withScheme($server['HTTP_X_FORWARDED_PROTO']);
+            } else {
+                if (isset($server['REQUEST_SCHEME'])) {
+                    $uri = $uri->withScheme($server['REQUEST_SCHEME']);
+                } elseif (isset($server['HTTPS'])) {
+                    $uri = $uri->withScheme('on' === $server['HTTPS'] ? 'https' : 'http');
+                }
+
+                if (isset($server['SERVER_PORT'])) {
+                    $uri = $uri->withPort($server['SERVER_PORT']);
+                }
             }
 
             if (isset($server['HTTP_HOST'])) {
-                $uri = $uri->withHost($server['HTTP_HOST']);
+                if (1 === \preg_match('/^(.+)\:(\d+)$/', $server['HTTP_HOST'], $matches)) {
+                    $uri = $uri->withHost($matches[1])->withPort($matches[2]);
+                } else {
+                    $uri = $uri->withHost($server['HTTP_HOST']);
+                }
             } elseif (isset($server['SERVER_NAME'])) {
                 $uri = $uri->withHost($server['SERVER_NAME']);
-            }
-
-            if (isset($server['SERVER_PORT'])) {
-                $uri = $uri->withPort($server['SERVER_PORT']);
             }
 
             if (isset($server['REQUEST_URI'])) {
