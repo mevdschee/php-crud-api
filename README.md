@@ -769,11 +769,30 @@ You can also change the `url` variable, used to test the API with authentication
 First you need to create a Firebase project on the [Firebase console](https://console.firebase.google.com/).
 Add a web application to this project and grab the code snippet for later use.
 
-Then you have to configure the `jwtAuth.secrets` configuration in your `api.php` file.
-Grab the public key via this [URL](https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com).
-There may be several certificates, just grab the one corresponding to your `kid` (if you don't
-know what it is, just test them all until you will be logged in).
-Now, just fill `jwtAuth.secrets` with your public key.
+Then you have to configure the `jwtAuth.secrets` configuration in your `api.php` file. 
+This can be done as follows:
+
+a. Log a user in to your Firebase-based app, get an authentication token for that user
+b. Go to [https://jwt.io/](https://jwt.io/) and paste the token in the decoding field
+c. Read the decoded header information from the token, it will give you the correct `kid`
+d. Grab the public key via this [URL](https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com), which corresponds to your `kid` from previous step
+e. Now, just fill `jwtAuth.secrets` with your public key in the `api.php`
+
+Here is an example of what it should look like in the configuration:
+
+```
+...,
+'middlewares' => 'cors, jwtAuth, authorization',
+        'jwtAuth.secrets' => "ce5ced6e40dcd1eff407048867b1ed1e706686a0:-----BEGIN CERTIFICATE-----\nMIIDHDCCAgSgAwIBAgIIExun9bJSK1wwDQYJKoZIhvcNAQEFBQAwMTEvMC0GA1UE\nAxMmc2VjdXJldG9rZW4uc3lzdGVtLmdzZXJ2aWNlYWNjb3VudC5jb20wHhcNMTkx\nMjIyMjEyMTA3WhcNMjAwMTA4MDkzNjA3WjAxMS8wLQYDVQQDEyZzZWN1cmV0b2tl\nbi5zeXN0ZW0uZ3NlcnZpY2VhY2NvdW50LmNvbTCCASIwDQYJKoZIhvcNAQEBBQAD\nggEPADCCAQoCggEBAKsvVDUwXeYQtySNvyI1/tZAk0sj7Zx4/1+YLUomwlK6vmEd\nyl2IXOYOj3VR7FBA24A9//nnrp+mV8YOYEOdaWX7PQo0PIPFPqdA0r7CqBUWHPfQ\n1WVHVRQY3G0c7upM97UfMes9xOrMqyvecMRk1e5S6eT12Zh2og7yiVs8gP83M1EB\nGqseUaltaadjyT35w5B0Ny0/7NdLYiv2G6Z0S821SxvSo1/wfmilnBBKYYluP0PA\n9NPznWFP6uXnX7gKxyJT9//cYVxTO6+b1TT13Yvrpm1a4EuCOhLrZH6ErHQTccAM\nhAx8mdNtbROsp0dlPKrSfqO82uFz45RXZYmSeP0CAwEAAaM4MDYwDAYDVR0TAQH/\nBAIwADAOBgNVHQ8BAf8EBAMCB4AwFgYDVR0lAQH/BAwwCgYIKwYBBQUHAwIwDQYJ\nKoZIhvcNAQEFBQADggEBACNsJ5m00gdTvD6j6ahURsGrNZ0VJ0YREVQ5U2Jtubr8\nn2fuhMxkB8147ISzfi6wZR+yNwPGjlr8JkAHAC0i+Nam9SqRyfZLqsm+tHdgFT8h\npa+R/FoGrrLzxJNRiv0Trip8hZjgz3PClz6KxBQzqL+rfGV2MbwTXuBoEvLU1mYA\no3/UboJT7cNGjZ8nHXeoKMsec1/H55lUdconbTm5iMU1sTDf+3StGYzTwC+H6yc2\nY3zIq3/cQUCrETkALrqzyCnLjRrLYZu36ITOaKUbtmZhwrP99i2f+H4Ab2i8jeMu\nk61HD29mROYjl95Mko2BxL+76To7+pmn73U9auT+xfA=\n-----END CERTIFICATE-----\n",
+        'cors.allowedOrigins' => '*',
+        'cors.allowHeaders' => 'X-Authorization'
+```
+
+Notes:
+ - The `kid:key` pair is formatted as a string
+ - Do not include spaces before or after the ':'
+ - Use double quotation marks (") around the string text
+ - The string must contain the linefeeds (\n)
 
 To test your integration, you can copy the [firebase/vanilla.html](examples/clients/firebase/vanilla.html)
 file and the [firebase/vanilla-success.html](examples/clients/firebase/vanilla-success.html) file,
