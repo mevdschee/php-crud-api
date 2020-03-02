@@ -9,13 +9,15 @@ class GenericReflection
     private $pdo;
     private $driver;
     private $database;
+    private $tables;
     private $typeConverter;
 
-    public function __construct(LazyPdo $pdo, string $driver, string $database)
+    public function __construct(LazyPdo $pdo, string $driver, string $database, array $tables)
     {
         $this->pdo = $pdo;
         $this->driver = $driver;
         $this->database = $database;
+        $this->tables = $tables;
         $this->typeConverter = new TypeConverter($driver);
     }
 
@@ -88,6 +90,10 @@ class GenericReflection
     {
         $sql = $this->getTablesSQL();
         $results = $this->query($sql, [$this->database]);
+        $tables = $this->tables;
+        $results = array_filter($results, function ($v) use ($tables) {
+            return !$tables || in_array($v['TABLE_NAME'], $tables);
+        });
         foreach ($results as &$result) {
             switch ($this->driver) {
                 case 'mysql':

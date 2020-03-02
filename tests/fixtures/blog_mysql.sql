@@ -7,11 +7,11 @@ SET sql_mode = 'NO_AUTO_VALUE_ON_ZERO';
 
 DROP TABLE IF EXISTS `categories`;
 CREATE TABLE `categories` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `name` varchar(255) NOT NULL,
-  `icon` blob,
+  `id` int(11) NOT NULL AUTO_INCREMENT COMMENT 'The identifier of the category.',
+  `name` varchar(255) NOT NULL COMMENT 'The name of the category.',
+  `icon` blob COMMENT 'A small image representing the category.',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='The post categories of the blog system.';
 
 INSERT INTO `categories` (`name`, `icon`) VALUES
 ('announcement',	NULL),

@@ -11,6 +11,7 @@ class Config
         'username' => null,
         'password' => null,
         'database' => null,
+        'tables' => '',
         'middlewares' => 'cors',
         'controllers' => 'records,geojson,openapi',
         'customControllers' => '',
@@ -130,6 +131,11 @@ class Config
     public function getDatabase(): string
     {
         return $this->values['database'];
+    }
+
+    public function getTables(): array
+    {
+        return array_filter(array_map('trim', explode(',', $this->values['tables'])));
     }
 
     public function getMiddlewares(): array

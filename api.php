@@ -1498,6 +1498,11 @@ namespace Nyholm\Psr7\Factory {
 
         public function createResponse(int $code = 200, string $reasonPhrase = ''): ResponseInterface
         {
+            if (2 > \func_num_args()) {
+                // This will make the Response class to use a custom reasonPhrase
+                $reasonPhrase = null;
+            }
+
             return new Response($code, [], null, '1.1', $reasonPhrase);
         }
 
@@ -1951,7 +1956,7 @@ namespace Nyholm\Psr7 {
             if (null === $reason && isset(self::PHRASES[$this->statusCode])) {
                 $this->reasonPhrase = self::PHRASES[$status];
             } else {
-                $this->reasonPhrase = $reason;
+                $this->reasonPhrase = $reason ?? '';
             }
 
             $this->protocol = $version;
@@ -2226,7 +2231,7 @@ namespace Nyholm\Psr7 {
                 $new = new self();
                 $new->stream = $body;
                 $meta = \stream_get_meta_data($new->stream);
-                $new->seekable = $meta['seekable'];
+                $new->seekable = $meta['seekable'] && 0 === \fseek($new->stream, 0, \SEEK_CUR);
                 $new->readable = isset(self::READ_WRITE_HASH['read'][$meta['mode']]);
                 $new->writable = isset(self::READ_WRITE_HASH['write'][$meta['mode']]);
                 $new->uri = $new->getMetadata('uri');
@@ -2854,8 +2859,8 @@ namespace Nyholm\Psr7 {
             }
 
             $port = (int) $port;
-            if (1 > $port || 0xffff < $port) {
-                throw new \InvalidArgumentException(\sprintf('Invalid port: %d. Must be between 1 and 65535', $port));
+            if (0 > $port || 0xffff < $port) {
+                throw new \InvalidArgumentException(\sprintf('Invalid port: %d. Must be between 0 and 65535', $port));
             }
 
             return self::isNonStandardPort($this->scheme, $port) ? $port : null;
@@ -2936,7 +2941,7 @@ namespace Nyholm\Psr7Server {
 
             $headers = \function_exists('getallheaders') ? getallheaders() : static::getHeadersFromServer($_SERVER);
 
-            return $this->fromArrays($server, $headers, $_COOKIE, $_GET, $_POST, $_FILES, fopen('php://input', 'r') ?: null);
+            return $this->fromArrays($server, $headers, $_COOKIE, $_GET, $_POST, $_FILES, \fopen('php://input', 'r') ?: null);
         }
 
         /**
@@ -3127,20 +3132,28 @@ namespace Nyholm\Psr7Server {
         {
             $uri = $this->uriFactory->createUri('');
 
-            if (isset($server['REQUEST_SCHEME'])) {
-                $uri = $uri->withScheme($server['REQUEST_SCHEME']);
-            } elseif (isset($server['HTTPS'])) {
-                $uri = $uri->withScheme('on' === $server['HTTPS'] ? 'https' : 'http');
+            if (isset($server['HTTP_X_FORWARDED_PROTO'])) {
+                $uri = $uri->withScheme($server['HTTP_X_FORWARDED_PROTO']);
+            } else {
+                if (isset($server['REQUEST_SCHEME'])) {
+                    $uri = $uri->withScheme($server['REQUEST_SCHEME']);
+                } elseif (isset($server['HTTPS'])) {
+                    $uri = $uri->withScheme('on' === $server['HTTPS'] ? 'https' : 'http');
+                }
+
+                if (isset($server['SERVER_PORT'])) {
+                    $uri = $uri->withPort($server['SERVER_PORT']);
+                }
             }
 
             if (isset($server['HTTP_HOST'])) {
-                $uri = $uri->withHost($server['HTTP_HOST']);
+                if (1 === \preg_match('/^(.+)\:(\d+)$/', $server['HTTP_HOST'], $matches)) {
+                    $uri = $uri->withHost($matches[1])->withPort($matches[2]);
+                } else {
+                    $uri = $uri->withHost($server['HTTP_HOST']);
+                }
             } elseif (isset($server['SERVER_NAME'])) {
                 $uri = $uri->withHost($server['SERVER_NAME']);
-            }
-
-            if (isset($server['SERVER_PORT'])) {
-                $uri = $uri->withPort($server['SERVER_PORT']);
             }
 
             if (isset($server['REQUEST_URI'])) {
@@ -5223,6 +5236,7 @@ namespace Tqdev\PhpCrudApi\Database {
         private $address;
         private $port;
         private $database;
+        private $tables;
         private $username;
         private $password;
         private $pdo;
@@ -5300,26 +5314,27 @@ namespace Tqdev\PhpCrudApi\Database {
             foreach ($commands as $command) {
                 $this->pdo->addInitCommand($command);
             }
-            $this->reflection = new GenericReflection($this->pdo, $this->driver, $this->database);
-            $this->definition = new GenericDefinition($this->pdo, $this->driver, $this->database);
+            $this->reflection = new GenericReflection($this->pdo, $this->driver, $this->database, $this->tables);
+            $this->definition = new GenericDefinition($this->pdo, $this->driver, $this->database, $this->tables);
             $this->conditions = new ConditionsBuilder($this->driver);
             $this->columns = new ColumnsBuilder($this->driver);
             $this->converter = new DataConverter($this->driver);
             return $result;
         }
 
-        public function __construct(string $driver, string $address, int $port, string $database, string $username, string $password)
+        public function __construct(string $driver, string $address, int $port, string $database, array $tables, string $username, string $password)
         {
             $this->driver = $driver;
             $this->address = $address;
             $this->port = $port;
             $this->database = $database;
+            $this->tables = $tables;
             $this->username = $username;
             $this->password = $password;
             $this->initPdo();
         }
 
-        public function reconstruct(string $driver, string $address, int $port, string $database, string $username, string $password): bool
+        public function reconstruct(string $driver, string $address, int $port, string $database, array $tables, string $username, string $password): bool
         {
             if ($driver) {
                 $this->driver = $driver;
@@ -5332,6 +5347,9 @@ namespace Tqdev\PhpCrudApi\Database {
             }
             if ($database) {
                 $this->database = $database;
+            }
+            if ($tables) {
+                $this->tables = $tables;
             }
             if ($username) {
                 $this->username = $username;
@@ -5524,6 +5542,7 @@ namespace Tqdev\PhpCrudApi\Database {
                 $this->address,
                 $this->port,
                 $this->database,
+                $this->tables,
                 $this->username
             ]));
         }
@@ -5545,13 +5564,13 @@ namespace Tqdev\PhpCrudApi\Database {
         private $typeConverter;
         private $reflection;
 
-        public function __construct(LazyPdo $pdo, string $driver, string $database)
+        public function __construct(LazyPdo $pdo, string $driver, string $database, array $tables)
         {
             $this->pdo = $pdo;
             $this->driver = $driver;
             $this->database = $database;
             $this->typeConverter = new TypeConverter($driver);
-            $this->reflection = new GenericReflection($pdo, $driver, $database);
+            $this->reflection = new GenericReflection($pdo, $driver, $database, $tables);
         }
 
         private function quote(string $identifier): string
@@ -5965,13 +5984,15 @@ namespace Tqdev\PhpCrudApi\Database {
         private $pdo;
         private $driver;
         private $database;
+        private $tables;
         private $typeConverter;
 
-        public function __construct(LazyPdo $pdo, string $driver, string $database)
+        public function __construct(LazyPdo $pdo, string $driver, string $database, array $tables)
         {
             $this->pdo = $pdo;
             $this->driver = $driver;
             $this->database = $database;
+            $this->tables = $tables;
             $this->typeConverter = new TypeConverter($driver);
         }
 
@@ -6044,6 +6065,10 @@ namespace Tqdev\PhpCrudApi\Database {
         {
             $sql = $this->getTablesSQL();
             $results = $this->query($sql, [$this->database]);
+            $tables = $this->tables;
+            $results = array_filter($results, function ($v) use ($tables) {
+                return !$tables || in_array($v['TABLE_NAME'], $tables);
+            });
             foreach ($results as &$result) {
                 switch ($this->driver) {
                     case 'mysql':
@@ -7160,6 +7185,10 @@ namespace Tqdev\PhpCrudApi\Middleware {
         {
             if (session_status() == PHP_SESSION_NONE) {
                 if (!headers_sent()) {
+                    $sessionName = $this->getProperty('sessionName', '');
+                    if ($sessionName) {
+                        session_name($sessionName);
+                    }
                     session_start();
                 }
             }
@@ -7341,6 +7370,10 @@ namespace Tqdev\PhpCrudApi\Middleware {
         {
             if (session_status() == PHP_SESSION_NONE) {
                 if (!headers_sent()) {
+                    $sessionName = $this->getProperty('sessionName', '');
+                    if ($sessionName) {
+                        session_name($sessionName);
+                    }
                     session_start();
                 }
             }
@@ -7712,6 +7745,10 @@ namespace Tqdev\PhpCrudApi\Middleware {
         {
             if (session_status() == PHP_SESSION_NONE) {
                 if (!headers_sent()) {
+                    $sessionName = $this->getProperty('sessionName', '');
+                    if ($sessionName) {
+                        session_name($sessionName);
+                    }
                     session_start();
                 }
             }
@@ -7948,6 +7985,15 @@ namespace Tqdev\PhpCrudApi\Middleware {
             return '';
         }
 
+        private function getTables(): array
+        {
+            $tablesHandler = $this->getProperty('tablesHandler', '');
+            if ($tablesHandler) {
+                return call_user_func($tablesHandler);
+            }
+            return [];
+        }
+
         private function getUsername(): string
         {
             $usernameHandler = $this->getProperty('usernameHandler', '');
@@ -7972,10 +8018,11 @@ namespace Tqdev\PhpCrudApi\Middleware {
             $address = $this->getAddress();
             $port = $this->getPort();
             $database = $this->getDatabase();
+            $tables = $this->getTables();
             $username = $this->getUsername();
             $password = $this->getPassword();
-            if ($driver || $address || $port || $database || $username || $password) {
-                $this->db->reconstruct($driver, $address, $port, $database, $username, $password);
+            if ($driver || $address || $port || $database || $tables || $username || $password) {
+                $this->db->reconstruct($driver, $address, $port, $database, $tables, $username, $password);
             }
             return $next->handle($request);
         }
@@ -8295,6 +8342,7 @@ namespace Tqdev\PhpCrudApi\OpenApi {
                         $this->openapi->set("paths|$path|$method|requestBody|\$ref", "#/components/requestBodies/$operationType");
                     }
                     $this->openapi->set("paths|$path|$method|tags|0", "$type");
+                    $this->openapi->set("paths|$path|$method|operationId", "$operation" . "_" . "$type");
                     if ($operationType == 'updateTable') {
                         $this->openapi->set("paths|$path|$method|description", "rename table");
                     } else {
@@ -8589,7 +8637,7 @@ namespace Tqdev\PhpCrudApi\OpenApi {
                         $parameters = ['filter', 'include', 'exclude', 'order', 'size', 'page', 'join'];
                     }
                 } else {
-                    $path = sprintf('/records/%s/{%s}', $tableName, $pkName);
+                    $path = sprintf('/records/%s/{id}', $tableName);
                     if ($operation == 'read') {
                         $parameters = ['pk', 'include', 'exclude', 'join'];
                     } else {
@@ -8603,6 +8651,7 @@ namespace Tqdev\PhpCrudApi\OpenApi {
                     $this->openapi->set("paths|$path|$method|requestBody|\$ref", "#/components/requestBodies/$operation-" . rawurlencode($tableName));
                 }
                 $this->openapi->set("paths|$path|$method|tags|0", "$tableName");
+                $this->openapi->set("paths|$path|$method|operationId", "$operation" . "_" . "$tableName");
                 $this->openapi->set("paths|$path|$method|description", "$operation $tableName");
                 switch ($operation) {
                     case 'list':
@@ -10012,6 +10061,7 @@ namespace Tqdev\PhpCrudApi {
                 $config->getAddress(),
                 $config->getPort(),
                 $config->getDatabase(),
+                $config->getTables(),
                 $config->getUsername(),
                 $config->getPassword()
             );
@@ -10130,12 +10180,17 @@ namespace Tqdev\PhpCrudApi {
         {
             $parsedBody = $request->getParsedBody();
             if ($parsedBody) {
-                $request = $this->applySlimHack($request);
+                $request = $this->applyParsedBodyHack($request);
             } else {
                 $body = $request->getBody();
-                if ($body->isReadable() && $body->isSeekable()) {
+                if ($body->isReadable()) {
+                    if ($body->isSeekable()) {
+                        $body->rewind();
+                    }
                     $contents = $body->getContents();
-                    $body->rewind();
+                    if ($body->isSeekable()) {
+                        $body->rewind();
+                    }
                     if ($contents) {
                         $parsedBody = $this->parseBody($contents);
                         $request = $request->withParsedBody($parsedBody);
@@ -10145,11 +10200,10 @@ namespace Tqdev\PhpCrudApi {
             return $request;
         }
 
-        private function applySlimHack(ServerRequestInterface $request): ServerRequestInterface
+        private function applyParsedBodyHack(ServerRequestInterface $request): ServerRequestInterface
         {
-            $class = get_class($request);
-            if (in_array($class, ['Slim\Http\Request', 'Slim\Http\Request'])) {
-                $parsedBody = $request->getParsedBody();
+            $parsedBody = $request->getParsedBody();
+            if (is_array($parsedBody)) { // is it really?
                 $contents = json_encode($parsedBody);
                 $parsedBody = $this->parseBody($contents);
                 $request = $request->withParsedBody($parsedBody);
@@ -10185,6 +10239,7 @@ namespace Tqdev\PhpCrudApi {
             'username' => null,
             'password' => null,
             'database' => null,
+            'tables' => '',
             'middlewares' => 'cors',
             'controllers' => 'records,geojson,openapi',
             'customControllers' => '',
@@ -10304,6 +10359,11 @@ namespace Tqdev\PhpCrudApi {
         public function getDatabase(): string
         {
             return $this->values['database'];
+        }
+
+        public function getTables(): array
+        {
+            return array_filter(array_map('trim', explode(',', $this->values['tables'])));
         }
 
         public function getMiddlewares(): array
@@ -10451,6 +10511,7 @@ namespace Tqdev\PhpCrudApi {
                     return 'document';
                 case 'columns':
                     return $method == 'get' ? 'reflect' : 'remodel';
+                case 'geojson':
                 case 'records':
                     switch ($method) {
                         case 'POST':
@@ -10617,7 +10678,7 @@ namespace Tqdev\PhpCrudApi {
     $config = new Config([
         'username' => 'php-crud-api',
         'password' => 'php-crud-api',
-        'database' => 'php-crud-api',
+        'database' => 'php-crud-api'
     ]);
     $request = RequestFactory::fromGlobals();
     $api = new Api($config);

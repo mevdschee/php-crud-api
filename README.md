@@ -70,6 +70,7 @@ These are all the configuration options and their default value between brackets
 - "username": Username of the user connecting to the database (no default)
 - "password": Password of the user connecting to the database (no default)
 - "database": Database the connecting is made to (no default)
+- "tables": Comma separated list of tables to publish (defaults to 'all')
 - "middlewares": List of middlewares to load (`cors`)
 - "controllers": List of controllers to load (`records,geojson,openapi`)
 - "openApiBase": OpenAPI info (`{"info":{"title":"PHP-CRUD-API","version":"1.0.0"}}`)
@@ -93,7 +94,7 @@ These limitation and constrains apply:
 
 The following features are supported:
 
-  - Single PHP file, easy to deploy.
+  - Composer install or single PHP file, easy to deploy.
   - Very little code, easy to adapt and maintain
   - Supports POST variables as input (x-www-form-urlencoded)
   - Supports a JSON object as input
@@ -119,9 +120,17 @@ The following features are supported:
 
 ## Compilation
 
+You can install all dependencies of this project using the following command:
+
+    php install.php
+
 You can compile all files into a single "`api.php`" file using:
 
     php build.php
+
+NB: The install script will patch the dependencies in the vendor directory for PHP 7.0 compatibility.
+
+### Development
 
 You can access the non-compiled code at the URL:
 
@@ -137,7 +146,7 @@ You can update all dependencies of this project using the following command:
 
 This script will install and run [Composer](https://getcomposer.org/) to update the dependencies.
 
-NB: The update script will also patch the dependencies in the vendor directory for PHP 7.0 compatibility.
+NB: The update script will patch the dependencies in the vendor directory for PHP 7.0 compatibility.
 
 ## TreeQL, a pragmatic GraphQL
 
@@ -613,6 +622,7 @@ You can tune the middleware behavior using middleware specific configuration par
 - "dbAuth.usernameColumn": The users table column that holds usernames ("username")
 - "dbAuth.passwordColumn": The users table column that holds passwords ("password")
 - "dbAuth.returnedColumns": The columns returned on successful login, empty means 'all' ("")
+- "dbAuth.sessionName": The name of the PHP session that is started ("")
 - "jwtAuth.mode": Set to "optional" if you want to allow anonymous access ("required")
 - "jwtAuth.header": Name of the header containing the JWT token ("X-Authorization")
 - "jwtAuth.leeway": The acceptable number of seconds of clock skew ("5")
@@ -621,13 +631,16 @@ You can tune the middleware behavior using middleware specific configuration par
 - "jwtAuth.algorithms": The algorithms that are allowed, empty means 'all' ("")
 - "jwtAuth.audiences": The audiences that are allowed, empty means 'all' ("")
 - "jwtAuth.issuers": The issuers that are allowed, empty means 'all' ("")
+- "jwtAuth.sessionName": The name of the PHP session that is started ("")
 - "basicAuth.mode": Set to "optional" if you want to allow anonymous access ("required")
 - "basicAuth.realm": Text to prompt when showing login ("Username and password required")
 - "basicAuth.passwordFile": The file to read for username/password combinations (".htpasswd")
+- "basicAuth.sessionName": The name of the PHP session that is started ("")
 - "reconnect.driverHandler": Handler to implement retrieval of the database driver ("")
 - "reconnect.addressHandler": Handler to implement retrieval of the database address ("")
 - "reconnect.portHandler": Handler to implement retrieval of the database port ("")
 - "reconnect.databaseHandler": Handler to implement retrieval of the database name ("")
+- "reconnect.tablesHandler": Handler to implement retrieval of the table names ("")
 - "reconnect.usernameHandler": Handler to implement retrieval of the database username ("")
 - "reconnect.passwordHandler": Handler to implement retrieval of the database password ("")
 - "authorization.tableHandler": Handler to implement table authorization rules ("")
@@ -756,11 +769,30 @@ You can also change the `url` variable, used to test the API with authentication
 First you need to create a Firebase project on the [Firebase console](https://console.firebase.google.com/).
 Add a web application to this project and grab the code snippet for later use.
 
-Then you have to configure the `jwtAuth.secrets` configuration in your `api.php` file.
-Grab the public key via this [URL](https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com).
-There may be several certificates, just grab the one corresponding to your `kid` (if you don't
-know what it is, just test them all until you will be logged in).
-Now, just fill `jwtAuth.secrets` with your public key.
+Then you have to configure the `jwtAuth.secrets` configuration in your `api.php` file. 
+This can be done as follows:
+
+a. Log a user in to your Firebase-based app, get an authentication token for that user
+b. Go to [https://jwt.io/](https://jwt.io/) and paste the token in the decoding field
+c. Read the decoded header information from the token, it will give you the correct `kid`
+d. Grab the public key via this [URL](https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com), which corresponds to your `kid` from previous step
+e. Now, just fill `jwtAuth.secrets` with your public key in the `api.php`
+
+Here is an example of what it should look like in the configuration:
+
+```
+...,
+'middlewares' => 'cors, jwtAuth, authorization',
+        'jwtAuth.secrets' => "ce5ced6e40dcd1eff407048867b1ed1e706686a0:-----BEGIN CERTIFICATE-----\nMIIDHDCCAgSgAwIBAgIIExun9bJSK1wwDQYJKoZIhvcNAQEFBQAwMTEvMC0GA1UE\nAxMmc2VjdXJldG9rZW4uc3lzdGVtLmdzZXJ2aWNlYWNjb3VudC5jb20wHhcNMTkx\nMjIyMjEyMTA3WhcNMjAwMTA4MDkzNjA3WjAxMS8wLQYDVQQDEyZzZWN1cmV0b2tl\nbi5zeXN0ZW0uZ3NlcnZpY2VhY2NvdW50LmNvbTCCASIwDQYJKoZIhvcNAQEBBQAD\nggEPADCCAQoCggEBAKsvVDUwXeYQtySNvyI1/tZAk0sj7Zx4/1+YLUomwlK6vmEd\nyl2IXOYOj3VR7FBA24A9//nnrp+mV8YOYEOdaWX7PQo0PIPFPqdA0r7CqBUWHPfQ\n1WVHVRQY3G0c7upM97UfMes9xOrMqyvecMRk1e5S6eT12Zh2og7yiVs8gP83M1EB\nGqseUaltaadjyT35w5B0Ny0/7NdLYiv2G6Z0S821SxvSo1/wfmilnBBKYYluP0PA\n9NPznWFP6uXnX7gKxyJT9//cYVxTO6+b1TT13Yvrpm1a4EuCOhLrZH6ErHQTccAM\nhAx8mdNtbROsp0dlPKrSfqO82uFz45RXZYmSeP0CAwEAAaM4MDYwDAYDVR0TAQH/\nBAIwADAOBgNVHQ8BAf8EBAMCB4AwFgYDVR0lAQH/BAwwCgYIKwYBBQUHAwIwDQYJ\nKoZIhvcNAQEFBQADggEBACNsJ5m00gdTvD6j6ahURsGrNZ0VJ0YREVQ5U2Jtubr8\nn2fuhMxkB8147ISzfi6wZR+yNwPGjlr8JkAHAC0i+Nam9SqRyfZLqsm+tHdgFT8h\npa+R/FoGrrLzxJNRiv0Trip8hZjgz3PClz6KxBQzqL+rfGV2MbwTXuBoEvLU1mYA\no3/UboJT7cNGjZ8nHXeoKMsec1/H55lUdconbTm5iMU1sTDf+3StGYzTwC+H6yc2\nY3zIq3/cQUCrETkALrqzyCnLjRrLYZu36ITOaKUbtmZhwrP99i2f+H4Ab2i8jeMu\nk61HD29mROYjl95Mko2BxL+76To7+pmn73U9auT+xfA=\n-----END CERTIFICATE-----\n",
+        'cors.allowedOrigins' => '*',
+        'cors.allowHeaders' => 'X-Authorization'
+```
+
+Notes:
+ - The `kid:key` pair is formatted as a string
+ - Do not include spaces before or after the ':'
+ - Use double quotation marks (") around the string text
+ - The string must contain the linefeeds (\n)
 
 To test your integration, you can copy the [firebase/vanilla.html](examples/clients/firebase/vanilla.html)
 file and the [firebase/vanilla-success.html](examples/clients/firebase/vanilla-success.html) file,

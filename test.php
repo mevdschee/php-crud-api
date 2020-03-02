@@ -85,6 +85,14 @@ function getDatabase(Config $config)
     return $config->getMiddlewares()['reconnect']['databaseHandler']();
 }
 
+function getTables(Config $config)
+{
+    if (!isset($config->getMiddlewares()['reconnect']['tablesHandler'])) {
+        return $config->getTables();
+    }
+    return $config->getMiddlewares()['reconnect']['tablesHandler']();
+}
+
 function getUsername(Config $config)
 {
     if (!isset($config->getMiddlewares()['reconnect']['usernameHandler'])) {
@@ -112,6 +120,7 @@ function loadFixture(string $dir, Config $config)
         $config->getAddress(),
         $config->getPort(),
         getDatabase($config),
+        getTables($config),
         getUsername($config),
         getPassword($config)
     );

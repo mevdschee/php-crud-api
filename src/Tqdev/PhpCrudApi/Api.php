@@ -50,6 +50,7 @@ class Api implements RequestHandlerInterface
             $config->getAddress(),
             $config->getPort(),
             $config->getDatabase(),
+            $config->getTables(),
             $config->getUsername(),
             $config->getPassword()
         );
@@ -168,12 +169,17 @@ class Api implements RequestHandlerInterface
     {
         $parsedBody = $request->getParsedBody();
         if ($parsedBody) {
-            $request = $this->applySlimHack($request);
+            $request = $this->applyParsedBodyHack($request);
         } else {
             $body = $request->getBody();
-            if ($body->isReadable() && $body->isSeekable()) {
+            if ($body->isReadable()) {
+                if ($body->isSeekable()) {
+                    $body->rewind();
+                }
                 $contents = $body->getContents();
-                $body->rewind();
+                if ($body->isSeekable()) {
+                    $body->rewind();
+                }
                 if ($contents) {
                     $parsedBody = $this->parseBody($contents);
                     $request = $request->withParsedBody($parsedBody);
@@ -183,11 +189,10 @@ class Api implements RequestHandlerInterface
         return $request;
     }
 
-    private function applySlimHack(ServerRequestInterface $request): ServerRequestInterface
+    private function applyParsedBodyHack(ServerRequestInterface $request): ServerRequestInterface
     {
-        $class = get_class($request);
-        if (in_array($class, ['Slim\Http\Request', 'Slim\Http\Request'])) {
-            $parsedBody = $request->getParsedBody();
+        $parsedBody = $request->getParsedBody();
+        if (is_array($parsedBody)) { // is it really?
             $contents = json_encode($parsedBody);
             $parsedBody = $this->parseBody($contents);
             $request = $request->withParsedBody($parsedBody);
