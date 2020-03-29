@@ -1,0 +1,45 @@
+<html>
+<head>
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.20/css/jquery.dataTables.min.css"/>
+<script type="text/javascript" src="https://code.jquery.com/jquery-3.3.1.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/1.10.20/js/jquery.dataTables.min.js"></script>
+<script>
+$(document).ready(function() {
+    $('#example').DataTable( {
+        ajax: {
+            url: '/api.php/records/posts?join=categories&join=users',
+            dataSrc: 'records'
+        },
+        columns: [
+            { data: "id" },
+            { data: "user_id.username" },
+            { data: "category_id.name" },
+            { data: "content" }
+        ]
+    });
+});
+</script>
+</head>
+<body>
+
+<table id="example" class="display" style="width:100%">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Username</th>
+            <th>Category</th>
+            <th>Content</th>
+        </tr>
+    </thead>
+    <tfoot>
+        <tr>
+            <th>ID</th>
+            <th>Username</th>
+            <th>Category</th>
+            <th>Content</th>
+        </tr>
+    </tfoot>
+</table>
+
+</body>
+</html>
