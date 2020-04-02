@@ -41,6 +41,8 @@ class Config
                 return 5432;
             case 'sqlsrv':
                 return 1433;
+            case 'sqlite':
+                return 0;
         }
     }
 
@@ -53,6 +55,8 @@ class Config
                 return 'localhost';
             case 'sqlsrv':
                 return 'localhost';
+            case 'sqlite':
+                return 'data.db';
         }
     }
 

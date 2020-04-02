@@ -32,6 +32,8 @@ class GenericDB
                 return "$this->driver:host=$this->address port=$this->port dbname=$this->database options='--client_encoding=UTF8'";
             case 'sqlsrv':
                 return "$this->driver:Server=$this->address,$this->port;Database=$this->database";
+            case 'sqlite':
+                return "$this->driver:$this->address";
         }
     }
 
@@ -50,6 +52,10 @@ class GenericDB
                 ];
             case 'sqlsrv':
                 return [];
+            case 'sqlite':
+                return [
+                    'PRAGMA foreign_keys = on;',
+                ];
         }
     }
 
@@ -75,6 +81,9 @@ class GenericDB
                 return $options + [
                     \PDO::SQLSRV_ATTR_DIRECT_QUERY => false,
                     \PDO::SQLSRV_ATTR_FETCHES_NUMERIC_TYPE => true,
+                ];
+            case 'sqlite':
+                return $options + [
                 ];
         }
     }
