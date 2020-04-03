@@ -21,6 +21,54 @@ class GenericReflection
         $this->typeConverter = new TypeConverter($driver);
     }
 
+    private function createSqlLiteReflectionTables() /*: void */
+    {
+        $reflection = $this->query('SELECT "name" FROM "sqlite_master" WHERE "type" = \'table\' and name like \'sys/%\';',[]);
+        if (count($reflection->fetchAll())==0) {
+			//create reflection tables
+			$this->query('CREATE table "sys/version" ("version" integer);',[]);
+			$this->query('CREATE table "sys/tables" ("name" text, "type" text);',[]);
+			$this->query('CREATE table "sys/columns" ("self" text,"cid" integer,"name" text,"type" integer,"notnull" integer,"dflt_value" integer,"pk" integer);',[]);
+			$this->query('CREATE table "sys/foreign_keys" ("self" text,"id" integer,"seq" integer,"table" text,"from" text,"to" text,"on_update" text,"on_delete" text,"match" text);',[]);
+		}
+        $version = $this->query('pragma schema_version',[])->fetchColumn(0);
+		if ($version != $this->query('SELECT "version" from "sys/version";')->fetchColumn(0)) {
+			// reflection may take a while
+			set_time_limit(3600);
+			// update version data
+			$this->query('DELETE FROM "sys/version";');
+            $stmt = $this->pdo->prepare('INSERT into "sys/version" ("version") VALUES (?);');
+            $stmt->execute(array($version)); 
+
+			// update tables data
+			$this->query('DELETE FROM "sys/tables";');
+			$result = $this->query('SELECT "name", "type" FROM sqlite_master WHERE ("type" = \'table\' or "type" = \'view\') and name not like "sys/%" and name<>"sqlite_sequence";');
+			$tables = array();
+			foreach($result as $row) {
+				$tables[] = $row['name'];
+                $stmt = $this->pdo->prepare('INSERT into "sys/tables" ("name", "type") VALUES (?, ?);');
+                $stmt->execute(array($row['name'], $row['type']));
+			}
+			// update columns and foreign_keys data
+			$this->query('DELETE FROM "sys/columns"');
+			$this->query('DELETE FROM "sys/foreign_keys"');
+			foreach ($tables as $table) {
+				$result = $this->query("pragma table_info(`$table`);");
+				foreach($result as $row) {
+					array_unshift($row, $table);
+                    $stmt = $this->pdo->prepare('INSERT into "sys/columns" ("self","cid","name","type","notnull","dflt_value","pk") VALUES (?,?,?,?,?,?,?);');
+                    $stmt->execute(array_values($row));
+				}
+				$result = $this->query("pragma foreign_key_list(`$table`);");
+				foreach($result as $row) {
+					array_unshift($row, $table);
+                    $stmt = $this->pdo->prepare('INSERT into "sys/foreign_keys" ("self","id","seq","table","from","to","on_update","on_delete","match") VALUES (?,?,?,?,?,?,?,?,?);');
+                    $stmt->execute(array_values($row));
+				}
+			}
+		}
+    }
+
     public function getIgnoredTables(): array
     {
         switch ($this->driver) {
@@ -30,8 +78,12 @@ class GenericReflection
                 return ['spatial_ref_sys', 'raster_columns', 'raster_overviews', 'geography_columns', 'geometry_columns'];
             case 'sqlsrv':
                 return [];
+            case 'sqlite':
+                return ['sys/version','sys/tables','sys/columns','sys/foreign_keys'];
         }
     }
+
+
 
     private function getTablesSQL(): string
     {
@@ -42,6 +94,9 @@ class GenericReflection
                 return 'SELECT c.relname as "TABLE_NAME", c.relkind as "TABLE_TYPE" FROM pg_catalog.pg_class c LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace WHERE c.relkind IN (\'r\', \'v\') AND n.nspname <> \'pg_catalog\' AND n.nspname <> \'information_schema\' AND n.nspname !~ \'^pg_toast\' AND pg_catalog.pg_table_is_visible(c.oid) AND \'\' <> ? ORDER BY "TABLE_NAME";';
             case 'sqlsrv':
                 return 'SELECT o.name as "TABLE_NAME", o.xtype as "TABLE_TYPE" FROM sysobjects o WHERE o.xtype IN (\'U\', \'V\') ORDER BY "TABLE_NAME"';
+            case 'sqlite':
+                $this->createSqlLiteReflectionTables();
+                return 'SELECT t.name as "TABLE_NAME", t.type as "TABLE_TYPE" FROM "sys/tables" t WHERE t.type IN (\'table\', \'view\') ORDER BY "TABLE_NAME"';
         }
     }
 
