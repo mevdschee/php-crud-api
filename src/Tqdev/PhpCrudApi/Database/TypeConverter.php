@@ -133,7 +133,7 @@ class TypeConverter
             'int4' => 'integer',
             'int8' => 'bigint',
             'double precision' => 'double',
-            'datetime' => 'timestamp',
+            'datetime' => 'timestamp'
         ],
     ];
 

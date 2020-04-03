@@ -79,7 +79,7 @@ CREATE TABLE "users" (
   "id" integer NOT NULL PRIMARY KEY AUTOINCREMENT,
   "username" varchar(255) NOT NULL,
   "password" varchar(255) NOT NULL,
-  "location" clob NULL
+  "location" text NULL
 );
 
 INSERT INTO "users" ("id", "username", "password", "location") VALUES (1, 'user1', 'pass1', NULL);
@@ -89,7 +89,7 @@ DROP TABLE IF EXISTS "countries";
 CREATE TABLE "countries" (
   "id" integer NOT NULL PRIMARY KEY AUTOINCREMENT,
   "name" varchar(255) NOT NULL,
-  "shape" clob NOT NULL
+  "shape" text NOT NULL
 );
 
 INSERT INTO "countries" ("id", "name", "shape") VALUES (1, 'Left', 'POLYGON ((30 10, 40 40, 20 40, 10 20, 30 10))');
