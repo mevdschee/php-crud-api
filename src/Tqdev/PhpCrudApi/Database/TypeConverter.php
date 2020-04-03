@@ -121,6 +121,20 @@ class TypeConverter
             'uniqueidentifier' => 'char',
             'xml' => 'clob',
         ],
+        'sqlite' => [
+            'tinytext' => 'clob',
+            'text' => 'clob',
+            'mediumtext' => 'clob',
+            'longtext' => 'clob',
+            'mediumint' => 'integer',
+            'int' => 'integer',
+            'bigint' => 'bigint',
+            'int2' => 'smallint',
+            'int4' => 'integer',
+            'int8' => 'bigint',
+            'double precision' => 'double',
+            'datetime' => 'timestamp',
+        ],
     ];
 
     // source: https://docs.oracle.com/javase/9/docs/api/java/sql/Types.html

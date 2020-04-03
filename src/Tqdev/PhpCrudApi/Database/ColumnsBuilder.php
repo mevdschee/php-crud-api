@@ -22,9 +22,14 @@ class ColumnsBuilder
             return '';
         }
         switch ($this->driver) {
-            case 'mysql':return " LIMIT $offset, $limit";
-            case 'pgsql':return " LIMIT $limit OFFSET $offset";
-            case 'sqlsrv':return " OFFSET $offset ROWS FETCH NEXT $limit ROWS ONLY";
+            case 'mysql':
+                return " LIMIT $offset, $limit";
+            case 'pgsql':
+                return " LIMIT $limit OFFSET $offset";
+            case 'sqlsrv':
+                return " OFFSET $offset ROWS FETCH NEXT $limit ROWS ONLY";
+            case 'sqlite':
+                return " LIMIT $limit OFFSET $offset";
         }
     }
 
@@ -74,9 +79,14 @@ class ColumnsBuilder
         $valuesSql = '(' . implode(',', $values) . ')';
         $outputColumn = $this->quoteColumnName($table->getPk());
         switch ($this->driver) {
-            case 'mysql':return "$columnsSql VALUES $valuesSql";
-            case 'pgsql':return "$columnsSql VALUES $valuesSql RETURNING $outputColumn";
-            case 'sqlsrv':return "$columnsSql OUTPUT INSERTED.$outputColumn VALUES $valuesSql";
+            case 'mysql':
+                return "$columnsSql VALUES $valuesSql";
+            case 'pgsql':
+                return "$columnsSql VALUES $valuesSql RETURNING $outputColumn";
+            case 'sqlsrv':
+                return "$columnsSql OUTPUT INSERTED.$outputColumn VALUES $valuesSql";
+            case 'sqlite':
+                return "$columnsSql VALUES $valuesSql";
         }
     }
 

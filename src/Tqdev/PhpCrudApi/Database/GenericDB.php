@@ -83,8 +83,7 @@ class GenericDB
                     \PDO::SQLSRV_ATTR_FETCHES_NUMERIC_TYPE => true,
                 ];
             case 'sqlite':
-                return $options + [
-                ];
+                return $options + [];
         }
     }
 
@@ -192,9 +191,15 @@ class GenericDB
             case 'mysql':
                 $stmt = $this->query('SELECT LAST_INSERT_ID()', []);
                 break;
+            case 'sqlite':
+                $stmt = $this->query('SELECT LAST_INSERT_ROWID()', []);
+                break;
         }
         $pkValue = $stmt->fetchColumn(0);
         if ($this->driver == 'sqlsrv' && $table->getPk()->getType() == 'bigint') {
+            return (int) $pkValue;
+        }
+        if ($this->driver == 'sqlite' && in_array($table->getPk()->getType(), ['integer', 'bigint'])) {
             return (int) $pkValue;
         }
         return $pkValue;

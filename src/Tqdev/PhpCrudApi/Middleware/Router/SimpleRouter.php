@@ -141,6 +141,8 @@ class SimpleRouter implements Router
         } catch (\PDOException $e) {
             if (strpos(strtolower($e->getMessage()), 'duplicate') !== false) {
                 $response = $this->responder->error(ErrorCode::DUPLICATE_KEY_EXCEPTION, '');
+            } elseif (strpos(strtolower($e->getMessage()), 'unique constraint') !== false) {
+                $response = $this->responder->error(ErrorCode::DUPLICATE_KEY_EXCEPTION, '');
             } elseif (strpos(strtolower($e->getMessage()), 'default value') !== false) {
                 $response = $this->responder->error(ErrorCode::DATA_INTEGRITY_VIOLATION, '');
             } elseif (strpos(strtolower($e->getMessage()), 'allow nulls') !== false) {

@@ -23,50 +23,47 @@ class GenericReflection
 
     private function createSqlLiteReflectionTables() /*: void */
     {
-        $reflection = $this->query('SELECT "name" FROM "sqlite_master" WHERE "type" = \'table\' and name like \'sys/%\';',[]);
-        if (count($reflection->fetchAll())==0) {
-			//create reflection tables
-			$this->query('CREATE table "sys/version" ("version" integer);',[]);
-			$this->query('CREATE table "sys/tables" ("name" text, "type" text);',[]);
-			$this->query('CREATE table "sys/columns" ("self" text,"cid" integer,"name" text,"type" integer,"notnull" integer,"dflt_value" integer,"pk" integer);',[]);
-			$this->query('CREATE table "sys/foreign_keys" ("self" text,"id" integer,"seq" integer,"table" text,"from" text,"to" text,"on_update" text,"on_delete" text,"match" text);',[]);
-		}
-        $version = $this->query('pragma schema_version',[])->fetchColumn(0);
-		if ($version != $this->query('SELECT "version" from "sys/version";')->fetchColumn(0)) {
-			// reflection may take a while
-			set_time_limit(3600);
-			// update version data
-			$this->query('DELETE FROM "sys/version";');
-            $stmt = $this->pdo->prepare('INSERT into "sys/version" ("version") VALUES (?);');
-            $stmt->execute(array($version)); 
+        $reflection = $this->query('SELECT "name" FROM "sqlite_master" WHERE "type" = \'table\' and name like \'sys/%\';', []);
+        if (count($reflection) == 0) {
+            //create reflection tables
+            $this->query('CREATE table "sys/version" ("version" integer);', []);
+            $this->query('CREATE table "sys/tables" ("name" text, "type" text);', []);
+            $this->query('CREATE table "sys/columns" ("self" text,"cid" integer,"name" text,"type" integer,"notnull" integer,"dflt_value" integer,"pk" integer);', []);
+            $this->query('CREATE table "sys/foreign_keys" ("self" text,"id" integer,"seq" integer,"table" text,"from" text,"to" text,"on_update" text,"on_delete" text,"match" text);', []);
+        }
+        $version = $this->query('pragma schema_version;', [])[0]["schema_version"];
+        $current = $this->query('SELECT "version" from "sys/version";', []);
+        if (!$current || count($current) == 0 || !isset($current[0]["schema_version"]) || $version != $current[0]["schema_version"]) {
+            // reflection may take a while
+            set_time_limit(3600);
+            // update version data
+            $this->query('DELETE FROM "sys/version";', []);
+            $this->query('INSERT into "sys/version" ("version") VALUES (?);', [$version]);
 
-			// update tables data
-			$this->query('DELETE FROM "sys/tables";');
-			$result = $this->query('SELECT "name", "type" FROM sqlite_master WHERE ("type" = \'table\' or "type" = \'view\') and name not like "sys/%" and name<>"sqlite_sequence";');
-			$tables = array();
-			foreach($result as $row) {
-				$tables[] = $row['name'];
-                $stmt = $this->pdo->prepare('INSERT into "sys/tables" ("name", "type") VALUES (?, ?);');
-                $stmt->execute(array($row['name'], $row['type']));
-			}
-			// update columns and foreign_keys data
-			$this->query('DELETE FROM "sys/columns"');
-			$this->query('DELETE FROM "sys/foreign_keys"');
-			foreach ($tables as $table) {
-				$result = $this->query("pragma table_info(`$table`);");
-				foreach($result as $row) {
-					array_unshift($row, $table);
-                    $stmt = $this->pdo->prepare('INSERT into "sys/columns" ("self","cid","name","type","notnull","dflt_value","pk") VALUES (?,?,?,?,?,?,?);');
-                    $stmt->execute(array_values($row));
-				}
-				$result = $this->query("pragma foreign_key_list(`$table`);");
-				foreach($result as $row) {
-					array_unshift($row, $table);
-                    $stmt = $this->pdo->prepare('INSERT into "sys/foreign_keys" ("self","id","seq","table","from","to","on_update","on_delete","match") VALUES (?,?,?,?,?,?,?,?,?);');
-                    $stmt->execute(array_values($row));
-				}
-			}
-		}
+            // update tables data
+            $this->query('DELETE FROM "sys/tables";', []);
+            $result = $this->query('SELECT "name", "type" FROM sqlite_master WHERE ("type" = \'table\' or "type" = \'view\') and name not like "sys/%" and name<>"sqlite_sequence";', []);
+            $tables = array();
+            foreach ($result as $row) {
+                $tables[] = $row['name'];
+                $this->query('INSERT into "sys/tables" ("name", "type") VALUES (?, ?);', [$row['name'], $row['type']]);
+            }
+            // update columns and foreign_keys data
+            $this->query('DELETE FROM "sys/columns";', []);
+            $this->query('DELETE FROM "sys/foreign_keys";', []);
+            foreach ($tables as $table) {
+                $result = $this->query("pragma table_info(`$table`);", []);
+                foreach ($result as $row) {
+                    array_unshift($row, $table);
+                    $this->query('INSERT into "sys/columns" ("self","cid","name","type","notnull","dflt_value","pk") VALUES (?,?,?,?,?,?,?);', array_values($row));
+                }
+                $result = $this->query("pragma foreign_key_list(`$table`);", []);
+                foreach ($result as $row) {
+                    array_unshift($row, $table);
+                    $this->query('INSERT into "sys/foreign_keys" ("self","id","seq","table","from","to","on_update","on_delete","match") VALUES (?,?,?,?,?,?,?,?,?);', array_values($row));
+                }
+            }
+        }
     }
 
     public function getIgnoredTables(): array
@@ -79,11 +76,9 @@ class GenericReflection
             case 'sqlsrv':
                 return [];
             case 'sqlite':
-                return ['sys/version','sys/tables','sys/columns','sys/foreign_keys'];
+                return ['sys/version', 'sys/tables', 'sys/columns', 'sys/foreign_keys'];
         }
     }
-
-
 
     private function getTablesSQL(): string
     {
@@ -96,7 +91,7 @@ class GenericReflection
                 return 'SELECT o.name as "TABLE_NAME", o.xtype as "TABLE_TYPE" FROM sysobjects o WHERE o.xtype IN (\'U\', \'V\') ORDER BY "TABLE_NAME"';
             case 'sqlite':
                 $this->createSqlLiteReflectionTables();
-                return 'SELECT t.name as "TABLE_NAME", t.type as "TABLE_TYPE" FROM "sys/tables" t WHERE t.type IN (\'table\', \'view\') ORDER BY "TABLE_NAME"';
+                return 'SELECT t.name as "TABLE_NAME", t.type as "TABLE_TYPE" FROM "sys/tables" t WHERE t.type IN (\'table\', \'view\') AND \'\' <> ? ORDER BY "TABLE_NAME"';
         }
     }
 
@@ -109,6 +104,8 @@ class GenericReflection
                 return 'SELECT a.attname AS "COLUMN_NAME", case when a.attnotnull then \'NO\' else \'YES\' end as "IS_NULLABLE", pg_catalog.format_type(a.atttypid, -1) as "DATA_TYPE", case when a.atttypmod < 0 then NULL else a.atttypmod-4 end as "CHARACTER_MAXIMUM_LENGTH", case when a.atttypid != 1700 then NULL else ((a.atttypmod - 4) >> 16) & 65535 end as "NUMERIC_PRECISION", case when a.atttypid != 1700 then NULL else (a.atttypmod - 4) & 65535 end as "NUMERIC_SCALE", \'\' AS "COLUMN_TYPE" FROM pg_attribute a JOIN pg_class pgc ON pgc.oid = a.attrelid WHERE pgc.relname = ? AND \'\' <> ? AND a.attnum > 0 AND NOT a.attisdropped;';
             case 'sqlsrv':
                 return 'SELECT c.name AS "COLUMN_NAME", c.is_nullable AS "IS_NULLABLE", t.Name AS "DATA_TYPE", (c.max_length/2) AS "CHARACTER_MAXIMUM_LENGTH", c.precision AS "NUMERIC_PRECISION", c.scale AS "NUMERIC_SCALE", \'\' AS "COLUMN_TYPE" FROM sys.columns c INNER JOIN sys.types t ON c.user_type_id = t.user_type_id WHERE c.object_id = OBJECT_ID(?) AND \'\' <> ?';
+            case 'sqlite':
+                return 'SELECT "name" AS "COLUMN_NAME", case when "notnull"==1 then \'no\' else \'yes\' end as "IS_NULLABLE", "type" AS "DATA_TYPE", 2147483647 AS "CHARACTER_MAXIMUM_LENGTH", 0 AS "NUMERIC_PRECISION", 0 AS "NUMERIC_SCALE", \'\' AS "COLUMN_TYPE" FROM "sys/columns" WHERE "self" = ? AND \'\' <> ?';
         }
     }
 
@@ -121,6 +118,8 @@ class GenericReflection
                 return 'SELECT a.attname AS "COLUMN_NAME" FROM pg_attribute a JOIN pg_constraint c ON (c.conrelid, c.conkey[1]) = (a.attrelid, a.attnum) JOIN pg_class pgc ON pgc.oid = a.attrelid WHERE pgc.relname = ? AND \'\' <> ? AND c.contype = \'p\'';
             case 'sqlsrv':
                 return 'SELECT c.NAME as "COLUMN_NAME" FROM sys.key_constraints kc inner join sys.objects t on t.object_id = kc.parent_object_id INNER JOIN sys.index_columns ic ON kc.parent_object_id = ic.object_id and kc.unique_index_id = ic.index_id INNER JOIN sys.columns c ON ic.object_id = c.object_id AND ic.column_id = c.column_id WHERE kc.type = \'PK\' and t.object_id = OBJECT_ID(?) and \'\' <> ?';
+            case 'sqlite':
+                return 'SELECT "name" as "COLUMN_NAME" FROM "sys/columns" WHERE "pk"=1 AND "self"=? AND \'\' <> ?';
         }
     }
 
@@ -133,6 +132,8 @@ class GenericReflection
                 return 'SELECT a.attname AS "COLUMN_NAME", c.confrelid::regclass::text AS "REFERENCED_TABLE_NAME" FROM pg_attribute a JOIN pg_constraint c ON (c.conrelid, c.conkey[1]) = (a.attrelid, a.attnum) JOIN pg_class pgc ON pgc.oid = a.attrelid WHERE pgc.relname = ? AND \'\' <> ? AND c.contype  = \'f\'';
             case 'sqlsrv':
                 return 'SELECT COL_NAME(fc.parent_object_id, fc.parent_column_id) AS "COLUMN_NAME", OBJECT_NAME (f.referenced_object_id) AS "REFERENCED_TABLE_NAME" FROM sys.foreign_keys AS f INNER JOIN sys.foreign_key_columns AS fc ON f.OBJECT_ID = fc.constraint_object_id WHERE f.parent_object_id = OBJECT_ID(?) and \'\' <> ?';
+            case 'sqlite':
+                return 'SELECT "from" AS "COLUMN_NAME", "table" AS "REFERENCED_TABLE_NAME" FROM "sys/foreign_keys" WHERE "self" = ? AND \'\' <> ?';
         }
     }
 
@@ -150,20 +151,22 @@ class GenericReflection
             return !$tables || in_array($v['TABLE_NAME'], $tables);
         });
         foreach ($results as &$result) {
+            $map = [];
             switch ($this->driver) {
                 case 'mysql':
                     $map = ['BASE TABLE' => 'table', 'VIEW' => 'view'];
-                    $result['TABLE_TYPE'] = $map[$result['TABLE_TYPE']];
                     break;
                 case 'pgsql':
                     $map = ['r' => 'table', 'v' => 'view'];
-                    $result['TABLE_TYPE'] = $map[$result['TABLE_TYPE']];
                     break;
                 case 'sqlsrv':
                     $map = ['U' => 'table', 'V' => 'view'];
-                    $result['TABLE_TYPE'] = $map[trim($result['TABLE_TYPE'])];
+                    break;
+                case 'sqlite':
+                    $map = ['table' => 'table', 'view' => 'view'];
                     break;
             }
+            $result['TABLE_TYPE'] = $map[trim($result['TABLE_TYPE'])];
         }
         return $results;
     }
@@ -189,6 +192,23 @@ class GenericReflection
                     if (isset($matches[5])) {
                         $result['NUMERIC_SCALE'] = $matches[5];
                     }
+                }
+            }
+        }
+        if ($this->driver == 'sqlite') {
+            foreach ($results as &$result) {
+                // mysql does not properly reflect display width of types
+                preg_match('|([a-z]+)(\(([0-9]+)(,([0-9]+))?\))?|', $result['DATA_TYPE'], $matches);
+                if (isset($matches[1])) {
+                    $result['DATA_TYPE'] = $matches[1];
+                } else {
+                    $result['DATA_TYPE'] = 'text';
+                }
+                if (isset($matches[5])) {
+                    $result['NUMERIC_PRECISION'] = $matches[3];
+                    $result['NUMERIC_SCALE'] = $matches[5];
+                } else if (isset($matches[3])) {
+                    $result['CHARACTER_MAXIMUM_LENGTH'] = $matches[3];
                 }
             }
         }

@@ -27,10 +27,10 @@ class DataConverter
 
     private function getRecordValueConversion(ReflectedColumn $column): string
     {
-        if (in_array($this->driver, ['mysql', 'sqlsrv']) && $column->isBoolean()) {
+        if (in_array($this->driver, ['mysql', 'sqlsrv', 'sqlite']) && $column->isBoolean()) {
             return 'boolean';
         }
-        if ($this->driver == 'sqlsrv' && $column->getType() == 'bigint') {
+        if (in_array($this->driver, ['sqlsrv', 'sqlite']) && in_array($column->getType(), ['integer', 'bigint'])) {
             return 'integer';
         }
         return 'none';
