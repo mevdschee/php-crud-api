@@ -19,8 +19,8 @@ CREATE TABLE "comments" (
   "post_id" integer NOT NULL,
   "message" text NOT NULL,
   "category_id" integer NOT NULL,
-  FOREIGN KEY ("post_id") REFERENCES "posts" ("id"),
-  FOREIGN KEY ("category_id") REFERENCES "categories" ("id")
+  FOREIGN KEY ("post_id") REFERENCES "posts" ("id") ON DELETE RESTRICT ON UPDATE RESTRICT,
+  FOREIGN KEY ("category_id") REFERENCES "categories" ("id") ON DELETE RESTRICT ON UPDATE RESTRICT
 );
 
 CREATE INDEX "comments_post_id" ON "comments" ("post_id");
@@ -30,22 +30,6 @@ INSERT INTO "comments" ("id", "post_id", "message", "category_id") VALUES (1, 1,
 INSERT INTO "comments" ("id", "post_id", "message", "category_id") VALUES (2, 1, 'fantastic', 3);
 INSERT INTO "comments" ("id", "post_id", "message", "category_id") VALUES (3, 2, 'thank you', 3);
 INSERT INTO "comments" ("id", "post_id", "message", "category_id") VALUES (4, 2, 'awesome', 3);
-
-DROP TABLE IF EXISTS "post_tags";
-CREATE TABLE "post_tags" (
-  "id" integer NOT NULL PRIMARY KEY AUTOINCREMENT,
-  "post_id" integer NOT NULL,
-  "tag_id" integer NOT NULL,
-  FOREIGN KEY ("tag_id") REFERENCES "tags" ("id"),
-  FOREIGN KEY ("post_id") REFERENCES "posts" ("id") ON DELETE RESTRICT ON UPDATE RESTRICT
-);
-
-CREATE UNIQUE INDEX "post_tags_post_id_tag_id" ON "post_tags" ("post_id", "tag_id");
-
-INSERT INTO "post_tags" ("id", "post_id", "tag_id") VALUES (1, 1, 1);
-INSERT INTO "post_tags" ("id", "post_id", "tag_id") VALUES (2, 1, 2);
-INSERT INTO "post_tags" ("id", "post_id", "tag_id") VALUES (3, 2, 1);
-INSERT INTO "post_tags" ("id", "post_id", "tag_id") VALUES (4, 2, 2);
 
 DROP TABLE IF EXISTS "posts";
 CREATE TABLE "posts" (
@@ -63,6 +47,22 @@ CREATE INDEX "posts_category_id" ON "posts" ("category_id");
 
 INSERT INTO "posts" ("id", "user_id", "category_id", "content") VALUES (1, 1, 1, 'blog started');
 INSERT INTO "posts" ("id", "user_id", "category_id", "content") VALUES (2, 1, 2, 'It works!');
+
+DROP TABLE IF EXISTS "post_tags";
+CREATE TABLE "post_tags" (
+  "id" integer NOT NULL PRIMARY KEY AUTOINCREMENT,
+  "post_id" integer NOT NULL,
+  "tag_id" integer NOT NULL,
+  FOREIGN KEY ("tag_id") REFERENCES "tags" ("id") ON DELETE RESTRICT ON UPDATE RESTRICT,
+  FOREIGN KEY ("post_id") REFERENCES "posts" ("id") ON DELETE RESTRICT ON UPDATE RESTRICT
+);
+
+CREATE UNIQUE INDEX "post_tags_post_id_tag_id" ON "post_tags" ("post_id", "tag_id");
+
+INSERT INTO "post_tags" ("id", "post_id", "tag_id") VALUES (1, 1, 1);
+INSERT INTO "post_tags" ("id", "post_id", "tag_id") VALUES (2, 1, 2);
+INSERT INTO "post_tags" ("id", "post_id", "tag_id") VALUES (3, 2, 1);
+INSERT INTO "post_tags" ("id", "post_id", "tag_id") VALUES (4, 2, 2);
 
 DROP TABLE IF EXISTS "tags";
 CREATE TABLE "tags" (
@@ -83,7 +83,7 @@ CREATE TABLE "users" (
 );
 
 INSERT INTO "users" ("id", "username", "password", "location") VALUES (1, 'user1', 'pass1', NULL);
-INSERT INTO "users" ("id", "username", "password", "location") VALUES (2, 'user2', 'pass2', NULL);
+INSERT INTO "users" ("id", "username", "password", "location") VALUES (2, 'user2', '$2y$10$cg7/nswxVZ0cmVIsMB/pVOh1OfcHScBJGq7Xu4KF9dFEQgRZ8HWe.', NULL);
 
 DROP TABLE IF EXISTS "countries";
 CREATE TABLE "countries" (
@@ -108,8 +108,8 @@ DROP TABLE IF EXISTS "events";
 CREATE TABLE "events" (
   "id" integer NOT NULL PRIMARY KEY AUTOINCREMENT,
   "name" varchar(255) NOT NULL,
-  "datetime" datetime NOT NULL,
-  "visitors" integer NOT NULL
+  "datetime" datetime,
+  "visitors" bigint
 );
 
 INSERT INTO "events" ("id", "name", "datetime", "visitors") VALUES (1, 'Launch', '2016-01-01 13:01:01', 0);
@@ -129,15 +129,17 @@ CREATE TABLE "products" (
 
 INSERT INTO "products" ("id", "name", "price", "properties", "created_at") VALUES (1, 'Calculator', '23.01', '{"depth":false,"model":"TRX-120","width":100,"height":null}', '1970-01-01 01:01:01');
 
+DROP TABLE IF EXISTS "barcodes2";
 DROP TABLE IF EXISTS "barcodes";
 CREATE TABLE "barcodes" (
   "id" integer NOT NULL PRIMARY KEY AUTOINCREMENT,
   "product_id" integer NOT NULL,
   "hex" varchar(255) NOT NULL,
-  "bin" blob NOT NULL
+  "bin" blob NOT NULL,
+  "ip_address" varchar(15)
 );
 
-INSERT INTO "barcodes" ("id", "product_id", "hex", "bin") VALUES (1, 1, '00ff01', 'AP8B');
+INSERT INTO "barcodes" ("id", "product_id", "hex", "bin", "ip_address") VALUES (1, 1, '00ff01', 'AP8B', '127.0.0.1');
 
 DROP TABLE IF EXISTS "kunsthåndværk";
 CREATE TABLE "kunsthåndværk" (
@@ -150,6 +152,20 @@ CREATE TABLE "kunsthåndværk" (
 
 INSERT INTO "kunsthåndværk" ("id", "Umlauts ä_ö_ü-COUNT", "user_id", "invisible") VALUES ('e42c77c6-06a4-4502-816c-d112c7142e6d', 1, 1, NULL);
 INSERT INTO "kunsthåndværk" ("id", "Umlauts ä_ö_ü-COUNT", "user_id", "invisible") VALUES ('e31ecfe6-591f-4660-9fbd-1a232083037f', 2, 2, NULL);
+
+DROP TABLE IF EXISTS "invisibles";
+CREATE TABLE "invisibles" (
+  "id" varchar(36) NOT NULL PRIMARY KEY
+);
+
+INSERT INTO "invisibles" ("id") VALUES ('e42c77c6-06a4-4502-816c-d112c7142e6d');
+
+DROP TABLE IF EXISTS "nopk";
+CREATE TABLE "nopk" (
+  "id" varchar(36) NOT NULL
+);
+
+INSERT INTO "nopk" ("id") VALUES ('e42c77c6-06a4-4502-816c-d112c7142e6d');
 
 PRAGMA foreign_keys = on;
 
