@@ -4838,9 +4838,14 @@ namespace Tqdev\PhpCrudApi\Database {
                 return '';
             }
             switch ($this->driver) {
-                case 'mysql':return " LIMIT $offset, $limit";
-                case 'pgsql':return " LIMIT $limit OFFSET $offset";
-                case 'sqlsrv':return " OFFSET $offset ROWS FETCH NEXT $limit ROWS ONLY";
+                case 'mysql':
+                    return " LIMIT $offset, $limit";
+                case 'pgsql':
+                    return " LIMIT $limit OFFSET $offset";
+                case 'sqlsrv':
+                    return " OFFSET $offset ROWS FETCH NEXT $limit ROWS ONLY";
+                case 'sqlite':
+                    return " LIMIT $limit OFFSET $offset";
             }
         }
 
@@ -4890,9 +4895,14 @@ namespace Tqdev\PhpCrudApi\Database {
             $valuesSql = '(' . implode(',', $values) . ')';
             $outputColumn = $this->quoteColumnName($table->getPk());
             switch ($this->driver) {
-                case 'mysql':return "$columnsSql VALUES $valuesSql";
-                case 'pgsql':return "$columnsSql VALUES $valuesSql RETURNING $outputColumn";
-                case 'sqlsrv':return "$columnsSql OUTPUT INSERTED.$outputColumn VALUES $valuesSql";
+                case 'mysql':
+                    return "$columnsSql VALUES $valuesSql";
+                case 'pgsql':
+                    return "$columnsSql VALUES $valuesSql RETURNING $outputColumn";
+                case 'sqlsrv':
+                    return "$columnsSql OUTPUT INSERTED.$outputColumn VALUES $valuesSql";
+                case 'sqlite':
+                    return "$columnsSql VALUES $valuesSql";
             }
         }
 
@@ -5072,17 +5082,28 @@ namespace Tqdev\PhpCrudApi\Database {
         private function getSpatialFunctionName(string $operator): string
         {
             switch ($operator) {
-                case 'co':return 'ST_Contains';
-                case 'cr':return 'ST_Crosses';
-                case 'di':return 'ST_Disjoint';
-                case 'eq':return 'ST_Equals';
-                case 'in':return 'ST_Intersects';
-                case 'ov':return 'ST_Overlaps';
-                case 'to':return 'ST_Touches';
-                case 'wi':return 'ST_Within';
-                case 'ic':return 'ST_IsClosed';
-                case 'is':return 'ST_IsSimple';
-                case 'iv':return 'ST_IsValid';
+                case 'co':
+                    return 'ST_Contains';
+                case 'cr':
+                    return 'ST_Crosses';
+                case 'di':
+                    return 'ST_Disjoint';
+                case 'eq':
+                    return 'ST_Equals';
+                case 'in':
+                    return 'ST_Intersects';
+                case 'ov':
+                    return 'ST_Overlaps';
+                case 'to':
+                    return 'ST_Touches';
+                case 'wi':
+                    return 'ST_Within';
+                case 'ic':
+                    return 'ST_IsClosed';
+                case 'is':
+                    return 'ST_IsSimple';
+                case 'iv':
+                    return 'ST_IsValid';
             }
         }
 
@@ -5102,6 +5123,9 @@ namespace Tqdev\PhpCrudApi\Database {
                     $functionName = str_replace('ST_', 'ST', $functionName);
                     $argument = $hasArgument ? 'geometry::STGeomFromText(?,0)' : '';
                     return "$column.$functionName($argument)=1";
+                case 'sqlite':
+                    $argument = $hasArgument ? '?' : '0';
+                    return "$functionName($column, $argument)=1";
             }
         }
 
@@ -5157,10 +5181,10 @@ namespace Tqdev\PhpCrudApi\Database {
 
         private function getRecordValueConversion(ReflectedColumn $column): string
         {
-            if (in_array($this->driver, ['mysql', 'sqlsrv']) && $column->isBoolean()) {
+            if (in_array($this->driver, ['mysql', 'sqlsrv', 'sqlite']) && $column->isBoolean()) {
                 return 'boolean';
             }
-            if ($this->driver == 'sqlsrv' && $column->getType() == 'bigint') {
+            if (in_array($this->driver, ['sqlsrv', 'sqlite']) && in_array($column->getType(), ['integer', 'bigint'])) {
                 return 'integer';
             }
             return 'none';
@@ -5255,6 +5279,8 @@ namespace Tqdev\PhpCrudApi\Database {
                     return "$this->driver:host=$this->address port=$this->port dbname=$this->database options='--client_encoding=UTF8'";
                 case 'sqlsrv':
                     return "$this->driver:Server=$this->address,$this->port;Database=$this->database";
+                case 'sqlite':
+                    return "$this->driver:$this->address";
             }
         }
 
@@ -5273,6 +5299,10 @@ namespace Tqdev\PhpCrudApi\Database {
                     ];
                 case 'sqlsrv':
                     return [];
+                case 'sqlite':
+                    return [
+                        'PRAGMA foreign_keys = on;',
+                    ];
             }
         }
 
@@ -5299,6 +5329,8 @@ namespace Tqdev\PhpCrudApi\Database {
                         \PDO::SQLSRV_ATTR_DIRECT_QUERY => false,
                         \PDO::SQLSRV_ATTR_FETCHES_NUMERIC_TYPE => true,
                     ];
+                case 'sqlite':
+                    return $options + [];
             }
         }
 
@@ -5406,9 +5438,15 @@ namespace Tqdev\PhpCrudApi\Database {
                 case 'mysql':
                     $stmt = $this->query('SELECT LAST_INSERT_ID()', []);
                     break;
+                case 'sqlite':
+                    $stmt = $this->query('SELECT LAST_INSERT_ROWID()', []);
+                    break;
             }
             $pkValue = $stmt->fetchColumn(0);
             if ($this->driver == 'sqlsrv' && $table->getPk()->getType() == 'bigint') {
+                return (int) $pkValue;
+            }
+            if ($this->driver == 'sqlite' && in_array($table->getPk()->getType(), ['integer', 'bigint'])) {
                 return (int) $pkValue;
             }
             return $pkValue;
@@ -5996,6 +6034,51 @@ namespace Tqdev\PhpCrudApi\Database {
             $this->typeConverter = new TypeConverter($driver);
         }
 
+        private function createSqlLiteReflectionTables() /*: void */
+        {
+            $reflection = $this->query('SELECT "name" FROM "sqlite_master" WHERE "type" = \'table\' and name like \'sys/%\';', []);
+            if (count($reflection) == 0) {
+                //create reflection tables
+                $this->query('CREATE table "sys/version" ("version" integer);', []);
+                $this->query('CREATE table "sys/tables" ("name" text, "type" text);', []);
+                $this->query('CREATE table "sys/columns" ("self" text,"cid" integer,"name" text,"type" integer,"notnull" integer,"dflt_value" integer,"pk" integer);', []);
+                $this->query('CREATE table "sys/foreign_keys" ("self" text,"id" integer,"seq" integer,"table" text,"from" text,"to" text,"on_update" text,"on_delete" text,"match" text);', []);
+            }
+            $version = $this->query('pragma schema_version;', [])[0]["schema_version"];
+            $current = $this->query('SELECT "version" from "sys/version";', []);
+            if (!$current || count($current) == 0 || !isset($current[0]["schema_version"]) || $version != $current[0]["schema_version"]) {
+                // reflection may take a while
+                set_time_limit(3600);
+                // update version data
+                $this->query('DELETE FROM "sys/version";', []);
+                $this->query('INSERT into "sys/version" ("version") VALUES (?);', [$version]);
+
+                // update tables data
+                $this->query('DELETE FROM "sys/tables";', []);
+                $result = $this->query('SELECT "name", "type" FROM sqlite_master WHERE ("type" = \'table\' or "type" = \'view\') and name not like "sys/%" and name<>"sqlite_sequence";', []);
+                $tables = array();
+                foreach ($result as $row) {
+                    $tables[] = $row['name'];
+                    $this->query('INSERT into "sys/tables" ("name", "type") VALUES (?, ?);', [$row['name'], $row['type']]);
+                }
+                // update columns and foreign_keys data
+                $this->query('DELETE FROM "sys/columns";', []);
+                $this->query('DELETE FROM "sys/foreign_keys";', []);
+                foreach ($tables as $table) {
+                    $result = $this->query("pragma table_info(`$table`);", []);
+                    foreach ($result as $row) {
+                        array_unshift($row, $table);
+                        $this->query('INSERT into "sys/columns" ("self","cid","name","type","notnull","dflt_value","pk") VALUES (?,?,?,?,?,?,?);', array_values($row));
+                    }
+                    $result = $this->query("pragma foreign_key_list(`$table`);", []);
+                    foreach ($result as $row) {
+                        array_unshift($row, $table);
+                        $this->query('INSERT into "sys/foreign_keys" ("self","id","seq","table","from","to","on_update","on_delete","match") VALUES (?,?,?,?,?,?,?,?,?);', array_values($row));
+                    }
+                }
+            }
+        }
+
         public function getIgnoredTables(): array
         {
             switch ($this->driver) {
@@ -6005,6 +6088,8 @@ namespace Tqdev\PhpCrudApi\Database {
                     return ['spatial_ref_sys', 'raster_columns', 'raster_overviews', 'geography_columns', 'geometry_columns'];
                 case 'sqlsrv':
                     return [];
+                case 'sqlite':
+                    return ['sys/version', 'sys/tables', 'sys/columns', 'sys/foreign_keys'];
             }
         }
 
@@ -6017,6 +6102,9 @@ namespace Tqdev\PhpCrudApi\Database {
                     return 'SELECT c.relname as "TABLE_NAME", c.relkind as "TABLE_TYPE" FROM pg_catalog.pg_class c LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace WHERE c.relkind IN (\'r\', \'v\') AND n.nspname <> \'pg_catalog\' AND n.nspname <> \'information_schema\' AND n.nspname !~ \'^pg_toast\' AND pg_catalog.pg_table_is_visible(c.oid) AND \'\' <> ? ORDER BY "TABLE_NAME";';
                 case 'sqlsrv':
                     return 'SELECT o.name as "TABLE_NAME", o.xtype as "TABLE_TYPE" FROM sysobjects o WHERE o.xtype IN (\'U\', \'V\') ORDER BY "TABLE_NAME"';
+                case 'sqlite':
+                    $this->createSqlLiteReflectionTables();
+                    return 'SELECT t.name as "TABLE_NAME", t.type as "TABLE_TYPE" FROM "sys/tables" t WHERE t.type IN (\'table\', \'view\') AND \'\' <> ? ORDER BY "TABLE_NAME"';
             }
         }
 
@@ -6029,6 +6117,8 @@ namespace Tqdev\PhpCrudApi\Database {
                     return 'SELECT a.attname AS "COLUMN_NAME", case when a.attnotnull then \'NO\' else \'YES\' end as "IS_NULLABLE", pg_catalog.format_type(a.atttypid, -1) as "DATA_TYPE", case when a.atttypmod < 0 then NULL else a.atttypmod-4 end as "CHARACTER_MAXIMUM_LENGTH", case when a.atttypid != 1700 then NULL else ((a.atttypmod - 4) >> 16) & 65535 end as "NUMERIC_PRECISION", case when a.atttypid != 1700 then NULL else (a.atttypmod - 4) & 65535 end as "NUMERIC_SCALE", \'\' AS "COLUMN_TYPE" FROM pg_attribute a JOIN pg_class pgc ON pgc.oid = a.attrelid WHERE pgc.relname = ? AND \'\' <> ? AND a.attnum > 0 AND NOT a.attisdropped;';
                 case 'sqlsrv':
                     return 'SELECT c.name AS "COLUMN_NAME", c.is_nullable AS "IS_NULLABLE", t.Name AS "DATA_TYPE", (c.max_length/2) AS "CHARACTER_MAXIMUM_LENGTH", c.precision AS "NUMERIC_PRECISION", c.scale AS "NUMERIC_SCALE", \'\' AS "COLUMN_TYPE" FROM sys.columns c INNER JOIN sys.types t ON c.user_type_id = t.user_type_id WHERE c.object_id = OBJECT_ID(?) AND \'\' <> ?';
+                case 'sqlite':
+                    return 'SELECT "name" AS "COLUMN_NAME", case when "notnull"==1 then \'no\' else \'yes\' end as "IS_NULLABLE", "type" AS "DATA_TYPE", 2147483647 AS "CHARACTER_MAXIMUM_LENGTH", 0 AS "NUMERIC_PRECISION", 0 AS "NUMERIC_SCALE", \'\' AS "COLUMN_TYPE" FROM "sys/columns" WHERE "self" = ? AND \'\' <> ?';
             }
         }
 
@@ -6041,6 +6131,8 @@ namespace Tqdev\PhpCrudApi\Database {
                     return 'SELECT a.attname AS "COLUMN_NAME" FROM pg_attribute a JOIN pg_constraint c ON (c.conrelid, c.conkey[1]) = (a.attrelid, a.attnum) JOIN pg_class pgc ON pgc.oid = a.attrelid WHERE pgc.relname = ? AND \'\' <> ? AND c.contype = \'p\'';
                 case 'sqlsrv':
                     return 'SELECT c.NAME as "COLUMN_NAME" FROM sys.key_constraints kc inner join sys.objects t on t.object_id = kc.parent_object_id INNER JOIN sys.index_columns ic ON kc.parent_object_id = ic.object_id and kc.unique_index_id = ic.index_id INNER JOIN sys.columns c ON ic.object_id = c.object_id AND ic.column_id = c.column_id WHERE kc.type = \'PK\' and t.object_id = OBJECT_ID(?) and \'\' <> ?';
+                case 'sqlite':
+                    return 'SELECT "name" as "COLUMN_NAME" FROM "sys/columns" WHERE "pk"=1 AND "self"=? AND \'\' <> ?';
             }
         }
 
@@ -6053,6 +6145,8 @@ namespace Tqdev\PhpCrudApi\Database {
                     return 'SELECT a.attname AS "COLUMN_NAME", c.confrelid::regclass::text AS "REFERENCED_TABLE_NAME" FROM pg_attribute a JOIN pg_constraint c ON (c.conrelid, c.conkey[1]) = (a.attrelid, a.attnum) JOIN pg_class pgc ON pgc.oid = a.attrelid WHERE pgc.relname = ? AND \'\' <> ? AND c.contype  = \'f\'';
                 case 'sqlsrv':
                     return 'SELECT COL_NAME(fc.parent_object_id, fc.parent_column_id) AS "COLUMN_NAME", OBJECT_NAME (f.referenced_object_id) AS "REFERENCED_TABLE_NAME" FROM sys.foreign_keys AS f INNER JOIN sys.foreign_key_columns AS fc ON f.OBJECT_ID = fc.constraint_object_id WHERE f.parent_object_id = OBJECT_ID(?) and \'\' <> ?';
+                case 'sqlite':
+                    return 'SELECT "from" AS "COLUMN_NAME", "table" AS "REFERENCED_TABLE_NAME" FROM "sys/foreign_keys" WHERE "self" = ? AND \'\' <> ?';
             }
         }
 
@@ -6070,20 +6164,22 @@ namespace Tqdev\PhpCrudApi\Database {
                 return !$tables || in_array($v['TABLE_NAME'], $tables);
             });
             foreach ($results as &$result) {
+                $map = [];
                 switch ($this->driver) {
                     case 'mysql':
                         $map = ['BASE TABLE' => 'table', 'VIEW' => 'view'];
-                        $result['TABLE_TYPE'] = $map[$result['TABLE_TYPE']];
                         break;
                     case 'pgsql':
                         $map = ['r' => 'table', 'v' => 'view'];
-                        $result['TABLE_TYPE'] = $map[$result['TABLE_TYPE']];
                         break;
                     case 'sqlsrv':
                         $map = ['U' => 'table', 'V' => 'view'];
-                        $result['TABLE_TYPE'] = $map[trim($result['TABLE_TYPE'])];
+                        break;
+                    case 'sqlite':
+                        $map = ['table' => 'table', 'view' => 'view'];
                         break;
                 }
+                $result['TABLE_TYPE'] = $map[trim($result['TABLE_TYPE'])];
             }
             return $results;
         }
@@ -6109,6 +6205,23 @@ namespace Tqdev\PhpCrudApi\Database {
                         if (isset($matches[5])) {
                             $result['NUMERIC_SCALE'] = $matches[5];
                         }
+                    }
+                }
+            }
+            if ($this->driver == 'sqlite') {
+                foreach ($results as &$result) {
+                    // mysql does not properly reflect display width of types
+                    preg_match('|([a-z]+)(\(([0-9]+)(,([0-9]+))?\))?|', $result['DATA_TYPE'], $matches);
+                    if (isset($matches[1])) {
+                        $result['DATA_TYPE'] = $matches[1];
+                    } else {
+                        $result['DATA_TYPE'] = 'integer';
+                    }
+                    if (isset($matches[5])) {
+                        $result['NUMERIC_PRECISION'] = $matches[3];
+                        $result['NUMERIC_SCALE'] = $matches[5];
+                    } else if (isset($matches[3])) {
+                        $result['CHARACTER_MAXIMUM_LENGTH'] = $matches[3];
                     }
                 }
             }
@@ -6398,6 +6511,20 @@ namespace Tqdev\PhpCrudApi\Database {
                 'udt' => 'varbinary',
                 'uniqueidentifier' => 'char',
                 'xml' => 'clob',
+            ],
+            'sqlite' => [
+                'tinytext' => 'clob',
+                'text' => 'clob',
+                'mediumtext' => 'clob',
+                'longtext' => 'clob',
+                'mediumint' => 'integer',
+                'int' => 'integer',
+                'bigint' => 'bigint',
+                'int2' => 'smallint',
+                'int4' => 'integer',
+                'int8' => 'bigint',
+                'double precision' => 'double',
+                'datetime' => 'timestamp'
             ],
         ];
 
@@ -6963,6 +7090,8 @@ namespace Tqdev\PhpCrudApi\Middleware\Router {
                 $response = call_user_func($this->routeHandlers[$routeNumbers[0]], $request);
             } catch (\PDOException $e) {
                 if (strpos(strtolower($e->getMessage()), 'duplicate') !== false) {
+                    $response = $this->responder->error(ErrorCode::DUPLICATE_KEY_EXCEPTION, '');
+                } elseif (strpos(strtolower($e->getMessage()), 'unique constraint') !== false) {
                     $response = $this->responder->error(ErrorCode::DUPLICATE_KEY_EXCEPTION, '');
                 } elseif (strpos(strtolower($e->getMessage()), 'default value') !== false) {
                     $response = $this->responder->error(ErrorCode::DATA_INTEGRITY_VIOLATION, '');
@@ -10269,6 +10398,8 @@ namespace Tqdev\PhpCrudApi {
                     return 5432;
                 case 'sqlsrv':
                     return 1433;
+                case 'sqlite':
+                    return 0;
             }
         }
 
@@ -10281,6 +10412,8 @@ namespace Tqdev\PhpCrudApi {
                     return 'localhost';
                 case 'sqlsrv':
                     return 'localhost';
+                case 'sqlite':
+                    return 'data.db';
             }
         }
 
