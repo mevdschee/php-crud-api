@@ -6839,7 +6839,6 @@ namespace Tqdev\PhpCrudApi\GeoJson {
                 $coordinates = preg_replace('|([0-9\-\.]+ )+([0-9\-\.]+)|', '[\1\2]', $coordinates);
             }
             $coordinates = str_replace(['(', ')', ', ', ' '], ['[', ']', ',', ','], $coordinates);
-            $json = $coordinates;
             $coordinates = json_decode($coordinates);
             if (!$coordinates) {
                 throw new \Exception('Could not decode WKT: ' . $wkt);
