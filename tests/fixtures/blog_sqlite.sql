@@ -17,7 +17,7 @@ DROP TABLE IF EXISTS "comments";
 CREATE TABLE "comments" (
   "id" integer NOT NULL PRIMARY KEY AUTOINCREMENT,
   "post_id" integer NOT NULL,
-  "message" text NOT NULL,
+  "message" varchar(255) NOT NULL,
   "category_id" integer NOT NULL,
   FOREIGN KEY ("post_id") REFERENCES "posts" ("id") ON DELETE RESTRICT ON UPDATE RESTRICT,
   FOREIGN KEY ("category_id") REFERENCES "categories" ("id") ON DELETE RESTRICT ON UPDATE RESTRICT
@@ -36,7 +36,7 @@ CREATE TABLE "posts" (
   "id" integer NOT NULL PRIMARY KEY AUTOINCREMENT,
   "user_id" integer NOT NULL,
   "category_id" integer NOT NULL,
-  "content" text NOT NULL,
+  "content" varchar(255) NOT NULL,
   FOREIGN KEY ("user_id") REFERENCES "users" ("id") ON DELETE RESTRICT ON UPDATE RESTRICT,
   FOREIGN KEY ("category_id") REFERENCES "categories" ("id") ON DELETE RESTRICT ON UPDATE RESTRICT
 );
@@ -121,7 +121,7 @@ DROP TABLE IF EXISTS "products";
 CREATE TABLE "products" (
   "id" integer NOT NULL PRIMARY KEY AUTOINCREMENT,
   "name" varchar(255) NOT NULL,
-  "price" varchar(12) NOT NULL,
+  "price" decimal(10,2) NOT NULL,
   "properties" clob NOT NULL,
   "created_at" datetime NOT NULL,
   "deleted_at" datetime NULL
@@ -136,7 +136,8 @@ CREATE TABLE "barcodes" (
   "product_id" integer NOT NULL,
   "hex" varchar(255) NOT NULL,
   "bin" blob NOT NULL,
-  "ip_address" varchar(15)
+  "ip_address" varchar(15),
+  FOREIGN KEY ("product_id") REFERENCES "products" ("id") ON DELETE RESTRICT ON UPDATE RESTRICT
 );
 
 INSERT INTO "barcodes" ("id", "product_id", "hex", "bin", "ip_address") VALUES (1, 1, '00ff01', 'AP8B', '127.0.0.1');
