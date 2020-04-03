@@ -146,17 +146,28 @@ class ConditionsBuilder
     private function getSpatialFunctionName(string $operator): string
     {
         switch ($operator) {
-            case 'co':return 'ST_Contains';
-            case 'cr':return 'ST_Crosses';
-            case 'di':return 'ST_Disjoint';
-            case 'eq':return 'ST_Equals';
-            case 'in':return 'ST_Intersects';
-            case 'ov':return 'ST_Overlaps';
-            case 'to':return 'ST_Touches';
-            case 'wi':return 'ST_Within';
-            case 'ic':return 'ST_IsClosed';
-            case 'is':return 'ST_IsSimple';
-            case 'iv':return 'ST_IsValid';
+            case 'co':
+                return 'ST_Contains';
+            case 'cr':
+                return 'ST_Crosses';
+            case 'di':
+                return 'ST_Disjoint';
+            case 'eq':
+                return 'ST_Equals';
+            case 'in':
+                return 'ST_Intersects';
+            case 'ov':
+                return 'ST_Overlaps';
+            case 'to':
+                return 'ST_Touches';
+            case 'wi':
+                return 'ST_Within';
+            case 'ic':
+                return 'ST_IsClosed';
+            case 'is':
+                return 'ST_IsSimple';
+            case 'iv':
+                return 'ST_IsValid';
         }
     }
 
@@ -176,6 +187,9 @@ class ConditionsBuilder
                 $functionName = str_replace('ST_', 'ST', $functionName);
                 $argument = $hasArgument ? 'geometry::STGeomFromText(?,0)' : '';
                 return "$column.$functionName($argument)=1";
+            case 'sqlite':
+                $argument = $hasArgument ? '?' : '0';
+                return "$functionName($column, $argument)=1";
         }
     }
 

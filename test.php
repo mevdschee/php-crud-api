@@ -27,6 +27,9 @@ function runDir(Config $config, string $dir, array $matches, string $category): 
             if (substr($entry, -4) != '.log') {
                 continue;
             }
+            if ($config->getDriver() == 'sqlite' && strpos($entry, '_geo')) {
+                continue;
+            }
             $success += runTest($config, $file, $category);
             $total += 1;
         } elseif (is_dir($file)) {
