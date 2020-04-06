@@ -4255,11 +4255,6 @@ namespace Tqdev\PhpCrudApi\Column {
             return $this->database()->getTableNames();
         }
 
-        public function getDatabaseName(): string
-        {
-            return $this->database()->getName();
-        }
-
         public function removeTable(string $tableName): bool
         {
             unset($this->tables[$tableName]);
@@ -6274,7 +6269,7 @@ namespace Tqdev\PhpCrudApi\Database {
             if ($this->driver == 'sqlite') {
                 foreach ($results as &$result) {
                     // mysql does not properly reflect display width of types
-                    preg_match('|([a-z]+)(\(([0-9]+)(,([0-9]+))?\))?|', $result['DATA_TYPE'], $matches);
+                    preg_match('|([a-zA-Z]+)(\(([0-9]+)(,([0-9]+))?\))?|', $result['DATA_TYPE'], $matches);
                     if (isset($matches[1])) {
                         $result['DATA_TYPE'] = $matches[1];
                     } else {
@@ -6321,7 +6316,7 @@ namespace Tqdev\PhpCrudApi\Database {
         private function query(string $sql, array $parameters): array
         {
             $stmt = $this->pdo->prepare($sql);
-            //echo "- $sql -- " . json_encode($parameters, JSON_UNESCAPED_UNICODE) . "\n";
+            // echo "- $sql -- " . json_encode($parameters, JSON_UNESCAPED_UNICODE) . "\n";
             $stmt->execute($parameters);
             return $stmt->fetchAll();
         }

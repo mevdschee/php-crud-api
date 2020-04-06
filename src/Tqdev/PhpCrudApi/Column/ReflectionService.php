@@ -95,11 +95,6 @@ class ReflectionService
         return $this->database()->getTableNames();
     }
 
-    public function getDatabaseName(): string
-    {
-        return $this->database()->getName();
-    }
-
     public function removeTable(string $tableName): bool
     {
         unset($this->tables[$tableName]);

@@ -199,7 +199,7 @@ class GenericReflection
         if ($this->driver == 'sqlite') {
             foreach ($results as &$result) {
                 // mysql does not properly reflect display width of types
-                preg_match('|([a-z]+)(\(([0-9]+)(,([0-9]+))?\))?|', $result['DATA_TYPE'], $matches);
+                preg_match('|([a-zA-Z]+)(\(([0-9]+)(,([0-9]+))?\))?|', $result['DATA_TYPE'], $matches);
                 if (isset($matches[1])) {
                     $result['DATA_TYPE'] = $matches[1];
                 } else {
@@ -246,7 +246,7 @@ class GenericReflection
     private function query(string $sql, array $parameters): array
     {
         $stmt = $this->pdo->prepare($sql);
-        //echo "- $sql -- " . json_encode($parameters, JSON_UNESCAPED_UNICODE) . "\n";
+        // echo "- $sql -- " . json_encode($parameters, JSON_UNESCAPED_UNICODE) . "\n";
         $stmt->execute($parameters);
         return $stmt->fetchAll();
     }
