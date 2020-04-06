@@ -73,6 +73,8 @@ class GenericDefinition
             case 'pgsql':
             case 'sqlsrv':
                 return '';
+            case 'sqlite':
+                return $column->getPk() ? ' AUTOINCREMENT' : '';
         }
     }
 
@@ -96,6 +98,8 @@ class GenericDefinition
                 return "ALTER TABLE $p1 RENAME TO $p2";
             case 'sqlsrv':
                 return "EXEC sp_rename $p1, $p2";
+            case 'sqlite':
+                return "ALTER TABLE $p1 RENAME TO $p2";
         }
     }
 
@@ -114,6 +118,8 @@ class GenericDefinition
             case 'sqlsrv':
                 $p4 = $this->quote($tableName . '.' . $columnName);
                 return "EXEC sp_rename $p4, $p3, 'COLUMN'";
+            case 'sqlite':
+                return "ALTER TABLE $p1 RENAME COLUMN $p2 TO $p3";
         }
     }
 
@@ -272,12 +278,22 @@ class GenericDefinition
             $f4 = $this->quote($newColumn->getFk());
             $f5 = $this->quote($this->getPrimaryKey($newColumn->getFk()));
             $f6 = $this->quote($tableName . '_' . $pkColumn . '_pkey');
-            $fields[] = "$f1 $f2";
-            if ($newColumn->getPk()) {
-                $constraints[] = "CONSTRAINT $f6 PRIMARY KEY ($f1)";
-            }
-            if ($newColumn->getFk()) {
-                $constraints[] = "CONSTRAINT $f3 FOREIGN KEY ($f1) REFERENCES $f4 ($f5)";
+            if ($this->driver == 'sqlite') {
+                if ($newColumn->getPk()) {
+                    $f2 = str_replace('NULL', 'NULL PRIMARY KEY', $f2);
+                }
+                $fields[] = "$f1 $f2";
+                if ($newColumn->getFk()) {
+                    $constraints[] = "FOREIGN KEY ($f1) REFERENCES $f4 ($f5)";
+                }
+            } else {
+                $fields[] = "$f1 $f2";
+                if ($newColumn->getPk()) {
+                    $constraints[] = "CONSTRAINT $f6 PRIMARY KEY ($f1)";
+                }
+                if ($newColumn->getFk()) {
+                    $constraints[] = "CONSTRAINT $f3 FOREIGN KEY ($f1) REFERENCES $f4 ($f5)";
+                }
             }
         }
         $p2 = implode(',', array_merge($fields, $constraints));
@@ -297,6 +313,8 @@ class GenericDefinition
                 return "ALTER TABLE $p1 ADD COLUMN $p2 $p3";
             case 'sqlsrv':
                 return "ALTER TABLE $p1 ADD $p2 $p3";
+            case 'sqlite':
+                return "ALTER TABLE $p1 ADD COLUMN $p2 $p3";
         }
     }
 
@@ -309,6 +327,8 @@ class GenericDefinition
             case 'pgsql':
                 return "DROP TABLE $p1 CASCADE;";
             case 'sqlsrv':
+                return "DROP TABLE $p1;";
+            case 'sqlite':
                 return "DROP TABLE $p1;";
         }
     }
@@ -324,44 +344,56 @@ class GenericDefinition
                 return "ALTER TABLE $p1 DROP COLUMN $p2 CASCADE;";
             case 'sqlsrv':
                 return "ALTER TABLE $p1 DROP COLUMN $p2;";
+            case 'sqlite':
+                return "ALTER TABLE $p1 DROP COLUMN $p2;";
         }
     }
 
     public function renameTable(string $tableName, string $newTableName)
     {
         $sql = $this->getTableRenameSQL($tableName, $newTableName);
-        return $this->query($sql);
+        return $this->query($sql, []);
     }
 
     public function renameColumn(string $tableName, string $columnName, ReflectedColumn $newColumn)
     {
         $sql = $this->getColumnRenameSQL($tableName, $columnName, $newColumn);
-        return $this->query($sql);
+        return $this->query($sql, []);
+    }
+
+    public function updateColumnsSqlite(ReflectedTable $table)
+    {
+        $create = $this->getAddTableSQL($table);
+        $name = $table->getName();
+        $sql = "UPDATE SQLITE_MASTER SET SQL = ? WHERE NAME = ?;";
+        $result = $this->query($sql, [$create, $name]);
+        $this->query('VACUUM;', []);
+        return $result;
     }
 
     public function retypeColumn(string $tableName, string $columnName, ReflectedColumn $newColumn)
     {
         $sql = $this->getColumnRetypeSQL($tableName, $columnName, $newColumn);
-        return $this->query($sql);
+        return $this->query($sql, []);
     }
 
     public function setColumnNullable(string $tableName, string $columnName, ReflectedColumn $newColumn)
     {
         $sql = $this->getSetColumnNullableSQL($tableName, $columnName, $newColumn);
-        return $this->query($sql);
+        return $this->query($sql, []);
     }
 
     public function addColumnPrimaryKey(string $tableName, string $columnName, ReflectedColumn $newColumn)
     {
         $sql = $this->getSetColumnPkConstraintSQL($tableName, $columnName, $newColumn);
-        $this->query($sql);
+        $this->query($sql, []);
         if ($this->canAutoIncrement($newColumn)) {
             $sql = $this->getSetColumnPkSequenceSQL($tableName, $columnName, $newColumn);
-            $this->query($sql);
+            $this->query($sql, []);
             $sql = $this->getSetColumnPkSequenceStartSQL($tableName, $columnName, $newColumn);
-            $this->query($sql);
+            $this->query($sql, []);
             $sql = $this->getSetColumnPkDefaultSQL($tableName, $columnName, $newColumn);
-            $this->query($sql);
+            $this->query($sql, []);
         }
         return true;
     }
@@ -370,55 +402,55 @@ class GenericDefinition
     {
         if ($this->canAutoIncrement($newColumn)) {
             $sql = $this->getSetColumnPkDefaultSQL($tableName, $columnName, $newColumn);
-            $this->query($sql);
+            $this->query($sql, []);
             $sql = $this->getSetColumnPkSequenceSQL($tableName, $columnName, $newColumn);
-            $this->query($sql);
+            $this->query($sql, []);
         }
         $sql = $this->getSetColumnPkConstraintSQL($tableName, $columnName, $newColumn);
-        $this->query($sql);
+        $this->query($sql, []);
         return true;
     }
 
     public function addColumnForeignKey(string $tableName, string $columnName, ReflectedColumn $newColumn)
     {
         $sql = $this->getAddColumnFkConstraintSQL($tableName, $columnName, $newColumn);
-        return $this->query($sql);
+        return $this->query($sql, []);
     }
 
     public function removeColumnForeignKey(string $tableName, string $columnName, ReflectedColumn $newColumn)
     {
         $sql = $this->getRemoveColumnFkConstraintSQL($tableName, $columnName, $newColumn);
-        return $this->query($sql);
+        return $this->query($sql, []);
     }
 
     public function addTable(ReflectedTable $newTable)
     {
         $sql = $this->getAddTableSQL($newTable);
-        return $this->query($sql);
+        return $this->query($sql, []);
     }
 
     public function addColumn(string $tableName, ReflectedColumn $newColumn)
     {
         $sql = $this->getAddColumnSQL($tableName, $newColumn);
-        return $this->query($sql);
+        return $this->query($sql, []);
     }
 
     public function removeTable(string $tableName)
     {
         $sql = $this->getRemoveTableSQL($tableName);
-        return $this->query($sql);
+        return $this->query($sql, []);
     }
 
     public function removeColumn(string $tableName, string $columnName)
     {
         $sql = $this->getRemoveColumnSQL($tableName, $columnName);
-        return $this->query($sql);
+        return $this->query($sql, []);
     }
 
-    private function query(string $sql): bool
+    private function query(string $sql, array $arguments): bool
     {
         $stmt = $this->pdo->prepare($sql);
-        //echo "- $sql -- []\n";
-        return $stmt->execute();
+        //echo "- $sql -- " . json_encode($arguments) . "\n";
+        return $stmt->execute($arguments);
     }
 }

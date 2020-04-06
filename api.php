@@ -4006,8 +4006,31 @@ namespace Tqdev\PhpCrudApi\Column {
             return true;
         }
 
+        public function updateColumnSqlite(string $tableName, string $columnName, /* object */ $changes): bool
+        {
+            $table = $this->reflection->getTable($tableName);
+            $column = $table->getColumn($columnName);
+
+            // remove constraints on other column
+            $newColumn = ReflectedColumn::fromJson((object) array_merge((array) $column->jsonSerialize(), (array) $changes));
+            $columns = [];
+            foreach ($table->getColumnNames() as $name) {
+                if ($name == $columnName) {
+                    $columns[] = $newColumn;
+                } else {
+                    $columns[] = $table->getColumn($name);
+                }
+            }
+            $newTable = new ReflectedTable($table->getName(), $table->getType(), $columns);
+            return $this->db->definition()->updateColumnsSqlite($newTable);
+        }
+
         public function updateColumn(string $tableName, string $columnName, /* object */ $changes): bool
         {
+            if ($this->db->getDriver() == 'sqlite') {
+                return $this->updateColumnSqlite($tableName, $columnName, $changes);
+            }
+
             $table = $this->reflection->getTable($tableName);
             $column = $table->getColumn($columnName);
 
@@ -4045,7 +4068,8 @@ namespace Tqdev\PhpCrudApi\Column {
                     return false;
                 }
             }
-            if ($newColumn->getType() != $column->getType() ||
+            if (
+                $newColumn->getType() != $column->getType() ||
                 $newColumn->getLength() != $column->getLength() ||
                 $newColumn->getPrecision() != $column->getPrecision() ||
                 $newColumn->getScale() != $column->getScale()
@@ -5270,6 +5294,11 @@ namespace Tqdev\PhpCrudApi\Database {
         private $columns;
         private $converter;
 
+        public function getDriver(): string
+        {
+            return $this->driver;
+        }
+
         private function getDsn(): string
         {
             switch ($this->driver) {
@@ -5302,6 +5331,7 @@ namespace Tqdev\PhpCrudApi\Database {
                 case 'sqlite':
                     return [
                         'PRAGMA foreign_keys = on;',
+                        'PRAGMA writable_schema = on;',
                     ];
             }
         }
@@ -5661,6 +5691,8 @@ namespace Tqdev\PhpCrudApi\Database {
                 case 'pgsql':
                 case 'sqlsrv':
                     return '';
+                case 'sqlite':
+                    return $column->getPk() ? ' AUTOINCREMENT' : '';
             }
         }
 
@@ -5684,6 +5716,8 @@ namespace Tqdev\PhpCrudApi\Database {
                     return "ALTER TABLE $p1 RENAME TO $p2";
                 case 'sqlsrv':
                     return "EXEC sp_rename $p1, $p2";
+                case 'sqlite':
+                    return "ALTER TABLE $p1 RENAME TO $p2";
             }
         }
 
@@ -5702,6 +5736,8 @@ namespace Tqdev\PhpCrudApi\Database {
                 case 'sqlsrv':
                     $p4 = $this->quote($tableName . '.' . $columnName);
                     return "EXEC sp_rename $p4, $p3, 'COLUMN'";
+                case 'sqlite':
+                    return "ALTER TABLE $p1 RENAME COLUMN $p2 TO $p3";
             }
         }
 
@@ -5860,12 +5896,22 @@ namespace Tqdev\PhpCrudApi\Database {
                 $f4 = $this->quote($newColumn->getFk());
                 $f5 = $this->quote($this->getPrimaryKey($newColumn->getFk()));
                 $f6 = $this->quote($tableName . '_' . $pkColumn . '_pkey');
-                $fields[] = "$f1 $f2";
-                if ($newColumn->getPk()) {
-                    $constraints[] = "CONSTRAINT $f6 PRIMARY KEY ($f1)";
-                }
-                if ($newColumn->getFk()) {
-                    $constraints[] = "CONSTRAINT $f3 FOREIGN KEY ($f1) REFERENCES $f4 ($f5)";
+                if ($this->driver == 'sqlite') {
+                    if ($newColumn->getPk()) {
+                        $f2 = str_replace('NULL', 'NULL PRIMARY KEY', $f2);
+                    }
+                    $fields[] = "$f1 $f2";
+                    if ($newColumn->getFk()) {
+                        $constraints[] = "FOREIGN KEY ($f1) REFERENCES $f4 ($f5)";
+                    }
+                } else {
+                    $fields[] = "$f1 $f2";
+                    if ($newColumn->getPk()) {
+                        $constraints[] = "CONSTRAINT $f6 PRIMARY KEY ($f1)";
+                    }
+                    if ($newColumn->getFk()) {
+                        $constraints[] = "CONSTRAINT $f3 FOREIGN KEY ($f1) REFERENCES $f4 ($f5)";
+                    }
                 }
             }
             $p2 = implode(',', array_merge($fields, $constraints));
@@ -5885,6 +5931,8 @@ namespace Tqdev\PhpCrudApi\Database {
                     return "ALTER TABLE $p1 ADD COLUMN $p2 $p3";
                 case 'sqlsrv':
                     return "ALTER TABLE $p1 ADD $p2 $p3";
+                case 'sqlite':
+                    return "ALTER TABLE $p1 ADD COLUMN $p2 $p3";
             }
         }
 
@@ -5897,6 +5945,8 @@ namespace Tqdev\PhpCrudApi\Database {
                 case 'pgsql':
                     return "DROP TABLE $p1 CASCADE;";
                 case 'sqlsrv':
+                    return "DROP TABLE $p1;";
+                case 'sqlite':
                     return "DROP TABLE $p1;";
             }
         }
@@ -5912,44 +5962,56 @@ namespace Tqdev\PhpCrudApi\Database {
                     return "ALTER TABLE $p1 DROP COLUMN $p2 CASCADE;";
                 case 'sqlsrv':
                     return "ALTER TABLE $p1 DROP COLUMN $p2;";
+                case 'sqlite':
+                    return "ALTER TABLE $p1 DROP COLUMN $p2;";
             }
         }
 
         public function renameTable(string $tableName, string $newTableName)
         {
             $sql = $this->getTableRenameSQL($tableName, $newTableName);
-            return $this->query($sql);
+            return $this->query($sql, []);
         }
 
         public function renameColumn(string $tableName, string $columnName, ReflectedColumn $newColumn)
         {
             $sql = $this->getColumnRenameSQL($tableName, $columnName, $newColumn);
-            return $this->query($sql);
+            return $this->query($sql, []);
+        }
+
+        public function updateColumnsSqlite(ReflectedTable $table)
+        {
+            $create = $this->getAddTableSQL($table);
+            $name = $table->getName();
+            $sql = "UPDATE SQLITE_MASTER SET SQL = ? WHERE NAME = ?;";
+            $result = $this->query($sql, [$create, $name]);
+            $this->query('VACUUM;', []);
+            return $result;
         }
 
         public function retypeColumn(string $tableName, string $columnName, ReflectedColumn $newColumn)
         {
             $sql = $this->getColumnRetypeSQL($tableName, $columnName, $newColumn);
-            return $this->query($sql);
+            return $this->query($sql, []);
         }
 
         public function setColumnNullable(string $tableName, string $columnName, ReflectedColumn $newColumn)
         {
             $sql = $this->getSetColumnNullableSQL($tableName, $columnName, $newColumn);
-            return $this->query($sql);
+            return $this->query($sql, []);
         }
 
         public function addColumnPrimaryKey(string $tableName, string $columnName, ReflectedColumn $newColumn)
         {
             $sql = $this->getSetColumnPkConstraintSQL($tableName, $columnName, $newColumn);
-            $this->query($sql);
+            $this->query($sql, []);
             if ($this->canAutoIncrement($newColumn)) {
                 $sql = $this->getSetColumnPkSequenceSQL($tableName, $columnName, $newColumn);
-                $this->query($sql);
+                $this->query($sql, []);
                 $sql = $this->getSetColumnPkSequenceStartSQL($tableName, $columnName, $newColumn);
-                $this->query($sql);
+                $this->query($sql, []);
                 $sql = $this->getSetColumnPkDefaultSQL($tableName, $columnName, $newColumn);
-                $this->query($sql);
+                $this->query($sql, []);
             }
             return true;
         }
@@ -5958,56 +6020,56 @@ namespace Tqdev\PhpCrudApi\Database {
         {
             if ($this->canAutoIncrement($newColumn)) {
                 $sql = $this->getSetColumnPkDefaultSQL($tableName, $columnName, $newColumn);
-                $this->query($sql);
+                $this->query($sql, []);
                 $sql = $this->getSetColumnPkSequenceSQL($tableName, $columnName, $newColumn);
-                $this->query($sql);
+                $this->query($sql, []);
             }
             $sql = $this->getSetColumnPkConstraintSQL($tableName, $columnName, $newColumn);
-            $this->query($sql);
+            $this->query($sql, []);
             return true;
         }
 
         public function addColumnForeignKey(string $tableName, string $columnName, ReflectedColumn $newColumn)
         {
             $sql = $this->getAddColumnFkConstraintSQL($tableName, $columnName, $newColumn);
-            return $this->query($sql);
+            return $this->query($sql, []);
         }
 
         public function removeColumnForeignKey(string $tableName, string $columnName, ReflectedColumn $newColumn)
         {
             $sql = $this->getRemoveColumnFkConstraintSQL($tableName, $columnName, $newColumn);
-            return $this->query($sql);
+            return $this->query($sql, []);
         }
 
         public function addTable(ReflectedTable $newTable)
         {
             $sql = $this->getAddTableSQL($newTable);
-            return $this->query($sql);
+            return $this->query($sql, []);
         }
 
         public function addColumn(string $tableName, ReflectedColumn $newColumn)
         {
             $sql = $this->getAddColumnSQL($tableName, $newColumn);
-            return $this->query($sql);
+            return $this->query($sql, []);
         }
 
         public function removeTable(string $tableName)
         {
             $sql = $this->getRemoveTableSQL($tableName);
-            return $this->query($sql);
+            return $this->query($sql, []);
         }
 
         public function removeColumn(string $tableName, string $columnName)
         {
             $sql = $this->getRemoveColumnSQL($tableName, $columnName);
-            return $this->query($sql);
+            return $this->query($sql, []);
         }
 
-        private function query(string $sql): bool
+        private function query(string $sql, array $arguments): bool
         {
             $stmt = $this->pdo->prepare($sql);
-            //echo "- $sql -- []\n";
-            return $stmt->execute();
+            //echo "- $sql -- " . json_encode($arguments) . "\n";
+            return $stmt->execute($arguments);
         }
     }
 }
@@ -6034,7 +6096,7 @@ namespace Tqdev\PhpCrudApi\Database {
             $this->typeConverter = new TypeConverter($driver);
         }
 
-        private function createSqlLiteReflectionTables() /*: void */
+        private function updateSqlLiteReflectionTables() /*: void */
         {
             $reflection = $this->query('SELECT "name" FROM "sqlite_master" WHERE "type" = \'table\' and name like \'sys/%\';', []);
             if (count($reflection) == 0) {
@@ -6103,7 +6165,7 @@ namespace Tqdev\PhpCrudApi\Database {
                 case 'sqlsrv':
                     return 'SELECT o.name as "TABLE_NAME", o.xtype as "TABLE_TYPE" FROM sysobjects o WHERE o.xtype IN (\'U\', \'V\') ORDER BY "TABLE_NAME"';
                 case 'sqlite':
-                    $this->createSqlLiteReflectionTables();
+                    $this->updateSqlLiteReflectionTables();
                     return 'SELECT t.name as "TABLE_NAME", t.type as "TABLE_TYPE" FROM "sys/tables" t WHERE t.type IN (\'table\', \'view\') AND \'\' <> ? ORDER BY "TABLE_NAME"';
             }
         }
@@ -6118,6 +6180,7 @@ namespace Tqdev\PhpCrudApi\Database {
                 case 'sqlsrv':
                     return 'SELECT c.name AS "COLUMN_NAME", c.is_nullable AS "IS_NULLABLE", t.Name AS "DATA_TYPE", (c.max_length/2) AS "CHARACTER_MAXIMUM_LENGTH", c.precision AS "NUMERIC_PRECISION", c.scale AS "NUMERIC_SCALE", \'\' AS "COLUMN_TYPE" FROM sys.columns c INNER JOIN sys.types t ON c.user_type_id = t.user_type_id WHERE c.object_id = OBJECT_ID(?) AND \'\' <> ?';
                 case 'sqlite':
+                    $this->updateSqlLiteReflectionTables();
                     return 'SELECT "name" AS "COLUMN_NAME", case when "notnull"==1 then \'no\' else \'yes\' end as "IS_NULLABLE", "type" AS "DATA_TYPE", 2147483647 AS "CHARACTER_MAXIMUM_LENGTH", 0 AS "NUMERIC_PRECISION", 0 AS "NUMERIC_SCALE", \'\' AS "COLUMN_TYPE" FROM "sys/columns" WHERE "self" = ? AND \'\' <> ?';
             }
         }

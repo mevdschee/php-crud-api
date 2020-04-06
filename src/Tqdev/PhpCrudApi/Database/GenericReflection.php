@@ -21,7 +21,7 @@ class GenericReflection
         $this->typeConverter = new TypeConverter($driver);
     }
 
-    private function createSqlLiteReflectionTables() /*: void */
+    private function updateSqlLiteReflectionTables() /*: void */
     {
         $reflection = $this->query('SELECT "name" FROM "sqlite_master" WHERE "type" = \'table\' and name like \'sys/%\';', []);
         if (count($reflection) == 0) {
@@ -90,7 +90,7 @@ class GenericReflection
             case 'sqlsrv':
                 return 'SELECT o.name as "TABLE_NAME", o.xtype as "TABLE_TYPE" FROM sysobjects o WHERE o.xtype IN (\'U\', \'V\') ORDER BY "TABLE_NAME"';
             case 'sqlite':
-                $this->createSqlLiteReflectionTables();
+                $this->updateSqlLiteReflectionTables();
                 return 'SELECT t.name as "TABLE_NAME", t.type as "TABLE_TYPE" FROM "sys/tables" t WHERE t.type IN (\'table\', \'view\') AND \'\' <> ? ORDER BY "TABLE_NAME"';
         }
     }
@@ -105,6 +105,7 @@ class GenericReflection
             case 'sqlsrv':
                 return 'SELECT c.name AS "COLUMN_NAME", c.is_nullable AS "IS_NULLABLE", t.Name AS "DATA_TYPE", (c.max_length/2) AS "CHARACTER_MAXIMUM_LENGTH", c.precision AS "NUMERIC_PRECISION", c.scale AS "NUMERIC_SCALE", \'\' AS "COLUMN_TYPE" FROM sys.columns c INNER JOIN sys.types t ON c.user_type_id = t.user_type_id WHERE c.object_id = OBJECT_ID(?) AND \'\' <> ?';
             case 'sqlite':
+                $this->updateSqlLiteReflectionTables();
                 return 'SELECT "name" AS "COLUMN_NAME", case when "notnull"==1 then \'no\' else \'yes\' end as "IS_NULLABLE", "type" AS "DATA_TYPE", 2147483647 AS "CHARACTER_MAXIMUM_LENGTH", 0 AS "NUMERIC_PRECISION", 0 AS "NUMERIC_SCALE", \'\' AS "COLUMN_TYPE" FROM "sys/columns" WHERE "self" = ? AND \'\' <> ?';
         }
     }

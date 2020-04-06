@@ -29,8 +29,31 @@ class DefinitionService
         return true;
     }
 
+    public function updateColumnSqlite(string $tableName, string $columnName, /* object */ $changes): bool
+    {
+        $table = $this->reflection->getTable($tableName);
+        $column = $table->getColumn($columnName);
+
+        // remove constraints on other column
+        $newColumn = ReflectedColumn::fromJson((object) array_merge((array) $column->jsonSerialize(), (array) $changes));
+        $columns = [];
+        foreach ($table->getColumnNames() as $name) {
+            if ($name == $columnName) {
+                $columns[] = $newColumn;
+            } else {
+                $columns[] = $table->getColumn($name);
+            }
+        }
+        $newTable = new ReflectedTable($table->getName(), $table->getType(), $columns);
+        return $this->db->definition()->updateColumnsSqlite($newTable);
+    }
+
     public function updateColumn(string $tableName, string $columnName, /* object */ $changes): bool
     {
+        if ($this->db->getDriver() == 'sqlite') {
+            return $this->updateColumnSqlite($tableName, $columnName, $changes);
+        }
+
         $table = $this->reflection->getTable($tableName);
         $column = $table->getColumn($columnName);
 
@@ -68,7 +91,8 @@ class DefinitionService
                 return false;
             }
         }
-        if ($newColumn->getType() != $column->getType() ||
+        if (
+            $newColumn->getType() != $column->getType() ||
             $newColumn->getLength() != $column->getLength() ||
             $newColumn->getPrecision() != $column->getPrecision() ||
             $newColumn->getScale() != $column->getScale()

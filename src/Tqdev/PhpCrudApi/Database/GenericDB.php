@@ -23,6 +23,11 @@ class GenericDB
     private $columns;
     private $converter;
 
+    public function getDriver(): string
+    {
+        return $this->driver;
+    }
+
     private function getDsn(): string
     {
         switch ($this->driver) {
@@ -55,6 +60,7 @@ class GenericDB
             case 'sqlite':
                 return [
                     'PRAGMA foreign_keys = on;',
+                    'PRAGMA writable_schema = on;',
                 ];
         }
     }
