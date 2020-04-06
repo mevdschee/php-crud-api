@@ -106,7 +106,7 @@ class GenericReflection
                 return 'SELECT c.name AS "COLUMN_NAME", c.is_nullable AS "IS_NULLABLE", t.Name AS "DATA_TYPE", (c.max_length/2) AS "CHARACTER_MAXIMUM_LENGTH", c.precision AS "NUMERIC_PRECISION", c.scale AS "NUMERIC_SCALE", \'\' AS "COLUMN_TYPE" FROM sys.columns c INNER JOIN sys.types t ON c.user_type_id = t.user_type_id WHERE c.object_id = OBJECT_ID(?) AND \'\' <> ?';
             case 'sqlite':
                 $this->updateSqlLiteReflectionTables();
-                return 'SELECT "name" AS "COLUMN_NAME", case when "notnull"==1 then \'no\' else \'yes\' end as "IS_NULLABLE", "type" AS "DATA_TYPE", 2147483647 AS "CHARACTER_MAXIMUM_LENGTH", 0 AS "NUMERIC_PRECISION", 0 AS "NUMERIC_SCALE", \'\' AS "COLUMN_TYPE" FROM "sys/columns" WHERE "self" = ? AND \'\' <> ?';
+                return 'SELECT "name" AS "COLUMN_NAME", case when "notnull"==1 then \'no\' else \'yes\' end as "IS_NULLABLE", lower("type") AS "DATA_TYPE", 2147483647 AS "CHARACTER_MAXIMUM_LENGTH", 0 AS "NUMERIC_PRECISION", 0 AS "NUMERIC_SCALE", \'\' AS "COLUMN_TYPE" FROM "sys/columns" WHERE "self" = ? AND \'\' <> ?';
         }
     }
 
@@ -184,7 +184,7 @@ class GenericReflection
         if ($this->driver == 'mysql') {
             foreach ($results as &$result) {
                 // mysql does not properly reflect display width of types
-                preg_match('|([a-zA-Z]+)(\(([0-9]+)(,([0-9]+))?\))?|', $result['DATA_TYPE'], $matches);
+                preg_match('|([a-z]+)(\(([0-9]+)(,([0-9]+))?\))?|', $result['DATA_TYPE'], $matches);
                 $result['DATA_TYPE'] = $matches[1];
                 if (!$result['CHARACTER_MAXIMUM_LENGTH']) {
                     if (isset($matches[3])) {
@@ -198,8 +198,8 @@ class GenericReflection
         }
         if ($this->driver == 'sqlite') {
             foreach ($results as &$result) {
-                // mysql does not properly reflect display width of types
-                preg_match('|([a-zA-Z]+)(\(([0-9]+)(,([0-9]+))?\))?|', $result['DATA_TYPE'], $matches);
+                // sqlite does not properly reflect display width of types
+                preg_match('|([a-z]+)(\(([0-9]+)(,([0-9]+))?\))?|', $result['DATA_TYPE'], $matches);
                 if (isset($matches[1])) {
                     $result['DATA_TYPE'] = $matches[1];
                 } else {

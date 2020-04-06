@@ -17,7 +17,7 @@ DROP TABLE IF EXISTS "comments";
 CREATE TABLE "comments" (
   "id" integer NOT NULL PRIMARY KEY AUTOINCREMENT,
   "post_id" integer NOT NULL,
-  "message" varchar(255) NOT NULL,
+  "message" VARCHAR(255) NOT NULL,
   "category_id" integer NOT NULL,
   FOREIGN KEY ("post_id") REFERENCES "posts" ("id") ON DELETE RESTRICT ON UPDATE RESTRICT,
   FOREIGN KEY ("category_id") REFERENCES "categories" ("id") ON DELETE RESTRICT ON UPDATE RESTRICT
