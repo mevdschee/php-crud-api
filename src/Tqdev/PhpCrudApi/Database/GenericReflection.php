@@ -184,7 +184,7 @@ class GenericReflection
         if ($this->driver == 'mysql') {
             foreach ($results as &$result) {
                 // mysql does not properly reflect display width of types
-                preg_match('|([a-z]+)(\(([0-9]+)(,([0-9]+))?\))?|', $result['DATA_TYPE'], $matches);
+                preg_match('|([a-zA-Z]+)(\(([0-9]+)(,([0-9]+))?\))?|', $result['DATA_TYPE'], $matches);
                 $result['DATA_TYPE'] = $matches[1];
                 if (!$result['CHARACTER_MAXIMUM_LENGTH']) {
                     if (isset($matches[3])) {
