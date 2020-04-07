@@ -9918,6 +9918,9 @@ namespace Tqdev\PhpCrudApi\Record {
                 foreach ($params['join'] as $tableNames) {
                     $path = array();
                     foreach (explode(',', $tableNames) as $tableName) {
+                        if (!$this->reflection->hasTable($tableName)) {
+                            continue;
+                        }
                         $t = $this->reflection->getTable($tableName);
                         if ($t != null) {
                             $path[] = $t->getName();
