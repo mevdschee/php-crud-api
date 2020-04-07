@@ -148,11 +148,13 @@ CREATE TABLE "kunsthåndværk" (
   "Umlauts ä_ö_ü-COUNT" integer NOT NULL UNIQUE,
   "user_id" integer NOT NULL,
   "invisible" varchar(36),
-  FOREIGN KEY ("user_id") REFERENCES "users" ("id") ON DELETE RESTRICT ON UPDATE RESTRICT
+  "invisible_id" varchar(36),
+  FOREIGN KEY ("user_id") REFERENCES "users" ("id") ON DELETE RESTRICT ON UPDATE RESTRICT,
+  FOREIGN KEY ("invisible_id") REFERENCES "invisibles" ("id") ON DELETE RESTRICT ON UPDATE RESTRICT
 );
 
-INSERT INTO "kunsthåndværk" ("id", "Umlauts ä_ö_ü-COUNT", "user_id", "invisible") VALUES ('e42c77c6-06a4-4502-816c-d112c7142e6d', 1, 1, NULL);
-INSERT INTO "kunsthåndværk" ("id", "Umlauts ä_ö_ü-COUNT", "user_id", "invisible") VALUES ('e31ecfe6-591f-4660-9fbd-1a232083037f', 2, 2, NULL);
+INSERT INTO "kunsthåndværk" ("id", "Umlauts ä_ö_ü-COUNT", "user_id", "invisible", "invisible_id") VALUES ('e42c77c6-06a4-4502-816c-d112c7142e6d', 1, 1, NULL, 'e42c77c6-06a4-4502-816c-d112c7142e6d');
+INSERT INTO "kunsthåndværk" ("id", "Umlauts ä_ö_ü-COUNT", "user_id", "invisible", "invisible_id") VALUES ('e31ecfe6-591f-4660-9fbd-1a232083037f', 2, 2, NULL, 'e42c77c6-06a4-4502-816c-d112c7142e6d');
 
 DROP TABLE IF EXISTS "invisibles";
 CREATE TABLE "invisibles" (

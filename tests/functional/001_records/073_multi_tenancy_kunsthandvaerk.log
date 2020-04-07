@@ -12,9 +12,9 @@ GET /records/kunsthåndværk/b55decba-8eb5-436b-af3e-148f7b4eacda
 ===
 200
 Content-Type: application/json
-Content-Length: 84
+Content-Length: 104
 
-{"id":"b55decba-8eb5-436b-af3e-148f7b4eacda","Umlauts ä_ö_ü-COUNT":4,"user_id":1}
+{"id":"b55decba-8eb5-436b-af3e-148f7b4eacda","Umlauts ä_ö_ü-COUNT":4,"user_id":1,"invisible_id":null}
 ===
 PUT /records/kunsthåndværk/b55decba-8eb5-436b-af3e-148f7b4eacda
 
@@ -30,9 +30,9 @@ GET /records/kunsthåndværk/b55decba-8eb5-436b-af3e-148f7b4eacda
 ===
 200
 Content-Type: application/json
-Content-Length: 84
+Content-Length: 104
 
-{"id":"b55decba-8eb5-436b-af3e-148f7b4eacda","Umlauts ä_ö_ü-COUNT":4,"user_id":1}
+{"id":"b55decba-8eb5-436b-af3e-148f7b4eacda","Umlauts ä_ö_ü-COUNT":4,"user_id":1,"invisible_id":null}
 ===
 DELETE /records/kunsthåndværk/e31ecfe6-591f-4660-9fbd-1a232083037f
 ===

@@ -167,14 +167,16 @@ CREATE TABLE `kunsthåndværk` (
   `Umlauts ä_ö_ü-COUNT` int(11) NOT NULL,
   `user_id` int(11) NOT NULL,
   `invisible` varchar(36),
+  `invisible_id` varchar(36),
   PRIMARY KEY (`id`),
   CONSTRAINT `kunsthåndværk_Umlauts ä_ö_ü-COUNT_fkey` UNIQUE (`Umlauts ä_ö_ü-COUNT`),
-  CONSTRAINT `kunsthåndværk_user_id_fkey` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
+  CONSTRAINT `kunsthåndværk_user_id_fkey` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`),
+  CONSTRAINT `kunsthåndværk_invisible_id_fkey` FOREIGN KEY (`invisible_id`) REFERENCES `invisibles` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-INSERT INTO `kunsthåndværk` (`id`, `Umlauts ä_ö_ü-COUNT`, `user_id`, `invisible`) VALUES
-('e42c77c6-06a4-4502-816c-d112c7142e6d', 1, 1, NULL),
-('e31ecfe6-591f-4660-9fbd-1a232083037f', 2, 2, NULL);
+INSERT INTO `kunsthåndværk` (`id`, `Umlauts ä_ö_ü-COUNT`, `user_id`, `invisible`, `invisible_id`) VALUES
+('e42c77c6-06a4-4502-816c-d112c7142e6d', 1, 1, NULL, 'e42c77c6-06a4-4502-816c-d112c7142e6d'),
+('e31ecfe6-591f-4660-9fbd-1a232083037f', 2, 2, NULL, 'e42c77c6-06a4-4502-816c-d112c7142e6d');
 
 DROP TABLE IF EXISTS `invisibles`;
 CREATE TABLE `invisibles` (

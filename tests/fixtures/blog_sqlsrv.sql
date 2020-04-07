@@ -285,6 +285,7 @@ CREATE TABLE [kunsthåndværk](
 	[Umlauts ä_ö_ü-COUNT] [int] NOT NULL,
 	[user_id] [int] NOT NULL,
 	[invisible] [nvarchar](36),
+	[invisible_id] [nvarchar](36),
 	CONSTRAINT [kunsthåndværk_pkey] PRIMARY KEY CLUSTERED([id] ASC)
 )
 GO
@@ -372,9 +373,9 @@ GO
 INSERT [barcodes] ([product_id], [hex], [bin], [ip_address]) VALUES (1, N'00ff01', 0x00ff01, N'127.0.0.1')
 GO
 
-INSERT [kunsthåndværk] ([id], [Umlauts ä_ö_ü-COUNT], [user_id], [invisible]) VALUES ('e42c77c6-06a4-4502-816c-d112c7142e6d', 1, 1, NULL)
+INSERT [kunsthåndværk] ([id], [Umlauts ä_ö_ü-COUNT], [user_id], [invisible], [invisible_id]) VALUES ('e42c77c6-06a4-4502-816c-d112c7142e6d', 1, 1, NULL, 'e42c77c6-06a4-4502-816c-d112c7142e6d')
 GO
-INSERT [kunsthåndværk] ([id], [Umlauts ä_ö_ü-COUNT], [user_id], [invisible]) VALUES ('e31ecfe6-591f-4660-9fbd-1a232083037f', 2, 2, NULL)
+INSERT [kunsthåndværk] ([id], [Umlauts ä_ö_ü-COUNT], [user_id], [invisible], [invisible_id]) VALUES ('e31ecfe6-591f-4660-9fbd-1a232083037f', 2, 2, NULL, 'e42c77c6-06a4-4502-816c-d112c7142e6d')
 GO
 
 INSERT [invisibles] ([id]) VALUES ('e42c77c6-06a4-4502-816c-d112c7142e6d')
@@ -432,4 +433,10 @@ ALTER TABLE [kunsthåndværk]  WITH CHECK ADD 	CONSTRAINT [kunsthåndværk_user_
 REFERENCES [users] ([id])
 GO
 ALTER TABLE [kunsthåndværk] CHECK	CONSTRAINT [kunsthåndværk_user_id_fkey]
+GO
+
+ALTER TABLE [kunsthåndværk]  WITH CHECK ADD 	CONSTRAINT [kunsthåndværk_invisible_id_fkey] FOREIGN KEY([invisible_id])
+REFERENCES [invisibles] ([id])
+GO
+ALTER TABLE [kunsthåndværk] CHECK	CONSTRAINT [kunsthåndværk_invisible_id_fkey]
 GO
