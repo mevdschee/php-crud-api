@@ -1158,9 +1158,10 @@ To run the docker tests run "build_all.sh" and "run_all.sh" from the docker dire
     [3/4] Starting SQLServer 2017 ... skipped
     [4/4] Cloning PHP-CRUD-API v2 ... skipped
     ------------------------------------------------
-    mysql: 100 tests ran in 3623 ms, 0 failed
-    pgsql: 100 tests ran in 1310 ms, 0 failed
+    mysql: 102 tests ran in 3286 ms, 0 skipped, 0 failed
+    pgsql: 102 tests ran in 1047 ms, 0 skipped, 0 failed
     sqlsrv: skipped, driver not loaded
+    sqlite: 102 tests ran in 1301 ms, 11 skipped, 0 failed
     ================================================
     Debian 9 (PHP 7.0)
     ================================================
@@ -1169,9 +1170,10 @@ To run the docker tests run "build_all.sh" and "run_all.sh" from the docker dire
     [3/4] Starting SQLServer 2017 ... skipped
     [4/4] Cloning PHP-CRUD-API v2 ... skipped
     ------------------------------------------------
-    mysql: 100 tests ran in 4844 ms, 0 failed
-    pgsql: 100 tests ran in 1394 ms, 0 failed
+    mysql: 102 tests ran in 2962 ms, 0 skipped, 0 failed
+    pgsql: 102 tests ran in 1045 ms, 0 skipped, 0 failed
     sqlsrv: skipped, driver not loaded
+    sqlite: 102 tests ran in 1085 ms, 11 skipped, 0 failed
     ================================================
     Ubuntu 16.04 (PHP 7.0)
     ================================================
@@ -1180,9 +1182,10 @@ To run the docker tests run "build_all.sh" and "run_all.sh" from the docker dire
     [3/4] Starting SQLServer 2017 ... done
     [4/4] Cloning PHP-CRUD-API v2 ... skipped
     ------------------------------------------------
-    mysql: 100 tests ran in 4932 ms, 0 failed
-    pgsql: 100 tests ran in 1394 ms, 0 failed
-    sqlsrv: 100 tests ran in 50977 ms, 0 failed
+    mysql: 102 tests ran in 2978 ms, 0 skipped, 0 failed
+    pgsql: 102 tests ran in 1059 ms, 0 skipped, 0 failed
+    sqlsrv: 102 tests ran in 10269 ms, 0 skipped, 0 failed
+    sqlite: skipped, driver not loaded
     ================================================
     Ubuntu 18.04 (PHP 7.2)
     ================================================
@@ -1191,9 +1194,10 @@ To run the docker tests run "build_all.sh" and "run_all.sh" from the docker dire
     [3/4] Starting SQLServer 2017 ... skipped
     [4/4] Cloning PHP-CRUD-API v2 ... skipped
     ------------------------------------------------
-    mysql: 100 tests ran in 4327 ms, 0 failed
-    pgsql: 100 tests ran in 1396 ms, 0 failed
+    mysql: 102 tests ran in 3479 ms, 0 skipped, 0 failed
+    pgsql: 102 tests ran in 1046 ms, 0 skipped, 0 failed
     sqlsrv: skipped, driver not loaded
+    sqlite: 102 tests ran in 1107 ms, 11 skipped, 0 failed
     ================================================
     Ubuntu 20.04 (PHP 7.3)
     ================================================
@@ -1202,8 +1206,8 @@ To run the docker tests run "build_all.sh" and "run_all.sh" from the docker dire
     [3/4] Starting SQLServer 2017 ... skipped
     [4/4] Cloning PHP-CRUD-API v2 ... skipped
     ------------------------------------------------
-    mysql: 100 tests ran in 4327 ms, 0 failed
-    pgsql: 100 tests ran in 1396 ms, 0 failed
+    mysql: 102 tests ran in 6089 ms, 0 skipped, 0 failed
+    pgsql: 102 tests ran in 1080 ms, 0 skipped, 0 failed
     sqlsrv: skipped, driver not loaded
 
 The above test run (including starting up the databases) takes less than 5 minutes on my slow laptop.
@@ -1223,9 +1227,10 @@ The above test run (including starting up the databases) takes less than 5 minut
     [3/4] Starting SQLServer 2017 ... skipped
     [4/4] Cloning PHP-CRUD-API v2 ... skipped
     ------------------------------------------------
-    mysql: 100 tests ran in 4327 ms, 0 failed
-    pgsql: 100 tests ran in 1396 ms, 0 failed
+    mysql: 102 tests ran in 3479 ms, 0 skipped, 0 failed
+    pgsql: 102 tests ran in 1046 ms, 0 skipped, 0 failed
     sqlsrv: skipped, driver not loaded
+    sqlite: 102 tests ran in 1107 ms, 11 skipped, 0 failed
     root@b7ab9472e08f:/php-crud-api# 
 
 As you can see the "run.sh" script gives you access to a prompt in a chosen the docker environment.
