@@ -59,6 +59,7 @@ class GenericDB
                 return [];
             case 'sqlite':
                 return [
+                    //'SELECT load_extension("mod_spatialite.so");',
                     'PRAGMA foreign_keys = on;',
                     'PRAGMA writable_schema = on;',
                 ];
