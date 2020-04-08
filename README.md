@@ -27,10 +27,11 @@ There are also proof-of-concept ports of this script that only support basic RES
 
 ## Requirements
 
-  - PHP 7.0 or higher with PDO drivers for MySQL, PgSQL or SqlSrv enabled
+  - PHP 7.0 or higher with PDO drivers for MySQL, PgSQL, SqlSrv or SQLite enabled
   - MySQL 5.6 / MariaDB 10.0 or higher for spatial features in MySQL
   - PostGIS 2.0 or higher for spatial features in PostgreSQL 9.1 or higher
   - SQL Server 2012 or higher (2017 for Linux support)
+  - SQLite 3 or higher (has no geospatial support)
 
 ## Installation
 
@@ -64,8 +65,8 @@ Edit the following lines in the bottom of the file "`api.php`":
 
 These are all the configuration options and their default value between brackets:
 
-- "driver": `mysql`, `pgsql` or `sqlsrv` (`mysql`)
-- "address": Hostname of the database server (`localhost`)
+- "driver": `mysql`, `pgsql`, `sqlsrv` or `sqlite` (`mysql`)
+- "address": Hostname (or filename) of the database server (`localhost`)
 - "port": TCP port of the database server (defaults to driver default)
 - "username": Username of the user connecting to the database (no default)
 - "password": Password of the user connecting to the database (no default)
@@ -85,7 +86,7 @@ These are all the configuration options and their default value between brackets
 These limitation and constrains apply:
 
   - Primary keys should either be auto-increment (from 1 to 2^53) or UUID
-  - Composite primary or foreign keys are not supported
+  - Composite primary and composite foreign keys are not supported
   - Complex writes (transactions) are not supported
   - Complex queries calling functions (like "concat" or "sum") are not supported
   - Database must support and define foreign key constraints
