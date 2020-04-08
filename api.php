@@ -4006,31 +4006,8 @@ namespace Tqdev\PhpCrudApi\Column {
             return true;
         }
 
-        public function updateColumnSqlite(string $tableName, string $columnName, /* object */ $changes): bool
-        {
-            $table = $this->reflection->getTable($tableName);
-            $column = $table->getColumn($columnName);
-
-            // remove constraints on other column
-            $newColumn = ReflectedColumn::fromJson((object) array_merge((array) $column->jsonSerialize(), (array) $changes));
-            $columns = [];
-            foreach ($table->getColumnNames() as $name) {
-                if ($name == $columnName) {
-                    $columns[] = $newColumn;
-                } else {
-                    $columns[] = $table->getColumn($name);
-                }
-            }
-            $newTable = new ReflectedTable($table->getName(), $table->getType(), $columns);
-            return $this->db->definition()->updateColumnsSqlite($newTable);
-        }
-
         public function updateColumn(string $tableName, string $columnName, /* object */ $changes): bool
         {
-            if ($this->db->getDriver() == 'sqlite') {
-                return $this->updateColumnSqlite($tableName, $columnName, $changes);
-            }
-
             $table = $this->reflection->getTable($tableName);
             $column = $table->getColumn($columnName);
 
@@ -5972,16 +5949,6 @@ namespace Tqdev\PhpCrudApi\Database {
         {
             $sql = $this->getColumnRenameSQL($tableName, $columnName, $newColumn);
             return $this->query($sql, []);
-        }
-
-        public function updateColumnsSqlite(ReflectedTable $table)
-        {
-            $create = $this->getAddTableSQL($table);
-            $name = $table->getName();
-            $sql = "UPDATE SQLITE_MASTER SET SQL = ? WHERE NAME = ?;";
-            $result = $this->query($sql, [$create, $name]);
-            $this->query('VACUUM;', []);
-            return $result;
         }
 
         public function retypeColumn(string $tableName, string $columnName, ReflectedColumn $newColumn)

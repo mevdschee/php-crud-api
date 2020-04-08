@@ -1,3 +1,4 @@
+===
 GET /records/posts?page=1,2&order=category_id,asc&order=id,desc
 ===
 200

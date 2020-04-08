@@ -1,3 +1,4 @@
+===
 GET /records/events/1?include=visitors
 ===
 200

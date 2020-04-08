@@ -1,3 +1,4 @@
+===
 GET /records/posts?size=10
 ===
 200

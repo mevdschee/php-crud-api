@@ -1,3 +1,5 @@
+skip-for-sqlite: table (columns) cannot be altered online
+===
 PUT /columns/barcodes/hex
 
 {"type":"clob"}

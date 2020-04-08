@@ -1,3 +1,5 @@
+skip-for-sqlite: auto incrementing primary keys must be integer typed (may not be bigint)
+===
 GET /columns
 ===
 200

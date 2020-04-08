@@ -1,3 +1,4 @@
+===
 POST /records/comments
 
 {"user_id":1,"post_id":2,"message":"<h1>Title</h1> <p>Body</p>","category_id":3}

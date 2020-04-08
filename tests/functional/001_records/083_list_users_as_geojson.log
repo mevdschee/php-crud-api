@@ -1,3 +1,5 @@
+skip-for-sqlite: no support for geometry functions (spatialite)
+===
 GET /geojson/users?exclude=password
 ===
 200

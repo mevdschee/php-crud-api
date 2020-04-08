@@ -1,3 +1,4 @@
+===
 PUT /records/posts/3
 
 {"user_id":1,"category_id":1,"content":"test (edited)"}

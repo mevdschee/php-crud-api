@@ -1,3 +1,4 @@
+===
 POST /records/posts
 
 {"user_id":1,"category_id":1,"content":"#1"}

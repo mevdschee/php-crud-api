@@ -1,3 +1,4 @@
+===
 POST /columns
 
 {"name":"barcodes2","type":"table","columns":[{"name":"id","type":"integer","pk":true},{"name":"product_id","type":"integer","fk":"products"},{"name":"hex","type":"varchar","length":255},{"name":"bin","type":"blob"},{"name":"ip_address","type":"varchar","length":15,"nullable":true}]}

@@ -1,3 +1,4 @@
+===
 GET /records/categories?filter=icon,is,null&filter=id,le,2
 ===
 200

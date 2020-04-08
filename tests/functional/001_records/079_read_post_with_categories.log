@@ -1,3 +1,4 @@
+===
 GET /records/posts/1?join=tags&include=tags.name
 ===
 200

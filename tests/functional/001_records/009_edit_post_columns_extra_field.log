@@ -1,3 +1,4 @@
+===
 PUT /records/posts/3?include=id,content
 
 {"user_id":2,"content":"test (edited 3)"}

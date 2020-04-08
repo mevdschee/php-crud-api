@@ -11,7 +11,8 @@ require 'vendor/autoload.php';
 function runDir(Config $config, string $dir, array $matches, string $category): array
 {
     $success = 0;
-    $total = 0;
+    $skipped = 0;
+    $failed = 0;
     $entries = scandir($dir);
     foreach ($entries as $entry) {
         if ($entry === '.' || $entry === '..') {
@@ -27,57 +28,73 @@ function runDir(Config $config, string $dir, array $matches, string $category): 
             if (substr($entry, -4) != '.log') {
                 continue;
             }
-            //if ($config->getDriver() == 'sqlite' && strpos($entry, '_geo')) {
-            //    continue;
-            //}
-            $success += runTest($config, $file, $category);
-            $total += 1;
+            $statistics = runTest($config, $file, $category);
+            $success += $statistics['success'];
+            $skipped += $statistics['skipped'];
+            $failed += $statistics['failed'];
         } elseif (is_dir($file)) {
             $statistics = runDir($config, $file, array_slice($matches, 1), "$category/$entry");
-            $total += $statistics['total'];
             $success += $statistics['success'];
+            $skipped += $statistics['skipped'];
+            $failed += $statistics['failed'];
         }
     }
-    $failed = $total - $success;
-    return compact('total', 'success', 'failed');
+    return compact('success', 'skipped', 'failed');
 }
 
-function runTest(Config $config, string $file, string $category): int
+function runTest(Config $config, string $file, string $category): array
 {
+    $success = 1;
+    $skipped = 0;
+    $failed = 0;
     $title = ucwords(str_replace('_', ' ', $category)) . '/';
     $title .= ucwords(str_replace('_', ' ', substr(basename($file), 0, -4)));
     $line1 = "=====[$title]=====";
     $len = strlen($line1);
     $line2 = str_repeat("=", $len);
     $parts = preg_split('/^[=]+([\r\n]+|$)/m', file_get_contents($file));
-    $dirty = false;
-    $success = 1;
-    for ($i = 0; $i < count($parts); $i += 2) {
-        $recording = false;
-        if (empty($parts[$i + 1])) {
-            if (substr($parts[$i], -1) != "\n") {
-                $parts[$i] .= "\n";
-            }
-            $parts[$i + 1] = '';
-            $recording = true;
-            $dirty = true;
+    $headers = explode("\n", $parts[0]);
+    $driver = $config->getDriver();
+    foreach ($headers as $header) {
+        if (!strpos($header, ':')) {
+            continue;
         }
-        $in = $parts[$i];
-        $exp = $parts[$i + 1];
-        $api = new Api($config);
-        $_SERVER['REMOTE_ADDR'] = 'TEST_IP';
-        $out = ResponseUtils::toString($api->handle(RequestFactory::fromString($in)));
-        if ($recording) {
-            $parts[$i + 1] = $out;
-        } else if ($out != $exp) {
-            echo "$line1\n$exp\n$line2\n$out\n$line2\n";
+        list($key, $value) = explode(':', strtolower($header));
+        if ($key == "skip-for-$driver") {
+            $skipped = 1;
             $success = 0;
         }
     }
-    if ($dirty) {
-        file_put_contents($file, implode("===\n", $parts));
+    if (!$skipped) {
+        $dirty = false;
+        for ($i = 1; $i < count($parts); $i += 2) {
+            $recording = false;
+            if (empty($parts[$i + 1])) {
+                if (substr($parts[$i], -1) != "\n") {
+                    $parts[$i] .= "\n";
+                }
+                $parts[$i + 1] = '';
+                $recording = true;
+                $dirty = true;
+            }
+            $in = $parts[$i];
+            $exp = $parts[$i + 1];
+            $api = new Api($config);
+            $_SERVER['REMOTE_ADDR'] = 'TEST_IP';
+            $out = ResponseUtils::toString($api->handle(RequestFactory::fromString($in)));
+            if ($recording) {
+                $parts[$i + 1] = $out;
+            } else if ($out != $exp) {
+                echo "$line1\n$exp\n$line2\n$out\n$line2\n";
+                $failed = 1;
+                $success = 0;
+            }
+        }
+        if ($dirty) {
+            file_put_contents($file, implode("===\n", $parts));
+        }
     }
-    return $success;
+    return compact('success', 'skipped', 'failed');
 }
 
 function getDatabase(Config $config)
@@ -167,12 +184,14 @@ function run(array $drivers, string $dir, array $matches)
         $config = new Config($settings);
         loadFixture($dir, $config);
         $start = microtime(true);
-        $stats = runDir($config, "$dir/functional", array_slice($matches, 1), '');
+        $statistics = runDir($config, "$dir/functional", array_slice($matches, 1), '');
         $end = microtime(true);
         $time = ($end - $start) * 1000;
-        $total = $stats['total'];
-        $failed = $stats['failed'];
-        echo sprintf("%s: %d tests ran in %d ms, %d failed\n", $driver, $total, $time, $failed);
+        $success = $statistics['success'];
+        $skipped = $statistics['skipped'];
+        $failed = $statistics['failed'];
+        $total = $success + $skipped + $failed;
+        echo sprintf("%s: %d tests ran in %d ms, %d skipped, %d failed\n", $driver, $total, $time, $skipped, $failed);
     }
 }
 

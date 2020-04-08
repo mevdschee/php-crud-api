@@ -1,3 +1,4 @@
+===
 GET /records/posts/2?include=id,content
 ===
 200

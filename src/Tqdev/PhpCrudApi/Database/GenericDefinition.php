@@ -361,16 +361,6 @@ class GenericDefinition
         return $this->query($sql, []);
     }
 
-    public function updateColumnsSqlite(ReflectedTable $table)
-    {
-        $create = $this->getAddTableSQL($table);
-        $name = $table->getName();
-        $sql = "UPDATE SQLITE_MASTER SET SQL = ? WHERE NAME = ?;";
-        $result = $this->query($sql, [$create, $name]);
-        $this->query('VACUUM;', []);
-        return $result;
-    }
-
     public function retypeColumn(string $tableName, string $columnName, ReflectedColumn $newColumn)
     {
         $sql = $this->getColumnRetypeSQL($tableName, $columnName, $newColumn);

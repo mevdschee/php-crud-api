@@ -1,3 +1,4 @@
+===
 GET /records/posts/1,2
 ===
 200

@@ -1,3 +1,5 @@
+skip-for-sqlite: table (columns) cannot be altered online
+===
 POST /columns/barcodes
 
 {"name":"alternative_product_id","type":"integer","nullable":true,"fk":"products"}

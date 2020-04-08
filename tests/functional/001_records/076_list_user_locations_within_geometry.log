@@ -1,3 +1,5 @@
+skip-for-sqlite: no support for geometry functions (spatialite)
+===
 GET /records/users?include=id,location&filter=location,swi,POLYGON((10 10,10 50,50 50,50 10,10 10))
 ===
 200
