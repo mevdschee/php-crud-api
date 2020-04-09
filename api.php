@@ -5266,11 +5266,6 @@ namespace Tqdev\PhpCrudApi\Database {
         private $columns;
         private $converter;
 
-        public function getDriver(): string
-        {
-            return $this->driver;
-        }
-
         private function getDsn(): string
         {
             switch ($this->driver) {
@@ -5303,7 +5298,6 @@ namespace Tqdev\PhpCrudApi\Database {
                 case 'sqlite':
                     return [
                         'PRAGMA foreign_keys = on;',
-                        'PRAGMA writable_schema = on;',
                     ];
             }
         }
