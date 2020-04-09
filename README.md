@@ -1209,6 +1209,7 @@ To run the docker tests run "build_all.sh" and "run_all.sh" from the docker dire
     mysql: 102 tests ran in 6089 ms, 0 skipped, 0 failed
     pgsql: 102 tests ran in 1080 ms, 0 skipped, 0 failed
     sqlsrv: skipped, driver not loaded
+    sqlite: 102 tests ran in 1199 ms, 11 skipped, 0 failed
 
 The above test run (including starting up the databases) takes less than 5 minutes on my slow laptop.
 
