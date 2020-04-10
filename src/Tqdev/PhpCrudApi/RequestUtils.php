@@ -23,7 +23,8 @@ class RequestUtils
     {
         $params = array();
         $query = $request->getUri()->getQuery();
-        $query = str_replace('][]=', ']=', str_replace('=', '[]=', $query));
+        //$query = str_replace('][]=', ']=', str_replace('=', '[]=', $query));
+        $query = str_replace('%5D%5B%5D=', '%5D=', str_replace('=', '%5B%5D=', $query));
         parse_str($query, $params);
         return $params;
     }
