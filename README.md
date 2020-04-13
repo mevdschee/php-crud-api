@@ -1215,7 +1215,7 @@ To run the docker tests run "build_all.sh" and "run_all.sh" from the docker dire
     Ubuntu 20.04 (PHP 7.3)
     ================================================
     [1/4] Starting MySQL 8.0 ........ done
-    [2/4] Starting PostgreSQL 12 .... done
+    [2/4] Starting PostgreSQL 12.2 .. done
     [3/4] Starting SQLServer 2017 ... skipped
     [4/4] Cloning PHP-CRUD-API v2 ... skipped
     ------------------------------------------------
