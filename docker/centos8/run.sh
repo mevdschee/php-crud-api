@@ -21,26 +21,25 @@ FLUSH PRIVILEGES;
 EOF
 echo "done"
 
-echo -n "[2/4] Starting PostgreSQL 10.6 .. "
-# # initialize postgresql
-# su - -c "/usr/bin/initdb --auth-local peer --auth-host password -D /var/lib/pgsql/data" postgres > /dev/null
-# # run postgres server
-# nohup su - -c "/usr/bin/postgres -D /var/lib/pgsql/data" postgres > /root/postgres.log 2>&1 &
-# # wait for postgres to become available
-# until su - -c "psql -U postgres -c '\q'" postgres >/dev/null 2>&1; do
-#    sleep 1;
-# done
-# # create database and user on postgres
-# su - -c "psql -U postgres >/dev/null" postgres << 'EOF'
-# CREATE USER "php-crud-api" WITH PASSWORD 'php-crud-api';
-# CREATE DATABASE "php-crud-api";
-# GRANT ALL PRIVILEGES ON DATABASE "php-crud-api" to "php-crud-api";
-# \c "php-crud-api";
-# CREATE EXTENSION IF NOT EXISTS postgis;
-# \q
-# EOF
-# echo "done"
-echo "skipped"
+echo -n "[2/4] Starting PostgreSQL 12.2 .. "
+# initialize postgresql
+su - -c "/usr/pgsql-12/bin/initdb --auth-local peer --auth-host password -D /var/lib/pgsql/data" postgres > /dev/null
+# run postgres server
+nohup su - -c "/usr/pgsql-12/bin/postgres -D /var/lib/pgsql/data" postgres > /root/postgres.log 2>&1 &
+# wait for postgres to become available
+until su - -c "psql -U postgres -c '\q'" postgres >/dev/null 2>&1; do
+   sleep 1;
+done
+# create database and user on postgres
+su - -c "psql -U postgres >/dev/null" postgres << 'EOF'
+CREATE USER "php-crud-api" WITH PASSWORD 'php-crud-api';
+CREATE DATABASE "php-crud-api";
+GRANT ALL PRIVILEGES ON DATABASE "php-crud-api" to "php-crud-api";
+\c "php-crud-api";
+CREATE EXTENSION IF NOT EXISTS postgis;
+\q
+EOF
+echo "done"
 
 echo -n "[3/4] Starting SQLServer 2017 ... "
 echo "skipped"
