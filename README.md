@@ -1096,6 +1096,7 @@ I am testing mainly on Ubuntu and I have the following test setups:
   - (Docker) Ubuntu 16.04 with PHP 7.0, MariaDB 10.0, PostgreSQL 9.5 (PostGIS 2.2) and SQL Server 2017
   - (Docker) Debian 9 with PHP 7.0, MariaDB 10.1, PostgreSQL 9.6 (PostGIS 2.3) and SQLite 3.16
   - (Docker) Ubuntu 18.04 with PHP 7.2, MySQL 5.7, PostgreSQL 10.4 (PostGIS 2.4) and SQLite 3.22
+  - (Docker) CentOS 8 with PHP 7.2, MariaDB 10.3, ~~PostgreSQL 10.6 (PostGIS 2.4)~~ and SQLite 3.26
   - (Docker) Debian 10 with PHP 7.3, MariaDB 10.3, PostgreSQL 11.4 (PostGIS 2.5) and SQLite 3.27
   - (Docker) Ubuntu 20.04 with PHP 7.3, MySQL 8.0, PostgreSQL 12 (PostGIS 3) and SQLite 3.31
 
@@ -1150,6 +1151,18 @@ Install docker using the following commands and then logout and login for the ch
 
 To run the docker tests run "build_all.sh" and "run_all.sh" from the docker directory. The output should be:
 
+    ================================================
+    CentOS 8 (PHP 7.2)
+    ================================================
+    [1/4] Starting MariaDB 10.3 ..... done
+    [2/4] Starting PostgreSQL 10.6 .. skipped
+    [3/4] Starting SQLServer 2017 ... skipped
+    [4/4] Cloning PHP-CRUD-API v2 ... skipped
+    ------------------------------------------------
+    mysql: 102 tests ran in 2712 ms, 0 skipped, 0 failed
+    pgsql: skipped, driver not loaded
+    sqlsrv: skipped, driver not loaded
+    sqlite: 102 tests ran in 1162 ms, 11 skipped, 0 failed
     ================================================
     Debian 10 (PHP 7.3)
     ================================================
@@ -1213,13 +1226,14 @@ To run the docker tests run "build_all.sh" and "run_all.sh" from the docker dire
 
 The above test run (including starting up the databases) takes less than 5 minutes on my slow laptop.
 
-    $ ./run.sh 
-    1) debian10
-    2) debian9
-    3) ubuntu16
-    4) ubuntu18
-    5) ubuntu20
-    > 4
+    $ ./run.sh
+    1) centos8
+    2) debian10
+    3) debian9
+    4) ubuntu16
+    5) ubuntu18
+    6) ubuntu20
+    > 5
     ================================================
     Ubuntu 18.04 (PHP 7.2)
     ================================================
