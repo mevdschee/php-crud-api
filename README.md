@@ -1152,17 +1152,17 @@ Install docker using the following commands and then logout and login for the ch
 To run the docker tests run "build_all.sh" and "run_all.sh" from the docker directory. The output should be:
 
     ================================================
-    CentOS 8 (PHP 7.2)
+    CentOS 8 (PHP 7.4)
     ================================================
-    [1/4] Starting MariaDB 10.3 ..... done
+    [1/4] Starting MariaDB 10.4 ..... done
     [2/4] Starting PostgreSQL 12.2 .. done
     [3/4] Starting SQLServer 2017 ... skipped
     [4/4] Cloning PHP-CRUD-API v2 ... skipped
     ------------------------------------------------
-    mysql: 102 tests ran in 2906 ms, 0 skipped, 0 failed
-    pgsql: 102 tests ran in 795 ms, 0 skipped, 0 failed
+    mysql: 102 tests ran in 2927 ms, 0 skipped, 0 failed
+    pgsql: 102 tests ran in 852 ms, 0 skipped, 0 failed
     sqlsrv: skipped, driver not loaded
-    sqlite: 102 tests ran in 811 ms, 11 skipped, 0 failed
+    sqlite: 102 tests ran in 879 ms, 11 skipped, 0 failed
     ================================================
     Debian 10 (PHP 7.3)
     ================================================
