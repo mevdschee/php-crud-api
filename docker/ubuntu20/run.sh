@@ -14,7 +14,7 @@ while ! mysqladmin ping -hlocalhost >/dev/null 2>&1; do
 done
 # create database and user on mysql
 mysql -u root >/dev/null << 'EOF'
-CREATE DATABASE `php-crud-api` CHARACTER SET utf8 COLLATE utf8_general_ci;
+CREATE DATABASE `php-crud-api` CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
 CREATE USER 'php-crud-api'@'localhost' IDENTIFIED WITH MYSQL_NATIVE_PASSWORD BY 'php-crud-api';
 GRANT ALL PRIVILEGES ON `php-crud-api`.* TO 'php-crud-api'@'localhost' WITH GRANT OPTION;
 FLUSH PRIVILEGES;
