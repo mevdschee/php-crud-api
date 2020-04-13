@@ -1,20 +1,20 @@
 #!/bin/bash
 echo "================================================"
-echo " CentOS 8 (PHP 7.2)"
+echo " CentOS 8 (PHP 7.4)"
 echo "================================================"
-echo -n "[1/4] Starting MariaDB 10.3 ..... "
+echo -n "[1/4] Starting MariaDB 10.4 ..... "
 # initialize mysql
 mysql_install_db > /dev/null
 chown -R mysql:mysql /var/lib/mysql
 # run mysql server
-nohup /usr/libexec/mysqld -u mysql > /root/mysql.log 2>&1 &
+nohup /usr/sbin/mysqld -u mysql > /root/mysql.log 2>&1 &
 # wait for mysql to become available
 while ! mysqladmin ping -hlocalhost >/dev/null 2>&1; do
     sleep 1
 done
 # create database and user on mysql
 mysql -u root >/dev/null << 'EOF'
-CREATE DATABASE `php-crud-api` CHARACTER SET utf8 COLLATE utf8_general_ci;
+CREATE DATABASE `php-crud-api` CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
 CREATE USER 'php-crud-api'@'localhost' IDENTIFIED BY 'php-crud-api';
 GRANT ALL PRIVILEGES ON `php-crud-api`.* TO 'php-crud-api'@'localhost' WITH GRANT OPTION;
 FLUSH PRIVILEGES;
