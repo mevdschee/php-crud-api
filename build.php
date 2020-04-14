@@ -105,7 +105,11 @@ $ignore = [
 $directories = ['vendor/psr', 'vendor/nyholm', 'src'];
 
 if (extension_loaded('psr')) {
+<<<<<<< HEAD
     unset($directories['vendor/psr']);
+=======
+    array_shift($directories);
+>>>>>>> ed4b365a38866366a4cfa522b7d8d9bc7d51044b
 }
 
 run(__DIR__, $directories, 'api.php', $ignore);
