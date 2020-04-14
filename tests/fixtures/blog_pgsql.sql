@@ -546,3 +546,69 @@ ALTER TABLE ONLY "kunsthåndværk"
 --
 -- PostgreSQL database dump complete
 --
+
+DROP TABLE IF EXISTS alltypes CASCADE;
+
+CREATE TABLE alltypes (
+  id serial NOT NULL,
+  nninteger integer NOT NULL ,
+  nnbigint bigint NOT NULL ,
+  nnvarchar varchar(10) NOT NULL ,
+  nndecimal decimal NOT NULL ,
+  nnfloat double precision NOT NULL ,
+  nndouble double precision NOT NULL ,
+  nnboolean boolean NOT NULL ,
+  nndate date NOT NULL ,
+  nntime time NOT NULL ,
+  nntimestamp timestamp NOT NULL ,
+  nnclob text NOT NULL ,
+  nnblob bytea NOT NULL ,
+  nnvarbinary bytea NOT NULL ,
+  nngeometry geometry NOT NULL ,
+  ninteger integer NULL ,
+  nvarchar varchar(10) NULL ,
+  ndate date NULL
+);
+
+ALTER TABLE ONLY alltypes
+    ADD CONSTRAINT alltypes_pkey PRIMARY KEY (id);
+
+INSERT INTO "alltypes" (
+  "id",
+  "nninteger",
+  "nnbigint",
+  "nnvarchar",
+  "nndecimal",
+  "nnfloat",
+  "nndouble",
+  "nnboolean",
+  "nndate",
+  "nntime",
+  "nntimestamp",
+  "nnclob",
+  "nnblob",
+  "nnvarbinary",
+  "nngeometry",
+  "ninteger",
+  "nvarchar",
+  "ndate"
+) VALUES (
+  '1',
+  '1',
+  '1',
+  'a',
+  '1',
+  '1',
+  '1',
+  '1',
+  '2000-01-01',
+  '01:01:01',
+  '2000-01-01 01:01:01',
+  'a',
+  0xa,
+  0xa,
+  ST_GeomFromText('POINT(1 1)'),
+  NULL,
+  NULL,
+  NULL
+);

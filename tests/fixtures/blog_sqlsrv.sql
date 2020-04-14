@@ -440,3 +440,78 @@ REFERENCES [invisibles] ([id])
 GO
 ALTER TABLE [kunsthåndværk] CHECK	CONSTRAINT [kunsthåndværk_invisible_id_fkey]
 GO
+
+DROP SEQUENCE IF EXISTS [alltypes_id_seq]
+GO
+CREATE SEQUENCE [alltypes_id_seq] AS int START WITH 1 INCREMENT BY 1 NO CACHE
+GO
+
+DROP TABLE IF EXISTS [alltypes];
+CREATE TABLE `alltypes` (
+	[id] [int] NOT NULL CONSTRAINT [alltypes_id_def] DEFAULT NEXT VALUE FOR [alltypes_id_seq],
+	[nninteger] [int] NOT NULL ,
+	[nnbigint] [bigint] NOT NULL ,
+	[nnvarchar] [nvarchar](10) NOT NULL ,
+	[nndecimal] [decimal] NOT NULL ,
+	[nnfloat] [float] NOT NULL ,
+	[nndouble] [float] NOT NULL ,
+	[nnboolean] [bit] NOT NULL ,
+	[nndate] [date] NOT NULL ,
+	[nntime] [time] NOT NULL ,
+	[nntimestamp] [datetime2] NOT NULL ,
+	[nnclob] [varchar](max) NOT NULL ,
+	[nnblob] [varbinary](max) NOT NULL ,
+	[nnvarbinary] [varbinary](10) NOT NULL ,
+	[nngeometry] [geometry] NOT NULL ,
+	[ninteger] [int] NULL ,
+	[nvarchar] [nvarchar](10) NULL ,
+	[ndate] [date] NULL ,
+	CONSTRAINT [alltypes_pkey] PRIMARY KEY CLUSTERED([id] ASC)
+)
+GO
+
+DECLARE @g geography
+GO
+SET @g = geography::Point(1, 1, 0)
+GO
+
+INSERT [alltypes] (
+	[id],
+	[nninteger],
+	[nnbigint],
+	[nnvarchar],
+	[nndecimal],
+	[nnfloat],
+	[nndouble],
+	[nnboolean],
+	[nndate],
+	[nntime],
+	[nntimestamp],
+	[nnclob],
+	[nnblob],
+	[nnvarbinary],
+	[nngeometry],
+	[ninteger],
+	[nvarchar],
+	[ndate]
+) VALUES (
+	'1',
+	'1',
+	'1',
+	'a',
+	'1',
+	'1',
+	'1',
+	'1',
+	'2000-01-01',
+	'01:01:01',
+	'2000-01-01 01:01:01',
+	'a',
+	0xa,
+	0xa,
+	@g.ToString(),
+	NULL,
+	NULL,
+	NULL
+)
+GO
