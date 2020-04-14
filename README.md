@@ -53,6 +53,8 @@ Alternatively you can integrate this project into the web framework of your choi
 - [Automatic REST API for Symfony 4](https://tqdev.com/2019-automatic-rest-api-symfony)
 - [Automatic REST API for SlimPHP 4](https://tqdev.com/2019-automatic-api-slimphp-4)
 
+In these integrations [Composer](https://getcomposer.org/) is used to load this project as a dependency.
+
 ## Configuration
 
 Edit the following lines in the bottom of the file "`api.php`":
@@ -305,7 +307,7 @@ As you see we added a number to the "filter" parameter to indicate that "OR" ins
 Note that you can also repeat "filter1" and create an "AND" within an "OR". Since you can also go one level deeper
 by adding a letter (a-f) you can create almost any reasonably complex condition tree.
 
-NB: You can only filter on the requested table (not on it's included) and filters are only applied on list calls.
+NB: You can only filter on the requested table (not on it's included tables) and filters are only applied on list calls.
 
 ### Column selection
 
@@ -1215,7 +1217,7 @@ To run the docker tests run "build_all.sh" and "run_all.sh" from the docker dire
     Ubuntu 20.04 (PHP 7.3)
     ================================================
     [1/4] Starting MySQL 8.0 ........ done
-    [2/4] Starting PostgreSQL 12 .... done
+    [2/4] Starting PostgreSQL 12.2 .. done
     [3/4] Starting SQLServer 2017 ... skipped
     [4/4] Cloning PHP-CRUD-API v2 ... skipped
     ------------------------------------------------

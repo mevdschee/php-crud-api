@@ -21,7 +21,7 @@ FLUSH PRIVILEGES;
 EOF
 echo "done"
 
-echo -n "[2/4] Starting PostgreSQL 12 .... "
+echo -n "[2/4] Starting PostgreSQL 12.2 .. "
 # ensure statistics can be written
 mkdir /var/run/postgresql/10-main.pg_stat_tmp/ && chmod 777 /var/run/postgresql/10-main.pg_stat_tmp/
 # run postgres server
