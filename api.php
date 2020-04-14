@@ -3802,9 +3802,9 @@ namespace Tqdev\PhpCrudApi\Database {
         {
             switch ($this->driver) {
                 case 'mysql':
-                    return "$this->driver:host=$this->address;port=$this->port;dbname=$this->database;charset=utf8mb4";
+                    return "$this->driver:host=$this->address;port=$this->port;dbname=$this->database;charset=$this->charset";
                 case 'pgsql':
-                    return "$this->driver:host=$this->address port=$this->port dbname=$this->database options='--client_encoding=UTF8'";
+                    return "$this->driver:host=$this->address port=$this->port dbname=$this->database options='--client_encoding=$this->charset'";
                 case 'sqlsrv':
                     return "$this->driver:Server=$this->address,$this->port;Database=$this->database";
                 case 'sqlite':
@@ -3818,12 +3818,12 @@ namespace Tqdev\PhpCrudApi\Database {
                 case 'mysql':
                     return [
                         'SET SESSION sql_warnings=1;',
-                        'SET NAMES utf8mb4;',
+                        "SET NAMES $this->charset;",
                         'SET SESSION sql_mode = "ANSI,TRADITIONAL";',
                     ];
                 case 'pgsql':
                     return [
-                        "SET NAMES 'UTF8';",
+                        "SET NAMES '$this->charset';",
                     ];
                 case 'sqlsrv':
                     return [];
@@ -3881,8 +3881,8 @@ namespace Tqdev\PhpCrudApi\Database {
             $this->converter = new DataConverter($this->driver);
             return $result;
         }
-
-        public function __construct(string $driver, string $address, int $port, string $database, array $tables, string $username, string $password)
+        
+        public function __construct(string $driver, string $address, int $port, string $database, array $tables, string $username, string $password, string $charset)
         {
             $this->driver = $driver;
             $this->address = $address;
@@ -3891,10 +3891,11 @@ namespace Tqdev\PhpCrudApi\Database {
             $this->tables = $tables;
             $this->username = $username;
             $this->password = $password;
+            $this->charset = $charset;
             $this->initPdo();
         }
 
-        public function reconstruct(string $driver, string $address, int $port, string $database, array $tables, string $username, string $password): bool
+        public function reconstruct(string $driver, string $address, int $port, string $database, array $tables, string $username, string $password, string $charset): bool
         {
             if ($driver) {
                 $this->driver = $driver;
@@ -3916,6 +3917,9 @@ namespace Tqdev\PhpCrudApi\Database {
             }
             if ($password) {
                 $this->password = $password;
+            }
+            if ($charset) {
+                $this->charset = $charset;
             }
             return $this->initPdo();
         }
@@ -6644,6 +6648,15 @@ namespace Tqdev\PhpCrudApi\Middleware {
             return '';
         }
 
+        private function getCharset(): string
+        {
+            $charsetHandler = $this->getProperty('charsetHandler', '');
+            if ($charsetHandler) {
+                return call_user_func($charsetHandler);
+            }
+            return '';
+        }
+
         public function process(ServerRequestInterface $request, RequestHandlerInterface $next): ResponseInterface
         {
             $driver = $this->getDriver();
@@ -6653,8 +6666,9 @@ namespace Tqdev\PhpCrudApi\Middleware {
             $tables = $this->getTables();
             $username = $this->getUsername();
             $password = $this->getPassword();
-            if ($driver || $address || $port || $database || $tables || $username || $password) {
-                $this->db->reconstruct($driver, $address, $port, $database, $tables, $username, $password);
+            $charset = $this->getCharset();
+            if ($driver || $address || $port || $database || $tables || $username || $password || $charset) {
+                $this->db->reconstruct($driver, $address, $port, $database, $tables, $username, $password, $charset);
             }
             return $next->handle($request);
         }
@@ -8698,7 +8712,8 @@ namespace Tqdev\PhpCrudApi {
                 $config->getDatabase(),
                 $config->getTables(),
                 $config->getUsername(),
-                $config->getPassword()
+                $config->getPassword(),
+                $config->getCharset()
             );
             $prefix = sprintf('phpcrudapi-%s-', substr(md5(__FILE__), 0, 8));
             $cache = CacheFactory::create($config->getCacheType(), $prefix, $config->getCachePath());
@@ -8885,6 +8900,7 @@ namespace Tqdev\PhpCrudApi {
             'debug' => false,
             'basePath' => '',
             'openApiBase' => '{"info":{"title":"PHP-CRUD-API","version":"1.0.0"}}',
+            'charset' => null,
         ];
 
         private function getDefaultDriver(array $values): string
@@ -8909,6 +8925,17 @@ namespace Tqdev\PhpCrudApi {
             }
         }
 
+        private function getDefaultCharset(string $driver): string
+        {
+            switch ($driver) {
+                case 'mysql':
+                    return 'utf8mb4';
+                case 'pgsql':
+                    return 'UTF8';
+            }
+            return '';
+        }
+
         private function getDefaultAddress(string $driver): string
         {
             switch ($driver) {
@@ -8929,6 +8956,7 @@ namespace Tqdev\PhpCrudApi {
                 'driver' => $driver,
                 'address' => $this->getDefaultAddress($driver),
                 'port' => $this->getDefaultPort($driver),
+                'charset' => $this->getDefaultCharset($driver),
             ];
         }
 
@@ -8993,6 +9021,11 @@ namespace Tqdev\PhpCrudApi {
         public function getPassword(): string
         {
             return $this->values['password'];
+        }
+
+        public function getCharset(): string
+        {
+            return $this->values['charset'];
         }
 
         public function getDatabase(): string
