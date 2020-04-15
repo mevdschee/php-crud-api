@@ -207,7 +207,7 @@ CREATE TABLE `alltypes` (
   `nnboolean` BOOLEAN NOT NULL ,
   `nndate` DATE NOT NULL ,
   `nntime` TIME NOT NULL ,
-  `nntimestamp` TIMESTAMP NOT NULL ,
+  `nntimestamp` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `nnclob` LONGTEXT NOT NULL ,
   `nnblob` BLOB NOT NULL ,
   `nnvarbinary` VARBINARY(10) NOT NULL ,
@@ -217,6 +217,8 @@ CREATE TABLE `alltypes` (
   `ndate` DATE NULL ,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT = 'Table used to test types validation, nn is for not null';
+
+ALTER TABLE alltypes ALTER COLUMN nntimestamp DROP DEFAULT;
 
 INSERT INTO `alltypes` (
   `id`,
