@@ -248,11 +248,11 @@ INSERT INTO `alltypes` (
   '1',
   '2000-01-01',
   '01:01:01',
-  '2000-01-01 01:01:01',
+  TIMESTAMP('2000-01-01', '01:01:01'),
   'a',
   0xa,
   0xa,
-  GeomFromText('POINT(1 1)'),
+  ST_GeomFromText('POINT(1 1)'),
   NULL,
   NULL,
   NULL
