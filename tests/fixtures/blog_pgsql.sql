@@ -554,13 +554,13 @@ CREATE TABLE alltypes (
   nninteger integer NOT NULL ,
   nnbigint bigint NOT NULL ,
   nnvarchar varchar(10) NOT NULL ,
-  nndecimal decimal NOT NULL ,
+  nndecimal decimal(10,4) NOT NULL ,
   nnfloat double precision NOT NULL ,
   nndouble double precision NOT NULL ,
   nnboolean boolean NOT NULL ,
   nndate date NOT NULL ,
   nntime time NOT NULL ,
-  nntimestamp timestamp NOT NULL ,
+  nntimestamp timestamp NOT NULL  DEFAULT CURRENT_TIMESTAMP ,
   nnclob text NOT NULL ,
   nnblob bytea NOT NULL ,
   nnvarbinary bytea NOT NULL ,
@@ -573,6 +573,8 @@ CREATE TABLE alltypes (
 ALTER TABLE ONLY alltypes
     ADD CONSTRAINT alltypes_pkey PRIMARY KEY (id);
 
+ALTER TABLE alltypes ALTER COLUMN nntimestamp DROP DEFAULT;
+    
 INSERT INTO "alltypes" (
   "id",
   "nninteger",
