@@ -1,3 +1,4 @@
+skip-for-sqlite: sqlite types are not specific enough for the alltypes tests
 ===
 PUT /records/alltypes/1
 
@@ -309,7 +310,7 @@ GET /records/alltypes/1
 ===
 200
 Content-Type: application/json
-Content-Length: 397
+Content-Length: 396
 
 {"id":1,"nninteger":3,"nnbigint":3,"nnvarchar":"c","nndecimal":"3","nnfloat":3,"nndouble":3,"nnboolean":true,"nndate":"2000-01-03","nntime":"03:01:01","nntimestamp":"2000-01-03 03:01:01","nnclob":"HLnVf8PrxX\/vPMElDxrlFLIHoBd1fnLVSXVEDLjt0bk=","nnblob":"T8O5IGVzdCBsZSBjYWbDqSBsZSBwbHVzIHByb2NoZT8=","nnvarbinary":"Cg==","nngeometry":"POINT(3 3)","ninteger":4,"nvarchar":"d","ndate":"2000-01-04"}
 ===
@@ -327,6 +328,6 @@ GET /records/alltypes/1
 ===
 200
 Content-Type: application/json
-Content-Length: 393
+Content-Length: 392
 
 {"id":1,"nninteger":3,"nnbigint":3,"nnvarchar":"c","nndecimal":"3","nnfloat":3,"nndouble":3,"nnboolean":true,"nndate":"2000-01-03","nntime":"03:01:01","nntimestamp":"2000-01-03 03:01:01","nnclob":"HLnVf8PrxX\/vPMElDxrlFLIHoBd1fnLVSXVEDLjt0bk=","nnblob":"T8O5IGVzdCBsZSBjYWbDqSBsZSBwbHVzIHByb2NoZT8=","nnvarbinary":"Cg==","nngeometry":"POINT(3 3)","ninteger":null,"nvarchar":null,"ndate":null}
