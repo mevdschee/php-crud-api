@@ -102,4 +102,10 @@ $ignore = [
     'vendor/nyholm/psr7/src/Factory/HttplugFactory.php',
 ];
 
-run(__DIR__, ['vendor/psr', 'vendor/nyholm', 'src'], 'api.php', $ignore);
+$directories = ['vendor/nyholm', 'src'];
+
+if (!extension_loaded('psr')) {
+    array_unshift($directories, 'vendor/psr');
+}
+
+run(__DIR__, $directories, 'api.php', $ignore);
