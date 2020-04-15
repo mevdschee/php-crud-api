@@ -311,7 +311,7 @@ GET /records/alltypes/1
 Content-Type: application/json
 Content-Length: 397
 
-{"id":1,"nninteger":3,"nnbigint":3,"nnvarchar":"c","nndecimal":"3","nnfloat":3,"nndouble":3,"nnboolean":false,"nndate":"2000-01-03","nntime":"03:01:01","nntimestamp":"2020-04-14 15:58:10","nnclob":"HLnVf8PrxX\/vPMElDxrlFLIHoBd1fnLVSXVEDLjt0bk=","nnblob":"T8O5IGVzdCBsZSBjYWbDqSBsZSBwbHVzIHByb2NoZT8=","nnvarbinary":"Cg==","nngeometry":"POINT(3 3)","ninteger":4,"nvarchar":"d","ndate":"2000-01-04"}
+{"id":1,"nninteger":3,"nnbigint":3,"nnvarchar":"c","nndecimal":"3","nnfloat":3,"nndouble":3,"nnboolean":true,"nndate":"2000-01-03","nntime":"03:01:01","nntimestamp":"2000-01-03 03:01:01","nnclob":"HLnVf8PrxX\/vPMElDxrlFLIHoBd1fnLVSXVEDLjt0bk=","nnblob":"T8O5IGVzdCBsZSBjYWbDqSBsZSBwbHVzIHByb2NoZT8=","nnvarbinary":"Cg==","nngeometry":"POINT(3 3)","ninteger":4,"nvarchar":"d","ndate":"2000-01-04"}
 ===
 PUT /records/alltypes/1
 
@@ -329,4 +329,4 @@ GET /records/alltypes/1
 Content-Type: application/json
 Content-Length: 393
 
-{"id":1,"nninteger":3,"nnbigint":3,"nnvarchar":"c","nndecimal":"3","nnfloat":3,"nndouble":3,"nnboolean":false,"nndate":"2000-01-03","nntime":"03:01:01","nntimestamp":"2020-04-14 15:58:12","nnclob":"HLnVf8PrxX\/vPMElDxrlFLIHoBd1fnLVSXVEDLjt0bk=","nnblob":"T8O5IGVzdCBsZSBjYWbDqSBsZSBwbHVzIHByb2NoZT8=","nnvarbinary":"Cg==","nngeometry":"POINT(3 3)","ninteger":null,"nvarchar":null,"ndate":null}
+{"id":1,"nninteger":3,"nnbigint":3,"nnvarchar":"c","nndecimal":"3","nnfloat":3,"nndouble":3,"nnboolean":true,"nndate":"2000-01-03","nntime":"03:01:01","nntimestamp":"2000-01-03 03:01:01","nnclob":"HLnVf8PrxX\/vPMElDxrlFLIHoBd1fnLVSXVEDLjt0bk=","nnblob":"T8O5IGVzdCBsZSBjYWbDqSBsZSBwbHVzIHByb2NoZT8=","nnvarbinary":"Cg==","nngeometry":"POINT(3 3)","ninteger":null,"nvarchar":null,"ndate":null}
