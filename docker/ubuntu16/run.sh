@@ -41,7 +41,7 @@ echo "done"
 
 echo -n "[3/4] Starting SQLServer 2017 ... "
 # run sqlserver server
-nohup /opt/mssql/bin/sqlservr --accept-eula > /root/mysql.log 2>&1 &
+nohup /opt/mssql/bin/sqlservr --accept-eula > /root/mssql.log 2>&1 &
 # create database and user on postgres
 /opt/mssql-tools/bin/sqlcmd -l 30 -S localhost -U SA -P sapwd123! >/dev/null << 'EOF'
 CREATE DATABASE [php-crud-api]
