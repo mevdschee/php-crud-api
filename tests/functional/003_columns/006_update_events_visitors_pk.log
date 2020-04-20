@@ -1,5 +1,13 @@
 skip-for-sqlite: table (columns) cannot be altered online
 ===
+GET /columns/events/visitors
+===
+200
+Content-Type: application/json
+Content-Length: 51
+
+{"name":"visitors","type":"bigint","nullable":true}
+===
 PUT /columns/events/visitors
 
 {"nullable":false}
@@ -17,6 +25,16 @@ Content-Type: application/json
 Content-Length: 35
 
 {"name":"visitors","type":"bigint"}
+===
+PUT /columns/events/visitors
+
+{"nullable":true}
+===
+200
+Content-Type: application/json
+Content-Length: 4
+
+true
 ===
 GET /columns/events/id
 ===
@@ -40,9 +58,9 @@ GET /columns/events/visitors
 ===
 200
 Content-Type: application/json
-Content-Length: 35
+Content-Length: 51
 
-{"name":"visitors","type":"bigint"}
+{"name":"visitors","type":"bigint","nullable":true}
 ===
 PUT /columns/events/id
 
