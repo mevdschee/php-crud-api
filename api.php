@@ -5166,11 +5166,17 @@ namespace Tqdev\PhpCrudApi\Database {
 
         private function convertRecordValue($conversion, $value)
         {
-            switch ($conversion) {
+            $args = explode('|', $conversion);
+            $type = array_shift($args);
+            switch ($type) {
                 case 'boolean':
                     return $value ? true : false;
                 case 'integer':
                     return (int) $value;
+                case 'float':
+                    return (float) $value;
+                case 'decimal':
+                    return number_format($value, $args[0], '.', '');
             }
             return $value;
         }
@@ -5182,6 +5188,12 @@ namespace Tqdev\PhpCrudApi\Database {
             }
             if (in_array($this->driver, ['sqlsrv', 'sqlite']) && in_array($column->getType(), ['integer', 'bigint'])) {
                 return 'integer';
+            }
+            if (in_array($this->driver, ['sqlite', 'pgsql']) && in_array($column->getType(), ['float', 'double'])) {
+                return 'float';
+            }
+            if (in_array($this->driver, ['sqlite']) && in_array($column->getType(), ['decimal'])) {
+                return 'decimal|' . $column->getScale();
             }
             return 'none';
         }
@@ -5656,7 +5668,7 @@ namespace Tqdev\PhpCrudApi\Database {
                     return $column->getPk() ? ' AUTO_INCREMENT' : '';
                 case 'pgsql':
                 case 'sqlsrv':
-                    return '';
+                    return $column->getPk() ? ' IDENTITY(1,1)' : '';
                 case 'sqlite':
                     return $column->getPk() ? ' AUTOINCREMENT' : '';
             }
@@ -6024,7 +6036,7 @@ namespace Tqdev\PhpCrudApi\Database {
         private function query(string $sql, array $arguments): bool
         {
             $stmt = $this->pdo->prepare($sql);
-            //echo "- $sql -- " . json_encode($arguments) . "\n";
+            // echo "- $sql -- " . json_encode($arguments) . "\n";
             return $stmt->execute($arguments);
         }
     }
@@ -6377,19 +6389,26 @@ namespace Tqdev\PhpCrudApi\Database {
         private $fromJdbc = [
             'mysql' => [
                 'clob' => 'longtext',
-                'boolean' => 'tinyint',
+                'boolean' => 'tinyint(1)',
                 'blob' => 'longblob',
                 'timestamp' => 'datetime',
             ],
             'pgsql' => [
                 'clob' => 'text',
                 'blob' => 'bytea',
+                'float' => 'real',
+                'double' => 'double precision',
+                'varbinary' => 'bytea',
             ],
             'sqlsrv' => [
                 'boolean' => 'bit',
                 'varchar' => 'nvarchar',
                 'clob' => 'ntext',
                 'blob' => 'image',
+                'time' => 'time(0)',
+                'timestamp' => 'datetime2(0)',
+                'double' => 'float',
+                'float' => 'real',
             ],
         ];
 
