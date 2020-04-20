@@ -1,5 +1,3 @@
-skip-for-pgsql: varbinary is not properly supported yet
-skip-for-sqlsrv: float has high precision and time and datetime have microseconds
 ===
 POST /columns
 
@@ -17,7 +15,6 @@ POST /columns
 {"name":"timestamp","type":"timestamp"},
 {"name":"clob","type":"clob"},
 {"name":"blob","type":"blob"},
-{"name":"varbinary","type":"varbinary","length":10},
 {"name":"geometry","type":"geometry"}
 ]}
 ===
@@ -31,14 +28,14 @@ GET /columns/types
 ===
 200
 Content-Type: application/json
-Content-Length: 615
+Content-Length: 563
 
-{"name":"types","type":"table","columns":[{"name":"id","type":"integer","pk":true},{"name":"integer","type":"integer"},{"name":"bigint","type":"bigint"},{"name":"varchar","type":"varchar","length":10},{"name":"decimal","type":"decimal","precision":10,"scale":4},{"name":"float","type":"float"},{"name":"double","type":"double"},{"name":"boolean","type":"boolean"},{"name":"date","type":"date"},{"name":"time","type":"time"},{"name":"timestamp","type":"timestamp"},{"name":"clob","type":"clob"},{"name":"blob","type":"blob"},{"name":"varbinary","type":"varbinary","length":10},{"name":"geometry","type":"geometry"}]}
+{"name":"types","type":"table","columns":[{"name":"id","type":"integer","pk":true},{"name":"integer","type":"integer"},{"name":"bigint","type":"bigint"},{"name":"varchar","type":"varchar","length":10},{"name":"decimal","type":"decimal","precision":10,"scale":4},{"name":"float","type":"float"},{"name":"double","type":"double"},{"name":"boolean","type":"boolean"},{"name":"date","type":"date"},{"name":"time","type":"time"},{"name":"timestamp","type":"timestamp"},{"name":"clob","type":"clob"},{"name":"blob","type":"blob"},{"name":"geometry","type":"geometry"}]}
 ===
 POST /records/types
 Content-Type: application/json
 
-{"integer":2,"bigint":3,"varchar":"abc","decimal":"1.23","float":2.34,"double":3.45,"boolean":true,"date":"1970-01-01","time":"00:00:01","timestamp":"2001-02-03 04:05:06","clob":"a","blob":"YQ==","varbinary":"YQ==","geometry":"POINT(1 2)"}
+{"integer":2,"bigint":3,"varchar":"abc","decimal":"1.23","float":1,"double":23.45,"boolean":true,"date":"1970-01-01","time":"00:00:01","timestamp":"2001-02-03 04:05:06","clob":"a","blob":"YQ==","geometry":"POINT(1 2)"}
 ===
 200
 Content-Type: application/json
@@ -50,9 +47,9 @@ GET /records/types/1
 ===
 200
 Content-Type: application/json
-Content-Length: 248
+Content-Length: 227
 
-{"id":1,"integer":2,"bigint":3,"varchar":"abc","decimal":"1.2300","float":2.34,"double":3.45,"boolean":true,"date":"1970-01-01","time":"00:00:01","timestamp":"2001-02-03 04:05:06","clob":"a","blob":"YQ==","varbinary":"YQ==","geometry":"POINT(1 2)"}
+{"id":1,"integer":2,"bigint":3,"varchar":"abc","decimal":"1.2300","float":1,"double":23.45,"boolean":true,"date":"1970-01-01","time":"00:00:01","timestamp":"2001-02-03 04:05:06","clob":"a","blob":"YQ==","geometry":"POINT(1 2)"}
 ===
 DELETE /columns/types
 ===

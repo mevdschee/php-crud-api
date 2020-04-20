@@ -26,7 +26,7 @@ class DataConverter
             case 'float':
                 return (float) $value;
             case 'decimal':
-                return sprintf('%.' . $args[0] . 'f', $value);
+                return number_format($value, $args[0], '.', '');
         }
         return $value;
     }
@@ -39,7 +39,7 @@ class DataConverter
         if (in_array($this->driver, ['sqlsrv', 'sqlite']) && in_array($column->getType(), ['integer', 'bigint'])) {
             return 'integer';
         }
-        if (in_array($this->driver, ['sqlite']) && in_array($column->getType(), ['float', 'double'])) {
+        if (in_array($this->driver, ['sqlite', 'pgsql']) && in_array($column->getType(), ['float', 'double'])) {
             return 'float';
         }
         if (in_array($this->driver, ['sqlite']) && in_array($column->getType(), ['decimal'])) {
