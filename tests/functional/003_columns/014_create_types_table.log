@@ -1,5 +1,5 @@
 skip-for-pgsql: varbinary is not properly supported yet
-skip-for-sqlite: float is returned as string
+skip-for-sqlite: float is returned as string, decimal does not respect scale
 skip-for-sqlsrv: float has high precision and time and datetime have microseconds
 ===
 POST /columns
