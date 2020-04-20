@@ -14,19 +14,26 @@ class TypeConverter
     private $fromJdbc = [
         'mysql' => [
             'clob' => 'longtext',
-            'boolean' => 'tinyint',
+            'boolean' => 'tinyint(1)',
             'blob' => 'longblob',
             'timestamp' => 'datetime',
         ],
         'pgsql' => [
             'clob' => 'text',
             'blob' => 'bytea',
+            'float' => 'real',
+            'double' => 'double precision',
+            'varbinary' => 'bytea',
         ],
         'sqlsrv' => [
             'boolean' => 'bit',
             'varchar' => 'nvarchar',
             'clob' => 'ntext',
             'blob' => 'image',
+            'time' => 'time(0)',
+            'timestamp' => 'datetime2(0)',
+            'double' => 'float',
+            'float' => 'real',
         ],
     ];
 

@@ -16,11 +16,17 @@ class DataConverter
 
     private function convertRecordValue($conversion, $value)
     {
-        switch ($conversion) {
+        $args = explode('|', $conversion);
+        $type = array_shift($args);
+        switch ($type) {
             case 'boolean':
                 return $value ? true : false;
             case 'integer':
                 return (int) $value;
+            case 'float':
+                return (float) $value;
+            case 'decimal':
+                return number_format($value, $args[0], '.', '');
         }
         return $value;
     }
@@ -32,6 +38,12 @@ class DataConverter
         }
         if (in_array($this->driver, ['sqlsrv', 'sqlite']) && in_array($column->getType(), ['integer', 'bigint'])) {
             return 'integer';
+        }
+        if (in_array($this->driver, ['sqlite', 'pgsql']) && in_array($column->getType(), ['float', 'double'])) {
+            return 'float';
+        }
+        if (in_array($this->driver, ['sqlite']) && in_array($column->getType(), ['decimal'])) {
+            return 'decimal|' . $column->getScale();
         }
         return 'none';
     }

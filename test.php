@@ -64,6 +64,10 @@ function runTest(Config $config, string $file, string $category): array
             $skipped = 1;
             $success = 0;
         }
+        if ($key == "skip-always") {
+            $skipped = 1;
+            $success = 0;
+        }
     }
     if (!$skipped) {
         $dirty = false;

@@ -72,7 +72,7 @@ class GenericDefinition
                 return $column->getPk() ? ' AUTO_INCREMENT' : '';
             case 'pgsql':
             case 'sqlsrv':
-                return '';
+                return $column->getPk() ? ' IDENTITY(1,1)' : '';
             case 'sqlite':
                 return $column->getPk() ? ' AUTOINCREMENT' : '';
         }
@@ -440,7 +440,7 @@ class GenericDefinition
     private function query(string $sql, array $arguments): bool
     {
         $stmt = $this->pdo->prepare($sql);
-        //echo "- $sql -- " . json_encode($arguments) . "\n";
+        // echo "- $sql -- " . json_encode($arguments) . "\n";
         return $stmt->execute($arguments);
     }
 }
