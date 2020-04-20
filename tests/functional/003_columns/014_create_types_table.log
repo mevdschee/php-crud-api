@@ -1,22 +1,7 @@
 ===
 POST /columns
 
-{"name":"types","type":"table","columns":[
-{"name":"id","type":"integer","pk":true},
-{"name":"integer","type":"integer"},
-{"name":"bigint","type":"bigint"},
-{"name":"varchar","type":"varchar","length":10},
-{"name":"decimal","type":"decimal","precision":10,"scale":4},
-{"name":"float","type":"float"},
-{"name":"double","type":"double"},
-{"name":"boolean","type":"boolean"},
-{"name":"date","type":"date"},
-{"name":"time","type":"time"},
-{"name":"timestamp","type":"timestamp"},
-{"name":"clob","type":"clob"},
-{"name":"blob","type":"blob"},
-{"name":"geometry","type":"geometry"}
-]}
+{"name":"types","type":"table","columns":[{"name":"id","type":"integer","pk":true},{"name":"integer","type":"integer"},{"name":"bigint","type":"bigint"},{"name":"varchar","type":"varchar","length":10},{"name":"decimal","type":"decimal","precision":10,"scale":4},{"name":"float","type":"float"},{"name":"double","type":"double"},{"name":"boolean","type":"boolean"},{"name":"date","type":"date"},{"name":"time","type":"time"},{"name":"timestamp","type":"timestamp"},{"name":"clob","type":"clob"},{"name":"blob","type":"blob"},{"name":"geometry","type":"geometry"}]}
 ===
 200
 Content-Type: application/json
