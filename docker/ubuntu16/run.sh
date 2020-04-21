@@ -59,12 +59,12 @@ echo "done"
 
 echo -n "[4/4] Cloning PHP-CRUD-API v2 ... "
 # install software
-if [ -d /php-crud-api ]; then
-  echo "skipped"
-else
-  git clone --quiet https://github.com/mevdschee/php-crud-api.git
+#if [ -d /php-crud-api ]; then
+#  echo "skipped"
+#else
+  git clone --quiet https://github.com/lcuis/php-crud-api.git
   echo "done"
-fi
+#fi
 
 echo "------------------------------------------------"
 

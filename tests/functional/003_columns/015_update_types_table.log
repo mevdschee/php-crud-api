@@ -306,16 +306,6 @@ Content-Length: 50
 
 {"code":1008,"message":"Cannot read HTTP message"}
 ===
-PUT /records/types/1
-
-{"geometry":"string"}
-===
-409
-Content-Type: application/json
-Content-Length: 50
-
-{"code":1010,"message":"Data integrity violation"}
-===
 GET /records/types/1
 ===
 200
