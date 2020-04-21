@@ -32,7 +32,7 @@ GET /records/types/1
 ===
 200
 Content-Type: application/json
-Content-Length: 227
+Content-Length: 246
 
 {"id":1,"integer":2,"bigint":3,"varchar":"abc","decimal":"1.2300","float":1,"double":23.45,"boolean":true,"date":"1970-01-01","time":"00:00:01","timestamp":"2001-02-03 04:05:06","clob":"a","blob":"YQ==","varbinary":"YQ==","geometry":"POINT(1 2)"}
 ===
