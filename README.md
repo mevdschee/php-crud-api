@@ -1060,7 +1060,7 @@ JavaScript does not support 64 bit integers. All numbers are stored as 64 bit fl
 
 ### Inf and NaN floats
 
-The valid floating point values 'Infinite' (calculated with '1/0') and 'Not a Number' (calculated with '0/0') cannot be expressed in JSON, as they are not supported by the [JSON specification](https://www.json.org). When these values are stored in a database then you cannot read them as it outputs records as JSON.
+The valid floating point values 'Infinite' (calculated with '1/0') and 'Not a Number' (calculated with '0/0') cannot be expressed in JSON, as they are not supported by the [JSON specification](https://www.json.org). When these values are stored in a database then you cannot read them as this script outputs database records as JSON.
 
 ## Errors
 
