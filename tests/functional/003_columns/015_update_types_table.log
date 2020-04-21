@@ -323,3 +323,11 @@ Content-Type: application/json
 Content-Length: 324
 
 {"id":1,"integer":3,"bigint":3,"varchar":"c","decimal":"3.0000","float":3,"double":3,"boolean":true,"date":"2000-01-03","time":"03:01:01","timestamp":"2000-01-03 03:01:01","clob":"HLnVf8PrxX\/vPMElDxrlFLIHoBd1fnLVSXVEDLjt0bk=","blob":"T8O5IGVzdCBsZSBjYWbDqSBsZSBwbHVzIHByb2NoZT8=","varbinary":"Yw==","geometry":"POINT(3 3)"}
+===
+DELETE /columns/types
+===
+200
+Content-Type: application/json
+Content-Length: 4
+
+true
