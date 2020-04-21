@@ -34,9 +34,9 @@ GET /records/types/1
 ===
 200
 Content-Type: application/json
-Content-Length: 309
+Content-Length: 241
 
-{"id":1,"integer":2,"bigint":2,"varchar":"b","decimal":"2","float":2,"double":2,"boolean":false,"date":"2000-01-02","time":"02:01:01","timestamp":"2000-01-02 02:01:01","clob":"b","blob":"Cg==","varbinary":"Cg==","geometry":"POINT(2 2)","ninteger":null,"nvarchar":null,"ndate":null}
+{"id":1,"integer":2,"bigint":2,"varchar":"b","decimal":"2.0000","float":2,"double":2,"boolean":false,"date":"2000-01-02","time":"02:01:01","timestamp":"2000-01-02 02:01:01","clob":"b","blob":"Cg==","varbinary":"Cg==","geometry":"POINT(2 2)"}
 ===
 PUT /records/types/1
 
@@ -52,9 +52,9 @@ GET /records/types/1
 ===
 200
 Content-Type: application/json
-Content-Length: 308
+Content-Length: 240
 
-{"id":1,"integer":3,"bigint":3,"varchar":"c","decimal":"3","float":3,"double":3,"boolean":true,"date":"2000-01-03","time":"03:01:01","timestamp":"2000-01-03 03:01:01","clob":"c","blob":"Cg==","varbinary":"Cg==","geometry":"POINT(3 3)","ninteger":null,"nvarchar":null,"ndate":null}
+{"id":1,"integer":3,"bigint":3,"varchar":"c","decimal":"3.0000","float":3,"double":3,"boolean":true,"date":"2000-01-03","time":"03:01:01","timestamp":"2000-01-03 03:01:01","clob":"c","blob":"Yw==","varbinary":"Yw==","geometry":"POINT(3 3)"}
 ===
 PUT /records/types/1
 
@@ -72,7 +72,7 @@ PUT /records/types/1
 ===
 422
 Content-Type: application/json
-Content-Length: 106
+Content-Length: 101
 
 {"code":1013,"message":"Input validation failed for 'types'","details":{"integer":"must be numeric"}}
 ===
@@ -92,7 +92,7 @@ PUT /records/types/1
 ===
 422
 Content-Type: application/json
-Content-Length: 105
+Content-Length: 100
 
 {"code":1013,"message":"Input validation failed for 'types'","details":{"bigint":"must be numeric"}}
 ===
@@ -102,7 +102,7 @@ PUT /records/types/1
 ===
 422
 Content-Type: application/json
-Content-Length: 99
+Content-Length: 94
 
 {"code":1013,"message":"Input validation failed for 'types'","details":{"varchar":"too long"}}
 ===
@@ -112,7 +112,7 @@ PUT /records/types/1
 ===
 422
 Content-Type: application/json
-Content-Length: 102
+Content-Length: 97
 
 {"code":1013,"message":"Input validation failed for 'types'","details":{"decimal":"not a float"}}
 ===
@@ -122,7 +122,7 @@ PUT /records/types/1
 ===
 422
 Content-Type: application/json
-Content-Length: 100
+Content-Length: 95
 
 {"code":1013,"message":"Input validation failed for 'types'","details":{"float":"not a float"}}
 ===
@@ -132,7 +132,7 @@ PUT /records/types/1
 ===
 422
 Content-Type: application/json
-Content-Length: 101
+Content-Length: 96
 
 {"code":1013,"message":"Input validation failed for 'types'","details":{"double":"not a float"}}
 ===
@@ -142,7 +142,7 @@ PUT /records/types/1
 ===
 422
 Content-Type: application/json
-Content-Length: 110
+Content-Length: 105
 
 {"code":1013,"message":"Input validation failed for 'types'","details":{"boolean":"not a valid boolean"}}
 ===
@@ -152,7 +152,7 @@ PUT /records/types/1
 ===
 422
 Content-Type: application/json
-Content-Length: 105
+Content-Length: 100
 
 {"code":1013,"message":"Input validation failed for 'types'","details":{"boolean":"cannot be null"}}
 ===
@@ -162,7 +162,7 @@ PUT /records/types/1
 ===
 422
 Content-Type: application/json
-Content-Length: 122
+Content-Length: 117
 
 {"code":1013,"message":"Input validation failed for 'types'","details":{"date":"invalid date format use yyyy-mm-dd"}}
 ===
@@ -172,7 +172,7 @@ PUT /records/types/1
 ===
 422
 Content-Type: application/json
-Content-Length: 104
+Content-Length: 99
 
 {"code":1013,"message":"Input validation failed for 'types'","details":{"date":"not a valid date"}}
 ===
@@ -182,7 +182,7 @@ PUT /records/types/1
 ===
 422
 Content-Type: application/json
-Content-Length: 120
+Content-Length: 115
 
 {"code":1013,"message":"Input validation failed for 'types'","details":{"time":"invalid time format use hh:mm:ss"}}
 ===
@@ -192,7 +192,7 @@ PUT /records/types/1
 ===
 422
 Content-Type: application/json
-Content-Length: 110
+Content-Length: 105
 
 {"code":1013,"message":"Input validation failed for 'types'","details":{"time":"non-numeric time value"}}
 ===
@@ -202,7 +202,7 @@ PUT /records/types/1
 ===
 422
 Content-Type: application/json
-Content-Length: 104
+Content-Length: 99
 
 {"code":1013,"message":"Input validation failed for 'types'","details":{"time":"not a valid time"}}
 ===
@@ -212,7 +212,7 @@ PUT /records/types/1
 ===
 422
 Content-Type: application/json
-Content-Length: 141
+Content-Length: 136
 
 {"code":1013,"message":"Input validation failed for 'types'","details":{"timestamp":"invalid timestamp format use yyyy-mm-dd hh:mm:ss"}}
 ===
@@ -222,7 +222,7 @@ PUT /records/types/1
 ===
 422
 Content-Type: application/json
-Content-Length: 127
+Content-Length: 122
 
 {"code":1013,"message":"Input validation failed for 'types'","details":{"timestamp":"invalid date format use yyyy-mm-dd"}}
 ===
@@ -232,7 +232,7 @@ PUT /records/types/1
 ===
 422
 Content-Type: application/json
-Content-Length: 109
+Content-Length: 104
 
 {"code":1013,"message":"Input validation failed for 'types'","details":{"timestamp":"not a valid date"}}
 ===
@@ -242,7 +242,7 @@ PUT /records/types/1
 ===
 422
 Content-Type: application/json
-Content-Length: 125
+Content-Length: 120
 
 {"code":1013,"message":"Input validation failed for 'types'","details":{"timestamp":"invalid time format use hh:mm:ss"}}
 ===
@@ -252,7 +252,7 @@ PUT /records/types/1
 ===
 422
 Content-Type: application/json
-Content-Length: 115
+Content-Length: 110
 
 {"code":1013,"message":"Input validation failed for 'types'","details":{"timestamp":"non-numeric time value"}}
 ===
@@ -262,7 +262,7 @@ PUT /records/types/1
 ===
 422
 Content-Type: application/json
-Content-Length: 109
+Content-Length: 104
 
 {"code":1013,"message":"Input validation failed for 'types'","details":{"timestamp":"not a valid time"}}
 ===
@@ -292,7 +292,7 @@ PUT /records/types/1
 ===
 422
 Content-Type: application/json
-Content-Length: 101
+Content-Length: 96
 
 {"code":1013,"message":"Input validation failed for 'types'","details":{"varbinary":"too long"}}
 ===
@@ -316,38 +316,10 @@ Content-Length: 50
 
 {"code":1010,"message":"Data integrity violation"}
 ===
-PUT /records/types/1
-
-{"ninteger":4,"nvarchar":"d","ndate":"2000-01-04"}
-===
-200
-Content-Type: application/json
-Content-Length: 1
-
-1
-===
 GET /records/types/1
 ===
 200
 Content-Type: application/json
-Content-Length: 396
+Content-Length: 324
 
-{"id":1,"integer":3,"bigint":3,"varchar":"c","decimal":"3","float":3,"double":3,"boolean":true,"date":"2000-01-03","time":"03:01:01","timestamp":"2000-01-03 03:01:01","clob":"HLnVf8PrxX\/vPMElDxrlFLIHoBd1fnLVSXVEDLjt0bk=","blob":"T8O5IGVzdCBsZSBjYWbDqSBsZSBwbHVzIHByb2NoZT8=","varbinary":"Cg==","geometry":"POINT(3 3)","ninteger":4,"nvarchar":"d","ndate":"2000-01-04"}
-===
-PUT /records/types/1
-
-{"ninteger":null,"nvarchar":null,"ndate":null}
-===
-200
-Content-Type: application/json
-Content-Length: 1
-
-1
-===
-GET /records/types/1
-===
-200
-Content-Type: application/json
-Content-Length: 392
-
-{"id":1,"integer":3,"bigint":3,"varchar":"c","decimal":"3","float":3,"double":3,"boolean":true,"date":"2000-01-03","time":"03:01:01","timestamp":"2000-01-03 03:01:01","clob":"HLnVf8PrxX\/vPMElDxrlFLIHoBd1fnLVSXVEDLjt0bk=","blob":"T8O5IGVzdCBsZSBjYWbDqSBsZSBwbHVzIHByb2NoZT8=","varbinary":"Cg==","geometry":"POINT(3 3)","ninteger":null,"nvarchar":null,"ndate":null}
+{"id":1,"integer":3,"bigint":3,"varchar":"c","decimal":"3.0000","float":3,"double":3,"boolean":true,"date":"2000-01-03","time":"03:01:01","timestamp":"2000-01-03 03:01:01","clob":"HLnVf8PrxX\/vPMElDxrlFLIHoBd1fnLVSXVEDLjt0bk=","blob":"T8O5IGVzdCBsZSBjYWbDqSBsZSBwbHVzIHByb2NoZT8=","varbinary":"Yw==","geometry":"POINT(3 3)"}
