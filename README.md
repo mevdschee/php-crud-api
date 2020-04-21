@@ -1050,9 +1050,17 @@ binary types:
 other types:
 - geometry /* non-jdbc type, extension with limited support */
 
-## 64 bit integers in JavaScript
+## Data types in JavaScript
+
+Javascript and Javascript object notation are not very well suited for reading database records. Decimal, date/time, binary and geometry types are represented as strings in JSON (binary is base64 encoded, geometries are in WKT format). Below are two more serious issues described.
+
+### 64 bit integers
 
 JavaScript does not support 64 bit integers. All numbers are stored as 64 bit floating point values. The mantissa of a 64 bit floating point number is only 53 bit and that is why all integer numbers bigger than 53 bit may cause problems in JavaScript.
+
+### Inf and NaN floats
+
+The valid floating point values 'Infinite' (calculated with '1/0') and 'Not a Number' (calculated with '0/0') cannot be expressed in JSON, as they are not supported by the [JSON specification](https://www.json.org). When these values are stored in a database then you cannot read them as it outputs records as JSON.
 
 ## Errors
 
