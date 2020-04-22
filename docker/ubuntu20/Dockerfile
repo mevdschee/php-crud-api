@@ -2,6 +2,9 @@ FROM ubuntu:20.04
 
 ARG DEBIAN_FRONTEND=noninteractive
 
+ENV TZ=Etc/UTC
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
 # install: php / mysql / postgres / sqlite / tools
 RUN apt-get update && apt-get -y install \
 php-cli php-xml \
