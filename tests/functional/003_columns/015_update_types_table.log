@@ -1,7 +1,7 @@
 ===
 POST /columns
 
-{"name":"types","type":"table","columns":[{"name":"id","type":"integer","pk":true},{"name":"integer","type":"integer"},{"name":"bigint","type":"bigint"},{"name":"varchar","type":"varchar","length":10},{"name":"decimal","type":"decimal","precision":10,"scale":4},{"name":"float","type":"float"},{"name":"double","type":"double"},{"name":"boolean","type":"boolean"},{"name":"date","type":"date"},{"name":"time","type":"time"},{"name":"timestamp","type":"timestamp"},{"name":"clob","type":"clob"},{"name":"blob","type":"blob"},{"name":"varbinary","type":"varbinary","length":10},{"name":"geometry","type":"geometry"}]}
+{"name":"types","type":"table","columns":[{"name":"id","type":"integer","pk":true},{"name":"integer","type":"integer"},{"name":"bigint","type":"bigint"},{"name":"varchar","type":"varchar","length":10},{"name":"decimal","type":"decimal","precision":10,"scale":4},{"name":"float","type":"float"},{"name":"double","type":"double"},{"name":"boolean","type":"boolean"},{"name":"date","type":"date"},{"name":"time","type":"time"},{"name":"timestamp","type":"timestamp"},{"name":"clob","type":"clob"},{"name":"blob","type":"blob"},{"name":"geometry","type":"geometry"}]}
 ===
 200
 Content-Type: application/json
@@ -12,7 +12,7 @@ true
 POST /records/types
 Content-Type: application/json
 
-{"integer":2,"bigint":3,"varchar":"abc","decimal":"1.23","float":1,"double":23.45,"boolean":true,"date":"1970-01-01","time":"00:00:01","timestamp":"2001-02-03 04:05:06","clob":"a","blob":"YQ==","varbinary":"YQ==","geometry":"POINT(1 2)"}
+{"integer":2,"bigint":3,"varchar":"abc","decimal":"1.23","float":1,"double":23.45,"boolean":true,"date":"1970-01-01","time":"00:00:01","timestamp":"2001-02-03 04:05:06","clob":"a","blob":"YQ==","geometry":"POINT(1 2)"}
 ===
 200
 Content-Type: application/json
@@ -22,7 +22,7 @@ Content-Length: 1
 ===
 PUT /records/types/1
 
-{"integer":2,"bigint":2,"varchar":"b","decimal":2,"float":2,"double":2,"boolean":false,"date":"2000-01-02","time":"02:01:01","timestamp":"2000-01-02 02:01:01","clob":"b","blob":"Cg==","varbinary":"Cg==","geometry":"POINT(2 2)"}
+{"integer":2,"bigint":2,"varchar":"b","decimal":2,"float":2,"double":2,"boolean":false,"date":"2000-01-02","time":"02:01:01","timestamp":"2000-01-02 02:01:01","clob":"b","blob":"Cg==","geometry":"POINT(2 2)"}
 ===
 200
 Content-Type: application/json
@@ -34,13 +34,13 @@ GET /records/types/1
 ===
 200
 Content-Type: application/json
-Content-Length: 241
+Content-Length: 222
 
-{"id":1,"integer":2,"bigint":2,"varchar":"b","decimal":"2.0000","float":2,"double":2,"boolean":false,"date":"2000-01-02","time":"02:01:01","timestamp":"2000-01-02 02:01:01","clob":"b","blob":"Cg==","varbinary":"Cg==","geometry":"POINT(2 2)"}
+{"id":1,"integer":2,"bigint":2,"varchar":"b","decimal":"2.0000","float":2,"double":2,"boolean":false,"date":"2000-01-02","time":"02:01:01","timestamp":"2000-01-02 02:01:01","clob":"b","blob":"Cg==","geometry":"POINT(2 2)"}
 ===
 PUT /records/types/1
 
-{"integer":3,"bigint":3,"varchar":"c","decimal":3,"float":3,"double":3,"boolean":true,"date":"2000-01-03","time":"03:01:01","timestamp":"2000-01-03 03:01:01","clob":"c","blob":"Yw==","varbinary":"Yw==","geometry":"POINT(3 3)"}
+{"integer":3,"bigint":3,"varchar":"c","decimal":3,"float":3,"double":3,"boolean":true,"date":"2000-01-03","time":"03:01:01","timestamp":"2000-01-03 03:01:01","clob":"c","blob":"Yw==","geometry":"POINT(3 3)"}
 ===
 200
 Content-Type: application/json
@@ -52,9 +52,9 @@ GET /records/types/1
 ===
 200
 Content-Type: application/json
-Content-Length: 240
+Content-Length: 221
 
-{"id":1,"integer":3,"bigint":3,"varchar":"c","decimal":"3.0000","float":3,"double":3,"boolean":true,"date":"2000-01-03","time":"03:01:01","timestamp":"2000-01-03 03:01:01","clob":"c","blob":"Yw==","varbinary":"Yw==","geometry":"POINT(3 3)"}
+{"id":1,"integer":3,"bigint":3,"varchar":"c","decimal":"3.0000","float":3,"double":3,"boolean":true,"date":"2000-01-03","time":"03:01:01","timestamp":"2000-01-03 03:01:01","clob":"c","blob":"Yw==","geometry":"POINT(3 3)"}
 ===
 PUT /records/types/1
 
@@ -286,33 +286,13 @@ Content-Length: 1
 
 1
 ===
-PUT /records/types/1
-
-{"varbinary":"1234567890123456789012345678901234567890123456789012345678901"}
-===
-422
-Content-Type: application/json
-Content-Length: 96
-
-{"code":1013,"message":"Input validation failed for 'types'","details":{"varbinary":"too long"}}
-===
-PUT /records/types/1
-
-{"varbinary":"\x00\x81"}
-===
-422
-Content-Type: application/json
-Content-Length: 50
-
-{"code":1008,"message":"Cannot read HTTP message"}
-===
 GET /records/types/1
 ===
 200
 Content-Type: application/json
-Content-Length: 324
+Content-Length: 305
 
-{"id":1,"integer":3,"bigint":3,"varchar":"c","decimal":"3.0000","float":3,"double":3,"boolean":true,"date":"2000-01-03","time":"03:01:01","timestamp":"2000-01-03 03:01:01","clob":"HLnVf8PrxX\/vPMElDxrlFLIHoBd1fnLVSXVEDLjt0bk=","blob":"T8O5IGVzdCBsZSBjYWbDqSBsZSBwbHVzIHByb2NoZT8=","varbinary":"Yw==","geometry":"POINT(3 3)"}
+{"id":1,"integer":3,"bigint":3,"varchar":"c","decimal":"3.0000","float":3,"double":3,"boolean":true,"date":"2000-01-03","time":"03:01:01","timestamp":"2000-01-03 03:01:01","clob":"HLnVf8PrxX\/vPMElDxrlFLIHoBd1fnLVSXVEDLjt0bk=","blob":"T8O5IGVzdCBsZSBjYWbDqSBsZSBwbHVzIHByb2NoZT8=","geometry":"POINT(3 3)"}
 ===
 DELETE /columns/types
 ===
