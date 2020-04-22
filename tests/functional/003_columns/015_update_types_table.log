@@ -58,16 +58,6 @@ Content-Length: 221
 ===
 PUT /records/types/1
 
-{"integer":123456789012345678901}
-===
-500
-Content-Type: application/json
-Content-Length: 13
-
-{"code":9999}
-===
-PUT /records/types/1
-
 {"integer":"string"}
 ===
 422
@@ -75,16 +65,6 @@ Content-Type: application/json
 Content-Length: 101
 
 {"code":1013,"message":"Input validation failed for 'types'","details":{"integer":"must be numeric"}}
-===
-PUT /records/types/1
-
-{"bigint":123456789012345678901}
-===
-500
-Content-Type: application/json
-Content-Length: 13
-
-{"code":9999}
 ===
 PUT /records/types/1
 
