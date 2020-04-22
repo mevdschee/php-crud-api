@@ -597,7 +597,7 @@ You can enable the following middleware using the "middlewares" config parameter
 - "basicAuth": Support for "Basic Authentication"
 - "reconnect": Reconnect to the database with different parameters
 - "authorization": Restrict access to certain tables or columns
-- "validation": Return input validation errors for custom rules
+- "validation": Return input validation errors for custom rules and default type rules
 - "ipAddress": Fill a protected field with the IP address on create
 - "sanitation": Apply input sanitation on create and update
 - "multiTenancy": Restricts tenants access in a multi-tenant scenario
@@ -652,6 +652,7 @@ You can tune the middleware behavior using middleware specific configuration par
 - "authorization.columnHandler": Handler to implement column authorization rules ("")
 - "authorization.recordHandler": Handler to implement record authorization filter rules ("")
 - "validation.handler": Handler to implement validation rules for input values ("")
+- "validation.types": List of types for which the default validation must take place ("all")
 - "ipAddress.tables": Tables to search for columns to override with IP address ("")
 - "ipAddress.columns": Columns to protect and override with the IP address on create ("")
 - "sanitation.handler": Handler to implement sanitation rules for input values ("")
@@ -888,8 +889,12 @@ The above example will strip all HTML tags from strings in the input.
 
 ### Validating input
 
-By default all input is accepted. If you want to validate the input, you may add the 'validation' middleware and define a 
-'validation.handler' function that returns a boolean indicating whether or not the value is valid.
+By default all input is accepted unless the validation middleware is specified. The default types validations are then applied.
+
+#### Validation handler
+
+If you want to validate the input in a custom way, you may add the 'validation' middleware and define a 'validation.handler' 
+function that returns a boolean indicating whether or not the value is valid.
 
     'validation.handler' => function ($operation, $tableName, $column, $value, $context) {
         return ($column['name'] == 'post_id' && !is_numeric($value)) ? 'must be numeric' : true;
@@ -914,6 +919,43 @@ Then the server will return a '422' HTTP status code and nice error message:
     }
 
 You can parse this output to make form fields show up with a red border and their appropriate error message.
+
+#### Validation types
+
+The default types validations return the following error messages:
+| error message | applies to types |
+| ---- | ---- |
+| cannot be null | any non-nullable column |
+| must be numeric | integer bigint |
+| exceeds range | integer bigint |
+| too long | varchar varbinary |
+| not a float | decimal float double |
+| not a valid boolean | boolean |
+| invalid date format use yyyy-mm-dd | date timestamp |
+| not a valid date | date timestamp |
+| invalid time format use hh:mm:ss | time timestamp |
+| non-numeric time value | time timestamp |
+| not a valid time | time timestamp |
+| invalid timestamp format use yyyy-mm-dd hh:mm:ss | timestamp |
+
+If you want the types validation to apply to all the types, you must activate the `validation` middleware.
+By default, all types are enabled. Which is equivalent to the two configuration possibilities:
+
+    'validation.types' => 'all',
+    
+or
+    
+    'validation.types'=> 'integer,bigint,varchar,decimal,float,double,boolean,date,time,timestamp,clob,blob,varbinary,geometry',
+
+Types with no declared error message can be checked whether null when the column is non-nullable.
+
+In case you want to use a validation handler but don't want any types validation, use either:
+
+    'validation.types' => '',
+    
+or
+    
+    'validation.types'=> 'none',
 
 ### Multi-tenancy support
 
