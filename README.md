@@ -938,6 +938,7 @@ The default types validations return the following error messages:
 | invalid date        | use yyyy-mm-dd              | date                                        |
 | invalid time        | use hh:mm:ss                | time                                        |
 | invalid timestamp   | use yyyy-mm-dd hh:mm:ss     | timestamp                                   |
+| invalid base64      | illegal characters          | varbinary, blob                             |
 
 If you want the types validation to apply to all the types, you must activate the "`validation`" middleware.
 By default, all types are enabled. Which is equivalent to the two configuration possibilities:
