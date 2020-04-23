@@ -923,39 +923,36 @@ You can parse this output to make form fields show up with a red border and thei
 #### Validation types
 
 The default types validations return the following error messages:
-| error message | applies to types |
-| ---- | ---- |
-| cannot be null | any non-nullable column |
-| must be numeric | integer bigint |
-| exceeds range | integer bigint |
-| too long | varchar varbinary |
-| not a float | decimal float double |
-| not a valid boolean | boolean |
-| invalid date format use yyyy-mm-dd | date timestamp |
-| not a valid date | date timestamp |
-| invalid time format use hh:mm:ss | time timestamp |
-| non-numeric time value | time timestamp |
-| not a valid time | time timestamp |
-| invalid timestamp format use yyyy-mm-dd hh:mm:ss | timestamp |
 
-If you want the types validation to apply to all the types, you must activate the `validation` middleware.
+| error message       | reason                      | applies to types                            |
+| ------------------- | --------------------------- | ------------------------------------------- |
+| cannot be null      | unexpected null value       | (any non-nullable column)                   |
+| illegal whitespace  | leading/trailing whitespace | integer bigint decimal float double boolean |
+| invalid integer     | illegal characters          | integer bigint                              |
+| string too long     | too many characters         | varchar varbinary                           |
+| invalid decimal     | illegal characters          | decimal                                     |
+| decimal too large   | too many digits before dot  | decimal                                     |
+| decimal too precise | too many digits after dot   | decimal                                     |
+| invalid float       | illegal characters          | float double                                |
+| invalid boolean     | use 1, 0, true or false     | boolean                                     |
+| invalid date        | use yyyy-mm-dd              | date                                        |
+| invalid time        | use hh:mm:ss                | time                                        |
+| invalid timestamp   | use yyyy-mm-dd hh:mm:ss     | timestamp                                   |
+
+If you want the types validation to apply to all the types, you must activate the "`validation`" middleware.
 By default, all types are enabled. Which is equivalent to the two configuration possibilities:
 
     'validation.types' => 'all',
     
 or
-    
+
     'validation.types'=> 'integer,bigint,varchar,decimal,float,double,boolean,date,time,timestamp,clob,blob,varbinary,geometry',
 
-Types with no declared error message can be checked whether null when the column is non-nullable.
-
-In case you want to use a validation handler but don't want any types validation, use either:
+In case you want to use a validation handler but don't want any types validation, use:
 
     'validation.types' => '',
-    
-or
-    
-    'validation.types'=> 'none',
+
+NB: Types that are enabled will be checked for null values when the column is non-nullable.
 
 ### Multi-tenancy support
 
@@ -1211,10 +1208,10 @@ To run the docker tests run "build_all.sh" and "run_all.sh" from the docker dire
     [3/4] Starting SQLServer 2017 ... skipped
     [4/4] Cloning PHP-CRUD-API v2 ... skipped
     ------------------------------------------------
-    mysql: 104 tests ran in 2869 ms, 1 skipped, 0 failed
-    pgsql: 104 tests ran in 850 ms, 1 skipped, 0 failed
+    mysql: 105 tests ran in 2986 ms, 1 skipped, 0 failed
+    pgsql: 105 tests ran in 976 ms, 1 skipped, 0 failed
     sqlsrv: skipped, driver not loaded
-    sqlite: 104 tests ran in 883 ms, 12 skipped, 0 failed
+    sqlite: 105 tests ran in 933 ms, 12 skipped, 0 failed
     ================================================
     Debian 10 (PHP 7.3)
     ================================================
@@ -1223,10 +1220,10 @@ To run the docker tests run "build_all.sh" and "run_all.sh" from the docker dire
     [3/4] Starting SQLServer 2017 ... skipped
     [4/4] Cloning PHP-CRUD-API v2 ... skipped
     ------------------------------------------------
-    mysql: 104 tests ran in 3056 ms, 1 skipped, 0 failed
-    pgsql: 104 tests ran in 869 ms, 1 skipped, 0 failed
+    mysql: 105 tests ran in 3214 ms, 1 skipped, 0 failed
+    pgsql: 105 tests ran in 904 ms, 1 skipped, 0 failed
     sqlsrv: skipped, driver not loaded
-    sqlite: 104 tests ran in 891 ms, 12 skipped, 0 failed
+    sqlite: 105 tests ran in 1145 ms, 12 skipped, 0 failed
     ================================================
     Debian 9 (PHP 7.0)
     ================================================
@@ -1235,10 +1232,10 @@ To run the docker tests run "build_all.sh" and "run_all.sh" from the docker dire
     [3/4] Starting SQLServer 2017 ... skipped
     [4/4] Cloning PHP-CRUD-API v2 ... skipped
     ------------------------------------------------
-    mysql: 104 tests ran in 2800 ms, 1 skipped, 0 failed
-    pgsql: 104 tests ran in 867 ms, 1 skipped, 0 failed
+    mysql: 105 tests ran in 2940 ms, 1 skipped, 0 failed
+    pgsql: 105 tests ran in 992 ms, 1 skipped, 0 failed
     sqlsrv: skipped, driver not loaded
-    sqlite: 104 tests ran in 1051 ms, 12 skipped, 0 failed
+    sqlite: 105 tests ran in 1063 ms, 12 skipped, 0 failed
     ================================================
     Ubuntu 16.04 (PHP 7.0)
     ================================================
@@ -1247,9 +1244,9 @@ To run the docker tests run "build_all.sh" and "run_all.sh" from the docker dire
     [3/4] Starting SQLServer 2017 ... done
     [4/4] Cloning PHP-CRUD-API v2 ... skipped
     ------------------------------------------------
-    mysql: 104 tests ran in 2789 ms, 1 skipped, 0 failed
-    pgsql: 104 tests ran in 872 ms, 1 skipped, 0 failed
-    sqlsrv: 104 tests ran in 7728 ms, 1 skipped, 0 failed
+    mysql: 105 tests ran in 3015 ms, 1 skipped, 0 failed
+    pgsql: 105 tests ran in 992 ms, 1 skipped, 0 failed
+    sqlsrv: 105 tests ran in 10515 ms, 1 skipped, 0 failed
     sqlite: skipped, driver not loaded
     ================================================
     Ubuntu 18.04 (PHP 7.2)
@@ -1259,10 +1256,10 @@ To run the docker tests run "build_all.sh" and "run_all.sh" from the docker dire
     [3/4] Starting SQLServer 2017 ... skipped
     [4/4] Cloning PHP-CRUD-API v2 ... skipped
     ------------------------------------------------
-    mysql: 104 tests ran in 3282 ms, 1 skipped, 0 failed
-    pgsql: 104 tests ran in 856 ms, 1 skipped, 0 failed
+    mysql: 105 tests ran in 3390 ms, 1 skipped, 0 failed
+    pgsql: 105 tests ran in 936 ms, 1 skipped, 0 failed
     sqlsrv: skipped, driver not loaded
-    sqlite: 104 tests ran in 972 ms, 12 skipped, 0 failed
+    sqlite: 105 tests ran in 1063 ms, 12 skipped, 0 failed
     ================================================
     Ubuntu 20.04 (PHP 7.3)
     ================================================
@@ -1271,10 +1268,10 @@ To run the docker tests run "build_all.sh" and "run_all.sh" from the docker dire
     [3/4] Starting SQLServer 2017 ... skipped
     [4/4] Cloning PHP-CRUD-API v2 ... skipped
     ------------------------------------------------
-    mysql: 104 tests ran in 5996 ms, 1 skipped, 0 failed
-    pgsql: 104 tests ran in 942 ms, 1 skipped, 0 failed
+    mysql: 105 tests ran in 6434 ms, 1 skipped, 0 failed
+    pgsql: 105 tests ran in 979 ms, 1 skipped, 0 failed
     sqlsrv: skipped, driver not loaded
-    sqlite: 104 tests ran in 961 ms, 12 skipped, 0 failed
+    sqlite: 105 tests ran in 1373 ms, 12 skipped, 0 failed
 
 The above test run (including starting up the databases) takes less than 5 minutes on my slow laptop.
 
@@ -1294,10 +1291,10 @@ The above test run (including starting up the databases) takes less than 5 minut
     [3/4] Starting SQLServer 2017 ... skipped
     [4/4] Cloning PHP-CRUD-API v2 ... skipped
     ------------------------------------------------
-    mysql: 104 tests ran in 3282 ms, 1 skipped, 0 failed
-    pgsql: 104 tests ran in 856 ms, 1 skipped, 0 failed
+    mysql: 105 tests ran in 3390 ms, 1 skipped, 0 failed
+    pgsql: 105 tests ran in 936 ms, 1 skipped, 0 failed
     sqlsrv: skipped, driver not loaded
-    sqlite: 104 tests ran in 972 ms, 12 skipped, 0 failed
+    sqlite: 105 tests ran in 1063 ms, 12 skipped, 0 failed
     root@b7ab9472e08f:/php-crud-api# 
 
 As you can see the "run.sh" script gives you access to a prompt in a chosen the docker environment.

@@ -25,7 +25,7 @@ RUN dnf -y module disable mariadb
 RUN dnf -y module disable postgresql
 
 RUN dnf -y install \
-php-cli php-xml php-json \
+php-cli php-xml php-json php-mbstring \
 MariaDB-server MariaDB-client php-mysqlnd \
 postgresql12 postgresql12-server php-pgsql postgis30_12 \
 sqlite php-sqlite3 \
