@@ -896,8 +896,8 @@ If you enable the 'sanitation' middleware, then you (automtically) also enable t
 
 - send leading and trailing whitespace (it will be ignored).
 - send a float to an integer field (it will be rounded).
-- send a base64url encoded (it will be converted to regular base64 encoding).
-- send a time/date/timestamp in any strtotime accepted format (it will be converted).
+- send a base64url encoded string (it will be converted to regular base64 encoding).
+- send a time/date/timestamp in any [strtotime accepted format](https://www.php.net/manual/en/datetime.formats.php) (it will be converted).
 
 You may use the config settings "`sanitation.types`" and "`sanitation.tables`"' to define for which types and
 in which tables you want to apply type sanitation (defaults to 'all'). Example:
