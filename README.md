@@ -894,8 +894,8 @@ The above example will strip all HTML tags from strings in the input.
 
 If you enable the 'sanitation' middleware, then you (automtically) also enable type sanitation. When this is enabled you may:
 
-- send leading and trailing whitespace (it will be ignored).
-- send a float to an integer field (it will be rounded).
+- send leading and trailing whitespace in a non-character field (it will be ignored).
+- send a float to an integer or bigint field (it will be rounded).
 - send a base64url encoded string (it will be converted to regular base64 encoding).
 - send a time/date/timestamp in any [strtotime accepted format](https://www.php.net/manual/en/datetime.formats.php) (it will be converted).
 
