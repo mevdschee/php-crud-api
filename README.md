@@ -104,7 +104,7 @@ The following features are supported:
   - Supports POST variables as input (x-www-form-urlencoded)
   - Supports a JSON object as input
   - Supports a JSON array as input (batch insert)
-  - Sanitize and validate input using callbacks
+  - Sanitize and validate input using type rules and callbacks
   - Permission system for databases, tables, columns and records
   - Multi-tenant single and multi database layouts are supported
   - Multi-domain CORS support for cross-domain requests
