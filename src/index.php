@@ -12,7 +12,8 @@ require '../vendor/autoload.php';
 $config = new Config([
     'username' => 'php-crud-api',
     'password' => 'php-crud-api',
-    'database' => 'php-crud-api'
+    'database' => 'php-crud-api',
+    'debug' => false
 ]);
 $request = RequestFactory::fromGlobals();
 $api = new Api($config);
