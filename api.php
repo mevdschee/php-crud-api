@@ -8155,6 +8155,7 @@ namespace Tqdev\PhpCrudApi\Middleware {
     use Psr\Http\Message\ServerRequestInterface;
     use Psr\Http\Server\RequestHandlerInterface;
     use Tqdev\PhpCrudApi\Column\Reflection\ReflectedTable;
+    use Tqdev\PhpCrudApi\Column\Reflection\ReflectedColumn;
     use Tqdev\PhpCrudApi\Column\ReflectionService;
     use Tqdev\PhpCrudApi\Controller\Responder;
     use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
@@ -8179,9 +8180,95 @@ namespace Tqdev\PhpCrudApi\Middleware {
                 if ($table->hasColumn($columnName)) {
                     $column = $table->getColumn($columnName);
                     $value = call_user_func($handler, $operation, $tableName, $column->serialize(), $value);
+                    $value = $this->sanitizeType($table, $column, $value);
                 }
             }
             return (object) $context;
+        }
+
+        private function sanitizeType(ReflectedTable $table, ReflectedColumn $column, $value)
+        {
+            $tables = $this->getArrayProperty('tables', 'all');
+            $types = $this->getArrayProperty('types', 'all');
+            if (
+                (in_array('all', $tables) || in_array($table->getName(), $tables)) &&
+                (in_array('all', $types) || in_array($column->getType(), $types))
+            ) {
+                if (is_null($value)) {
+                    return $value;
+                }
+                if (is_string($value)) {
+                    $newValue = null;
+                    switch ($column->getType()) {
+                        case 'integer':
+                        case 'bigint':
+                            $newValue = filter_var(trim($value), FILTER_VALIDATE_INT, FILTER_NULL_ON_FAILURE);
+                            break;
+                        case 'decimal':
+                            $newValue = filter_var(trim($value), FILTER_VALIDATE_FLOAT, FILTER_NULL_ON_FAILURE);
+                            if (is_float($newValue)) {
+                                $newValue = number_format($newValue, $column->getScale(), '.', '');
+                            }
+                            break;
+                        case 'float':
+                        case 'double':
+                            $newValue = filter_var(trim($value), FILTER_VALIDATE_FLOAT, FILTER_NULL_ON_FAILURE);
+                            break;
+                        case 'boolean':
+                            $newValue = filter_var(trim($value), FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+                            break;
+                        case 'date':
+                            $time = strtotime(trim($value));
+                            if ($time !== false) {
+                                $newValue = date('Y-m-d', $time);
+                            }
+                            break;
+                        case 'time':
+                            $time = strtotime(trim($value));
+                            if ($time !== false) {
+                                $newValue = date('H:i:s', $time);
+                            }
+                            break;
+                        case 'timestamp':
+                            $time = strtotime(trim($value));
+                            if ($time !== false) {
+                                $newValue = date('Y-m-d H:i:s', $time);
+                            }
+                            break;
+                        case 'blob':
+                        case 'varbinary':
+                            // allow base64url format
+                            $newValue = strtr(trim($value), '-_', '+/');
+                            break;
+                        case 'clob':
+                        case 'varchar':
+                            $newValue = $value;
+                            break;
+                        case 'geometry':
+                            $newValue = trim($value);
+                            break;
+                    }
+                    if (!is_null($newValue)) {
+                        $value = $newValue;
+                    }
+                } else {
+                    switch ($column->getType()) {
+                        case 'integer':
+                        case 'bigint':
+                            if (is_float($value)) {
+                                $value = (int) round($value);
+                            }
+                            break;
+                        case 'decimal':
+                            if (is_float($value) || is_int($value)) {
+                                $value = number_format((float) $value, $column->getScale(), '.', '');
+                            }
+                            break;
+                    }
+                }
+                // post process
+            }
+            return $value;
         }
 
         public function process(ServerRequestInterface $request, RequestHandlerInterface $next): ResponseInterface
@@ -8247,7 +8334,7 @@ namespace Tqdev\PhpCrudApi\Middleware {
     				$column = $table->getColumn($columnName);
     				$valid = call_user_func($handler, $operation, $tableName, $column->serialize(), $value, $context);
     				if ($valid === true || $valid === '') {
-    					$valid = $this->validateType($column, $value);
+    					$valid = $this->validateType($table, $column, $value);
     				}
     				if ($valid !== true && $valid !== '') {
     					$details[$columnName] = $valid;
@@ -8260,10 +8347,14 @@ namespace Tqdev\PhpCrudApi\Middleware {
     		return null;
     	}
 
-    	private function validateType(ReflectedColumn $column, $value)
+    	private function validateType(ReflectedTable $table, ReflectedColumn $column, $value)
     	{
+    		$tables = $this->getArrayProperty('tables', 'all');
     		$types = $this->getArrayProperty('types', 'all');
-    		if (in_array('all', $types) || in_array($column->getType(), $types)) {
+    		if (
+    			(in_array('all', $tables) || in_array($table->getName(), $tables)) &&
+    			(in_array('all', $types) || in_array($column->getType(), $types))
+    		) {
     			if (is_null($value)) {
     				return ($column->getNullable() ? true : "cannot be null");
     			}
@@ -8290,14 +8381,23 @@ namespace Tqdev\PhpCrudApi\Middleware {
     							return 'invalid integer';
     						}
     						break;
-    					case 'varchar':
-    						if (mb_strlen($value, 'UTF-8') > $column->getLength()) {
-    							return 'string too long';
-    						}
-    						break;
     					case 'decimal':
-    						if (!is_numeric($value)) {
+    						if (strpos($value, '.') !== false) {
+    							list($whole, $decimals) = explode('.', $value, 2);
+    						} else {
+    							list($whole, $decimals) = array($value, '');
+    						}
+    						if (strlen($whole) > 0 && !ctype_digit($whole)) {
     							return 'invalid decimal';
+    						}
+    						if (strlen($decimals) > 0 && !ctype_digit($decimals)) {
+    							return 'invalid decimal';
+    						}
+    						if (strlen($whole) > $column->getPrecision() - $column->getScale()) {
+    							return 'decimal too large';
+    						}
+    						if (strlen($decimals) > $column->getScale()) {
+    							return 'decimal too precise';
     						}
     						break;
     					case 'float':
@@ -8310,9 +8410,7 @@ namespace Tqdev\PhpCrudApi\Middleware {
     						}
     						break;
     					case 'boolean':
-    						if (
-    							filter_var($value, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) === null
-    						) {
+    						if (!in_array(strtolower($value), array('true', 'false'))) {
     							return 'invalid boolean';
     						}
     						break;
@@ -8332,12 +8430,18 @@ namespace Tqdev\PhpCrudApi\Middleware {
     						}
     						break;
     					case 'clob':
-    						// no checks needed
+    					case 'varchar':
+    						if ($column->hasLength() && mb_strlen($value, 'UTF-8') > $column->getLength()) {
+    							return 'string too long';
+    						}
     						break;
     					case 'blob':
     					case 'varbinary':
     						if (base64_decode($value, true) === false) {
     							return 'invalid base64';
+    						}
+    						if ($column->hasLength() && strlen(base64_decode($value)) > $column->getLength()) {
+    							return 'string too long';
     						}
     						break;
     					case 'geometry':
@@ -8352,7 +8456,6 @@ namespace Tqdev\PhpCrudApi\Middleware {
     							return 'invalid integer';
     						}
     						break;
-    					case 'decimal':
     					case 'float':
     					case 'double':
     						if (!is_float($value) && !is_int($value)) {
@@ -8360,7 +8463,7 @@ namespace Tqdev\PhpCrudApi\Middleware {
     						}
     						break;
     					case 'boolean':
-    						if (!(is_int($value) && ($value === 1 || $value === 0)) && !is_bool($value)) {
+    						if (!is_bool($value) && ($value !== 0) && ($value !== 1)) {
     							return 'invalid boolean';
     						}
     						break;
@@ -8374,31 +8477,6 @@ namespace Tqdev\PhpCrudApi\Middleware {
     					$value = filter_var($value, FILTER_VALIDATE_INT);
     					if ($value > 2147483647 || $value < -2147483648) {
     						return 'invalid integer';
-    					}
-    					break;
-    				case 'decimal':
-    					$value = "$value";
-    					if (strpos($value, '.') !== false) {
-    						list($whole, $decimals) = explode('.', $value, 2);
-    					} else {
-    						list($whole, $decimals) = array($value, '');
-    					}
-    					if (strlen($whole) > 0 && !ctype_digit($whole)) {
-    						return 'invalid decimal';
-    					}
-    					if (strlen($decimals) > 0 && !ctype_digit($decimals)) {
-    						return 'invalid decimal';
-    					}
-    					if (strlen($whole) > $column->getPrecision() - $column->getScale()) {
-    						return 'decimal too large';
-    					}
-    					if (strlen($decimals) > $column->getScale()) {
-    						return 'decimal too precise';
-    					}
-    					break;
-    				case 'varbinary':
-    					if (strlen(base64_decode($value)) > $column->getLength()) {
-    						return 'string too long';
     					}
     					break;
     			}

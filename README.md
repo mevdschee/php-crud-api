@@ -652,10 +652,13 @@ You can tune the middleware behavior using middleware specific configuration par
 - "authorization.columnHandler": Handler to implement column authorization rules ("")
 - "authorization.recordHandler": Handler to implement record authorization filter rules ("")
 - "validation.handler": Handler to implement validation rules for input values ("")
-- "validation.types": List of types for which the default validation must take place ("all")
+- "validation.types": Types to enable type validation for, empty means 'none' ("all")
+- "validation.tables": Tables to enable type validation for, empty means 'none' ("all")
 - "ipAddress.tables": Tables to search for columns to override with IP address ("")
 - "ipAddress.columns": Columns to protect and override with the IP address on create ("")
 - "sanitation.handler": Handler to implement sanitation rules for input values ("")
+- "sanitation.types": Types to enable type sanitation for, empty means 'none' ("all")
+- "sanitation.tables": Tables to enable type sanitation for, empty means 'none' ("all")
 - "multiTenancy.handler": Handler to implement simple multi-tenancy rules ("")
 - "pageLimits.pages": The maximum page number that a list operation allows ("100")
 - "pageLimits.records": The maximum number of records returned by a list operation ("1000")
@@ -887,14 +890,28 @@ the 'sanitation' middleware and define a 'sanitation.handler' function that retu
 
 The above example will strip all HTML tags from strings in the input.
 
+### Type sanitation
+
+If you enable the 'sanitation' middleware, then you (automtically) also enable type sanitation. When this is enabled you may:
+
+- send leading and trailing whitespace (it will be ignored).
+- send a float to an integer field (it will be rounded).
+- send a base64url encoded (it will be converted to regular base64 encoding).
+- send a time/date/timestamp in any strtotime accepted format (it will be converted).
+
+You may use the config settings "`sanitation.types`" and "`sanitation.tables`"' to define for which types and
+in which tables you want to apply type sanitation (defaults to 'all'). Example:
+
+    'sanitation.types' => 'date,timestamp',
+    'sanitation.tables' => 'posts,comments',
+
+Here we enable the type sanitation for date and timestamp fields in the posts and comments tables.
+
 ### Validating input
 
-By default all input is accepted unless the validation middleware is specified. The default types validations are then applied.
-
-#### Validation handler
-
-If you want to validate the input in a custom way, you may add the 'validation' middleware and define a 'validation.handler' 
-function that returns a boolean indicating whether or not the value is valid.
+By default all input is accepted and sent to the database. If you want to validate the input in a custom way, 
+you may add the 'validation' middleware and define a 'validation.handler' function that returns a boolean 
+indicating whether or not the value is valid.
 
     'validation.handler' => function ($operation, $tableName, $column, $value, $context) {
         return ($column['name'] == 'post_id' && !is_numeric($value)) ? 'must be numeric' : true;
@@ -920,9 +937,10 @@ Then the server will return a '422' HTTP status code and nice error message:
 
 You can parse this output to make form fields show up with a red border and their appropriate error message.
 
-#### Validation types
+### Type validations
 
-The default types validations return the following error messages:
+If you enable the 'validation' middleware, then you (automtically) also enable type validation. 
+This includes the following error messages:
 
 | error message       | reason                      | applies to types                            |
 | ------------------- | --------------------------- | ------------------------------------------- |
@@ -940,18 +958,13 @@ The default types validations return the following error messages:
 | invalid timestamp   | use yyyy-mm-dd hh:mm:ss     | timestamp                                   |
 | invalid base64      | illegal characters          | varbinary, blob                             |
 
-If you want the types validation to apply to all the types, you must activate the "`validation`" middleware.
-By default, all types are enabled. Which is equivalent to the two configuration possibilities:
+You may use the config settings "`validation.types`" and "`validation.tables`"' to define for which types and
+in which tables you want to apply type validation (defaults to 'all'). Example:
 
-    'validation.types' => 'all',
-    
-or
+    'validation.types' => 'date,timestamp',
+    'validation.tables' => 'posts,comments',
 
-    'validation.types'=> 'integer,bigint,varchar,decimal,float,double,boolean,date,time,timestamp,clob,blob,varbinary,geometry',
-
-In case you want to use a validation handler but don't want any types validation, use:
-
-    'validation.types' => '',
+Here we enable the type validation for date and timestamp fields in the posts and comments tables.
 
 NB: Types that are enabled will be checked for null values when the column is non-nullable.
 
@@ -1058,41 +1071,30 @@ in case that you use a non-default "cacheType" the hostname (optionally with por
 
 ## Types
 
-These are the supported types with their default length/precision/scale:
+These are the supported types with their length, category, JSON type and format:
 
-character types
-- varchar(255)
-- clob
+| type       | length | category  | JSON type | format              |
+| ---------- | ------ | --------- | --------- | ------------------- |
+| varchar    | 255    | character | string    |                     |
+| clob       |        | character | string    |                     |
+| boolean    |        | boolean   | boolean   |                     |
+| integer    |        | integer   | number    |                     |
+| bigint     |        | integer   | number    |                     |
+| float      |        | float     | number    |                     |
+| double     |        | float     | number    |                     |
+| decimal    | 19,4   | decimal   | string    |                     |
+| date       |        | date/time | string    | yyyy-mm-dd          | 
+| time       |        | date/time | srting    | hh:mm:ss            |
+| timestamp  |        | date/time | string    | yyyy-mm-dd hh:mm:ss |
+| varbinary  | 255    | binary    | string    | base64 encoded      |
+| blob       |        | binary    | string    | base64 encoded      |
+| geometry   |        | other     | string    | well-known text     |
 
-boolean types:
-- boolean
-
-integer types:
-- integer
-- bigint
-
-floating point types:
-- float
-- double
-
-decimal types:
-- decimal(19,4)
-
-date/time types:
-- date
-- time
-- timestamp
-
-binary types:
-- varbinary(255)
-- blob
-
-other types:
-- geometry /* non-jdbc type, extension with limited support */
+Note that geometry is a non-jdbc type and thus has limited support.
 
 ## Data types in JavaScript
 
-Javascript and Javascript object notation are not very well suited for reading database records. Decimal, date/time, binary and geometry types are represented as strings in JSON (binary is base64 encoded, geometries are in WKT format). Below are two more serious issues described.
+Javascript and Javascript object notation (JSON) are not very well suited for reading database records. Decimal, date/time, binary and geometry types must be represented as strings in JSON (binary is base64 encoded, geometries are in WKT format). Below are two more serious issues described.
 
 ### 64 bit integers
 
@@ -1147,7 +1149,7 @@ I am testing mainly on Ubuntu and I have the following test setups:
   - (Docker) Debian 9 with PHP 7.0, MariaDB 10.1, PostgreSQL 9.6 (PostGIS 2.3) and SQLite 3.16
   - (Docker) Ubuntu 18.04 with PHP 7.2, MySQL 5.7, PostgreSQL 10.4 (PostGIS 2.4) and SQLite 3.22
   - (Docker) Debian 10 with PHP 7.3, MariaDB 10.3, PostgreSQL 11.4 (PostGIS 2.5) and SQLite 3.27
-  - (Docker) Ubuntu 20.04 with PHP 7.3, MySQL 8.0, PostgreSQL 12.2 (PostGIS 3.0) and SQLite 3.31
+  - (Docker) Ubuntu 20.04 with PHP 7.4, MySQL 8.0, PostgreSQL 12.2 (PostGIS 3.0) and SQLite 3.31
   - (Docker) CentOS 8 with PHP 7.4, MariaDB 10.4, PostgreSQL 12.2 (PostGIS 3.0) and SQLite 3.26
 
 This covers not all environments (yet), so please notify me of failing tests and report your environment. 
@@ -1262,7 +1264,7 @@ To run the docker tests run "build_all.sh" and "run_all.sh" from the docker dire
     sqlsrv: skipped, driver not loaded
     sqlite: 105 tests ran in 1063 ms, 12 skipped, 0 failed
     ================================================
-    Ubuntu 20.04 (PHP 7.3)
+    Ubuntu 20.04 (PHP 7.4)
     ================================================
     [1/4] Starting MySQL 8.0 ........ done
     [2/4] Starting PostgreSQL 12.2 .. done

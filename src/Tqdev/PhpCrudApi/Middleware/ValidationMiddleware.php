@@ -34,7 +34,7 @@ class ValidationMiddleware extends Middleware
 				$column = $table->getColumn($columnName);
 				$valid = call_user_func($handler, $operation, $tableName, $column->serialize(), $value, $context);
 				if ($valid === true || $valid === '') {
-					$valid = $this->validateType($column, $value);
+					$valid = $this->validateType($table, $column, $value);
 				}
 				if ($valid !== true && $valid !== '') {
 					$details[$columnName] = $valid;
@@ -47,10 +47,14 @@ class ValidationMiddleware extends Middleware
 		return null;
 	}
 
-	private function validateType(ReflectedColumn $column, $value)
+	private function validateType(ReflectedTable $table, ReflectedColumn $column, $value)
 	{
+		$tables = $this->getArrayProperty('tables', 'all');
 		$types = $this->getArrayProperty('types', 'all');
-		if (in_array('all', $types) || in_array($column->getType(), $types)) {
+		if (
+			(in_array('all', $tables) || in_array($table->getName(), $tables)) &&
+			(in_array('all', $types) || in_array($column->getType(), $types))
+		) {
 			if (is_null($value)) {
 				return ($column->getNullable() ? true : "cannot be null");
 			}
@@ -77,14 +81,23 @@ class ValidationMiddleware extends Middleware
 							return 'invalid integer';
 						}
 						break;
-					case 'varchar':
-						if (mb_strlen($value, 'UTF-8') > $column->getLength()) {
-							return 'string too long';
-						}
-						break;
 					case 'decimal':
-						if (!is_numeric($value)) {
+						if (strpos($value, '.') !== false) {
+							list($whole, $decimals) = explode('.', $value, 2);
+						} else {
+							list($whole, $decimals) = array($value, '');
+						}
+						if (strlen($whole) > 0 && !ctype_digit($whole)) {
 							return 'invalid decimal';
+						}
+						if (strlen($decimals) > 0 && !ctype_digit($decimals)) {
+							return 'invalid decimal';
+						}
+						if (strlen($whole) > $column->getPrecision() - $column->getScale()) {
+							return 'decimal too large';
+						}
+						if (strlen($decimals) > $column->getScale()) {
+							return 'decimal too precise';
 						}
 						break;
 					case 'float':
@@ -97,9 +110,7 @@ class ValidationMiddleware extends Middleware
 						}
 						break;
 					case 'boolean':
-						if (
-							filter_var($value, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) === null
-						) {
+						if (!in_array(strtolower($value), array('true', 'false'))) {
 							return 'invalid boolean';
 						}
 						break;
@@ -119,12 +130,18 @@ class ValidationMiddleware extends Middleware
 						}
 						break;
 					case 'clob':
-						// no checks needed
+					case 'varchar':
+						if ($column->hasLength() && mb_strlen($value, 'UTF-8') > $column->getLength()) {
+							return 'string too long';
+						}
 						break;
 					case 'blob':
 					case 'varbinary':
 						if (base64_decode($value, true) === false) {
 							return 'invalid base64';
+						}
+						if ($column->hasLength() && strlen(base64_decode($value)) > $column->getLength()) {
+							return 'string too long';
 						}
 						break;
 					case 'geometry':
@@ -139,7 +156,6 @@ class ValidationMiddleware extends Middleware
 							return 'invalid integer';
 						}
 						break;
-					case 'decimal':
 					case 'float':
 					case 'double':
 						if (!is_float($value) && !is_int($value)) {
@@ -147,7 +163,7 @@ class ValidationMiddleware extends Middleware
 						}
 						break;
 					case 'boolean':
-						if (!(is_int($value) && ($value === 1 || $value === 0)) && !is_bool($value)) {
+						if (!is_bool($value) && ($value !== 0) && ($value !== 1)) {
 							return 'invalid boolean';
 						}
 						break;
@@ -161,31 +177,6 @@ class ValidationMiddleware extends Middleware
 					$value = filter_var($value, FILTER_VALIDATE_INT);
 					if ($value > 2147483647 || $value < -2147483648) {
 						return 'invalid integer';
-					}
-					break;
-				case 'decimal':
-					$value = "$value";
-					if (strpos($value, '.') !== false) {
-						list($whole, $decimals) = explode('.', $value, 2);
-					} else {
-						list($whole, $decimals) = array($value, '');
-					}
-					if (strlen($whole) > 0 && !ctype_digit($whole)) {
-						return 'invalid decimal';
-					}
-					if (strlen($decimals) > 0 && !ctype_digit($decimals)) {
-						return 'invalid decimal';
-					}
-					if (strlen($whole) > $column->getPrecision() - $column->getScale()) {
-						return 'decimal too large';
-					}
-					if (strlen($decimals) > $column->getScale()) {
-						return 'decimal too precise';
-					}
-					break;
-				case 'varbinary':
-					if (strlen(base64_decode($value)) > $column->getLength()) {
-						return 'string too long';
 					}
 					break;
 			}

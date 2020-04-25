@@ -12,7 +12,7 @@ true
 POST /records/types
 Content-Type: application/json
 
-{"integer":2,"bigint":3,"varchar":"abc","decimal":1.23,"float":1,"double":23.45,"boolean":true,"date":"1970-01-01","time":"00:00:01","timestamp":"2001-02-03 04:05:06","clob":"a","blob":"YQ==","geometry":"POINT(1 2)"}
+{"integer":2,"bigint":3,"varchar":"abc","decimal":"1.23","float":1,"double":23.45,"boolean":true,"date":"1970-01-01","time":"00:00:01","timestamp":"2001-02-03 04:05:06","clob":"a","blob":"YQ==","geometry":"POINT(1 2)"}
 ===
 200
 Content-Type: application/json
@@ -62,6 +62,26 @@ Content-Length: 101
 ===
 PUT /records/types/1
 
+{"integer":"2.3"}
+===
+422
+Content-Type: application/json
+Content-Length: 101
+
+{"code":1013,"message":"Input validation failed for 'types'","details":{"integer":"invalid integer"}}
+===
+PUT /records/types/1
+
+{"integer":2.3}
+===
+422
+Content-Type: application/json
+Content-Length: 101
+
+{"code":1013,"message":"Input validation failed for 'types'","details":{"integer":"invalid integer"}}
+===
+PUT /records/types/1
+
 {"integer":"12345678901"}
 ===
 422
@@ -102,7 +122,7 @@ Content-Length: 101
 ===
 PUT /records/types/1
 
-{"decimal":1131313145345}
+{"decimal":"1131313145345"}
 ===
 422
 Content-Type: application/json
@@ -122,16 +142,6 @@ Content-Length: 103
 ===
 PUT /records/types/1
 
-{"decimal":11313131e+5}
-===
-422
-Content-Type: application/json
-Content-Length: 103
-
-{"code":1013,"message":"Input validation failed for 'types'","details":{"decimal":"decimal too large"}}
-===
-PUT /records/types/1
-
 {"decimal":"123456.12345"}
 ===
 422
@@ -142,17 +152,7 @@ Content-Length: 105
 ===
 PUT /records/types/1
 
-{"decimal":113131.3145345}
-===
-422
-Content-Type: application/json
-Content-Length: 105
-
-{"code":1013,"message":"Input validation failed for 'types'","details":{"decimal":"decimal too precise"}}
-===
-PUT /records/types/1
-
-{"decimal":11313131E-5}
+{"decimal":"113131.3145345"}
 ===
 422
 Content-Type: application/json

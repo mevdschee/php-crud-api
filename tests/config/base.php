@@ -4,7 +4,7 @@ $settings = [
     'username' => 'incorrect_username',
     'password' => 'incorrect_password',
     'controllers' => 'records,columns,cache,openapi,geojson',
-    'middlewares' => 'cors,reconnect,dbAuth,jwtAuth,basicAuth,authorization,validation,ipAddress,sanitation,multiTenancy,pageLimits,joinLimits,customization',
+    'middlewares' => 'cors,reconnect,dbAuth,jwtAuth,basicAuth,authorization,sanitation,validation,ipAddress,multiTenancy,pageLimits,joinLimits,customization',
     'dbAuth.mode' => 'optional',
     'dbAuth.returnedColumns' => 'id,username,password',
     'jwtAuth.mode' => 'optional',
@@ -35,6 +35,7 @@ $settings = [
     'sanitation.handler' => function ($operation, $tableName, $column, $value) {
         return is_string($value) ? strip_tags($value) : $value;
     },
+    'sanitation.tables' => 'forgiving',
     'validation.handler' => function ($operation, $tableName, $column, $value, $context) {
         return ($column['name'] == 'post_id' && !is_numeric($value)) ? 'must be numeric' : true;
     },

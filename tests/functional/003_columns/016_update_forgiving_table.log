@@ -1,0 +1,383 @@
+===
+POST /columns
+
+{"name":"forgiving","type":"table","columns":[{"name":"id","type":"integer","pk":true},{"name":"integer","type":"integer"},{"name":"bigint","type":"bigint"},{"name":"varchar","type":"varchar","length":10},{"name":"decimal","type":"decimal","precision":10,"scale":4},{"name":"float","type":"float"},{"name":"double","type":"double"},{"name":"boolean","type":"boolean"},{"name":"date","type":"date"},{"name":"time","type":"time"},{"name":"timestamp","type":"timestamp"},{"name":"clob","type":"clob"},{"name":"blob","type":"blob"},{"name":"geometry","type":"geometry"}]}
+===
+200
+Content-Type: application/json
+Content-Length: 4
+
+true
+===
+POST /records/forgiving
+Content-Type: application/json
+
+{"integer":2,"bigint":3,"varchar":"abc","decimal":1.23,"float":1,"double":23.45,"boolean":true,"date":"1970-01-01","time":"00:00:01","timestamp":"2001-02-03 04:05:06","clob":"a","blob":"YQ==","geometry":"POINT(1 2)"}
+===
+200
+Content-Type: application/json
+Content-Length: 1
+
+1
+===
+PUT /records/forgiving/1
+
+{"boolean":"true"}
+===
+200
+Content-Type: application/json
+Content-Length: 1
+
+1
+===
+GET /records/forgiving/1?include=boolean
+===
+200
+Content-Type: application/json
+Content-Length: 16
+
+{"boolean":true}
+===
+PUT /records/forgiving/1
+
+{"boolean":"yes"}
+===
+200
+Content-Type: application/json
+Content-Length: 1
+
+1
+===
+GET /records/forgiving/1?include=boolean
+===
+200
+Content-Type: application/json
+Content-Length: 16
+
+{"boolean":true}
+===
+PUT /records/forgiving/1
+
+{"boolean":"1"}
+===
+200
+Content-Type: application/json
+Content-Length: 1
+
+1
+===
+GET /records/forgiving/1?include=boolean
+===
+200
+Content-Type: application/json
+Content-Length: 16
+
+{"boolean":true}
+===
+PUT /records/forgiving/1
+
+{"boolean":1}
+===
+200
+Content-Type: application/json
+Content-Length: 1
+
+1
+===
+GET /records/forgiving/1?include=boolean
+===
+200
+Content-Type: application/json
+Content-Length: 16
+
+{"boolean":true}
+===
+PUT /records/forgiving/1
+
+{"integer":" 2\n"}
+===
+200
+Content-Type: application/json
+Content-Length: 1
+
+1
+===
+GET /records/forgiving/1?include=integer
+===
+200
+Content-Type: application/json
+Content-Length: 13
+
+{"integer":2}
+===
+PUT /records/forgiving/1
+
+integer=2%20
+===
+200
+Content-Type: application/json
+Content-Length: 1
+
+1
+===
+GET /records/forgiving/1?include=integer
+===
+200
+Content-Type: application/json
+Content-Length: 13
+
+{"integer":2}
+===
+PUT /records/forgiving/1
+
+{"integer":1.99999}
+===
+200
+Content-Type: application/json
+Content-Length: 1
+
+1
+===
+GET /records/forgiving/1?include=integer
+===
+200
+Content-Type: application/json
+Content-Length: 13
+
+{"integer":2}
+===
+PUT /records/forgiving/1
+
+{"bigint":" 3\n"}
+===
+200
+Content-Type: application/json
+Content-Length: 1
+
+1
+===
+GET /records/forgiving/1?include=bigint
+===
+200
+Content-Type: application/json
+Content-Length: 12
+
+{"bigint":3}
+===
+PUT /records/forgiving/1
+
+{"bigint":2.99999}
+===
+200
+Content-Type: application/json
+Content-Length: 1
+
+1
+===
+GET /records/forgiving/1?include=bigint
+===
+200
+Content-Type: application/json
+Content-Length: 12
+
+{"bigint":3}
+===
+PUT /records/forgiving/1
+
+{"decimal":"1.23"}
+===
+200
+Content-Type: application/json
+Content-Length: 1
+
+1
+===
+GET /records/forgiving/1?include=decimal
+===
+200
+Content-Type: application/json
+Content-Length: 20
+
+{"decimal":"1.2300"}
+===
+PUT /records/forgiving/1
+
+{"decimal":"1.23004"}
+===
+200
+Content-Type: application/json
+Content-Length: 1
+
+1
+===
+GET /records/forgiving/1?include=decimal
+===
+200
+Content-Type: application/json
+Content-Length: 20
+
+{"decimal":"1.2300"}
+===
+PUT /records/forgiving/1
+
+{"decimal":"1.23006"}
+===
+200
+Content-Type: application/json
+Content-Length: 1
+
+1
+===
+GET /records/forgiving/1?include=decimal
+===
+200
+Content-Type: application/json
+Content-Length: 20
+
+{"decimal":"1.2301"}
+===
+PUT /records/forgiving/1
+
+float=1%20
+===
+200
+Content-Type: application/json
+Content-Length: 1
+
+1
+===
+GET /records/forgiving/1?include=float
+===
+200
+Content-Type: application/json
+Content-Length: 11
+
+{"float":1}
+===
+PUT /records/forgiving/1
+
+{"double":" 23.45e-1 "}
+===
+200
+Content-Type: application/json
+Content-Length: 1
+
+1
+===
+GET /records/forgiving/1?include=double
+===
+200
+Content-Type: application/json
+Content-Length: 16
+
+{"double":2.345}
+===
+PUT /records/forgiving/1
+
+{"date":"2020-12-05"}
+===
+200
+Content-Type: application/json
+Content-Length: 1
+
+1
+===
+GET /records/forgiving/1?include=date
+===
+200
+Content-Type: application/json
+Content-Length: 21
+
+{"date":"2020-12-05"}
+===
+PUT /records/forgiving/1
+
+{"date":"December 20th, 2020"}
+===
+200
+Content-Type: application/json
+Content-Length: 1
+
+1
+===
+GET /records/forgiving/1?include=date
+===
+200
+Content-Type: application/json
+Content-Length: 21
+
+{"date":"2020-12-20"}
+===
+PUT /records/forgiving/1
+
+{"time":"13:15"}
+===
+200
+Content-Type: application/json
+Content-Length: 1
+
+1
+===
+GET /records/forgiving/1?include=time
+===
+200
+Content-Type: application/json
+Content-Length: 19
+
+{"time":"13:15:00"}
+===
+PUT /records/forgiving/1
+
+{"timestamp":"2012-1-1 23:46"}
+===
+200
+Content-Type: application/json
+Content-Length: 1
+
+1
+===
+GET /records/forgiving/1?include=timestamp
+===
+200
+Content-Type: application/json
+Content-Length: 35
+
+{"timestamp":"2012-01-01 23:46:00"}
+===
+PUT /records/forgiving/1
+
+{"clob":"𠜎𠜱𠝹𠱓𠱸𠲖𠳏𠳕𠴕𠵼𠵿𠸎𠸏𠹷𠺝𠺢𠻗"}
+===
+200
+Content-Type: application/json
+Content-Length: 1
+
+1
+===
+PUT /records/forgiving/1
+
+{"blob":"!"}
+===
+422
+Content-Type: application/json
+Content-Length: 101
+
+{"code":1013,"message":"Input validation failed for 'forgiving'","details":{"blob":"invalid base64"}}
+===
+PUT /records/forgiving/1
+
+{"blob":"T8O5IGVzdCBsZSBjYWbDqSBsZSBwbHVzIHByb2NoZT8"}
+===
+200
+Content-Type: application/json
+Content-Length: 1
+
+1
+===
+DELETE /columns/forgiving
+===
+200
+Content-Type: application/json
+Content-Length: 4
+
+true
