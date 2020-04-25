@@ -1084,7 +1084,7 @@ These are the supported types with their length, category, JSON type and format:
 | double     |        | float     | number    |                     |
 | decimal    | 19,4   | decimal   | string    |                     |
 | date       |        | date/time | string    | yyyy-mm-dd          | 
-| time       |        | date/time | srting    | hh:mm:ss            |
+| time       |        | date/time | string    | hh:mm:ss            |
 | timestamp  |        | date/time | string    | yyyy-mm-dd hh:mm:ss |
 | varbinary  | 255    | binary    | string    | base64 encoded      |
 | blob       |        | binary    | string    | base64 encoded      |
