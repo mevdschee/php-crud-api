@@ -3,18 +3,18 @@ GET /records/posts/1,2
 ===
 200
 Content-Type: application/json
-Content-Length: 122
+Content-Length: 259
 
-[{"id":1,"user_id":1,"category_id":1,"content":"blog started"},{"id":2,"user_id":1,"category_id":2,"content":"It works!"}]
+[{"id":1,"user_id":1,"category_id":1,"content":"blog started"},{"id":2,"user_id":1,"category_id":2,"content":"🦀€ Grüßgott, Вiтаю, dobrý deň, hyvää päivää, გამარჯობა, Γεια σας, góðan dag, здравствуйте"}]
 ===
 GET /records/posts/1,2?format=xml
 ===
 200
 Content-Type: text/xml
-Content-Length: 277
+Content-Length: 414
 
 <?xml version="1.0" encoding="UTF-8"?>
-<object type="list"><object><id>1</id><user_id>1</user_id><category_id>1</category_id><content>blog started</content></object><object><id>2</id><user_id>1</user_id><category_id>2</category_id><content>It works!</content></object></object>
+<object type="list"><object><id>1</id><user_id>1</user_id><category_id>1</category_id><content>blog started</content></object><object><id>2</id><user_id>1</user_id><category_id>2</category_id><content>🦀€ Grüßgott, Вiтаю, dobrý deň, hyvää päivää, გამარჯობა, Γεια σας, góðan dag, здравствуйте</content></object></object>
 ===
 PUT /records/posts/1,2?format=xml
 
