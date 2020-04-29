@@ -1,0 +1,93 @@
+===
+GET /records/posts/1?format=xml
+===
+200
+Content-Type: text/xml
+Content-Length: 145
+
+<?xml version="1.0" encoding="UTF-8"?>
+<object><id>1</id><user_id>1</user_id><category_id>1</category_id><content>blog started</content></object>
+===
+GET /records/posts?limit=2
+===
+200
+Content-Type: application/json
+Content-Length: 134
+
+{"records":[{"id":1,"user_id":1,"category_id":1,"content":"blog started"},{"id":2,"user_id":1,"category_id":2,"content":"It works!"}]}
+===
+GET /records/posts?limit=2&format=xml
+===
+200
+Content-Type: text/xml
+Content-Length: 296
+
+<?xml version="1.0" encoding="UTF-8"?>
+<object><records type="list"><object><id>1</id><user_id>1</user_id><category_id>1</category_id><content>blog started</content></object><object><id>2</id><user_id>1</user_id><category_id>2</category_id><content>It works!</content></object></records></object>
+===
+GET /records/posts/1?join=users&format=xml
+===
+200
+Content-Type: text/xml
+Content-Length: 217
+
+<?xml version="1.0" encoding="UTF-8"?>
+<object><id>1</id><user_id><id>1</id><username>user1</username><password>pass1</password><location/></user_id><category_id>1</category_id><content>blog started</content></object>
+===
+GET /records/posts/1?join=users&join=comments,categories
+===
+200
+Content-Type: application/json
+Content-Length: 321
+
+{"id":1,"user_id":{"id":1,"username":"user1","password":"pass1","location":null},"category_id":1,"content":"blog started","comments":[{"id":1,"post_id":1,"message":"great","category_id":{"id":3,"name":"comment","icon":null}},{"id":2,"post_id":1,"message":"fantastic","category_id":{"id":3,"name":"comment","icon":null}}]}
+===
+GET /records/posts/1?join=users&join=comments,categories&format=xml
+===
+200
+Content-Type: text/xml
+Content-Length: 524
+
+<?xml version="1.0" encoding="UTF-8"?>
+<object><id>1</id><user_id><id>1</id><username>user1</username><password>pass1</password><location/></user_id><category_id>1</category_id><content>blog started</content><comments type="list"><object><id>1</id><post_id>1</post_id><message>great</message><category_id><id>3</id><name>comment</name><icon/></category_id></object><object><id>2</id><post_id>1</post_id><message>fantastic</message><category_id><id>3</id><name>comment</name><icon/></category_id></object></comments></object>
+===
+GET /records/posts?page=2,1
+===
+200
+Content-Type: application/json
+Content-Length: 84
+
+{"records":[{"id":2,"user_id":1,"category_id":2,"content":"It works!"}],"results":2}
+===
+GET /records/posts?page=2,1&format=xml
+===
+200
+Content-Type: text/xml
+Content-Length: 210
+
+<?xml version="1.0" encoding="UTF-8"?>
+<object><records type="list"><object><id>2</id><user_id>1</user_id><category_id>2</category_id><content>It works!</content></object></records><results>2</results></object>
+===
+POST /records/posts?format=xml
+Content-Type: application/xml
+
+<object><id>1</id><user_id>1</user_id><category_id>1</category_id><content>blog started</content></object>
+===
+200
+Content-Type: text/xml
+Content-Length: 115
+
+<?xml version="1.0" encoding="UTF-8"?>
+<object><code>1009</code><message>Duplicate key exception</message></object>
+===
+PUT /records/posts/1?format=xml
+Content-Type: application/xml
+
+<object><user_id>1</user_id><category_id>1</category_id><content>blog started</content></object>
+===
+200
+Content-Type: text/xml
+Content-Length: 57
+
+<?xml version="1.0" encoding="UTF-8"?>
+<object>1</object>

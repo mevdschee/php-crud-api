@@ -25,6 +25,7 @@ use Tqdev\PhpCrudApi\Middleware\FirewallMiddleware;
 use Tqdev\PhpCrudApi\Middleware\IpAddressMiddleware;
 use Tqdev\PhpCrudApi\Middleware\JoinLimitsMiddleware;
 use Tqdev\PhpCrudApi\Middleware\JwtAuthMiddleware;
+use Tqdev\PhpCrudApi\Middleware\XmlMiddleware;
 use Tqdev\PhpCrudApi\Middleware\MultiTenancyMiddleware;
 use Tqdev\PhpCrudApi\Middleware\PageLimitsMiddleware;
 use Tqdev\PhpCrudApi\Middleware\ReconnectMiddleware;
@@ -105,6 +106,9 @@ class Api implements RequestHandlerInterface
                     break;
                 case 'customization':
                     new CustomizationMiddleware($router, $responder, $properties, $reflection);
+                    break;
+                case 'xml':
+                    new XmlMiddleware($router, $responder, $properties, $reflection);
                     break;
             }
         }

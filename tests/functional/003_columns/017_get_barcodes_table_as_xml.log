@@ -1,0 +1,9 @@
+===
+GET /columns/barcodes?format=xml
+===
+200
+Content-Type: text/xml
+Content-Length: 489
+
+<?xml version="1.0" encoding="UTF-8"?>
+<object><name>barcodes</name><type>table</type><columns type="list"><object><name>id</name><type>integer</type><pk>1</pk></object><object><name>product_id</name><type>integer</type><fk>products</fk></object><object><name>hex</name><type>varchar</type><length>255</length></object><object><name>bin</name><type>blob</type></object><object><name>ip_address</name><type>varchar</type><length>15</length><nullable>1</nullable></object></columns></object>
