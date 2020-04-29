@@ -11,18 +11,16 @@ GET /records/posts/1,2?format=xml
 ===
 200
 Content-Type: text/xml
-Content-Length: 414
+Content-Length: 364
 
-<?xml version="1.0" encoding="UTF-8"?>
-<object type="list"><object><id>1</id><user_id>1</user_id><category_id>1</category_id><content>blog started</content></object><object><id>2</id><user_id>1</user_id><category_id>2</category_id><content>🦀€ Grüßgott, Вiтаю, dobrý deň, hyvää päivää, გამარჯობა, Γεια σας, góðan dag, здравствуйте</content></object></object>
+<root type="array"><item><id>1</id><user_id>1</user_id><category_id>1</category_id><content>blog started</content></item><item><id>2</id><user_id>1</user_id><category_id>2</category_id><content>🦀€ Grüßgott, Вiтаю, dobrý deň, hyvää päivää, გამარჯობა, Γεια σας, góðan dag, здравствуйте</content></item></root>
 ===
 PUT /records/posts/1,2?format=xml
 
-<object type="list"><object><user_id>1</user_id></object><object><user_id>2</user_id></object></object>
+<object type="array"><object><user_id>1</user_id></object><object><user_id>2</user_id></object></object>
 ===
 200
 Content-Type: text/xml
-Content-Length: 104
+Content-Length: 54
 
-<?xml version="1.0" encoding="UTF-8"?>
-<object type="list"><object>1</object><object>1</object></object>
+<root type="array"><item>1</item><item>1</item></root>

@@ -668,7 +668,7 @@ You can tune the middleware behavior using middleware specific configuration par
 - "joinLimits.records": The maximum number of records returned for a joined entity ("1000")
 - "customization.beforeHandler": Handler to implement request customization ("")
 - "customization.afterHandler": Handler to implement response customization ("")
-- "xml.objectElement": The XML element name to use for objects ("object")
+- "xml.types": JSON types that should be added to the XML type attribute ("null,array")
 
 If you don't specify these parameters in the configuration, then the default values (between brackets) are used.
 
@@ -1054,7 +1054,7 @@ While (note the "format" query parameter):
 
 Outputs:
 
-    <object><id>1</id><user_id>1</user_id><category_id>1</category_id><content>blog started</content></object>
+    <root><id>1</id><user_id>1</user_id><category_id>1</category_id><content>blog started</content></root>
 
 This functionality is disabled by default and must be enabled using the "middlewares" configuration setting.
 

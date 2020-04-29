@@ -11,10 +11,9 @@ GET /records/posts/1?format=xml
 ===
 200
 Content-Type: text/xml
-Content-Length: 145
+Content-Length: 102
 
-<?xml version="1.0" encoding="UTF-8"?>
-<object><id>1</id><user_id>1</user_id><category_id>1</category_id><content>blog started</content></object>
+<root><id>1</id><user_id>1</user_id><category_id>1</category_id><content>blog started</content></root>
 ===
 GET /records/posts?limit=2
 ===
@@ -28,19 +27,17 @@ GET /records/posts?limit=2&format=xml
 ===
 200
 Content-Type: text/xml
-Content-Length: 1204
+Content-Length: 1122
 
-<?xml version="1.0" encoding="UTF-8"?>
-<object><records type="list"><object><id>1</id><user_id>1</user_id><category_id>1</category_id><content>blog started</content></object><object><id>2</id><user_id>1</user_id><category_id>2</category_id><content>🦀€ Grüßgott, Вiтаю, dobrý deň, hyvää päivää, გამარჯობა, Γεια σας, góðan dag, здравствуйте</content></object><object><id>5</id><user_id>1</user_id><category_id>1</category_id><content>#1</content></object><object><id>6</id><user_id>1</user_id><category_id>1</category_id><content>#2</content></object><object><id>7</id><user_id>1</user_id><category_id>1</category_id><content>#3</content></object><object><id>8</id><user_id>1</user_id><category_id>1</category_id><content>#4</content></object><object><id>9</id><user_id>1</user_id><category_id>1</category_id><content>#5</content></object><object><id>10</id><user_id>1</user_id><category_id>1</category_id><content>#6</content></object><object><id>11</id><user_id>1</user_id><category_id>1</category_id><content>#7</content></object><object><id>12</id><user_id>1</user_id><category_id>1</category_id><content>#8</content></object></records></object>
+<root><records type="array"><item><id>1</id><user_id>1</user_id><category_id>1</category_id><content>blog started</content></item><item><id>2</id><user_id>1</user_id><category_id>2</category_id><content>🦀€ Grüßgott, Вiтаю, dobrý deň, hyvää päivää, გამარჯობა, Γεια σας, góðan dag, здравствуйте</content></item><item><id>5</id><user_id>1</user_id><category_id>1</category_id><content>#1</content></item><item><id>6</id><user_id>1</user_id><category_id>1</category_id><content>#2</content></item><item><id>7</id><user_id>1</user_id><category_id>1</category_id><content>#3</content></item><item><id>8</id><user_id>1</user_id><category_id>1</category_id><content>#4</content></item><item><id>9</id><user_id>1</user_id><category_id>1</category_id><content>#5</content></item><item><id>10</id><user_id>1</user_id><category_id>1</category_id><content>#6</content></item><item><id>11</id><user_id>1</user_id><category_id>1</category_id><content>#7</content></item><item><id>12</id><user_id>1</user_id><category_id>1</category_id><content>#8</content></item></records></root>
 ===
 GET /records/posts/1?join=users&format=xml
 ===
 200
 Content-Type: text/xml
-Content-Length: 243
+Content-Length: 200
 
-<?xml version="1.0" encoding="UTF-8"?>
-<object><id>1</id><user_id><id>1</id><username>user1</username><password>testtest2</password><location>POINT(30 20)</location></user_id><category_id>1</category_id><content>blog started</content></object>
+<root><id>1</id><user_id><id>1</id><username>user1</username><password>testtest2</password><location>POINT(30 20)</location></user_id><category_id>1</category_id><content>blog started</content></root>
 ===
 GET /records/posts/1?join=users&join=comments,categories
 ===
@@ -54,10 +51,9 @@ GET /records/posts/1?join=users&join=comments,categories&format=xml
 ===
 200
 Content-Type: text/xml
-Content-Length: 550
+Content-Length: 536
 
-<?xml version="1.0" encoding="UTF-8"?>
-<object><id>1</id><user_id><id>1</id><username>user1</username><password>testtest2</password><location>POINT(30 20)</location></user_id><category_id>1</category_id><content>blog started</content><comments type="list"><object><id>1</id><post_id>1</post_id><message>great</message><category_id><id>3</id><name>comment</name><icon/></category_id></object><object><id>2</id><post_id>1</post_id><message>fantastic</message><category_id><id>3</id><name>comment</name><icon/></category_id></object></comments></object>
+<root><id>1</id><user_id><id>1</id><username>user1</username><password>testtest2</password><location>POINT(30 20)</location></user_id><category_id>1</category_id><content>blog started</content><comments type="array"><item><id>1</id><post_id>1</post_id><message>great</message><category_id><id>3</id><name>comment</name><icon type="null"></icon></category_id></item><item><id>2</id><post_id>1</post_id><message>fantastic</message><category_id><id>3</id><name>comment</name><icon type="null"></icon></category_id></item></comments></root>
 ===
 GET /records/posts?page=2,1
 ===
@@ -71,10 +67,9 @@ GET /records/posts?page=2,1&format=xml
 ===
 200
 Content-Type: text/xml
-Content-Length: 348
+Content-Length: 302
 
-<?xml version="1.0" encoding="UTF-8"?>
-<object><records type="list"><object><id>2</id><user_id>1</user_id><category_id>2</category_id><content>🦀€ Grüßgott, Вiтаю, dobrý deň, hyvää päivää, გამარჯობა, Γεια σας, góðan dag, здравствуйте</content></object></records><results>12</results></object>
+<root><records type="array"><item><id>2</id><user_id>1</user_id><category_id>2</category_id><content>🦀€ Grüßgott, Вiтаю, dobrý deň, hyvää päivää, გამარჯობა, Γεια σας, góðan dag, здравствуйте</content></item></records><results>12</results></root>
 ===
 POST /records/posts?format=xml
 Content-Type: application/xml
@@ -83,10 +78,9 @@ Content-Type: application/xml
 ===
 200
 Content-Type: text/xml
-Content-Length: 115
+Content-Length: 72
 
-<?xml version="1.0" encoding="UTF-8"?>
-<object><code>1009</code><message>Duplicate key exception</message></object>
+<root><code>1009</code><message>Duplicate key exception</message></root>
 ===
 PUT /records/posts/1?format=xml
 Content-Type: application/xml
@@ -95,7 +89,28 @@ Content-Type: application/xml
 ===
 200
 Content-Type: text/xml
-Content-Length: 57
+Content-Length: 14
 
-<?xml version="1.0" encoding="UTF-8"?>
-<object>1</object>
+<root>1</root>
+===
+PUT /records/posts/1?format=xml
+Content-Type: application/xml
+
+<root><user_id>a</user_id></root>
+===
+200
+Content-Type: text/xml
+Content-Length: 137
+
+<root><code>1013</code><message>Input validation failed for 'posts'</message><details><user_id>invalid integer</user_id></details></root>
+===
+PUT /records/posts/1?format=xml
+Content-Type: application/xml
+
+<root><user_id>a</wrong_tag></root>
+===
+200
+Content-Type: text/xml
+Content-Length: 73
+
+<root><code>1008</code><message>Cannot read HTTP message</message></root>
