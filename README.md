@@ -1042,9 +1042,17 @@ The above example will add a header "X-Time-Taken" with the number of seconds th
 
 You may use the "xml" middleware to translate input and output from JSON to XML. This request:
 
+    GET /records/posts/1
+
+Outputs:
+
+    {"id":1,"user_id":1,"category_id":1,"content":"blog started"}
+
+While (note the "format" query parameter):
+
     GET /records/posts/1?format=xml
 
-Gives this outputs (it uses a "format" query parameter):
+Outputs:
 
     <object><id>1</id><user_id>1</user_id><category_id>1</category_id><content>blog started</content></object>
 
