@@ -6577,7 +6577,8 @@ namespace Tqdev\PhpCrudApi\Database {
                 $jdbcType = $this->toJdbc['simplified'][$jdbcType];
             }
             if (!isset($this->valid[$jdbcType])) {
-                throw new \Exception("Unsupported type '$jdbcType' for driver '$this->driver'");
+                //throw new \Exception("Unsupported type '$jdbcType' for driver '$this->driver'");
+                $jdbcType = 'clob';
             }
             return $jdbcType;
         }
@@ -8539,91 +8540,131 @@ namespace Tqdev\PhpCrudApi\Middleware {
             $this->reflection = $reflection;
         }
 
-        private function convertFromJsonToXml(string $body): string
+        private function json2xml($json, $types = 'null,boolean,number,string,object,array')
         {
-            $objectElement = $this->getProperty('objectElement', 'object');
-            $prolog = '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
-            $xml = new \SimpleXMLElement($prolog . '<root></root>');
-            $object = json_decode($body);
-            if (is_scalar($object)) {
-                $xml = $xml->addChild($objectElement, $object);
-            } else {
-                $xml = $xml->addChild($objectElement);
-                $this->convertFromObjectToXml($object, $xml, $objectElement);
-            }
-            return $prolog . $xml->asXML();
-        }
-
-        private function convertFromObjectToXml($object, $xml, string $objectElement): void
-        {
-            if (is_array($object)) {
-                $xml->addAttribute('type', 'list');
-            }
-            foreach ($object as $key => $value) {
-                if (!is_array($value) && !is_object($value)) {
-                    if (is_object($object)) {
-                        $xml->addChild($key, (string) $value);
+            $a = json_decode($json);
+            $d = new \DOMDocument();
+            $c = $d->createElement("root");
+            $d->appendChild($c);
+            $t = function ($v) {
+                $type = gettype($v);
+                switch ($type) {
+                    case 'integer':
+                        return 'number';
+                    case 'double':
+                        return 'number';
+                    default:
+                        return strtolower($type);
+                }
+            };
+            $ts = explode(',', $types);
+            $f = function ($f, $c, $a, $s = false) use ($t, $d, $ts) {
+                if (in_array($t($a), $ts)) {
+                    $c->setAttribute('type', $t($a));
+                }
+                if ($t($a) != 'array' && $t($a) != 'object') {
+                    if ($t($a) == 'boolean') {
+                        $c->appendChild($d->createTextNode($a ? 'true' : 'false'));
                     } else {
-                        $xml->addChild($objectElement, (string) $value);
+                        $c->appendChild($d->createTextNode($a));
                     }
-                    continue;
+                } else {
+                    foreach ($a as $k => $v) {
+                        if ($k == '__type' && $t($a) == 'object') {
+                            $c->setAttribute('__type', $v);
+                        } else {
+                            if ($t($v) == 'object') {
+                                $ch = $c->appendChild($d->createElementNS(null, $s ? 'item' : $k));
+                                $f($f, $ch, $v);
+                            } else if ($t($v) == 'array') {
+                                $ch = $c->appendChild($d->createElementNS(null, $s ? 'item' : $k));
+                                $f($f, $ch, $v, true);
+                            } else {
+                                $va = $d->createElementNS(null, $s ? 'item' : $k);
+                                if ($t($v) == 'boolean') {
+                                    $va->appendChild($d->createTextNode($v ? 'true' : 'false'));
+                                } else {
+                                    $va->appendChild($d->createTextNode($v));
+                                }
+                                $ch = $c->appendChild($va);
+                                if (in_array($t($v), $ts)) {
+                                    $ch->setAttribute('type', $t($v));
+                                }
+                            }
+                        }
+                    }
                 }
-                $node = $xml;
-                if (is_object($object)) {
-                    $node = $node->addChild($key);
-                } elseif (is_object($value)) {
-                    $node = $node->addChild($objectElement);
-                }
-                $this->convertFromObjectToXml($value, $node, $objectElement);
-            }
+            };
+            $f($f, $c, $a, $t($a) == 'array');
+            return $d->saveXML($d->documentElement);
         }
 
-        private function convertFromXmlToJson(string $body)/*: object */
+        private function xml2json($xml)
         {
-            $objectElement = $this->getProperty('objectElement', 'object');
-            $prolog = '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
-            $xml = new \SimpleXMLElement($prolog . $body);
-            $object = $this->convertFromXmlToObject($xml, $objectElement);
-            return json_decode(json_encode($object));
-        }
-
-        private function convertFromXmlToObject($xml): array
-        {
-            $result = [];
-            foreach ($xml->children() as $nodeName => $nodeValue) {
-                if (count($nodeValue->children()) == 0) {
-                    $object = strVal($nodeValue);
-                } else {
-                    $object = $this->convertFromXmlToObject($nodeValue);
-                }
-                $attributes = $xml->attributes();
-                if ($attributes['type'] == 'list') {
-                    $result[] = $object;
-                } else {
-                    $result[$nodeName] = $object;
-                }
+            $a = @dom_import_simplexml(simplexml_load_string($xml));
+            if (!$a) {
+                return null;
             }
-            return $result;
+            $t = function ($v) {
+                $t = $v->getAttribute('type');
+                $txt = $v->firstChild->nodeType == XML_TEXT_NODE;
+                return $t ?: ($txt ? 'string' : 'object');
+            };
+            $f = function ($f, $a) use ($t) {
+                $c = null;
+                if ($t($a) == 'null') {
+                    $c = null;
+                } else if ($t($a) == 'boolean') {
+                    $b = substr(strtolower($a->textContent), 0, 1);
+                    $c = in_array($b, array('1', 't'));
+                } else if ($t($a) == 'number') {
+                    $c = $a->textContent + 0;
+                } else if ($t($a) == 'string') {
+                    $c = $a->textContent;
+                } else if ($t($a) == 'object') {
+                    $c = array();
+                    if ($a->getAttribute('__type')) {
+                        $c['__type'] = $a->getAttribute('__type');
+                    }
+                    for ($i = 0; $i < $a->childNodes->length; $i++) {
+                        $v = $a->childNodes[$i];
+                        $c[$v->nodeName] = $f($f, $v);
+                    }
+                    $c = (object) $c;
+                } else if ($t($a) == 'array') {
+                    $c = array();
+                    for ($i = 0; $i < $a->childNodes->length; $i++) {
+                        $v = $a->childNodes[$i];
+                        $c[$i] = $f($f, $v);
+                    }
+                }
+                return $c;
+            };
+            $c = $f($f, $a);
+            return json_encode($c);
         }
 
         public function process(ServerRequestInterface $request, RequestHandlerInterface $next): ResponseInterface
         {
-            $operation = RequestUtils::getOperation($request);
-
             parse_str($request->getUri()->getQuery(), $params);
             $isXml = isset($params['format']) && $params['format'] == 'xml';
             if ($isXml) {
                 $body = $request->getBody()->getContents();
                 if ($body) {
-                    $json = $this->convertFromXmlToJson($body);
-                    $request = $request->withParsedBody($json);
+                    $json = $this->xml2json($body);
+                    $request = $request->withParsedBody(json_decode($json));
                 }
             }
             $response = $next->handle($request);
             if ($isXml) {
                 $body = $response->getBody()->getContents();
                 if ($body) {
-                    $xml = $this->convertFromJsonToXml($body);
+                    $types = implode(',', $this->getArrayProperty('types', 'null,array'));
+                    if ($types == '' || $types == 'all') {
+                        $xml = $this->json2xml($body);
+                    } else {
+                        $xml = $this->json2xml($body, $types);
+                    }
                     $response = ResponseFactory::fromXml(ResponseFactory::OK, $xml);
                 }
             }
@@ -11155,10 +11196,12 @@ namespace Tqdev\PhpCrudApi {
     use Tqdev\PhpCrudApi\ResponseUtils;
 
     $config = new Config([
+        // 'driver' => 'mysql',
+        // 'address' => 'localhost',
         'username' => 'php-crud-api',
         'password' => 'php-crud-api',
         'database' => 'php-crud-api',
-        'debug' => false
+        // d'debug' => false
     ]);
     $request = RequestFactory::fromGlobals();
     $api = new Api($config);

@@ -202,7 +202,8 @@ class TypeConverter
             $jdbcType = $this->toJdbc['simplified'][$jdbcType];
         }
         if (!isset($this->valid[$jdbcType])) {
-            throw new \Exception("Unsupported type '$jdbcType' for driver '$this->driver'");
+            //throw new \Exception("Unsupported type '$jdbcType' for driver '$this->driver'");
+            $jdbcType = 'clob';
         }
         return $jdbcType;
     }

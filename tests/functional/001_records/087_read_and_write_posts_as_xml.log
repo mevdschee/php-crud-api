@@ -15,21 +15,21 @@ Content-Length: 102
 
 <root><id>1</id><user_id>1</user_id><category_id>1</category_id><content>blog started</content></root>
 ===
-GET /records/posts?limit=2
+GET /records/posts?size=1
 ===
 200
 Content-Type: application/json
-Content-Length: 690
+Content-Length: 75
 
-{"records":[{"id":1,"user_id":1,"category_id":1,"content":"blog started"},{"id":2,"user_id":1,"category_id":2,"content":"🦀€ Grüßgott, Вiтаю, dobrý deň, hyvää päivää, გამარჯობა, Γεια σας, góðan dag, здравствуйте"},{"id":5,"user_id":1,"category_id":1,"content":"#1"},{"id":6,"user_id":1,"category_id":1,"content":"#2"},{"id":7,"user_id":1,"category_id":1,"content":"#3"},{"id":8,"user_id":1,"category_id":1,"content":"#4"},{"id":9,"user_id":1,"category_id":1,"content":"#5"},{"id":10,"user_id":1,"category_id":1,"content":"#6"},{"id":11,"user_id":1,"category_id":1,"content":"#7"},{"id":12,"user_id":1,"category_id":1,"content":"#8"}]}
+{"records":[{"id":1,"user_id":1,"category_id":1,"content":"blog started"}]}
 ===
-GET /records/posts?limit=2&format=xml
+GET /records/posts?size=1&format=xml
 ===
 200
 Content-Type: text/xml
-Content-Length: 1122
+Content-Length: 147
 
-<root><records type="array"><item><id>1</id><user_id>1</user_id><category_id>1</category_id><content>blog started</content></item><item><id>2</id><user_id>1</user_id><category_id>2</category_id><content>🦀€ Grüßgott, Вiтаю, dobrý deň, hyvää päivää, გამარჯობა, Γεια σας, góðan dag, здравствуйте</content></item><item><id>5</id><user_id>1</user_id><category_id>1</category_id><content>#1</content></item><item><id>6</id><user_id>1</user_id><category_id>1</category_id><content>#2</content></item><item><id>7</id><user_id>1</user_id><category_id>1</category_id><content>#3</content></item><item><id>8</id><user_id>1</user_id><category_id>1</category_id><content>#4</content></item><item><id>9</id><user_id>1</user_id><category_id>1</category_id><content>#5</content></item><item><id>10</id><user_id>1</user_id><category_id>1</category_id><content>#6</content></item><item><id>11</id><user_id>1</user_id><category_id>1</category_id><content>#7</content></item><item><id>12</id><user_id>1</user_id><category_id>1</category_id><content>#8</content></item></records></root>
+<root><records type="array"><item><id>1</id><user_id>1</user_id><category_id>1</category_id><content>blog started</content></item></records></root>
 ===
 GET /records/posts/1?join=users&format=xml
 ===

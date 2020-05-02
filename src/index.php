@@ -10,10 +10,12 @@ use Tqdev\PhpCrudApi\ResponseUtils;
 require '../vendor/autoload.php';
 
 $config = new Config([
+    // 'driver' => 'mysql',
+    // 'address' => 'localhost',
     'username' => 'php-crud-api',
     'password' => 'php-crud-api',
     'database' => 'php-crud-api',
-    'debug' => false
+    // d'debug' => false
 ]);
 $request = RequestFactory::fromGlobals();
 $api = new Api($config);
