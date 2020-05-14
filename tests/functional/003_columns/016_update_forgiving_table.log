@@ -202,6 +202,24 @@ Content-Length: 20
 ===
 PUT /records/forgiving/1
 
+{"decimal":1.2300}
+===
+200
+Content-Type: application/json
+Content-Length: 1
+
+1
+===
+GET /records/forgiving/1?include=decimal
+===
+200
+Content-Type: application/json
+Content-Length: 20
+
+{"decimal":"1.2300"}
+===
+PUT /records/forgiving/1
+
 {"decimal":"1.23004"}
 ===
 200
