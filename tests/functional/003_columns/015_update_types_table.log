@@ -132,6 +132,16 @@ Content-Length: 103
 ===
 PUT /records/types/1
 
+{"decimal":1.2300}
+===
+422
+Content-Type: application/json
+Content-Length: 101
+
+{"code":1013,"message":"Input validation failed for 'types'","details":{"decimal":"invalid decimal"}}
+===
+PUT /records/types/1
+
 {"decimal":"1234567.123"}
 ===
 422
