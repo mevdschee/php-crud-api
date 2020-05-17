@@ -2,7 +2,7 @@
 DELETE /records/posts/3
 ===
 200
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 1
 
 1
@@ -10,7 +10,7 @@ Content-Length: 1
 GET /records/posts/3
 ===
 404
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 46
 
 {"code":1003,"message":"Record '3' not found"}

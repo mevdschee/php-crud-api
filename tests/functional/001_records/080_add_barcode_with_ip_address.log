@@ -4,7 +4,7 @@ POST /records/barcodes
 {"product_id":1,"hex":"","bin":""}
 ===
 200
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 1
 
 2
@@ -12,7 +12,7 @@ Content-Length: 1
 GET /records/barcodes/2
 ===
 200
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 64
 
 {"id":2,"product_id":1,"hex":"","bin":"","ip_address":"TEST_IP"}
@@ -22,7 +22,7 @@ PUT /records/barcodes/2
 {"ip_address":"FAKE_IP"}
 ===
 200
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 1
 
 0
@@ -30,7 +30,7 @@ Content-Length: 1
 GET /records/barcodes/2
 ===
 200
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 64
 
 {"id":2,"product_id":1,"hex":"","bin":"","ip_address":"TEST_IP"}
@@ -38,7 +38,7 @@ Content-Length: 64
 DELETE /records/barcodes/2
 ===
 200
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 1
 
 1

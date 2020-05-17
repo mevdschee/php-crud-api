@@ -4,7 +4,7 @@ POST /columns
 {"name":"barcodes2","type":"table","columns":[{"name":"id","type":"integer","pk":true},{"name":"product_id","type":"integer","fk":"products"},{"name":"hex","type":"varchar","length":255},{"name":"bin","type":"blob"},{"name":"ip_address","type":"varchar","length":15,"nullable":true}]}
 ===
 200
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 4
 
 true
@@ -12,7 +12,7 @@ true
 GET /columns/barcodes2
 ===
 200
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 284
 
 {"name":"barcodes2","type":"table","columns":[{"name":"id","type":"integer","pk":true},{"name":"product_id","type":"integer","fk":"products"},{"name":"hex","type":"varchar","length":255},{"name":"bin","type":"blob"},{"name":"ip_address","type":"varchar","length":15,"nullable":true}]}
@@ -20,7 +20,7 @@ Content-Length: 284
 DELETE /columns/barcodes2
 ===
 200
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 4
 
 true

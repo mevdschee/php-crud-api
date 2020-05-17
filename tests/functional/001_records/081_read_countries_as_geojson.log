@@ -3,7 +3,7 @@ skip-for-sqlite: no support for geometry functions (spatialite)
 GET /geojson/countries/3
 ===
 200
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 105
 
 {"type":"Feature","id":3,"properties":{"name":"Point"},"geometry":{"type":"Point","coordinates":[30,10]}}
@@ -11,7 +11,7 @@ Content-Length: 105
 GET /geojson/countries/4
 ===
 200
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 127
 
 {"type":"Feature","id":4,"properties":{"name":"Line"},"geometry":{"type":"LineString","coordinates":[[30,10],[10,30],[40,40]]}}
@@ -19,7 +19,7 @@ Content-Length: 127
 GET /geojson/countries/5
 ===
 200
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 143
 
 {"type":"Feature","id":5,"properties":{"name":"Poly1"},"geometry":{"type":"Polygon","coordinates":[[[30,10],[40,40],[20,40],[10,20],[30,10]]]}}
@@ -27,7 +27,7 @@ Content-Length: 143
 GET /geojson/countries/6
 ===
 200
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 177
 
 {"type":"Feature","id":6,"properties":{"name":"Poly2"},"geometry":{"type":"Polygon","coordinates":[[[35,10],[45,45],[15,40],[10,20],[35,10]],[[20,30],[35,35],[30,20],[20,30]]]}}
@@ -35,7 +35,7 @@ Content-Length: 177
 GET /geojson/countries/7
 ===
 200
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 137
 
 {"type":"Feature","id":7,"properties":{"name":"Mpoint"},"geometry":{"type":"MultiPoint","coordinates":[[10,40],[40,30],[20,20],[30,10]]}}
@@ -43,7 +43,7 @@ Content-Length: 137
 GET /geojson/countries/8
 ===
 200
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 169
 
 {"type":"Feature","id":8,"properties":{"name":"Mline"},"geometry":{"type":"MultiLineString","coordinates":[[[10,10],[20,20],[10,40]],[[40,40],[30,30],[40,20],[30,10]]]}}
@@ -51,7 +51,7 @@ Content-Length: 169
 GET /geojson/countries/9
 ===
 200
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 184
 
 {"type":"Feature","id":9,"properties":{"name":"Mpoly1"},"geometry":{"type":"MultiPolygon","coordinates":[[[[30,20],[45,40],[10,40],[30,20]]],[[[15,5],[40,10],[10,20],[5,10],[15,5]]]]}}
@@ -59,7 +59,7 @@ Content-Length: 184
 GET /geojson/countries/10
 ===
 200
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 229
 
 {"type":"Feature","id":10,"properties":{"name":"Mpoly2"},"geometry":{"type":"MultiPolygon","coordinates":[[[[40,40],[20,45],[45,30],[40,40]]],[[[20,35],[10,30],[10,10],[30,5],[45,20],[20,35]],[[30,20],[20,15],[20,25],[30,20]]]]}}
@@ -67,7 +67,7 @@ Content-Length: 229
 GET /geojson/countries/11
 ===
 500
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 73
 
 {"code":9999,"message":"Geometry type not supported: GEOMETRYCOLLECTION"}

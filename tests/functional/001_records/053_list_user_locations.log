@@ -2,7 +2,7 @@
 GET /records/users?include=id,location
 ===
 200
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 73
 
 {"records":[{"id":1,"location":"POINT(30 20)"},{"id":2,"location":null}]}

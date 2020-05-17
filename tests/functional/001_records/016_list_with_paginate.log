@@ -4,7 +4,7 @@ POST /records/posts
 {"user_id":1,"category_id":1,"content":"#1"}
 ===
 200
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 1
 
 5
@@ -14,7 +14,7 @@ POST /records/posts
 {"user_id":1,"category_id":1,"content":"#2"}
 ===
 200
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 1
 
 6
@@ -24,7 +24,7 @@ POST /records/posts
 {"user_id":1,"category_id":1,"content":"#3"}
 ===
 200
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 1
 
 7
@@ -34,7 +34,7 @@ POST /records/posts
 {"user_id":1,"category_id":1,"content":"#4"}
 ===
 200
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 1
 
 8
@@ -44,7 +44,7 @@ POST /records/posts
 {"user_id":1,"category_id":1,"content":"#5"}
 ===
 200
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 1
 
 9
@@ -54,7 +54,7 @@ POST /records/posts
 {"user_id":1,"category_id":1,"content":"#6"}
 ===
 200
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 2
 
 10
@@ -64,7 +64,7 @@ POST /records/posts
 {"user_id":1,"category_id":1,"content":"#7"}
 ===
 200
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 2
 
 11
@@ -74,7 +74,7 @@ POST /records/posts
 {"user_id":1,"category_id":1,"content":"#8"}
 ===
 200
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 2
 
 12
@@ -84,7 +84,7 @@ POST /records/posts
 {"user_id":1,"category_id":1,"content":"#9"}
 ===
 200
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 2
 
 13
@@ -94,7 +94,7 @@ POST /records/posts
 {"user_id":1,"category_id":1,"content":"#10"}
 ===
 200
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 2
 
 14
@@ -102,7 +102,7 @@ Content-Length: 2
 GET /records/posts?page=2,2&order=id
 ===
 200
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 130
 
 {"records":[{"id":5,"user_id":1,"category_id":1,"content":"#1"},{"id":6,"user_id":1,"category_id":1,"content":"#2"}],"results":12}

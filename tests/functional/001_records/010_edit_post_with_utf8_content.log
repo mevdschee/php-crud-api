@@ -4,7 +4,7 @@ PUT /records/posts/2
 {"content":"🤗 Grüßgott, Вiтаю, dobrý deň, hyvää päivää, გამარჯობა, Γεια σας, góðan dag, здравствуйте"}
 ===
 200
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 1
 
 1
@@ -12,7 +12,7 @@ Content-Length: 1
 GET /records/posts/2
 ===
 200
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 192
 
 {"id":2,"user_id":1,"category_id":2,"content":"🤗 Grüßgott, Вiтаю, dobrý deň, hyvää päivää, გამარჯობა, Γεια σας, góðan dag, здравствуйте"}

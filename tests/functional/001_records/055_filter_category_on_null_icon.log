@@ -2,7 +2,7 @@
 GET /records/categories?filter=icon,is,null&filter=id,le,2
 ===
 200
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 94
 
 {"records":[{"id":1,"name":"announcement","icon":null},{"id":2,"name":"article","icon":null}]}
@@ -10,7 +10,7 @@ Content-Length: 94
 GET /records/categories?filter=icon,is&filter=id,le,2
 ===
 200
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 94
 
 {"records":[{"id":1,"name":"announcement","icon":null},{"id":2,"name":"article","icon":null}]}

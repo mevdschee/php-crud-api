@@ -4,7 +4,7 @@ PATCH /records/kunsthåndværk/e42c77c6-06a4-4502-816c-d112c7142e6d
 {"Umlauts ä_ö_ü-COUNT":10}
 ===
 200
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 1
 X-Time-Taken: 0.003
 
@@ -15,7 +15,7 @@ PATCH /records/kunsthåndværk/e42c77c6-06a4-4502-816c-d112c7142e6d
 {"Umlauts ä_ö_ü-COUNT":-10}
 ===
 200
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 1
 X-Time-Taken: 0.003
 

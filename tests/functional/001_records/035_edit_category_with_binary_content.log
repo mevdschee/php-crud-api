@@ -4,7 +4,7 @@ PUT /records/categories/2
 {"icon":"4oKsIABhYmMACg1cYgA"}
 ===
 200
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 1
 
 1
@@ -12,7 +12,7 @@ Content-Length: 1
 GET /records/categories/2
 ===
 200
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 55
 
 {"id":2,"name":"article","icon":"4oKsIABhYmMACg1cYgA="}

@@ -2,7 +2,7 @@
 GET /records/kunsthåndværk/e42c77c6-06a4-4502-816c-d112c7142e6d
 ===
 200
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 138
 
 {"id":"e42c77c6-06a4-4502-816c-d112c7142e6d","Umlauts ä_ö_ü-COUNT":1,"user_id":1,"invisible_id":"e42c77c6-06a4-4502-816c-d112c7142e6d"}
@@ -10,7 +10,7 @@ Content-Length: 138
 GET /records/kunsthåndværk/e42c77c6-06a4-4502-816c-d112c7142e6d?join=invisibles
 ===
 200
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 138
 
 {"id":"e42c77c6-06a4-4502-816c-d112c7142e6d","Umlauts ä_ö_ü-COUNT":1,"user_id":1,"invisible_id":"e42c77c6-06a4-4502-816c-d112c7142e6d"}

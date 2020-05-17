@@ -2,7 +2,7 @@
 GET /records/posts?include=tags.name&join=categories&join=post_tags,tags&join=comments&filter=id,eq,1
 ===
 200
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 198
 
 {"records":[{"id":1,"category_id":{"id":1},"post_tags":[{"post_id":1,"tag_id":{"id":1,"name":"funny"}},{"post_id":1,"tag_id":{"id":2,"name":"important"}}],"comments":[{"post_id":1},{"post_id":1}]}]}

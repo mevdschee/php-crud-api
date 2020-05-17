@@ -2,7 +2,7 @@
 GET /records/categories?filter=icon,nis,null
 ===
 200
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 14
 
 {"records":[]}

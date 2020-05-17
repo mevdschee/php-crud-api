@@ -2,7 +2,7 @@
 GET /records/posts?include=id,content
 ===
 200
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 78
 
 {"records":[{"id":1,"content":"blog started"},{"id":2,"content":"It works!"}]}

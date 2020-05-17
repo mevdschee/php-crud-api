@@ -2,7 +2,7 @@
 GET /records/posts/1?join=tags&include=tags.name
 ===
 200
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 69
 
 {"id":1,"tags":[{"id":1,"name":"funny"},{"id":2,"name":"important"}]}
@@ -10,7 +10,7 @@ Content-Length: 69
 GET /records/posts/1?join=categories&include=category_id,categories.name
 ===
 200
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 53
 
 {"id":1,"category_id":{"id":1,"name":"announcement"}}
@@ -18,7 +18,7 @@ Content-Length: 53
 GET /records/posts/1?join=comments,categories&include=category_id,categories.name
 ===
 200
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 145
 
 {"id":1,"category_id":1,"comments":[{"post_id":1,"category_id":{"id":3,"name":"comment"}},{"post_id":1,"category_id":{"id":3,"name":"comment"}}]}
@@ -26,7 +26,7 @@ Content-Length: 145
 GET /records/posts/1?join=categories&join=comments,categories&include=category_id,categories.name
 ===
 200
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 174
 
 {"id":1,"category_id":{"id":1,"name":"announcement"},"comments":[{"post_id":1,"category_id":{"id":3,"name":"comment"}},{"post_id":1,"category_id":{"id":3,"name":"comment"}}]}

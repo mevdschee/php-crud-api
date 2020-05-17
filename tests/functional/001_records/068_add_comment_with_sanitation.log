@@ -4,7 +4,7 @@ POST /records/comments
 {"user_id":1,"post_id":2,"message":"<h1>Title</h1> <p>Body</p>","category_id":3}
 ===
 200
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 1
 
 5
@@ -12,7 +12,7 @@ Content-Length: 1
 GET /records/comments/5
 ===
 200
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 59
 
 {"id":5,"post_id":2,"message":"Title Body","category_id":3}

@@ -4,7 +4,7 @@ POST /records/posts
 user_id=1&category_id=1&content=test
 ===
 200
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 1
 
 4

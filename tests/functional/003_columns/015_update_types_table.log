@@ -4,18 +4,18 @@ POST /columns
 {"name":"types","type":"table","columns":[{"name":"id","type":"integer","pk":true},{"name":"integer","type":"integer"},{"name":"bigint","type":"bigint"},{"name":"varchar","type":"varchar","length":10},{"name":"decimal","type":"decimal","precision":10,"scale":4},{"name":"float","type":"float"},{"name":"double","type":"double"},{"name":"boolean","type":"boolean"},{"name":"date","type":"date"},{"name":"time","type":"time"},{"name":"timestamp","type":"timestamp"},{"name":"clob","type":"clob"},{"name":"blob","type":"blob"},{"name":"geometry","type":"geometry"}]}
 ===
 200
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 4
 
 true
 ===
 POST /records/types
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 
 {"integer":2,"bigint":3,"varchar":"abc","decimal":"1.23","float":1,"double":23.45,"boolean":true,"date":"1970-01-01","time":"00:00:01","timestamp":"2001-02-03 04:05:06","clob":"a","blob":"YQ==","geometry":"POINT(1 2)"}
 ===
 200
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 1
 
 1
@@ -25,7 +25,7 @@ PUT /records/types/1
 {"boolean":null}
 ===
 422
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 100
 
 {"code":1013,"message":"Input validation failed for 'types'","details":{"boolean":"cannot be null"}}
@@ -35,7 +35,7 @@ PUT /records/types/1
 {"integer":" 1\n"}
 ===
 422
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 104
 
 {"code":1013,"message":"Input validation failed for 'types'","details":{"integer":"illegal whitespace"}}
@@ -45,7 +45,7 @@ PUT /records/types/1
 {"integer":"23e"}
 ===
 422
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 101
 
 {"code":1013,"message":"Input validation failed for 'types'","details":{"integer":"invalid integer"}}
@@ -55,7 +55,7 @@ PUT /records/types/1
 integer=23e
 ===
 422
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 101
 
 {"code":1013,"message":"Input validation failed for 'types'","details":{"integer":"invalid integer"}}
@@ -65,7 +65,7 @@ PUT /records/types/1
 {"integer":"2.3"}
 ===
 422
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 101
 
 {"code":1013,"message":"Input validation failed for 'types'","details":{"integer":"invalid integer"}}
@@ -75,7 +75,7 @@ PUT /records/types/1
 {"integer":2.3}
 ===
 422
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 101
 
 {"code":1013,"message":"Input validation failed for 'types'","details":{"integer":"invalid integer"}}
@@ -85,7 +85,7 @@ PUT /records/types/1
 {"integer":"12345678901"}
 ===
 422
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 101
 
 {"code":1013,"message":"Input validation failed for 'types'","details":{"integer":"invalid integer"}}
@@ -95,7 +95,7 @@ PUT /records/types/1
 {"bigint":"12345678901234567890"}
 ===
 422
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 100
 
 {"code":1013,"message":"Input validation failed for 'types'","details":{"bigint":"invalid integer"}}
@@ -105,7 +105,7 @@ PUT /records/types/1
 {"varchar":"12345678901"}
 ===
 422
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 101
 
 {"code":1013,"message":"Input validation failed for 'types'","details":{"varchar":"string too long"}}
@@ -115,7 +115,7 @@ PUT /records/types/1
 {"decimal":"12.23.34"}
 ===
 422
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 101
 
 {"code":1013,"message":"Input validation failed for 'types'","details":{"decimal":"invalid decimal"}}
@@ -125,7 +125,7 @@ PUT /records/types/1
 {"decimal":"1131313145345"}
 ===
 422
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 103
 
 {"code":1013,"message":"Input validation failed for 'types'","details":{"decimal":"decimal too large"}}
@@ -135,7 +135,7 @@ PUT /records/types/1
 {"decimal":1.2300}
 ===
 422
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 101
 
 {"code":1013,"message":"Input validation failed for 'types'","details":{"decimal":"invalid decimal"}}
@@ -145,7 +145,7 @@ PUT /records/types/1
 {"decimal":"1234567.123"}
 ===
 422
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 103
 
 {"code":1013,"message":"Input validation failed for 'types'","details":{"decimal":"decimal too large"}}
@@ -155,7 +155,7 @@ PUT /records/types/1
 {"decimal":"123456.12345"}
 ===
 422
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 105
 
 {"code":1013,"message":"Input validation failed for 'types'","details":{"decimal":"decimal too precise"}}
@@ -165,7 +165,7 @@ PUT /records/types/1
 {"decimal":"113131.3145345"}
 ===
 422
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 105
 
 {"code":1013,"message":"Input validation failed for 'types'","details":{"decimal":"decimal too precise"}}
@@ -175,7 +175,7 @@ PUT /records/types/1
 {"float":"string"}
 ===
 422
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 97
 
 {"code":1013,"message":"Input validation failed for 'types'","details":{"float":"invalid float"}}
@@ -185,7 +185,7 @@ PUT /records/types/1
 {"double":"string"}
 ===
 422
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 98
 
 {"code":1013,"message":"Input validation failed for 'types'","details":{"double":"invalid float"}}
@@ -195,7 +195,7 @@ PUT /records/types/1
 {"boolean":-1}
 ===
 422
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 101
 
 {"code":1013,"message":"Input validation failed for 'types'","details":{"boolean":"invalid boolean"}}
@@ -205,7 +205,7 @@ PUT /records/types/1
 {"date":"string"}
 ===
 422
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 95
 
 {"code":1013,"message":"Input validation failed for 'types'","details":{"date":"invalid date"}}
@@ -215,7 +215,7 @@ PUT /records/types/1
 {"date":"still-no-date"}
 ===
 422
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 95
 
 {"code":1013,"message":"Input validation failed for 'types'","details":{"date":"invalid date"}}
@@ -225,7 +225,7 @@ PUT /records/types/1
 {"time":"string"}
 ===
 422
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 95
 
 {"code":1013,"message":"Input validation failed for 'types'","details":{"time":"invalid time"}}
@@ -235,7 +235,7 @@ PUT /records/types/1
 {"time":"still:no:time"}
 ===
 422
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 95
 
 {"code":1013,"message":"Input validation failed for 'types'","details":{"time":"invalid time"}}
@@ -245,7 +245,7 @@ PUT /records/types/1
 {"time":"999:999:999"}
 ===
 422
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 95
 
 {"code":1013,"message":"Input validation failed for 'types'","details":{"time":"invalid time"}}
@@ -255,7 +255,7 @@ PUT /records/types/1
 {"timestamp":"string"}
 ===
 422
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 105
 
 {"code":1013,"message":"Input validation failed for 'types'","details":{"timestamp":"invalid timestamp"}}
@@ -265,7 +265,7 @@ PUT /records/types/1
 {"timestamp":"2001-01-01 999:999:999"}
 ===
 422
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 105
 
 {"code":1013,"message":"Input validation failed for 'types'","details":{"timestamp":"invalid timestamp"}}
@@ -275,7 +275,7 @@ PUT /records/types/1
 {"clob":"𠜎𠜱𠝹𠱓𠱸𠲖𠳏𠳕𠴕𠵼𠵿𠸎𠸏𠹷𠺝𠺢𠻗"}
 ===
 200
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 1
 
 1
@@ -285,7 +285,7 @@ PUT /records/types/1
 {"blob":"!"}
 ===
 422
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 97
 
 {"code":1013,"message":"Input validation failed for 'types'","details":{"blob":"invalid base64"}}
@@ -295,7 +295,7 @@ PUT /records/types/1
 {"blob":"T8O5IGVzdCBsZSBjYWbDqSBsZSBwbHVzIHByb2NoZT8"}
 ===
 200
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 1
 
 1
@@ -303,7 +303,7 @@ Content-Length: 1
 GET /records/types/1
 ===
 200
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 334
 
 {"id":1,"integer":2,"bigint":3,"varchar":"abc","decimal":"1.2300","float":1,"double":23.45,"boolean":true,"date":"1970-01-01","time":"00:00:01","timestamp":"2001-02-03 04:05:06","clob":"𠜎𠜱𠝹𠱓𠱸𠲖𠳏𠳕𠴕𠵼𠵿𠸎𠸏𠹷𠺝𠺢𠻗","blob":"T8O5IGVzdCBsZSBjYWbDqSBsZSBwbHVzIHByb2NoZT8=","geometry":"POINT(1 2)"}
@@ -311,7 +311,7 @@ Content-Length: 334
 DELETE /columns/types
 ===
 200
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 4
 
 true

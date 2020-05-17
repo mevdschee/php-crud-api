@@ -3,7 +3,7 @@ skip-for-sqlite: table (columns) cannot be altered online
 GET /columns/events/visitors
 ===
 200
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 51
 
 {"name":"visitors","type":"bigint","nullable":true}
@@ -13,7 +13,7 @@ PUT /columns/events/visitors
 {"nullable":false}
 ===
 200
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 4
 
 true
@@ -21,7 +21,7 @@ true
 GET /columns/events/visitors
 ===
 200
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 35
 
 {"name":"visitors","type":"bigint"}
@@ -31,7 +31,7 @@ PUT /columns/events/visitors
 {"nullable":true}
 ===
 200
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 4
 
 true
@@ -39,7 +39,7 @@ true
 GET /columns/events/id
 ===
 200
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 40
 
 {"name":"id","type":"integer","pk":true}
@@ -49,7 +49,7 @@ PUT /columns/events/visitors
 {"pk":false}
 ===
 200
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 4
 
 true
@@ -57,7 +57,7 @@ true
 GET /columns/events/visitors
 ===
 200
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 51
 
 {"name":"visitors","type":"bigint","nullable":true}
@@ -67,7 +67,7 @@ PUT /columns/events/id
 {"pk":true}
 ===
 200
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 4
 
 true
@@ -75,7 +75,7 @@ true
 GET /columns/events/id
 ===
 200
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 40
 
 {"name":"id","type":"integer","pk":true}

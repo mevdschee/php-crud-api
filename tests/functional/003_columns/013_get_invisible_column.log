@@ -2,7 +2,7 @@
 GET /columns/kunsthåndværk/invisible
 ===
 404
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 54
 
 {"code":1005,"message":"Column 'invisible' not found"}

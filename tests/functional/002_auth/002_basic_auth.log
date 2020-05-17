@@ -3,7 +3,7 @@ GET /records/invisibles/e42c77c6-06a4-4502-816c-d112c7142e6d
 Authorization: Basic dXNlcm5hbWUxOnBhc3N3b3JkMQ
 ===
 200
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 45
 
 {"id":"e42c77c6-06a4-4502-816c-d112c7142e6d"}
@@ -11,7 +11,7 @@ Content-Length: 45
 GET /records/invisibles/e42c77c6-06a4-4502-816c-d112c7142e6d
 ===
 200
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 45
 
 {"id":"e42c77c6-06a4-4502-816c-d112c7142e6d"}
@@ -20,7 +20,7 @@ GET /records/invisibles/e42c77c6-06a4-4502-816c-d112c7142e6d
 Authorization: Basic aW52YWxpZHVzZXI6aW52YWxpZHBhc3M
 ===
 403
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 65
 
 {"code":1012,"message":"Authentication failed for 'invaliduser'"}
@@ -28,7 +28,7 @@ Content-Length: 65
 GET /records/invisibles/e42c77c6-06a4-4502-816c-d112c7142e6d
 ===
 404
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 54
 
 {"code":1001,"message":"Table 'invisibles' not found"}

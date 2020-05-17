@@ -1,11 +1,11 @@
 ===
 POST /records/posts
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 
 {"}
 ===
 422
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 50
 
 {"code":1008,"message":"Cannot read HTTP message"}

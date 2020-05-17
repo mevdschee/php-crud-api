@@ -2,18 +2,18 @@
 GET /records/invisibles/e42c77c6-06a4-4502-816c-d112c7142e6d
 ===
 404
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 54
 
 {"code":1001,"message":"Table 'invisibles' not found"}
 ===
 POST /login
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 
 {"username":"user2","password":"pass2"}
 ===
 200
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 27
 
 {"id":2,"username":"user2"}
@@ -21,18 +21,18 @@ Content-Length: 27
 GET /records/invisibles/e42c77c6-06a4-4502-816c-d112c7142e6d
 ===
 200
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 45
 
 {"id":"e42c77c6-06a4-4502-816c-d112c7142e6d"}
 ===
 POST /login
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 
 {"username":"user2","password":"incorect password"}
 ===
 403
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 59
 
 {"code":1012,"message":"Authentication failed for 'user2'"}
@@ -40,7 +40,7 @@ Content-Length: 59
 GET /records/invisibles/e42c77c6-06a4-4502-816c-d112c7142e6d
 ===
 200
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 45
 
 {"id":"e42c77c6-06a4-4502-816c-d112c7142e6d"}
@@ -48,7 +48,7 @@ Content-Length: 45
 POST /logout
 ===
 200
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 27
 
 {"id":2,"username":"user2"}
@@ -56,7 +56,7 @@ Content-Length: 27
 GET /records/invisibles/e42c77c6-06a4-4502-816c-d112c7142e6d
 ===
 404
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 54
 
 {"code":1001,"message":"Table 'invisibles' not found"}
@@ -64,7 +64,7 @@ Content-Length: 54
 POST /logout
 ===
 401
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 49
 
 {"code":1011,"message":"Authentication required"}

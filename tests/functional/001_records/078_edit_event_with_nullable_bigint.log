@@ -2,7 +2,7 @@
 GET /records/events/1
 ===
 200
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 70
 
 {"id":1,"name":"Launch","datetime":"2016-01-01 13:01:01","visitors":0}
@@ -12,7 +12,7 @@ PUT /records/events/1
 {"datetime":null,"visitors":null}
 ===
 200
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 1
 
 1
@@ -20,7 +20,7 @@ Content-Length: 1
 GET /records/events/1
 ===
 200
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 56
 
 {"id":1,"name":"Launch","datetime":null,"visitors":null}
@@ -30,7 +30,7 @@ PUT /records/events/1
 {"datetime":"2016-01-01 13:01:01","visitors":0}
 ===
 200
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 1
 
 1
@@ -38,7 +38,7 @@ Content-Length: 1
 GET /records/events/1
 ===
 200
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 70
 
 {"id":1,"name":"Launch","datetime":"2016-01-01 13:01:01","visitors":0}

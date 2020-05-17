@@ -2,7 +2,7 @@
 GET /records/posts?include=id&filter1=id,eq,1&filter2=id,eq,2&filter=user_id,eq,1
 ===
 200
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 31
 
 {"records":[{"id":1},{"id":2}]}

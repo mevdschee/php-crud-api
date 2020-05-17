@@ -4,7 +4,7 @@ PUT /records/posts/4
 user_id=1&category_id=1&content=test+(edited)
 ===
 200
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 1
 
 1
@@ -12,7 +12,7 @@ Content-Length: 1
 GET /records/posts/4
 ===
 200
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 Content-Length: 62
 
 {"id":4,"user_id":1,"category_id":1,"content":"test (edited)"}

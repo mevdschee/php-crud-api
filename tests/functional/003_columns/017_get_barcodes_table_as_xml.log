@@ -2,7 +2,7 @@
 GET /columns/barcodes?format=xml
 ===
 200
-Content-Type: text/xml
+Content-Type: text/xml; charset=utf-8
 Content-Length: 433
 
 <root><name>barcodes</name><type>table</type><columns type="array"><item><name>id</name><type>integer</type><pk>true</pk></item><item><name>product_id</name><type>integer</type><fk>products</fk></item><item><name>hex</name><type>varchar</type><length>255</length></item><item><name>bin</name><type>blob</type></item><item><name>ip_address</name><type>varchar</type><length>15</length><nullable>true</nullable></item></columns></root>
