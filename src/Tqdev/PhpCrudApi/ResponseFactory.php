@@ -45,7 +45,7 @@ class ResponseFactory
         $stream = $psr17Factory->createStream($content);
         $stream->rewind();
         $response = $response->withBody($stream);
-        $response = $response->withHeader('Content-Type', $contentType);
+        $response = $response->withHeader('Content-Type', $contentType . '; charset=utf-8');
         $response = $response->withHeader('Content-Length', strlen($content));
         return $response;
     }

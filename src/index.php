@@ -15,7 +15,7 @@ $config = new Config([
     'username' => 'php-crud-api',
     'password' => 'php-crud-api',
     'database' => 'php-crud-api',
-    // d'debug' => false
+    // 'debug' => false
 ]);
 $request = RequestFactory::fromGlobals();
 $api = new Api($config);
