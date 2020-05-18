@@ -7,7 +7,7 @@ var clientId = ''; // client id as defined in auth0
 var audience = 'https://your-php-crud-api/api.php'; // api audience as defined in auth0
 var url = '/api.php/records/posts?join=categories&join=tags&join=comments&filter=id,eq,1';
 
-function requestApi() {
+function requestAPI() {
     var match = RegExp('[#&]access_token=([^&]*)').exec(window.location.hash);
     var accessToken = match && decodeURIComponent(match[1].replace(/\+/g, ' '));
     if (!accessToken) {
