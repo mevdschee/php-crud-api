@@ -86,6 +86,9 @@ class TempFileCache implements Cache
         if ($data === false) {
             return '';
         }
+        if (strpos($data, '|') === false) {
+            return '';
+        }
         list($ttl, $string) = explode('|', $data, 2);
         if ($ttl > 0 && time() - filemtime($filename) > $ttl) {
             return '';
