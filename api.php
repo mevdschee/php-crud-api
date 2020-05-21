@@ -3480,6 +3480,9 @@ namespace Tqdev\PhpCrudApi\Cache {
             if ($data === false) {
                 return '';
             }
+            if (strpos($data, '|') === false) {
+                return '';
+            }
             list($ttl, $string) = explode('|', $data, 2);
             if ($ttl > 0 && time() - filemtime($filename) > $ttl) {
                 return '';
@@ -4540,6 +4543,35 @@ namespace Tqdev\PhpCrudApi\Controller {
         public function openapi(ServerRequestInterface $request): ResponseInterface
         {
             return $this->responder->success($this->openApi->get());
+        }
+    }
+}
+
+// file: src/Tqdev/PhpCrudApi/Controller/ProcedureController.php
+namespace Tqdev\PhpCrudApi\Controller {
+
+    use Psr\Http\Message\ResponseInterface;
+    use Psr\Http\Message\ServerRequestInterface;
+    use Tqdev\PhpCrudApi\Middleware\Router\Router;
+    use Tqdev\PhpCrudApi\Record\ErrorCode;
+    use Tqdev\PhpCrudApi\Procedure\ProcedureService;
+    use Tqdev\PhpCrudApi\RequestUtils;
+
+    class ProcedureController
+    {
+        private $service;
+        private $responder;
+
+        public function __construct(Router $router, Responder $responder, ProcedureService $service)
+        {
+            $router->register('GET', '/procedures/*', array($this, '_list'));
+            $router->register('POST', '/procedures/*', array($this, 'create'));
+            $router->register('GET', '/procedures/*/*', array($this, 'read'));
+            $router->register('PUT', '/procedures/*/*', array($this, 'update'));
+            $router->register('DELETE', '/procedures/*/*', array($this, 'delete'));
+            $router->register('PATCH', '/procedures/*/*', array($this, 'increment'));
+            $this->service = $service;
+            $this->responder = $responder;
         }
     }
 }
@@ -9355,6 +9387,26 @@ namespace Tqdev\PhpCrudApi\OpenApi {
     }
 }
 
+// file: src/Tqdev/PhpCrudApi/Procedure/ProcedureService.php
+namespace Tqdev\PhpCrudApi\Record {
+
+    use Tqdev\PhpCrudApi\Column\ReflectionService;
+    use Tqdev\PhpCrudApi\Database\GenericDB;
+    use Tqdev\PhpCrudApi\Record\Document\ListDocument;
+
+    class ProcedureService
+    {
+        private $db;
+        private $reflection;
+
+        public function __construct(GenericDB $db, ReflectionService $reflection)
+        {
+            $this->db = $db;
+            $this->reflection = $reflection;
+        }
+    }
+}
+
 // file: src/Tqdev/PhpCrudApi/Record/Condition/AndCondition.php
 namespace Tqdev\PhpCrudApi\Record\Condition {
 
@@ -11201,6 +11253,10 @@ namespace Tqdev\PhpCrudApi {
         'username' => 'php-crud-api',
         'password' => 'php-crud-api',
         'database' => 'php-crud-api',
+        'middlewares' => 'authorization',
+        'authorization.tableHandler' => function ($operation, $tableName) {
+            return $operation != 'document';
+        },
         // 'debug' => false
     ]);
     $request = RequestFactory::fromGlobals();
