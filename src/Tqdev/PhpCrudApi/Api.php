@@ -25,13 +25,14 @@ use Tqdev\PhpCrudApi\Middleware\FirewallMiddleware;
 use Tqdev\PhpCrudApi\Middleware\IpAddressMiddleware;
 use Tqdev\PhpCrudApi\Middleware\JoinLimitsMiddleware;
 use Tqdev\PhpCrudApi\Middleware\JwtAuthMiddleware;
-use Tqdev\PhpCrudApi\Middleware\XmlMiddleware;
 use Tqdev\PhpCrudApi\Middleware\MultiTenancyMiddleware;
 use Tqdev\PhpCrudApi\Middleware\PageLimitsMiddleware;
 use Tqdev\PhpCrudApi\Middleware\ReconnectMiddleware;
 use Tqdev\PhpCrudApi\Middleware\Router\SimpleRouter;
 use Tqdev\PhpCrudApi\Middleware\SanitationMiddleware;
+use Tqdev\PhpCrudApi\Middleware\SslRedirectMiddleware;
 use Tqdev\PhpCrudApi\Middleware\ValidationMiddleware;
+use Tqdev\PhpCrudApi\Middleware\XmlMiddleware;
 use Tqdev\PhpCrudApi\Middleware\XsrfMiddleware;
 use Tqdev\PhpCrudApi\OpenApi\OpenApiService;
 use Tqdev\PhpCrudApi\Record\ErrorCode;
@@ -62,6 +63,9 @@ class Api implements RequestHandlerInterface
         $router = new SimpleRouter($config->getBasePath(), $responder, $cache, $config->getCacheTime(), $config->getDebug());
         foreach ($config->getMiddlewares() as $middleware => $properties) {
             switch ($middleware) {
+                case 'sslRedirect':
+                    new SslRedirectMiddleware($router, $responder, $properties);
+                    break;
                 case 'cors':
                     new CorsMiddleware($router, $responder, $properties);
                     break;
