@@ -8302,6 +8302,34 @@ namespace Tqdev\PhpCrudApi\Middleware {
     }
 }
 
+// file: src/Tqdev/PhpCrudApi/Middleware/SslRedirectMiddleware.php
+namespace Tqdev\PhpCrudApi\Middleware {
+
+    use Psr\Http\Message\ResponseInterface;
+    use Psr\Http\Message\ServerRequestInterface;
+    use Psr\Http\Server\RequestHandlerInterface;
+    use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
+    use Tqdev\PhpCrudApi\ResponseFactory;
+
+    class SslRedirectMiddleware extends Middleware
+    {
+        public function process(ServerRequestInterface $request, RequestHandlerInterface $next): ResponseInterface
+        {
+            $uri = $request->getUri();
+            $scheme = $uri->getScheme();
+            if ($scheme == 'http') {
+                $uri = $request->getUri();
+                $uri = $uri->withScheme('https');
+                $response = ResponseFactory::fromStatus(301);
+                $response = $response->withHeader('Location', $uri->__toString());
+            } else {
+                $response = $next->handle($request);
+            }
+            return $response;
+        }
+    }
+}
+
 // file: src/Tqdev/PhpCrudApi/Middleware/ValidationMiddleware.php
 namespace Tqdev\PhpCrudApi\Middleware {
 
@@ -10545,13 +10573,14 @@ namespace Tqdev\PhpCrudApi {
     use Tqdev\PhpCrudApi\Middleware\IpAddressMiddleware;
     use Tqdev\PhpCrudApi\Middleware\JoinLimitsMiddleware;
     use Tqdev\PhpCrudApi\Middleware\JwtAuthMiddleware;
-    use Tqdev\PhpCrudApi\Middleware\XmlMiddleware;
     use Tqdev\PhpCrudApi\Middleware\MultiTenancyMiddleware;
     use Tqdev\PhpCrudApi\Middleware\PageLimitsMiddleware;
     use Tqdev\PhpCrudApi\Middleware\ReconnectMiddleware;
     use Tqdev\PhpCrudApi\Middleware\Router\SimpleRouter;
     use Tqdev\PhpCrudApi\Middleware\SanitationMiddleware;
+    use Tqdev\PhpCrudApi\Middleware\SslRedirectMiddleware;
     use Tqdev\PhpCrudApi\Middleware\ValidationMiddleware;
+    use Tqdev\PhpCrudApi\Middleware\XmlMiddleware;
     use Tqdev\PhpCrudApi\Middleware\XsrfMiddleware;
     use Tqdev\PhpCrudApi\OpenApi\OpenApiService;
     use Tqdev\PhpCrudApi\Record\ErrorCode;
@@ -10582,6 +10611,9 @@ namespace Tqdev\PhpCrudApi {
             $router = new SimpleRouter($config->getBasePath(), $responder, $cache, $config->getCacheTime(), $config->getDebug());
             foreach ($config->getMiddlewares() as $middleware => $properties) {
                 switch ($middleware) {
+                    case 'sslRedirect':
+                        new SslRedirectMiddleware($router, $responder, $properties);
+                        break;
                     case 'cors':
                         new CorsMiddleware($router, $responder, $properties);
                         break;
