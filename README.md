@@ -589,6 +589,7 @@ The GeoJSON functionality is enabled by default, but can be disabled using the "
 You can enable the following middleware using the "middlewares" config parameter:
 
 - "firewall": Limit access to specific IP addresses
+- "sslRedirect": Force connection over HTTPS instead of HTTP
 - "cors": Support for CORS requests (enabled by default)
 - "xsrf": Block XSRF attacks using the 'Double Submit Cookie' method
 - "ajaxOnly": Restrict non-AJAX requests to prevent XSRF attacks
