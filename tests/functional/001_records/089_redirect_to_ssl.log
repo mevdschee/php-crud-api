@@ -1,0 +1,5 @@
+===
+GET http://localhost/records/posts
+===
+301
+Location: https://localhost/records/posts
