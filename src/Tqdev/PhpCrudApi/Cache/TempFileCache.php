@@ -121,18 +121,18 @@ class TempFileCache implements Cache
                 if (strlen($entry) != $len) {
                     continue;
                 }
-                if (is_file($filename)) {
+                if (file_exists($filename) && is_file($filename)) {
                     if ($all || $this->getString($filename) == null) {
-                        unlink($filename);
+                        @unlink($filename);
                     }
                 }
             } else {
                 if (strlen($entry) != $segments[0]) {
                     continue;
                 }
-                if (is_dir($filename)) {
+                if (file_exists($filename) && is_dir($filename)) {
                     $this->clean($filename, array_slice($segments, 1), $len - $segments[0], $all);
-                    rmdir($filename);
+                    @rmdir($filename);
                 }
             }
         }
