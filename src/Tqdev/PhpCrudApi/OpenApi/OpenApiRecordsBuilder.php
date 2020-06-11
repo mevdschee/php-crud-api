@@ -22,16 +22,16 @@ class OpenApiRecordsBuilder
         'integer' => ['type' => 'integer', 'format' => 'int32'],
         'bigint' => ['type' => 'integer', 'format' => 'int64'],
         'varchar' => ['type' => 'string'],
-        'clob' => ['type' => 'string'],
+        'clob' => ['type' => 'string', 'format' => 'large-string'],   //custom format
         'varbinary' => ['type' => 'string', 'format' => 'byte'],
-        'blob' => ['type' => 'string', 'format' => 'byte'],
-        'decimal' => ['type' => 'string'],
+        'blob' => ['type' => 'string', 'format' => 'large-byte'],     //custom format
+        'decimal' => ['type' => 'string', 'format' => 'decimal'],     //custom format
         'float' => ['type' => 'number', 'format' => 'float'],
         'double' => ['type' => 'number', 'format' => 'double'],
         'date' => ['type' => 'string', 'format' => 'date'],
-        'time' => ['type' => 'string', 'format' => 'date-time'],
+        'time' => ['type' => 'string', 'format' => 'time'],           //custom format
         'timestamp' => ['type' => 'string', 'format' => 'date-time'],
-        'geometry' => ['type' => 'string'],
+        'geometry' => ['type' => 'string', 'format' => 'geometry'],   //custom format
         'boolean' => ['type' => 'boolean'],
     ];
 
@@ -203,8 +203,12 @@ class OpenApiRecordsBuilder
                 }
                 $column = $table->getColumn($columnName);
                 $properties = $this->types[$column->getType()];
+                $properties['maxLength'] = $column->hasLength() ? $column->getLength() : 0;
+                $properties['nullable'] = $column->getNullable();
                 foreach ($properties as $key => $value) {
-                    $this->openapi->set("$prefix|properties|$columnName|$key", $value);
+                    if ($value) {
+                        $this->openapi->set("$prefix|properties|$columnName|$key", $value);
+                    }
                 }
                 if ($column->getPk()) {
                     $this->openapi->set("$prefix|properties|$columnName|x-primary-key", true);
