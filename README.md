@@ -276,10 +276,10 @@ Examples of filter usage are:
 
     GET /records/categories?filter=name,eq,Internet
     GET /records/categories?filter=name,sw,Inter
-    GET /records/categories?filter=id,le,2
-    GET /records/categories?filter=id,ngt,2
-    GET /records/categories?filter=id,bt,1,2
-    GET /records/categories?filter=id,in,1,2
+    GET /records/categories?filter=id,le,1
+    GET /records/categories?filter=id,ngt,1
+    GET /records/categories?filter=id,bt,0,1
+    GET /records/categories?filter=id,in,0,1
 
 Output:
 
