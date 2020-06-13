@@ -194,9 +194,9 @@ class OpenApiRecordsBuilder
                 $s = $column->getScale();
                 return '^-?[0-9]{1,' . ($p - $s) . '}(\.[0-9]{1,' . $s . '})?$';
             case 'float':
-                return '^-?[0-9]+(\.[0-9]+)$';
+                return '^-?[0-9]+(\.[0-9]+)?([eE]-?[0-9]+)?$';
             case 'double':
-                return '^-?[0-9]+(\.[0-9]+)$';
+                return '^-?[0-9]+(\.[0-9]+)?([eE]-?[0-9]+)?$';
             case 'date':
                 return '^[0-9]{4}-[0-9]{2}-[0-9]{2}$';
             case 'time':
