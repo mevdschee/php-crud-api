@@ -23,8 +23,7 @@ class ResponseFactory
 
     public static function fromCsv(int $status, string $csv): ResponseInterface
     {
-        $response = self::from($status, 'text/csv', $csv);
-        return $response->withHeader('Content-Type', 'text/csv');
+        return self::from($status, 'text/csv', $csv);
     }
 
     public static function fromHtml(int $status, string $html): ResponseInterface
@@ -36,6 +35,17 @@ class ResponseFactory
     {
         $content = json_encode($body, JSON_UNESCAPED_UNICODE);
         return self::from($status, 'application/json', $content);
+    }
+
+    public static function fromFile(int $status, string $filename): ResponseInterface
+    {
+        $psr17Factory = new Psr17Factory();
+        $response = $psr17Factory->createResponse($status);
+        $stream = $psr17Factory->createStreamFromFile($filename);
+        $response = $response->withBody($stream);
+        $response = $response->withHeader('Content-Type', mime_content_type(basename($filename)));
+        $response = $response->withHeader('Content-Length', filesize($filename));
+        return $response;
     }
 
     private static function from(int $status, string $contentType, string $content): ResponseInterface
