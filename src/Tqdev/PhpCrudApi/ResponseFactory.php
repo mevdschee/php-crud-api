@@ -37,18 +37,7 @@ class ResponseFactory
         return self::from($status, 'application/json', $content);
     }
 
-    public static function fromFile(int $status, string $filename): ResponseInterface
-    {
-        $psr17Factory = new Psr17Factory();
-        $response = $psr17Factory->createResponse($status);
-        $stream = $psr17Factory->createStreamFromFile($filename);
-        $response = $response->withBody($stream);
-        $response = $response->withHeader('Content-Type', mime_content_type(basename($filename)));
-        $response = $response->withHeader('Content-Length', filesize($filename));
-        return $response;
-    }
-
-    private static function from(int $status, string $contentType, string $content): ResponseInterface
+    public static function from(int $status, string $contentType, string $content): ResponseInterface
     {
         $psr17Factory = new Psr17Factory();
         $response = $psr17Factory->createResponse($status);
