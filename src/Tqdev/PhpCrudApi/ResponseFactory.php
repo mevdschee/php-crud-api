@@ -8,6 +8,8 @@ use Psr\Http\Message\ResponseInterface;
 class ResponseFactory
 {
     const OK = 200;
+    const MOVED_PERMANENTLY = 301;
+    const FOUND = 302;
     const UNAUTHORIZED = 401;
     const FORBIDDEN = 403;
     const NOT_FOUND = 404;
