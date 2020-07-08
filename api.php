@@ -3879,23 +3879,43 @@ namespace Tqdev\PhpCrudApi\Column\Reflection {
                 $columns[$column->getName()] = $column;
             }
             // set primary key
-            $columnNames = $reflection->getTablePrimaryKeys($name);
-            if (count($columnNames) == 1) {
-                $columnName = $columnNames[0];
-                if (isset($columns[$columnName])) {
-                    $pk = $columns[$columnName];
-                    $pk->setPk(true);
+            $columnName = false;
+            if ($type == 'view') {
+                $columnName = 'id';
+            } else {
+                $columnNames = $reflection->getTablePrimaryKeys($name);
+                if (count($columnNames) == 1) {
+                    $columnName = $columnNames[0];
                 }
             }
+            if ($columnName && isset($columns[$columnName])) {
+                $pk = $columns[$columnName];
+                $pk->setPk(true);
+            }
             // set foreign keys
-            $fks = $reflection->getTableForeignKeys($name);
-            foreach ($fks as $columnName => $table) {
-                $columns[$columnName]->setFk($table);
+            if ($type == 'view') {
+                $tables = $reflection->getTables();
+                foreach ($columns as $columnName => $column) {
+                    if (substr($columnName, -3) == '_id') {
+                        foreach ($tables as $table) {
+                            $tableName = $table['TABLE_NAME'];
+                            $suffix = $tableName . '_id';
+                            if (substr($columnName, -1 * strlen($suffix)) == $suffix) {
+                                $column->setFk($tableName);
+                            }
+                        }
+                    }
+                }
+            } else {
+                $fks = $reflection->getTableForeignKeys($name);
+                foreach ($fks as $columnName => $table) {
+                    $columns[$columnName]->setFk($table);
+                }
             }
             return new ReflectedTable($name, $type, array_values($columns));
         }
 
-        public static function fromJson(/* object */$json): ReflectedTable
+        public static function fromJson( /* object */$json): ReflectedTable
         {
             $name = $json->name;
             $type = isset($json->type) ? $json->type : 'table';
@@ -4589,9 +4609,6 @@ namespace Tqdev\PhpCrudApi\Controller {
             $table = RequestUtils::getPathSegment($request, 2);
             if (!$this->service->hasTable($table)) {
                 return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $table);
-            }
-            if ($this->service->getType($table) != 'table') {
-                return $this->responder->error(ErrorCode::OPERATION_NOT_SUPPORTED, __FUNCTION__);
             }
             $id = RequestUtils::getPathSegment($request, 3);
             $params = RequestUtils::getParams($request);
@@ -6994,7 +7011,9 @@ namespace Tqdev\PhpCrudApi\Middleware\Router {
                         return substr($fullPath, 0, -1 * strlen($path));
                     }
                 }
-                return $fullPath;
+                if ('/' . basename(__FILE__) == $fullPath) {
+                    return $fullPath;
+                }
             }
             return '/';
         }
@@ -9045,9 +9064,9 @@ namespace Tqdev\PhpCrudApi\OpenApi {
 namespace Tqdev\PhpCrudApi\OpenApi {
 
     use Tqdev\PhpCrudApi\Column\ReflectionService;
+    use Tqdev\PhpCrudApi\Column\Reflection\ReflectedColumn;
     use Tqdev\PhpCrudApi\Middleware\Communication\VariableStore;
     use Tqdev\PhpCrudApi\OpenApi\OpenApiDefinition;
-    use Tqdev\PhpCrudApi\Column\Reflection\ReflectedColumn;
 
     class OpenApiRecordsBuilder
     {
@@ -9065,16 +9084,16 @@ namespace Tqdev\PhpCrudApi\OpenApi {
             'integer' => ['type' => 'integer', 'format' => 'int32'],
             'bigint' => ['type' => 'integer', 'format' => 'int64'],
             'varchar' => ['type' => 'string'],
-            'clob' => ['type' => 'string', 'format' => 'large-string'],   //custom format
+            'clob' => ['type' => 'string', 'format' => 'large-string'], //custom format
             'varbinary' => ['type' => 'string', 'format' => 'byte'],
-            'blob' => ['type' => 'string', 'format' => 'large-byte'],     //custom format
-            'decimal' => ['type' => 'string', 'format' => 'decimal'],     //custom format
+            'blob' => ['type' => 'string', 'format' => 'large-byte'], //custom format
+            'decimal' => ['type' => 'string', 'format' => 'decimal'], //custom format
             'float' => ['type' => 'number', 'format' => 'float'],
             'double' => ['type' => 'number', 'format' => 'double'],
             'date' => ['type' => 'string', 'format' => 'date'],
-            'time' => ['type' => 'string', 'format' => 'time'],           //custom format
+            'time' => ['type' => 'string', 'format' => 'time'], //custom format
             'timestamp' => ['type' => 'string', 'format' => 'date-time'],
-            'geometry' => ['type' => 'string', 'format' => 'geometry'],   //custom format
+            'geometry' => ['type' => 'string', 'format' => 'geometry'], //custom format
             'boolean' => ['type' => 'boolean'],
         ];
 
@@ -9264,7 +9283,10 @@ namespace Tqdev\PhpCrudApi\OpenApi {
                 if (!$pkName && $operation != 'list') {
                     continue;
                 }
-                if ($type != 'table' && $operation != 'list') {
+                if ($type == 'view' && !in_array($operation, array('read', 'list'))) {
+                    continue;
+                }
+                if ($type == 'view' && !$pkName && $operation == 'read') {
                     continue;
                 }
                 if ($operation == 'delete') {
@@ -11170,6 +11192,8 @@ namespace Tqdev\PhpCrudApi {
     class ResponseFactory
     {
         const OK = 200;
+        const MOVED_PERMANENTLY = 301;
+        const FOUND = 302;
         const UNAUTHORIZED = 401;
         const FORBIDDEN = 403;
         const NOT_FOUND = 404;
@@ -11185,8 +11209,7 @@ namespace Tqdev\PhpCrudApi {
 
         public static function fromCsv(int $status, string $csv): ResponseInterface
         {
-            $response = self::from($status, 'text/csv', $csv);
-            return $response->withHeader('Content-Type', 'text/csv');
+            return self::from($status, 'text/csv', $csv);
         }
 
         public static function fromHtml(int $status, string $html): ResponseInterface
@@ -11200,7 +11223,7 @@ namespace Tqdev\PhpCrudApi {
             return self::from($status, 'application/json', $content);
         }
 
-        private static function from(int $status, string $contentType, string $content): ResponseInterface
+        public static function from(int $status, string $contentType, string $content): ResponseInterface
         {
             $psr17Factory = new Psr17Factory();
             $response = $psr17Factory->createResponse($status);
