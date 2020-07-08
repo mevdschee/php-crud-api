@@ -3,9 +3,9 @@
 namespace Tqdev\PhpCrudApi\OpenApi;
 
 use Tqdev\PhpCrudApi\Column\ReflectionService;
+use Tqdev\PhpCrudApi\Column\Reflection\ReflectedColumn;
 use Tqdev\PhpCrudApi\Middleware\Communication\VariableStore;
 use Tqdev\PhpCrudApi\OpenApi\OpenApiDefinition;
-use Tqdev\PhpCrudApi\Column\Reflection\ReflectedColumn;
 
 class OpenApiRecordsBuilder
 {
@@ -23,16 +23,16 @@ class OpenApiRecordsBuilder
         'integer' => ['type' => 'integer', 'format' => 'int32'],
         'bigint' => ['type' => 'integer', 'format' => 'int64'],
         'varchar' => ['type' => 'string'],
-        'clob' => ['type' => 'string', 'format' => 'large-string'],   //custom format
+        'clob' => ['type' => 'string', 'format' => 'large-string'], //custom format
         'varbinary' => ['type' => 'string', 'format' => 'byte'],
-        'blob' => ['type' => 'string', 'format' => 'large-byte'],     //custom format
-        'decimal' => ['type' => 'string', 'format' => 'decimal'],     //custom format
+        'blob' => ['type' => 'string', 'format' => 'large-byte'], //custom format
+        'decimal' => ['type' => 'string', 'format' => 'decimal'], //custom format
         'float' => ['type' => 'number', 'format' => 'float'],
         'double' => ['type' => 'number', 'format' => 'double'],
         'date' => ['type' => 'string', 'format' => 'date'],
-        'time' => ['type' => 'string', 'format' => 'time'],           //custom format
+        'time' => ['type' => 'string', 'format' => 'time'], //custom format
         'timestamp' => ['type' => 'string', 'format' => 'date-time'],
-        'geometry' => ['type' => 'string', 'format' => 'geometry'],   //custom format
+        'geometry' => ['type' => 'string', 'format' => 'geometry'], //custom format
         'boolean' => ['type' => 'boolean'],
     ];
 
@@ -222,7 +222,10 @@ class OpenApiRecordsBuilder
             if (!$pkName && $operation != 'list') {
                 continue;
             }
-            if ($type != 'table' && $operation != 'list') {
+            if ($type == 'view' && !in_array($operation, array('read', 'list'))) {
+                continue;
+            }
+            if ($type == 'view' && !$pkName && $operation == 'read') {
                 continue;
             }
             if ($operation == 'delete') {
