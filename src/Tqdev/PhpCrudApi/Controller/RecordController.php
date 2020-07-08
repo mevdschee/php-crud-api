@@ -42,9 +42,6 @@ class RecordController
         if (!$this->service->hasTable($table)) {
             return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $table);
         }
-        if ($this->service->getType($table) != 'table') {
-            return $this->responder->error(ErrorCode::OPERATION_NOT_SUPPORTED, __FUNCTION__);
-        }
         $id = RequestUtils::getPathSegment($request, 3);
         $params = RequestUtils::getParams($request);
         if (strpos($id, ',') !== false) {
