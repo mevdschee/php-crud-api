@@ -10913,6 +10913,16 @@ namespace Tqdev\PhpCrudApi {
             ];
         }
 
+        private function applyEnvironmentVariables(array $values): array
+        {
+            $newValues = array();
+            foreach ($values as $key => $value) {
+                $environmentKey = 'PHP_CRUD_API_' . strtoupper(preg_replace('/(?<!^)[A-Z]/', '_$0', str_replace('.', '_', $key)));
+                $newValues[$key] = getenv($environmentKey, true) ?: $value;
+            }
+            return $newValues;
+        }
+
         public function __construct(array $values)
         {
             $driver = $this->getDefaultDriver($values);
@@ -10924,6 +10934,7 @@ namespace Tqdev\PhpCrudApi {
                 $key = array_keys($diff)[0];
                 throw new \Exception("Config has invalid value '$key'");
             }
+            $newValues = $this->applyEnvironmentVariables($newValues);
             $this->values = $newValues;
         }
 
