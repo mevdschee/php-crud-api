@@ -1218,7 +1218,23 @@ server {
 }
 ```
 
-### Docker
+### Docker image
+
+There is a `Dockerfile` in the repository that is used to build an image at:
+
+[https://hub.docker.com/r/mevdschee/php-crud-api](https://hub.docker.com/r/mevdschee/php-crud-api)
+
+### Docker compose
+
+This repository also contains a `docker-compose.yml` file that can be installed/built/ran using:
+
+    sudo apt install docker-compose
+    docker-compose build
+    docker-compose up
+
+This will setup a database (MySQL) and a webserver (Apache) and runs the application using the blog example data used in the tests.
+
+### Dockerized tests
 
 Install docker using the following commands and then logout and login for the changes to take effect:
 
