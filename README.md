@@ -1218,23 +1218,7 @@ server {
 }
 ```
 
-### Docker image
-
-There is a `Dockerfile` in the repository that is used to build an image at:
-
-[https://hub.docker.com/r/mevdschee/php-crud-api](https://hub.docker.com/r/mevdschee/php-crud-api)
-
-### Docker compose
-
-This repository also contains a `docker-compose.yml` file that can be installed/built/ran using:
-
-    sudo apt install docker-compose
-    docker-compose build
-    docker-compose up
-
-This will setup a database (MySQL) and a webserver (Apache) and runs the application using the blog example data used in the tests.
-
-### Dockerized tests
+### Docker tests
 
 Install docker using the following commands and then logout and login for the changes to take effect:
 
@@ -1343,3 +1327,19 @@ The above test run (including starting up the databases) takes less than 5 minut
 As you can see the "run.sh" script gives you access to a prompt in a chosen the docker environment.
 In this environment the local files are mounted. This allows for easy debugging on different environments.
 You may type "exit" when you are done.
+
+### Docker image
+
+There is a `Dockerfile` in the repository that is used to build an image at:
+
+[https://hub.docker.com/r/mevdschee/php-crud-api](https://hub.docker.com/r/mevdschee/php-crud-api)
+
+### Docker compose
+
+This repository also contains a `docker-compose.yml` file that can be installed/built/ran using:
+
+    sudo apt install docker-compose
+    docker-compose build
+    docker-compose up
+
+This will setup a database (MySQL) and a webserver (Apache) and runs the application using the blog example data used in the tests.
