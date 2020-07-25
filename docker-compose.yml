@@ -3,10 +3,9 @@ services:
     database:
         image: mysql:8.0
         container_name: database
-        command: --default-authentication-plugin=mysql_native_password
         restart: always
         environment:
-        #- MYSQL_ROOT_PASSWORD=php-crud-api
+        - MYSQL_ROOT_PASSWORD=php-crud-api
         - MYSQL_DATABASE=php-crud-api
         - MYSQL_USER=php-crud-api
         - MYSQL_PASSWORD=php-crud-api
