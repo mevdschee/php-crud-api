@@ -1338,7 +1338,7 @@ It will be automatically build on every release. The "latest" tag points to the 
 
 ### Docker compose
 
-This repository also contains a `docker-compose.yml` file that can be installed/built/ran using:
+This repository also contains a `docker-compose.yml` file that you can install/build/run using:
 
     sudo apt install docker-compose
     docker-compose build
