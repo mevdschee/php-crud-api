@@ -1334,6 +1334,8 @@ There is a `Dockerfile` in the repository that is used to build an image at:
 
 [https://hub.docker.com/r/mevdschee/php-crud-api](https://hub.docker.com/r/mevdschee/php-crud-api)
 
+It will be automatically build on every release. The "latest" tag points to the last release.
+
 ### Docker compose
 
 This repository also contains a `docker-compose.yml` file that can be installed/built/ran using:
