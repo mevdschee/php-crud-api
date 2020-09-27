@@ -15,11 +15,8 @@ class FilterInfo
         $conditions = new PathTree();
         foreach ($params as $key => $filters) {
             if (substr($key, 0, 6) == 'filter') {
-                $path = [];
-                $suffix = substr($key, 6);
-                if ($suffix) {
-                    $path = str_split($suffix);
-                }
+                preg_match_all('/\d+|\D+/', substr($key, 6), $matches);
+                $path = $matches[0];
                 foreach ($filters as $filter) {
                     $condition = Condition::fromString($table, $filter);
                     if (($condition instanceof NoCondition) == false) {
