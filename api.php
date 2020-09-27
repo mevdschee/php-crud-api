@@ -9937,27 +9937,22 @@ namespace Tqdev\PhpCrudApi\Record {
 
     class FilterInfo
     {
-        private function addConditionFromFilterPath(PathTree $conditions, array $path, ReflectedTable $table, array $params)
-        {
-            $key = 'filter' . implode('', $path);
-            if (isset($params[$key])) {
-                foreach ($params[$key] as $filter) {
-                    $condition = Condition::fromString($table, $filter);
-                    if (($condition instanceof NoCondition) == false) {
-                        $conditions->put($path, $condition);
-                    }
-                }
-            }
-        }
-
         private function getConditionsAsPathTree(ReflectedTable $table, array $params): PathTree
         {
             $conditions = new PathTree();
-            $this->addConditionFromFilterPath($conditions, [], $table, $params);
-            for ($n = ord('0'); $n <= ord('9'); $n++) {
-                $this->addConditionFromFilterPath($conditions, [chr($n)], $table, $params);
-                for ($l = ord('a'); $l <= ord('f'); $l++) {
-                    $this->addConditionFromFilterPath($conditions, [chr($n), chr($l)], $table, $params);
+            foreach ($params as $key => $filters) {
+                if (substr($key, 0, 6) == 'filter') {
+                    $path = [];
+                    $suffix = substr($key, 6);
+                    if ($suffix) {
+                        $path = str_split($suffix);
+                    }
+                    foreach ($filters as $filter) {
+                        $condition = Condition::fromString($table, $filter);
+                        if (($condition instanceof NoCondition) == false) {
+                            $conditions->put($path, $condition);
+                        }
+                    }
                 }
             }
             return $conditions;
