@@ -5,8 +5,9 @@ Access-Control-Request-Method: POST
 Access-Control-Request-Headers: X-XSRF-TOKEN, X-Requested-With
 ===
 200
-Access-Control-Allow-Headers: Content-Type, X-XSRF-TOKEN, X-Authorization
+Access-Control-Allow-Headers: Content-Type, X-XSRF-TOKEN, X-Authorization, X-Debug-Info, X-Exception-Name, X-Exception-Message, X-Exception-File
 Access-Control-Allow-Methods: OPTIONS, GET, PUT, POST, DELETE, PATCH
 Access-Control-Max-Age: 1728000
+Access-Control-Expose-Headers: X-Debug-Info, X-Exception-Name, X-Exception-Message, X-Exception-File
 Access-Control-Allow-Credentials: true
 Access-Control-Allow-Origin: http://example.com
