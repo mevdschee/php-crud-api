@@ -614,10 +614,10 @@ You can tune the middleware behavior using middleware specific configuration par
 - "firewall.reverseProxy": Set to "true" when a reverse proxy is used ("")
 - "firewall.allowedIpAddresses": List of IP addresses that are allowed to connect ("")
 - "cors.allowedOrigins": The origins allowed in the CORS headers ("*")
-- "cors.allowHeaders": The headers allowed in the CORS request ("Content-Type, X-XSRF-TOKEN")
+- "cors.allowHeaders": The headers allowed in the CORS request ("Content-Type, X-XSRF-TOKEN, X-Authorization, X-Debug-Info, X-Exception-Name, X-Exception-Message, X-Exception-File")
 - "cors.allowMethods": The methods allowed in the CORS request ("OPTIONS, GET, PUT, POST, DELETE, PATCH")
 - "cors.allowCredentials": To allow credentials in the CORS request ("true")
-- "cors.exposeHeaders": Whitelist headers that browsers are allowed to access ("")
+- "cors.exposeHeaders": Whitelist headers that browsers are allowed to access ("X-Debug-Info, X-Exception-Name, X-Exception-Message, X-Exception-File")
 - "cors.maxAge": The time that the CORS grant is valid in seconds ("1728000")
 - "xsrf.excludeMethods": The methods that do not require XSRF protection ("OPTIONS,GET")
 - "xsrf.cookieName": The name of the XSRF protection cookie ("XSRF-TOKEN")
@@ -1334,9 +1334,11 @@ There is a `Dockerfile` in the repository that is used to build an image at:
 
 [https://hub.docker.com/r/mevdschee/php-crud-api](https://hub.docker.com/r/mevdschee/php-crud-api)
 
+It will be automatically build on every release. The "latest" tag points to the last release.
+
 ### Docker compose
 
-This repository also contains a `docker-compose.yml` file that can be installed/built/ran using:
+This repository also contains a `docker-compose.yml` file that you can install/build/run using:
 
     sudo apt install docker-compose
     docker-compose build
