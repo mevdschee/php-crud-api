@@ -83,7 +83,7 @@ These are all the configuration options and their default value between brackets
 - "debug": Show errors in the "X-Debug-Info" header (`false`)
 - "basePath": URI base path of the API (determined using PATH_INFO by default)
 
-All the above are also available as environment variables with capitals, a "PHP_CRUD_API_" prefix and underscores for word breakes, so for instance:
+All configuration parameters are also available as environment variables. Write the config parameter with capitals, a "PHP_CRUD_API_" prefix and underscores for word breakes, so for instance:
 
 - PHP_CRUD_API_DRIVER=mysql
 - PHP_CRUD_API_ADDRESS=localhost
