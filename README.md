@@ -83,6 +83,18 @@ These are all the configuration options and their default value between brackets
 - "debug": Show errors in the "X-Debug-Info" header (`false`)
 - "basePath": URI base path of the API (determined using PATH_INFO by default)
 
+All the above are also available as environment variables, so for instance:
+
+- PHP_CRUD_API_DRIVER=mysql
+- PHP_CRUD_API_ADDRESS=localhost
+- PHP_CRUD_API_PORT=3306
+- PHP_CRUD_API_DATABASE=php-crud-api
+- PHP_CRUD_API_USERNAME=php-crud-api
+- PHP_CRUD_API_PASSWORD=php-crud-api
+- PHP_CRUD_API_DEBUG=1
+
+The environment variables take precedence over the PHP configuration.
+
 ## Limitations
 
 These limitation and constrains apply:
