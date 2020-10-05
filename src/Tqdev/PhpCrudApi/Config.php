@@ -12,7 +12,7 @@ class Config
         'password' => null,
         'database' => null,
         'tables' => '',
-        'middlewares' => 'cors',
+        'middlewares' => 'cors,errors',
         'controllers' => 'records,geojson,openapi',
         'customControllers' => '',
         'customOpenApiBuilders' => '',

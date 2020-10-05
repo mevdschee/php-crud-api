@@ -7364,6 +7364,44 @@ namespace Tqdev\PhpCrudApi\Middleware {
     }
 }
 
+// file: src/Tqdev/PhpCrudApi/Middleware/CatchErrorsMiddleware.php
+namespace Tqdev\PhpCrudApi\Middleware {
+
+    use Psr\Http\Message\ResponseInterface;
+    use Psr\Http\Message\ServerRequestInterface;
+    use Psr\Http\Server\RequestHandlerInterface;
+    use Tqdev\PhpCrudApi\Controller\Responder;
+    use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
+    use Tqdev\PhpCrudApi\Middleware\Router\Router;
+    use Tqdev\PhpCrudApi\Record\ErrorCode;
+    use Tqdev\PhpCrudApi\ResponseUtils;
+
+    class CatchErrorsMiddleware extends Middleware
+    {
+        private $debug;
+
+        public function __construct(Router $router, Responder $responder, array $properties, bool $debug)
+        {
+            parent::__construct($router, $responder, $properties);
+            $this->debug = $debug;
+        }
+
+        public function process(ServerRequestInterface $request, RequestHandlerInterface $next): ResponseInterface
+        {
+            $response = null;
+            try {
+                $response = $next->handle($request);
+            } catch (\Throwable $e) {
+                $response = $this->responder->error(ErrorCode::ERROR_NOT_FOUND, $e->getMessage());
+                if ($this->debug) {
+                    $response = ResponseUtils::addExceptionHeaders($response, $e);
+                }
+            }
+            return $response;
+        }
+    }
+}
+
 // file: src/Tqdev/PhpCrudApi/Middleware/CorsMiddleware.php
 namespace Tqdev\PhpCrudApi\Middleware {
 
@@ -10629,6 +10667,7 @@ namespace Tqdev\PhpCrudApi {
     use Tqdev\PhpCrudApi\GeoJson\GeoJsonService;
     use Tqdev\PhpCrudApi\Middleware\AuthorizationMiddleware;
     use Tqdev\PhpCrudApi\Middleware\BasicAuthMiddleware;
+    use Tqdev\PhpCrudApi\Middleware\CatchErrorsMiddleware;
     use Tqdev\PhpCrudApi\Middleware\CorsMiddleware;
     use Tqdev\PhpCrudApi\Middleware\CustomizationMiddleware;
     use Tqdev\PhpCrudApi\Middleware\DbAuthMiddleware;
@@ -10724,6 +10763,9 @@ namespace Tqdev\PhpCrudApi {
                         break;
                     case 'xml':
                         new XmlMiddleware($router, $responder, $properties, $reflection);
+                        break;
+                    case 'errors':
+                        new CatchErrorsMiddleware($router, $responder, [], $config->getDebug());
                         break;
                 }
             }
@@ -10821,16 +10863,7 @@ namespace Tqdev\PhpCrudApi {
 
         public function handle(ServerRequestInterface $request): ResponseInterface
         {
-            $response = null;
-            try {
-                $response = $this->router->route($this->addParsedBody($request));
-            } catch (\Throwable $e) {
-                $response = $this->responder->error(ErrorCode::ERROR_NOT_FOUND, $e->getMessage());
-                if ($this->debug) {
-                    $response = ResponseUtils::addExceptionHeaders($response, $e);
-                }
-            }
-            return $response;
+            return $this->router->route($this->addParsedBody($request));
         }
     }
 }
@@ -10848,7 +10881,7 @@ namespace Tqdev\PhpCrudApi {
             'password' => null,
             'database' => null,
             'tables' => '',
-            'middlewares' => 'cors',
+            'middlewares' => 'cors,errors',
             'controllers' => 'records,geojson,openapi',
             'customControllers' => '',
             'customOpenApiBuilders' => '',

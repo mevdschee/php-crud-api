@@ -18,6 +18,7 @@ use Tqdev\PhpCrudApi\Database\GenericDB;
 use Tqdev\PhpCrudApi\GeoJson\GeoJsonService;
 use Tqdev\PhpCrudApi\Middleware\AuthorizationMiddleware;
 use Tqdev\PhpCrudApi\Middleware\BasicAuthMiddleware;
+use Tqdev\PhpCrudApi\Middleware\CatchErrorsMiddleware;
 use Tqdev\PhpCrudApi\Middleware\CorsMiddleware;
 use Tqdev\PhpCrudApi\Middleware\CustomizationMiddleware;
 use Tqdev\PhpCrudApi\Middleware\DbAuthMiddleware;
@@ -113,6 +114,9 @@ class Api implements RequestHandlerInterface
                     break;
                 case 'xml':
                     new XmlMiddleware($router, $responder, $properties, $reflection);
+                    break;
+                case 'errors':
+                    new CatchErrorsMiddleware($router, $responder, $properties, $config->getDebug());
                     break;
             }
         }
@@ -210,15 +214,6 @@ class Api implements RequestHandlerInterface
 
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
-        $response = null;
-        try {
-            $response = $this->router->route($this->addParsedBody($request));
-        } catch (\Throwable $e) {
-            $response = $this->responder->error(ErrorCode::ERROR_NOT_FOUND, $e->getMessage());
-            if ($this->debug) {
-                $response = ResponseUtils::addExceptionHeaders($response, $e);
-            }
-        }
-        return $response;
+        return $this->router->route($this->addParsedBody($request));
     }
 }
