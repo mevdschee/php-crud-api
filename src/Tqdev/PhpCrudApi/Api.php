@@ -62,6 +62,7 @@ class Api implements RequestHandlerInterface
         $reflection = new ReflectionService($db, $cache, $config->getCacheTime());
         $responder = new JsonResponder();
         $router = new SimpleRouter($config->getBasePath(), $responder, $cache, $config->getCacheTime(), $config->getDebug());
+        new CatchErrorsMiddleware($router, $responder, [], $config->getDebug());
         foreach ($config->getMiddlewares() as $middleware => $properties) {
             switch ($middleware) {
                 case 'sslRedirect':

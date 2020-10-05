@@ -35,4 +35,15 @@ class CatchErrorsMiddleware extends Middleware
         }
         return $response;
     }
+
+    /**
+     * High priority, should always be one of the very first middlewares to be loaded
+     * Only cors middleware should be loaded earlier
+     *
+     * @return int
+     */
+    public function getPriority()
+    {
+        return 998;
+    }
 }

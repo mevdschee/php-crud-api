@@ -66,4 +66,14 @@ class CorsMiddleware extends Middleware
         }
         return $response;
     }
+
+    /**
+     * load early in the routing stack. should be loaded before catc herrors middleware,
+     * otherwise cors headers will be missing
+     * @return int
+     */
+    public function getPriority()
+    {
+        return 999;
+    }
 }
