@@ -7164,6 +7164,7 @@ namespace Tqdev\PhpCrudApi\Middleware {
     use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
     use Tqdev\PhpCrudApi\Middleware\Communication\VariableStore;
     use Tqdev\PhpCrudApi\Middleware\Router\Router;
+    use Tqdev\PhpCrudApi\Record\ErrorCode;
     use Tqdev\PhpCrudApi\Record\FilterInfo;
     use Tqdev\PhpCrudApi\RequestUtils;
 
@@ -7225,9 +7226,20 @@ namespace Tqdev\PhpCrudApi\Middleware {
             }
         }
 
+        private function pathHandler(string $path) /*: bool*/
+        {
+            $pathHandler = $this->getProperty('pathHandler', '');
+            return $pathHandler ? call_user_func($pathHandler, $path) : true;
+        }
+
         public function process(ServerRequestInterface $request, RequestHandlerInterface $next): ResponseInterface
         {
             $path = RequestUtils::getPathSegment($request, 1);
+
+            if (!$this->pathHandler($path)) {
+                return $this->responder->error(ErrorCode::ROUTE_NOT_FOUND, $request->getUri()->getPath());
+            }
+
             $operation = RequestUtils::getOperation($request);
             $tableNames = RequestUtils::getTableNames($request, $this->reflection);
             foreach ($tableNames as $tableName) {
