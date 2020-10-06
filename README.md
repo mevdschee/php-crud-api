@@ -665,6 +665,7 @@ You can tune the middleware behavior using middleware specific configuration par
 - "reconnect.passwordHandler": Handler to implement retrieval of the database password ("")
 - "authorization.tableHandler": Handler to implement table authorization rules ("")
 - "authorization.columnHandler": Handler to implement column authorization rules ("")
+- "authorization.pathHandler": Handler to implement path authorization rules ("")
 - "authorization.recordHandler": Handler to implement record authorization filter rules ("")
 - "validation.handler": Handler to implement validation rules for input values ("")
 - "validation.types": Types to enable type validation for, empty means 'none' ("all")
@@ -852,7 +853,7 @@ Add the "columns" controller in the configuration to enable this functionality.
 
 ### Authorizing tables, columns and records
 
-By default all tables and columns are accessible. If you want to restrict access to some tables you may add the 'authorization' middleware 
+By default all tables, columns and paths are accessible. If you want to restrict access to some tables you may add the 'authorization' middleware 
 and define a 'authorization.tableHandler' function that returns 'false' for these tables.
 
     'authorization.tableHandler' => function ($operation, $tableName) {
@@ -873,6 +874,12 @@ The above example will restrict access to the 'password' field of the 'users' ta
 
 The above example will disallow access to user records where the username is 'admin'. 
 This construct adds a filter to every executed query. 
+
+    'authorization.pathHandler' => function ($path) {
+        return $path === 'openapi' ? false : true;
+    },
+
+The above example will disabled the `/openapi` route.
 
 NB: You need to handle the creation of invalid records with a validation (or sanitation) handler.
 
