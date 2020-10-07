@@ -80,7 +80,7 @@ These are all the configuration options and their default value between brackets
 - "cacheType": `TempFile`, `Redis`, `Memcache`, `Memcached` or `NoCache` (`TempFile`)
 - "cachePath": Path/address of the cache (defaults to system's temp directory)
 - "cacheTime": Number of seconds the cache is valid (`10`)
-- "debug": Show errors in the "X-Debug-Info" header (`false`)
+- "debug": Show errors in the "X-Exception" headers (`false`)
 - "basePath": URI base path of the API (determined using PATH_INFO by default)
 
 All configuration options are also available as environment variables. Write the config option with capitals, a "PHP_CRUD_API_" prefix and underscores for word breakes, so for instance:

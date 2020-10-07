@@ -45,7 +45,10 @@ class CorsMiddleware extends Middleware
             $response = $this->responder->error(ErrorCode::ORIGIN_FORBIDDEN, $origin);
         } elseif ($method == 'OPTIONS') {
             $response = ResponseFactory::fromStatus(ResponseFactory::OK);
-            $allowHeaders = $this->getProperty('allowHeaders', 'Content-Type, X-XSRF-TOKEN, X-Authorization, X-Debug-Info, X-Exception-Name, X-Exception-Message, X-Exception-File');
+            $allowHeaders = $this->getProperty('allowHeaders', 'Content-Type, X-XSRF-TOKEN, X-Authorization');
+            if ($this->debug) {
+                $allowHeaders = implode(', ', array_filter([$allowHeaders, 'X-Exception-Name, X-Exception-Message, X-Exception-File']));
+            }
             if ($allowHeaders) {
                 $response = $response->withHeader('Access-Control-Allow-Headers', $allowHeaders);
             }
@@ -61,7 +64,10 @@ class CorsMiddleware extends Middleware
             if ($maxAge) {
                 $response = $response->withHeader('Access-Control-Max-Age', $maxAge);
             }
-            $exposeHeaders = $this->getProperty('exposeHeaders', 'X-Debug-Info, X-Exception-Name, X-Exception-Message, X-Exception-File');
+            $exposeHeaders = $this->getProperty('exposeHeaders', '');
+            if ($this->debug) {
+                $exposeHeaders = implode(', ', array_filter([$exposeHeaders, 'X-Exception-Name, X-Exception-Message, X-Exception-File']));
+            }
             if ($exposeHeaders) {
                 $response = $response->withHeader('Access-Control-Expose-Headers', $exposeHeaders);
             }
