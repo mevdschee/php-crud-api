@@ -18,7 +18,6 @@ use Tqdev\PhpCrudApi\Database\GenericDB;
 use Tqdev\PhpCrudApi\GeoJson\GeoJsonService;
 use Tqdev\PhpCrudApi\Middleware\AuthorizationMiddleware;
 use Tqdev\PhpCrudApi\Middleware\BasicAuthMiddleware;
-use Tqdev\PhpCrudApi\Middleware\CatchErrorsMiddleware;
 use Tqdev\PhpCrudApi\Middleware\CorsMiddleware;
 use Tqdev\PhpCrudApi\Middleware\CustomizationMiddleware;
 use Tqdev\PhpCrudApi\Middleware\DbAuthMiddleware;
@@ -62,14 +61,13 @@ class Api implements RequestHandlerInterface
         $reflection = new ReflectionService($db, $cache, $config->getCacheTime());
         $responder = new JsonResponder();
         $router = new SimpleRouter($config->getBasePath(), $responder, $cache, $config->getCacheTime(), $config->getDebug());
-        new CatchErrorsMiddleware($router, $responder, [], $config->getDebug());
         foreach ($config->getMiddlewares() as $middleware => $properties) {
             switch ($middleware) {
                 case 'sslRedirect':
                     new SslRedirectMiddleware($router, $responder, $properties);
                     break;
                 case 'cors':
-                    new CorsMiddleware($router, $responder, $properties);
+                    new CorsMiddleware($router, $responder, $properties, $config->getDebug());
                     break;
                 case 'firewall':
                     new FirewallMiddleware($router, $responder, $properties);
@@ -115,9 +113,6 @@ class Api implements RequestHandlerInterface
                     break;
                 case 'xml':
                     new XmlMiddleware($router, $responder, $properties, $reflection);
-                    break;
-                case 'errors':
-                    new CatchErrorsMiddleware($router, $responder, $properties, $config->getDebug());
                     break;
             }
         }

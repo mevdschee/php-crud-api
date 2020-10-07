@@ -96,10 +96,6 @@ class SimpleRouter implements Router
             $this->cache->set('PathTree', $data, $this->ttl);
         }
 
-        uasort($this->middlewares, function (Middleware $a, Middleware $b) {
-            return $a->getPriority() > $b->getPriority() ? 1 : ($a->getPriority() === $b->getPriority() ? 0 : -1);
-        });
-
         return $this->handle($request);
     }
 

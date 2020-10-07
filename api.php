@@ -6893,17 +6893,6 @@ namespace Tqdev\PhpCrudApi\Middleware\Base {
             $this->properties = $properties;
         }
 
-        /**
-         * allows to load middlewares in a specific order
-         * The higher the priority, the earlier the middleware will be called
-         *
-         * @return int
-         */
-        public function getPriority() /* : int */
-        {
-            return 1;
-        }
-
         protected function getArrayProperty(string $key, string $default): array
         {
             return array_filter(array_map('trim', explode(',', $this->getProperty($key, $default))));
@@ -7067,10 +7056,6 @@ namespace Tqdev\PhpCrudApi\Middleware\Router {
                 $data = gzcompress(json_encode($this->routes, JSON_UNESCAPED_UNICODE));
                 $this->cache->set('PathTree', $data, $this->ttl);
             }
-
-            uasort($this->middlewares, function (Middleware $a, Middleware $b) {
-                return $a->getPriority() > $b->getPriority() ? 1 : ($a->getPriority() === $b->getPriority() ? 0 : -1);
-            });
 
             return $this->handle($request);
         }
@@ -7392,7 +7377,7 @@ namespace Tqdev\PhpCrudApi\Middleware {
     }
 }
 
-// file: src/Tqdev/PhpCrudApi/Middleware/CatchErrorsMiddleware.php
+// file: src/Tqdev/PhpCrudApi/Middleware/CorsMiddleware.php
 namespace Tqdev\PhpCrudApi\Middleware {
 
     use Psr\Http\Message\ResponseInterface;
@@ -7402,9 +7387,10 @@ namespace Tqdev\PhpCrudApi\Middleware {
     use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
     use Tqdev\PhpCrudApi\Middleware\Router\Router;
     use Tqdev\PhpCrudApi\Record\ErrorCode;
+    use Tqdev\PhpCrudApi\ResponseFactory;
     use Tqdev\PhpCrudApi\ResponseUtils;
 
-    class CatchErrorsMiddleware extends Middleware
+    class CorsMiddleware extends Middleware
     {
         private $debug;
 
@@ -7414,45 +7400,6 @@ namespace Tqdev\PhpCrudApi\Middleware {
             $this->debug = $debug;
         }
 
-        public function process(ServerRequestInterface $request, RequestHandlerInterface $next): ResponseInterface
-        {
-            $response = null;
-            try {
-                $response = $next->handle($request);
-            } catch (\Throwable $e) {
-                $response = $this->responder->error(ErrorCode::ERROR_NOT_FOUND, $e->getMessage());
-                if ($this->debug) {
-                    $response = ResponseUtils::addExceptionHeaders($response, $e);
-                }
-            }
-            return $response;
-        }
-
-        /**
-         * High priority, should always be one of the very first middlewares to be loaded
-         * Only cors middleware should be loaded earlier
-         *
-         * @return int
-         */
-        public function getPriority()
-        {
-            return 998;
-        }
-    }
-}
-
-// file: src/Tqdev/PhpCrudApi/Middleware/CorsMiddleware.php
-namespace Tqdev\PhpCrudApi\Middleware {
-
-    use Psr\Http\Message\ResponseInterface;
-    use Psr\Http\Message\ServerRequestInterface;
-    use Psr\Http\Server\RequestHandlerInterface;
-    use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
-    use Tqdev\PhpCrudApi\Record\ErrorCode;
-    use Tqdev\PhpCrudApi\ResponseFactory;
-
-    class CorsMiddleware extends Middleware
-    {
         private function isOriginAllowed(string $origin, string $allowedOrigins): bool
         {
             $found = false;
@@ -7497,7 +7444,15 @@ namespace Tqdev\PhpCrudApi\Middleware {
                     $response = $response->withHeader('Access-Control-Expose-Headers', $exposeHeaders);
                 }
             } else {
-                $response = $next->handle($request);
+                $response = null;
+                try {
+                    $response = $next->handle($request);
+                } catch (\Throwable $e) {
+                    $response = $this->responder->error(ErrorCode::ERROR_NOT_FOUND, $e->getMessage());
+                    if ($this->debug) {
+                        $response = ResponseUtils::addExceptionHeaders($response, $e);
+                    }
+                }
             }
             if ($origin) {
                 $allowCredentials = $this->getProperty('allowCredentials', 'true');
@@ -7507,16 +7462,6 @@ namespace Tqdev\PhpCrudApi\Middleware {
                 $response = $response->withHeader('Access-Control-Allow-Origin', $origin);
             }
             return $response;
-        }
-
-        /**
-         * load early in the routing stack. should be loaded before catc herrors middleware,
-         * otherwise cors headers will be missing
-         * @return int
-         */
-        public function getPriority()
-        {
-            return 999;
         }
     }
 }
@@ -10716,7 +10661,6 @@ namespace Tqdev\PhpCrudApi {
     use Tqdev\PhpCrudApi\GeoJson\GeoJsonService;
     use Tqdev\PhpCrudApi\Middleware\AuthorizationMiddleware;
     use Tqdev\PhpCrudApi\Middleware\BasicAuthMiddleware;
-    use Tqdev\PhpCrudApi\Middleware\CatchErrorsMiddleware;
     use Tqdev\PhpCrudApi\Middleware\CorsMiddleware;
     use Tqdev\PhpCrudApi\Middleware\CustomizationMiddleware;
     use Tqdev\PhpCrudApi\Middleware\DbAuthMiddleware;
@@ -10760,14 +10704,13 @@ namespace Tqdev\PhpCrudApi {
             $reflection = new ReflectionService($db, $cache, $config->getCacheTime());
             $responder = new JsonResponder();
             $router = new SimpleRouter($config->getBasePath(), $responder, $cache, $config->getCacheTime(), $config->getDebug());
-            new CatchErrorsMiddleware($router, $responder, [], $config->getDebug());
             foreach ($config->getMiddlewares() as $middleware => $properties) {
                 switch ($middleware) {
                     case 'sslRedirect':
                         new SslRedirectMiddleware($router, $responder, $properties);
                         break;
                     case 'cors':
-                        new CorsMiddleware($router, $responder, $properties);
+                        new CorsMiddleware($router, $responder, $properties, $config->getDebug());
                         break;
                     case 'firewall':
                         new FirewallMiddleware($router, $responder, $properties);
@@ -10813,9 +10756,6 @@ namespace Tqdev\PhpCrudApi {
                         break;
                     case 'xml':
                         new XmlMiddleware($router, $responder, $properties, $reflection);
-                        break;
-                    case 'errors':
-                        new CatchErrorsMiddleware($router, $responder, [], $config->getDebug());
                         break;
                 }
             }

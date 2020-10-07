@@ -19,17 +19,6 @@ abstract class Middleware implements MiddlewareInterface
         $this->properties = $properties;
     }
 
-    /**
-     * allows to load middlewares in a specific order
-     * The higher the priority, the earlier the middleware will be called
-     *
-     * @return int
-     */
-    public function getPriority() /* : int */
-    {
-        return 1;
-    }
-
     protected function getArrayProperty(string $key, string $default): array
     {
         return array_filter(array_map('trim', explode(',', $this->getProperty($key, $default))));

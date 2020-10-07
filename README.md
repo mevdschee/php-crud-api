@@ -619,8 +619,6 @@ You can enable the following middleware using the "middlewares" config parameter
 - "joinLimits": Restricts join parameters to prevent database scraping
 - "customization": Provides handlers for request and response customization
 - "xml": Translates all input and output from JSON to XML
-- "errors": Catches throwables and returns an error response instead of throwing  (enabled by default)\
-  Should always be applied after cors middleware, otherwise errors will not have CORS headers sent to the client.
 
 The "middlewares" config parameter is a comma separated list of enabled middlewares.
 You can tune the middleware behavior using middleware specific configuration parameters:
