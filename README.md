@@ -80,8 +80,20 @@ These are all the configuration options and their default value between brackets
 - "cacheType": `TempFile`, `Redis`, `Memcache`, `Memcached` or `NoCache` (`TempFile`)
 - "cachePath": Path/address of the cache (defaults to system's temp directory)
 - "cacheTime": Number of seconds the cache is valid (`10`)
-- "debug": Show errors in the "X-Debug-Info" header (`false`)
+- "debug": Show errors in the "X-Exception" headers (`false`)
 - "basePath": URI base path of the API (determined using PATH_INFO by default)
+
+All configuration options are also available as environment variables. Write the config option with capitals, a "PHP_CRUD_API_" prefix and underscores for word breakes, so for instance:
+
+- PHP_CRUD_API_DRIVER=mysql
+- PHP_CRUD_API_ADDRESS=localhost
+- PHP_CRUD_API_PORT=3306
+- PHP_CRUD_API_DATABASE=php-crud-api
+- PHP_CRUD_API_USERNAME=php-crud-api
+- PHP_CRUD_API_PASSWORD=php-crud-api
+- PHP_CRUD_API_DEBUG=1
+
+The environment variables take precedence over the PHP configuration.
 
 ## Limitations
 
@@ -614,10 +626,10 @@ You can tune the middleware behavior using middleware specific configuration par
 - "firewall.reverseProxy": Set to "true" when a reverse proxy is used ("")
 - "firewall.allowedIpAddresses": List of IP addresses that are allowed to connect ("")
 - "cors.allowedOrigins": The origins allowed in the CORS headers ("*")
-- "cors.allowHeaders": The headers allowed in the CORS request ("Content-Type, X-XSRF-TOKEN, X-Authorization, X-Debug-Info, X-Exception-Name, X-Exception-Message, X-Exception-File")
+- "cors.allowHeaders": The headers allowed in the CORS request ("Content-Type, X-XSRF-TOKEN, X-Authorization")
 - "cors.allowMethods": The methods allowed in the CORS request ("OPTIONS, GET, PUT, POST, DELETE, PATCH")
 - "cors.allowCredentials": To allow credentials in the CORS request ("true")
-- "cors.exposeHeaders": Whitelist headers that browsers are allowed to access ("X-Debug-Info, X-Exception-Name, X-Exception-Message, X-Exception-File")
+- "cors.exposeHeaders": Whitelist headers that browsers are allowed to access ("")
 - "cors.maxAge": The time that the CORS grant is valid in seconds ("1728000")
 - "xsrf.excludeMethods": The methods that do not require XSRF protection ("OPTIONS,GET")
 - "xsrf.cookieName": The name of the XSRF protection cookie ("XSRF-TOKEN")
@@ -653,6 +665,7 @@ You can tune the middleware behavior using middleware specific configuration par
 - "reconnect.passwordHandler": Handler to implement retrieval of the database password ("")
 - "authorization.tableHandler": Handler to implement table authorization rules ("")
 - "authorization.columnHandler": Handler to implement column authorization rules ("")
+- "authorization.pathHandler": Handler to implement path authorization rules ("")
 - "authorization.recordHandler": Handler to implement record authorization filter rules ("")
 - "validation.handler": Handler to implement validation rules for input values ("")
 - "validation.types": Types to enable type validation for, empty means 'none' ("all")
@@ -840,7 +853,7 @@ Add the "columns" controller in the configuration to enable this functionality.
 
 ### Authorizing tables, columns and records
 
-By default all tables and columns are accessible. If you want to restrict access to some tables you may add the 'authorization' middleware 
+By default all tables, columns and paths are accessible. If you want to restrict access to some tables you may add the 'authorization' middleware 
 and define a 'authorization.tableHandler' function that returns 'false' for these tables.
 
     'authorization.tableHandler' => function ($operation, $tableName) {
@@ -861,6 +874,12 @@ The above example will restrict access to the 'password' field of the 'users' ta
 
 The above example will disallow access to user records where the username is 'admin'. 
 This construct adds a filter to every executed query. 
+
+    'authorization.pathHandler' => function ($path) {
+        return $path === 'openapi' ? false : true;
+    },
+
+The above example will disabled the `/openapi` route.
 
 NB: You need to handle the creation of invalid records with a validation (or sanitation) handler.
 

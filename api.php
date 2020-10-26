@@ -7056,6 +7056,7 @@ namespace Tqdev\PhpCrudApi\Middleware\Router {
                 $data = gzcompress(json_encode($this->routes, JSON_UNESCAPED_UNICODE));
                 $this->cache->set('PathTree', $data, $this->ttl);
             }
+
             return $this->handle($request);
         }
 
@@ -7164,6 +7165,7 @@ namespace Tqdev\PhpCrudApi\Middleware {
     use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
     use Tqdev\PhpCrudApi\Middleware\Communication\VariableStore;
     use Tqdev\PhpCrudApi\Middleware\Router\Router;
+    use Tqdev\PhpCrudApi\Record\ErrorCode;
     use Tqdev\PhpCrudApi\Record\FilterInfo;
     use Tqdev\PhpCrudApi\RequestUtils;
 
@@ -7225,9 +7227,20 @@ namespace Tqdev\PhpCrudApi\Middleware {
             }
         }
 
+        private function pathHandler(string $path) /*: bool*/
+        {
+            $pathHandler = $this->getProperty('pathHandler', '');
+            return $pathHandler ? call_user_func($pathHandler, $path) : true;
+        }
+
         public function process(ServerRequestInterface $request, RequestHandlerInterface $next): ResponseInterface
         {
             $path = RequestUtils::getPathSegment($request, 1);
+
+            if (!$this->pathHandler($path)) {
+                return $this->responder->error(ErrorCode::ROUTE_NOT_FOUND, $request->getUri()->getPath());
+            }
+
             $operation = RequestUtils::getOperation($request);
             $tableNames = RequestUtils::getTableNames($request, $this->reflection);
             foreach ($tableNames as $tableName) {
@@ -7370,12 +7383,23 @@ namespace Tqdev\PhpCrudApi\Middleware {
     use Psr\Http\Message\ResponseInterface;
     use Psr\Http\Message\ServerRequestInterface;
     use Psr\Http\Server\RequestHandlerInterface;
+    use Tqdev\PhpCrudApi\Controller\Responder;
     use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
+    use Tqdev\PhpCrudApi\Middleware\Router\Router;
     use Tqdev\PhpCrudApi\Record\ErrorCode;
     use Tqdev\PhpCrudApi\ResponseFactory;
+    use Tqdev\PhpCrudApi\ResponseUtils;
 
     class CorsMiddleware extends Middleware
     {
+        private $debug;
+
+        public function __construct(Router $router, Responder $responder, array $properties, bool $debug)
+        {
+            parent::__construct($router, $responder, $properties);
+            $this->debug = $debug;
+        }
+
         private function isOriginAllowed(string $origin, string $allowedOrigins): bool
         {
             $found = false;
@@ -7399,7 +7423,10 @@ namespace Tqdev\PhpCrudApi\Middleware {
                 $response = $this->responder->error(ErrorCode::ORIGIN_FORBIDDEN, $origin);
             } elseif ($method == 'OPTIONS') {
                 $response = ResponseFactory::fromStatus(ResponseFactory::OK);
-                $allowHeaders = $this->getProperty('allowHeaders', 'Content-Type, X-XSRF-TOKEN, X-Authorization, X-Debug-Info, X-Exception-Name, X-Exception-Message, X-Exception-File');
+                $allowHeaders = $this->getProperty('allowHeaders', 'Content-Type, X-XSRF-TOKEN, X-Authorization');
+                if ($this->debug) {
+                    $allowHeaders = implode(', ', array_filter([$allowHeaders, 'X-Exception-Name, X-Exception-Message, X-Exception-File']));
+                }
                 if ($allowHeaders) {
                     $response = $response->withHeader('Access-Control-Allow-Headers', $allowHeaders);
                 }
@@ -7415,12 +7442,23 @@ namespace Tqdev\PhpCrudApi\Middleware {
                 if ($maxAge) {
                     $response = $response->withHeader('Access-Control-Max-Age', $maxAge);
                 }
-                $exposeHeaders = $this->getProperty('exposeHeaders', 'X-Debug-Info, X-Exception-Name, X-Exception-Message, X-Exception-File');
+                $exposeHeaders = $this->getProperty('exposeHeaders', '');
+                if ($this->debug) {
+                    $exposeHeaders = implode(', ', array_filter([$exposeHeaders, 'X-Exception-Name, X-Exception-Message, X-Exception-File']));
+                }
                 if ($exposeHeaders) {
                     $response = $response->withHeader('Access-Control-Expose-Headers', $exposeHeaders);
                 }
             } else {
-                $response = $next->handle($request);
+                $response = null;
+                try {
+                    $response = $next->handle($request);
+                } catch (\Throwable $e) {
+                    $response = $this->responder->error(ErrorCode::ERROR_NOT_FOUND, $e->getMessage());
+                    if ($this->debug) {
+                        $response = ResponseUtils::addExceptionHeaders($response, $e);
+                    }
+                }
             }
             if ($origin) {
                 $allowCredentials = $this->getProperty('allowCredentials', 'true');
@@ -9937,27 +9975,19 @@ namespace Tqdev\PhpCrudApi\Record {
 
     class FilterInfo
     {
-        private function addConditionFromFilterPath(PathTree $conditions, array $path, ReflectedTable $table, array $params)
-        {
-            $key = 'filter' . implode('', $path);
-            if (isset($params[$key])) {
-                foreach ($params[$key] as $filter) {
-                    $condition = Condition::fromString($table, $filter);
-                    if (($condition instanceof NoCondition) == false) {
-                        $conditions->put($path, $condition);
-                    }
-                }
-            }
-        }
-
         private function getConditionsAsPathTree(ReflectedTable $table, array $params): PathTree
         {
             $conditions = new PathTree();
-            $this->addConditionFromFilterPath($conditions, [], $table, $params);
-            for ($n = ord('0'); $n <= ord('9'); $n++) {
-                $this->addConditionFromFilterPath($conditions, [chr($n)], $table, $params);
-                for ($l = ord('a'); $l <= ord('f'); $l++) {
-                    $this->addConditionFromFilterPath($conditions, [chr($n), chr($l)], $table, $params);
+            foreach ($params as $key => $filters) {
+                if (substr($key, 0, 6) == 'filter') {
+                    preg_match_all('/\d+|\D+/', substr($key, 6), $matches);
+                    $path = $matches[0];
+                    foreach ($filters as $filter) {
+                        $condition = Condition::fromString($table, $filter);
+                        if (($condition instanceof NoCondition) == false) {
+                            $conditions->put($path, $condition);
+                        }
+                    }
                 }
             }
             return $conditions;
@@ -10686,7 +10716,7 @@ namespace Tqdev\PhpCrudApi {
                         new SslRedirectMiddleware($router, $responder, $properties);
                         break;
                     case 'cors':
-                        new CorsMiddleware($router, $responder, $properties);
+                        new CorsMiddleware($router, $responder, $properties, $config->getDebug());
                         break;
                     case 'firewall':
                         new FirewallMiddleware($router, $responder, $properties);
@@ -10829,16 +10859,7 @@ namespace Tqdev\PhpCrudApi {
 
         public function handle(ServerRequestInterface $request): ResponseInterface
         {
-            $response = null;
-            try {
-                $response = $this->router->route($this->addParsedBody($request));
-            } catch (\Throwable $e) {
-                $response = $this->responder->error(ErrorCode::ERROR_NOT_FOUND, $e->getMessage());
-                if ($this->debug) {
-                    $response = ResponseUtils::addExceptionHeaders($response, $e);
-                }
-            }
-            return $response;
+            return $this->router->route($this->addParsedBody($request));
         }
     }
 }
@@ -10856,7 +10877,7 @@ namespace Tqdev\PhpCrudApi {
             'password' => null,
             'database' => null,
             'tables' => '',
-            'middlewares' => 'cors',
+            'middlewares' => 'cors,errors',
             'controllers' => 'records,geojson,openapi',
             'customControllers' => '',
             'customOpenApiBuilders' => '',

@@ -67,7 +67,7 @@ class Api implements RequestHandlerInterface
                     new SslRedirectMiddleware($router, $responder, $properties);
                     break;
                 case 'cors':
-                    new CorsMiddleware($router, $responder, $properties);
+                    new CorsMiddleware($router, $responder, $properties, $config->getDebug());
                     break;
                 case 'firewall':
                     new FirewallMiddleware($router, $responder, $properties);
@@ -210,15 +210,6 @@ class Api implements RequestHandlerInterface
 
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
-        $response = null;
-        try {
-            $response = $this->router->route($this->addParsedBody($request));
-        } catch (\Throwable $e) {
-            $response = $this->responder->error(ErrorCode::ERROR_NOT_FOUND, $e->getMessage());
-            if ($this->debug) {
-                $response = ResponseUtils::addExceptionHeaders($response, $e);
-            }
-        }
-        return $response;
+        return $this->router->route($this->addParsedBody($request));
     }
 }

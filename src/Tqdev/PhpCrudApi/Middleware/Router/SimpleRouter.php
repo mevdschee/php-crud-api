@@ -95,6 +95,7 @@ class SimpleRouter implements Router
             $data = gzcompress(json_encode($this->routes, JSON_UNESCAPED_UNICODE));
             $this->cache->set('PathTree', $data, $this->ttl);
         }
+
         return $this->handle($request);
     }
 
