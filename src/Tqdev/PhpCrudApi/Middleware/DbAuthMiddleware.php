@@ -85,6 +85,12 @@ class DbAuthMiddleware extends Middleware
             }
             return $this->responder->error(ErrorCode::AUTHENTICATION_REQUIRED, '');
         }
+        if ($method == 'GET' && $path == 'me') {
+            if (isset($_SESSION['user'])) {
+                return $this->responder->success($_SESSION['user']);
+            }
+            return $this->responder->error(ErrorCode::AUTHENTICATION_REQUIRED, '');
+        }
         if (!isset($_SESSION['user']) || !$_SESSION['user']) {
             $authenticationMode = $this->getProperty('mode', 'required');
             if ($authenticationMode == 'required') {
