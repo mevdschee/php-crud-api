@@ -2,7 +2,7 @@
 echo "================================================"
 echo " CentOS 8 (PHP 7.4)"
 echo "================================================"
-echo -n "[1/4] Starting MariaDB 10.4 ..... "
+echo -n "[1/4] Starting MariaDB 10.5 ..... "
 # initialize mysql
 mysql_install_db > /dev/null
 chown -R mysql:mysql /var/lib/mysql
@@ -21,7 +21,7 @@ FLUSH PRIVILEGES;
 EOF
 echo "done"
 
-echo -n "[2/4] Starting PostgreSQL 12.2 .. "
+echo -n "[2/4] Starting PostgreSQL 12.5 .. "
 # initialize postgresql
 su - -c "/usr/pgsql-12/bin/initdb --auth-local peer --auth-host password -D /var/lib/pgsql/data" postgres > /dev/null
 # run postgres server
