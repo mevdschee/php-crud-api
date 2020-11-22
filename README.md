@@ -916,7 +916,7 @@ The above example will strip all HTML tags from strings in the input.
 
 ### Type sanitation
 
-If you enable the 'sanitation' middleware, then you (automtically) also enable type sanitation. When this is enabled you may:
+If you enable the 'sanitation' middleware, then you (automatically) also enable type sanitation. When this is enabled you may:
 
 - send leading and trailing whitespace in a non-character field (it will be ignored).
 - send a float to an integer or bigint field (it will be rounded).
@@ -963,7 +963,7 @@ You can parse this output to make form fields show up with a red border and thei
 
 ### Type validations
 
-If you enable the 'validation' middleware, then you (automtically) also enable type validation. 
+If you enable the 'validation' middleware, then you (automatically) also enable type validation. 
 This includes the following error messages:
 
 | error message       | reason                      | applies to types                            |
