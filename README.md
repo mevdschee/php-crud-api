@@ -1,6 +1,6 @@
 # PHP-CRUD-API
 
-Single file PHP 7 script that adds a REST API to a MySQL, PostgreSQL, MS SQL Server or SQLite database. 
+Single file PHP 7 script that adds a REST API to a MySQL, PostgreSQL, SQL Server or SQLite database. 
 
 NB: This is the [TreeQL](https://treeql.org) reference implementation in PHP.
 
