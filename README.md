@@ -1066,7 +1066,7 @@ You may use the "xml" middleware to translate input and output from JSON to XML.
 
     GET /records/posts/1
 
-Outputs:
+Outputs (when "pretty printed"):
 
     {
         "id": 1,
