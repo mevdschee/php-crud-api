@@ -898,7 +898,7 @@ should not use the "authorization" middleware, but you do need to use the "recon
     },
 
 This will make the API connect to the database specifying "mevdschee" as the username and "secret123" as the password.
-The OpenAPI specification is less specific on allowed and disallowed operations, when you are using database permissions,
+The OpenAPI specification is less specific on allowed and disallowed operations when you are using database permissions,
 as the permissions are not read in the reflection step.
 
 NB: You may want to retrieve the username and password from the session (the "$_SESSION" variable).
