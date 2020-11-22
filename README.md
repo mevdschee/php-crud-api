@@ -33,6 +33,8 @@ There are also proof-of-concept ports of this script that only support basic RES
     - SQL Server 2012 or higher (2017 for Linux support)
     - SQLite 3.16 or higher (spatial features NOT supported)
 
+Recommended platform: Ubuntu 20.04
+
 ## Installation
 
 This is a single file application! Upload "`api.php`" somewhere and enjoy!
