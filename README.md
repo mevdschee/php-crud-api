@@ -1068,7 +1068,12 @@ You may use the "xml" middleware to translate input and output from JSON to XML.
 
 Outputs:
 
-    {"id":1,"user_id":1,"category_id":1,"content":"blog started"}
+    {
+        "id": 1,
+        "user_id": 1,
+        "category_id": 1,
+        "content": "blog started"
+    }
 
 While (note the "format" query parameter):
 
@@ -1076,7 +1081,12 @@ While (note the "format" query parameter):
 
 Outputs:
 
-    <root><id>1</id><user_id>1</user_id><category_id>1</category_id><content>blog started</content></root>
+    <root>
+        <id>1</id>
+        <user_id>1</user_id>
+        <category_id>1</category_id>
+        <content>blog started</content>
+    </root>
 
 This functionality is disabled by default and must be enabled using the "middlewares" configuration setting.
 
