@@ -13,7 +13,7 @@ class Config
         'database' => null,
         'tables' => '',
         'middlewares' => 'cors,errors',
-        'controllers' => 'records,geojson,openapi',
+        'controllers' => 'records,geojson,procedures,openapi',
         'customControllers' => '',
         'customOpenApiBuilders' => '',
         'cacheType' => 'TempFile',
@@ -22,6 +22,7 @@ class Config
         'debug' => false,
         'basePath' => '',
         'openApiBase' => '{"info":{"title":"PHP-CRUD-API","version":"1.0.0"}}',
+        'proceduresDir' => './procedures/'
     ];
 
     private function getDefaultDriver(array $values): string
@@ -201,5 +202,10 @@ class Config
     public function getOpenApiBase(): array
     {
         return json_decode($this->values['openApiBase'], true);
+    }
+
+    public function getProceduresDir(): string
+    {
+        return $this->values['proceduresDir'];
     }
 }

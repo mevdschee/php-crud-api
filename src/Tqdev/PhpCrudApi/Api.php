@@ -13,6 +13,7 @@ use Tqdev\PhpCrudApi\Controller\ColumnController;
 use Tqdev\PhpCrudApi\Controller\GeoJsonController;
 use Tqdev\PhpCrudApi\Controller\JsonResponder;
 use Tqdev\PhpCrudApi\Controller\OpenApiController;
+use Tqdev\PhpCrudApi\Controller\ProcedureController;
 use Tqdev\PhpCrudApi\Controller\RecordController;
 use Tqdev\PhpCrudApi\Database\GenericDB;
 use Tqdev\PhpCrudApi\GeoJson\GeoJsonService;
@@ -37,6 +38,7 @@ use Tqdev\PhpCrudApi\Middleware\XsrfMiddleware;
 use Tqdev\PhpCrudApi\OpenApi\OpenApiService;
 use Tqdev\PhpCrudApi\Record\ErrorCode;
 use Tqdev\PhpCrudApi\Record\RecordService;
+use Tqdev\PhpCrudApi\Procedure\ProcedureService;
 use Tqdev\PhpCrudApi\ResponseUtils;
 
 class Api implements RequestHandlerInterface
@@ -137,6 +139,10 @@ class Api implements RequestHandlerInterface
                     $records = new RecordService($db, $reflection);
                     $geoJson = new GeoJsonService($reflection, $records);
                     new GeoJsonController($router, $responder, $geoJson);
+                    break;
+                case 'procedures':
+                    $procedures = new ProcedureService($db, $config->getProceduresDir());
+                    new ProcedureController($router, $responder, $procedures);
                     break;
             }
         }

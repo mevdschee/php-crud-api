@@ -318,6 +318,14 @@ class GenericDB
         return $stmt->rowCount();
     }
 
+    public function rawSql(string $sql, array $parameters)
+    {
+        $stmt = $this->query($sql, $parameters);
+        $records = $stmt->fetchAll();
+
+        return $records;
+    }
+
     private function query(string $sql, array $parameters): \PDOStatement
     {
         $stmt = $this->pdo->prepare($sql);
