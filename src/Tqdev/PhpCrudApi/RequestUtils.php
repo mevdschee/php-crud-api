@@ -19,12 +19,14 @@ class RequestUtils
         return isset($headers[0]) ? $headers[0] : '';
     }
 
-    public static function getParams(ServerRequestInterface $request): array
+    public static function getParams(ServerRequestInterface $request, bool $forceArray = true): array
     {
         $params = array();
         $query = $request->getUri()->getQuery();
         //$query = str_replace('][]=', ']=', str_replace('=', '[]=', $query));
-        $query = str_replace('%5D%5B%5D=', '%5D=', str_replace('=', '%5B%5D=', $query));
+        if ($forceArray) {
+            $query = str_replace('%5D%5B%5D=', '%5D=', str_replace('=', '%5B%5D=', $query));
+        }
         parse_str($query, $params);
         return $params;
     }
@@ -62,6 +64,17 @@ class RequestUtils
                         return 'delete';
                     case 'PATCH':
                         return 'increment';
+                }
+            case 'procedures':
+                switch ($method) {
+                    case 'POST':
+                        return 'write';
+                    case 'GET':
+                        return 'read';
+                    case 'PUT':
+                        return 'update';
+                    case 'DELETE':
+                        return 'delete';
                 }
         }
         return 'unknown';

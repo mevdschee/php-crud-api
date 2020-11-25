@@ -321,8 +321,14 @@ class GenericDB
     public function rawSql(string $sql, array $parameters)
     {
         $stmt = $this->query($sql, $parameters);
+        $stmt = $this->pdo->prepare($sql);
+        foreach ($parameters as $key => $value) {
+            if (strstr($sql, ':' . $key)) {
+                $stmt->bindParam(':' . $key, $value, \PDO::PARAM_STR);
+            }
+        }
+        $stmt->execute();
         $records = $stmt->fetchAll();
-
         return $records;
     }
 

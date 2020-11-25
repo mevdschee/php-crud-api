@@ -14,12 +14,19 @@ class ProcedureService {
         $this->baseDir = $proceduresDir;
     }
 
-    public function hasProcedure(string $procedureName) {
-        return file_exists($this->baseDir . $procedureName . '.sql');
+    public function hasProcedure(string $procedureName, string $operation) {
+        return file_exists($this->baseDir . $procedureName . '.' .$operation . '.sql');
     }
 
-    public function execute(string $procedureName) {
-        $sql = file_get_contents($this->baseDir . $procedureName . '.sql');
-        return $this->db->rawSql($sql, []);
+    public function execute(string $procedureName, string $operation, array $params = []) {
+        $sql = $this->parseSqlTemplate($this->baseDir . $procedureName . '.' . $operation . '.sql', $params);
+        return $this->db->rawSql($sql, $params);
+    }
+
+    private function parseSqlTemplate(string $path, array $context) {
+        ob_start();
+        extract($context);
+        include($path);
+        return ob_get_clean();
     }
 }

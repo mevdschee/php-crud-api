@@ -17,6 +17,9 @@ class ProcedureController
     public function __construct(Router $router, Responder $responder, ProcedureService $service)
     {
         $router->register('GET', '/procedures/*', array($this, 'file'));
+        $router->register('POST', '/procedures/*', array($this, 'file'));
+        $router->register('PUT', '/procedures/*', array($this, 'file'));
+        $router->register('DELETE', '/procedures/*', array($this, 'file'));
         $this->service = $service;
         $this->responder = $responder;
     }
@@ -24,11 +27,14 @@ class ProcedureController
     public function file(ServerRequestInterface $request): ResponseInterface
     {
         $file = RequestUtils::getPathSegment($request, 2);
-        $params = RequestUtils::getParams($request);
-        if (!$this->service->hasProcedure($file)) {
+        $operation = RequestUtils::getOperation($request);
+        $queryParams = RequestUtils::getParams($request, false);
+        $bodyParams = (array) $request->getParsedBody();
+        $params = array_merge($queryParams, $bodyParams);
+        if (!$this->service->hasProcedure($file, $operation)) {
             return $this->responder->error(ErrorCode::PROCEDURE_NOT_FOUND, $file);
-        }
-        return $this->responder->success($this->service->execute($file));
+        } 
+        return $this->responder->success($this->service->execute($file, $operation, $params));
     }
 }
  
