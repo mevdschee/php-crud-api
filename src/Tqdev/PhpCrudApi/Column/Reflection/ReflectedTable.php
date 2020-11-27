@@ -137,7 +137,7 @@ class ReflectedTable implements \JsonSerializable
     {
         $columns = array();
         foreach ($this->fks as $columnName => $referencedTableName) {
-            if ($tableName == $referencedTableName) {
+            if ($tableName == $referencedTableName && !is_null($this->columns[$columnName])) {
                 $columns[] = $this->columns[$columnName];
             }
         }
