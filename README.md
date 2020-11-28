@@ -718,10 +718,9 @@ The database authentication middleware defines three new routes:
 A user can be logged in by sending it's username and password to the login endpoint (in JSON format).
 The authenticated user (with all it's properties) will be stored in the `$_SESSION['user']` variable.
 The user can be logged out by sending a POST request with an empty body to the logout endpoint.
-The passwords are stored as hashes in the password column in the users table. To generate the hash value
-for the password 'pass2' you can run on the command line:
-
-    php -r 'echo password_hash("pass2", PASSWORD_DEFAULT)."\n";'
+The passwords are stored as hashes in the password column in the users table. You can register a new user
+using the register endpoint, but this functionality must be turned on using the "dbAuth.regsiterUser"
+configuration parameter.
 
 It is IMPORTANT to restrict access to the users table using the 'authorization' middleware, otherwise all 
 users can freely add, modify or delete any account! The minimal configuration is shown below:
