@@ -710,6 +710,7 @@ The database authentication middleware defines three new routes:
 
     method path       - parameters               - description
     ---------------------------------------------------------------------------------------------------
+    POST   /register  - username + password      - adds a user with given username and password
     POST   /login     - username + password      - logs a user in by username and password
     POST   /logout    -                          - logs out the currently logged in user
     GET    /me        -                          - returns the user as which you're currently logged in
