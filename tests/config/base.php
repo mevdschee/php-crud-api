@@ -7,6 +7,7 @@ $settings = [
     'middlewares' => 'sslRedirect,xml,cors,reconnect,dbAuth,jwtAuth,basicAuth,authorization,sanitation,validation,ipAddress,multiTenancy,pageLimits,joinLimits,customization',
     'dbAuth.mode' => 'optional',
     'dbAuth.returnedColumns' => 'id,username,password',
+    'dbAuth.registerUser' => '1',
     'jwtAuth.mode' => 'optional',
     'jwtAuth.time' => '1538207605',
     'jwtAuth.secrets' => 'axpIrCGNGqxzx2R9dtXLIPUSqPo778uhb8CA0F4Hx',

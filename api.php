@@ -7558,7 +7558,7 @@ namespace Tqdev\PhpCrudApi\Middleware {
             }
             $path = RequestUtils::getPathSegment($request, 1);
             $method = $request->getMethod();
-            if ($method == 'POST' && $path == 'login') {
+            if ($method == 'POST' && in_array($path, ['login', 'register'])) {
                 $body = $request->getParsedBody();
                 $username = isset($body->username) ? $body->username : '';
                 $password = isset($body->password) ? $body->password : '';
@@ -7568,6 +7568,14 @@ namespace Tqdev\PhpCrudApi\Middleware {
                 $usernameColumn = $table->getColumn($usernameColumnName);
                 $passwordColumnName = $this->getProperty('passwordColumn', 'password');
                 $passwordColumn = $table->getColumn($passwordColumnName);
+                $registerUser = $this->getProperty('registerUser', '');
+                if ($path == 'register' && $registerUser) {
+                    $data = json_decode($registerUser, true);
+                    $data = is_array($data) ? $data : [];
+                    $data[$usernameColumnName] = $username;
+                    $data[$passwordColumnName] = password_hash($password, PASSWORD_DEFAULT);
+                    $this->db->createSingle($table, $data);
+                }
                 $condition = new ColumnCondition($usernameColumn, 'eq', $username);
                 $returnedColumns = $this->getProperty('returnedColumns', '');
                 if (!$returnedColumns) {
