@@ -42,27 +42,18 @@ class DbAuthMiddleware extends Middleware
         }
         $path = RequestUtils::getPathSegment($request, 1);
         $method = $request->getMethod();
-        if ($method == 'POST' && in_array($path, ['login', 'register'])) {
+        if ($method == 'POST' && in_array($path, ['login', 'register', 'password'])) {
             $body = $request->getParsedBody();
             $username = isset($body->username) ? $body->username : '';
             $password = isset($body->password) ? $body->password : '';
+            $newPassword = isset($body->newPassword) ? $body->newPassword : '';
             $tableName = $this->getProperty('usersTable', 'users');
             $table = $this->reflection->getTable($tableName);
             $usernameColumnName = $this->getProperty('usernameColumn', 'username');
             $usernameColumn = $table->getColumn($usernameColumnName);
             $passwordColumnName = $this->getProperty('passwordColumn', 'password');
-            $passwordColumn = $table->getColumn($passwordColumnName);
+            $pkName = $table->getPk()->getName();
             $registerUser = $this->getProperty('registerUser', '');
-            if ($path == 'register') {
-                if (!$registerUser) {
-                    return $this->responder->error(ErrorCode::AUTHENTICATION_FAILED, $username);
-                }
-                $data = json_decode($registerUser, true);
-                $data = is_array($data) ? $data : [];
-                $data[$usernameColumnName] = $username;
-                $data[$passwordColumnName] = password_hash($password, PASSWORD_DEFAULT);
-                $this->db->createSingle($table, $data);
-            }
             $condition = new ColumnCondition($usernameColumn, 'eq', $username);
             $returnedColumns = $this->getProperty('returnedColumns', '');
             if (!$returnedColumns) {
@@ -70,20 +61,61 @@ class DbAuthMiddleware extends Middleware
             } else {
                 $columnNames = array_map('trim', explode(',', $returnedColumns));
                 $columnNames[] = $passwordColumnName;
+                $columnNames[] = $pkName;
             }
             $columnOrdering = $this->ordering->getDefaultColumnOrdering($table);
-            $users = $this->db->selectAll($table, $columnNames, $condition, $columnOrdering, 0, 1);
-            foreach ($users as $user) {
-                if (password_verify($password, $user[$passwordColumnName]) == 1) {
-                    if (!headers_sent()) {
-                        session_regenerate_id(true);
-                    }
+            if ($path == 'register') {
+                if (!$registerUser) {
+                    return $this->responder->error(ErrorCode::AUTHENTICATION_FAILED, $username);
+                }
+                $users = $this->db->selectAll($table, $columnNames, $condition, $columnOrdering, 0, 1);
+                if (!empty($users)) {
+                    return $this->responder->error(ErrorCode::USER_ALREADY_EXIST, $username);
+                }
+                $data = json_decode($registerUser, true);
+                $data = is_array($data) ? $data : [];
+                $data[$usernameColumnName] = $username;
+                $data[$passwordColumnName] = password_hash($password, PASSWORD_DEFAULT);
+                $this->db->createSingle($table, $data);
+                $users = $this->db->selectAll($table, $columnNames, $condition, $columnOrdering, 0, 1);
+                foreach ($users as $user) {
                     unset($user[$passwordColumnName]);
-                    $_SESSION['user'] = $user;
                     return $this->responder->success($user);
                 }
+                return $this->responder->error(ErrorCode::AUTHENTICATION_FAILED, $username);
             }
-            return $this->responder->error(ErrorCode::AUTHENTICATION_FAILED, $username);
+            if ($path == 'login') {
+                $users = $this->db->selectAll($table, $columnNames, $condition, $columnOrdering, 0, 1);
+                foreach ($users as $user) {
+                    if (password_verify($password, $user[$passwordColumnName]) == 1) {
+                        if (!headers_sent()) {
+                            session_regenerate_id(true);
+                        }
+                        unset($user[$passwordColumnName]);
+                        $_SESSION['user'] = $user;
+                        return $this->responder->success($user);
+                    }
+                }
+                return $this->responder->error(ErrorCode::AUTHENTICATION_FAILED, $username);
+            }
+            if ($path == 'password') {
+                if ($username != ($_SESSION['user'][$usernameColumnName] ?? '')) {
+                    return $this->responder->error(ErrorCode::AUTHENTICATION_FAILED, $username);
+                }
+                $users = $this->db->selectAll($table, $columnNames, $condition, $columnOrdering, 0, 1);
+                foreach ($users as $user) {
+                    if (password_verify($password, $user[$passwordColumnName]) == 1) {
+                        if (!headers_sent()) {
+                            session_regenerate_id(true);
+                        }
+                        $data = [$passwordColumnName => password_hash($newPassword, PASSWORD_DEFAULT)];
+                        $this->db->updateSingle($table, $data, $user[$pkName]);
+                        unset($user[$passwordColumnName]);
+                        return $this->responder->success($user);
+                    }
+                }
+                return $this->responder->error(ErrorCode::AUTHENTICATION_FAILED, $username);
+            }
         }
         if ($method == 'POST' && $path == 'logout') {
             if (isset($_SESSION['user'])) {

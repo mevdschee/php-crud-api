@@ -708,12 +708,13 @@ Below you find more information on each of the authentication types.
 
 The database authentication middleware defines three new routes:
 
-    method path       - parameters               - description
+    method path       - parameters                      - description
     ---------------------------------------------------------------------------------------------------
-    POST   /register  - username + password      - adds a user with given username and password
-    POST   /login     - username + password      - logs a user in by username and password
-    POST   /logout    -                          - logs out the currently logged in user
-    GET    /me        -                          - returns the user as which you're currently logged in
+    GET    /me        -                                 - returns the user that is currently logged in
+    POST   /register  - username, password              - adds a user with given username and password
+    POST   /login     - username, password              - logs a user in by username and password
+    POST   /password  - username, password, newPassword - updates the password of the logged in user
+    POST   /logout    -                                 - logs out the currently logged in user
 
 A user can be logged in by sending it's username and password to the login endpoint (in JSON format).
 The authenticated user (with all it's properties) will be stored in the `$_SESSION['user']` variable.

@@ -31,6 +31,7 @@ class ErrorCode
     const BAD_OR_MISSING_XSRF_TOKEN = 1017;
     const ONLY_AJAX_REQUESTS_ALLOWED = 1018;
     const PAGINATION_FORBIDDEN = 1019;
+    const USER_ALREADY_EXIST = 1020;
 
     private $values = [
         9999 => ["%s", ResponseFactory::INTERNAL_SERVER_ERROR],
@@ -54,6 +55,7 @@ class ErrorCode
         1017 => ["Bad or missing XSRF token", ResponseFactory::FORBIDDEN],
         1018 => ["Only AJAX requests allowed for '%s'", ResponseFactory::FORBIDDEN],
         1019 => ["Pagination forbidden", ResponseFactory::FORBIDDEN],
+        1020 => ["User '%s' already exists", ResponseFactory::CONFLICT],
     ];
 
     public function __construct(int $code)
