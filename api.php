@@ -7568,6 +7568,7 @@ namespace Tqdev\PhpCrudApi\Middleware {
                 $usernameColumnName = $this->getProperty('usernameColumn', 'username');
                 $usernameColumn = $table->getColumn($usernameColumnName);
                 $passwordColumnName = $this->getProperty('passwordColumn', 'password');
+                $passwordLength = $this->getProperty('passwordLength', '12');
                 $pkName = $table->getPk()->getName();
                 $registerUser = $this->getProperty('registerUser', '');
                 $condition = new ColumnCondition($usernameColumn, 'eq', $username);
@@ -7583,6 +7584,9 @@ namespace Tqdev\PhpCrudApi\Middleware {
                 if ($path == 'register') {
                     if (!$registerUser) {
                         return $this->responder->error(ErrorCode::AUTHENTICATION_FAILED, $username);
+                    }
+                    if (strlen($password) < $passwordLength) {
+                        return $this->responder->error(ErrorCode::PASSWORD_TOO_SHORT, $passwordLength);
                     }
                     $users = $this->db->selectAll($table, $columnNames, $condition, $columnOrdering, 0, 1);
                     if (!empty($users)) {
@@ -7617,6 +7621,9 @@ namespace Tqdev\PhpCrudApi\Middleware {
                 if ($path == 'password') {
                     if ($username != ($_SESSION['user'][$usernameColumnName] ?? '')) {
                         return $this->responder->error(ErrorCode::AUTHENTICATION_FAILED, $username);
+                    }
+                    if (strlen($newPassword) < $passwordLength) {
+                        return $this->responder->error(ErrorCode::PASSWORD_TOO_SHORT, $passwordLength);
                     }
                     $users = $this->db->selectAll($table, $columnNames, $condition, $columnOrdering, 0, 1);
                     foreach ($users as $user) {
@@ -9962,6 +9969,7 @@ namespace Tqdev\PhpCrudApi\Record {
         const ONLY_AJAX_REQUESTS_ALLOWED = 1018;
         const PAGINATION_FORBIDDEN = 1019;
         const USER_ALREADY_EXIST = 1020;
+        const PASSWORD_TOO_SHORT = 1021;
 
         private $values = [
             9999 => ["%s", ResponseFactory::INTERNAL_SERVER_ERROR],
@@ -9986,6 +9994,7 @@ namespace Tqdev\PhpCrudApi\Record {
             1018 => ["Only AJAX requests allowed for '%s'", ResponseFactory::FORBIDDEN],
             1019 => ["Pagination forbidden", ResponseFactory::FORBIDDEN],
             1020 => ["User '%s' already exists", ResponseFactory::CONFLICT],
+            1021 => ["Password too short (<%d characters)", ResponseFactory::UNPROCESSABLE_ENTITY],
         ];
 
         public function __construct(int $code)

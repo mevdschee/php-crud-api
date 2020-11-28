@@ -8,6 +8,7 @@ $settings = [
     'dbAuth.mode' => 'optional',
     'dbAuth.returnedColumns' => 'id,username,password',
     'dbAuth.registerUser' => '1',
+    'dbAuth.passwordLength' => '4',
     'jwtAuth.mode' => 'optional',
     'jwtAuth.time' => '1538207605',
     'jwtAuth.secrets' => 'axpIrCGNGqxzx2R9dtXLIPUSqPo778uhb8CA0F4Hx',

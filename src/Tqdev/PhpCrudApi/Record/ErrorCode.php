@@ -32,6 +32,7 @@ class ErrorCode
     const ONLY_AJAX_REQUESTS_ALLOWED = 1018;
     const PAGINATION_FORBIDDEN = 1019;
     const USER_ALREADY_EXIST = 1020;
+    const PASSWORD_TOO_SHORT = 1021;
 
     private $values = [
         9999 => ["%s", ResponseFactory::INTERNAL_SERVER_ERROR],
@@ -56,6 +57,7 @@ class ErrorCode
         1018 => ["Only AJAX requests allowed for '%s'", ResponseFactory::FORBIDDEN],
         1019 => ["Pagination forbidden", ResponseFactory::FORBIDDEN],
         1020 => ["User '%s' already exists", ResponseFactory::CONFLICT],
+        1021 => ["Password too short (<%d characters)", ResponseFactory::UNPROCESSABLE_ENTITY],
     ];
 
     public function __construct(int $code)

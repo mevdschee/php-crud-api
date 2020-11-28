@@ -52,6 +52,7 @@ class DbAuthMiddleware extends Middleware
             $usernameColumnName = $this->getProperty('usernameColumn', 'username');
             $usernameColumn = $table->getColumn($usernameColumnName);
             $passwordColumnName = $this->getProperty('passwordColumn', 'password');
+            $passwordLength = $this->getProperty('passwordLength', '12');
             $pkName = $table->getPk()->getName();
             $registerUser = $this->getProperty('registerUser', '');
             $condition = new ColumnCondition($usernameColumn, 'eq', $username);
@@ -67,6 +68,9 @@ class DbAuthMiddleware extends Middleware
             if ($path == 'register') {
                 if (!$registerUser) {
                     return $this->responder->error(ErrorCode::AUTHENTICATION_FAILED, $username);
+                }
+                if (strlen($password) < $passwordLength) {
+                    return $this->responder->error(ErrorCode::PASSWORD_TOO_SHORT, $passwordLength);
                 }
                 $users = $this->db->selectAll($table, $columnNames, $condition, $columnOrdering, 0, 1);
                 if (!empty($users)) {
@@ -101,6 +105,9 @@ class DbAuthMiddleware extends Middleware
             if ($path == 'password') {
                 if ($username != ($_SESSION['user'][$usernameColumnName] ?? '')) {
                     return $this->responder->error(ErrorCode::AUTHENTICATION_FAILED, $username);
+                }
+                if (strlen($newPassword) < $passwordLength) {
+                    return $this->responder->error(ErrorCode::PASSWORD_TOO_SHORT, $passwordLength);
                 }
                 $users = $this->db->selectAll($table, $columnNames, $condition, $columnOrdering, 0, 1);
                 foreach ($users as $user) {
