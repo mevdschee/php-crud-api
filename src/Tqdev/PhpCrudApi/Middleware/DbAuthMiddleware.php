@@ -53,7 +53,10 @@ class DbAuthMiddleware extends Middleware
             $passwordColumnName = $this->getProperty('passwordColumn', 'password');
             $passwordColumn = $table->getColumn($passwordColumnName);
             $registerUser = $this->getProperty('registerUser', '');
-            if ($path == 'register' && $registerUser) {
+            if ($path == 'register') {
+                if (!$registerUser) {
+                    return $this->responder->error(ErrorCode::AUTHENTICATION_FAILED, $username);
+                }
                 $data = json_decode($registerUser, true);
                 $data = is_array($data) ? $data : [];
                 $data[$usernameColumnName] = $username;
