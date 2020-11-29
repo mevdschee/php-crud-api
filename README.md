@@ -56,7 +56,7 @@ Alternatively you can integrate this project into the web framework of your choi
 In these integrations [Composer](https://getcomposer.org/) is used to load this project as a dependency.
 
 For people that don't use composer, the file "`api.include.php`" is provided. This file contains everything 
-from "`api.php`" except the configuration (from "`src/index.php`") and can be used by PHP's "include".
+from "`api.php`" except the configuration from "`src/index.php`" and can be used by PHP's "include".
 
 ## Configuration
 
