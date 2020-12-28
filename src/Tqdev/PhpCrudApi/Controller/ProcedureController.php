@@ -28,7 +28,9 @@ class ProcedureController
     {
         $file = RequestUtils::getPathSegment($request, 2);
         $operation = RequestUtils::getOperation($request);
-        $queryParams = RequestUtils::getParams($request, false);
+        $queryParams = array_map(function($param) {
+            return $param[0];
+        }, RequestUtils::getParams($request));
         $bodyParams = (array) $request->getParsedBody();
         $params = array_merge($queryParams, $bodyParams);
         if (!$this->service->hasProcedure($file, $operation)) {

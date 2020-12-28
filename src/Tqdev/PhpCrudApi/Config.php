@@ -22,7 +22,7 @@ class Config
         'debug' => false,
         'basePath' => '',
         'openApiBase' => '{"info":{"title":"PHP-CRUD-API","version":"1.0.0"}}',
-        'proceduresDir' => './procedures/'
+        'procedurePath' => 'procedures'
     ];
 
     private function getDefaultDriver(array $values): string
@@ -204,8 +204,8 @@ class Config
         return json_decode($this->values['openApiBase'], true);
     }
 
-    public function getProceduresDir(): string
+    public function getProcedurePath(): string
     {
-        return $this->values['proceduresDir'];
+        return $this->values['procedurePath'];
     }
 }

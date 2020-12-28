@@ -6,20 +6,20 @@ use Tqdev\PhpCrudApi\Database\GenericDB;
 
 class ProcedureService {
     private $db;
-    private $baseDir;
+    private $procedurePath;
 
-    public function __construct(GenericDB $db, string $proceduresDir)
+    public function __construct(GenericDB $db, string $procedurePath)
     {
         $this->db = $db;
-        $this->baseDir = $proceduresDir;
+        $this->procedurePath = $procedurePath;
     }
 
     public function hasProcedure(string $procedureName, string $operation) {
-        return file_exists($this->baseDir . $procedureName . '.' .$operation . '.sql');
+        return file_exists('./' . $this->procedurePath . '/' . $procedureName . '.' .$operation . '.sql');
     }
 
     public function execute(string $procedureName, string $operation, array $params = []) {
-        $sql = $this->parseSqlTemplate($this->baseDir . $procedureName . '.' . $operation . '.sql', $params);
+        $sql = $this->parseSqlTemplate($this->procedurePath . '/' . $procedureName . '.' . $operation . '.sql', $params);
         return $this->db->rawSql($sql, $params);
     }
 

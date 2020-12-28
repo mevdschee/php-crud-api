@@ -141,7 +141,7 @@ class Api implements RequestHandlerInterface
                     new GeoJsonController($router, $responder, $geoJson);
                     break;
                 case 'procedures':
-                    $procedures = new ProcedureService($db, $config->getProceduresDir());
+                    $procedures = new ProcedureService($db, $config->getProcedurePath());
                     new ProcedureController($router, $responder, $procedures);
                     break;
             }
