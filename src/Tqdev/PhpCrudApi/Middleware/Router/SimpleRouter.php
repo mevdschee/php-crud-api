@@ -104,7 +104,7 @@ class SimpleRouter implements Router
         $method = strtoupper($request->getMethod());
         $path = array();
         $segment = $method;
-        for ($i = 1; $segment; $i++) {
+        for ($i = 1; strlen($segment) > 0; $i++) {
             array_push($path, $segment);
             $segment = RequestUtils::getPathSegment($request, $i);
         }
