@@ -6387,7 +6387,7 @@ namespace Tqdev\PhpCrudApi\Database {
             return $this->pdo()->lastInsertId($name);
         }
 
-        public function query(string $statement): \PDOStatement
+        public function query(string $query, int $fetchMode = null, mixed ...$fetchModeArgs): \PDOStatement
         {
             return call_user_func_array(array($this->pdo(), 'query'), func_get_args());
         }
@@ -7579,6 +7579,7 @@ namespace Tqdev\PhpCrudApi\Middleware {
                     $columnNames = array_map('trim', explode(',', $returnedColumns));
                     $columnNames[] = $passwordColumnName;
                     $columnNames[] = $pkName;
+                    $columnNames = array_values(array_unique($columnNames));
                 }
                 $columnOrdering = $this->ordering->getDefaultColumnOrdering($table);
                 if ($path == 'register') {

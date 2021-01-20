@@ -117,7 +117,7 @@ class LazyPdo extends \PDO
         return $this->pdo()->lastInsertId($name);
     }
 
-    public function query(string $statement): \PDOStatement
+    public function query(string $query, int $fetchMode = null, mixed ...$fetchModeArgs): \PDOStatement
     {
         return call_user_func_array(array($this->pdo(), 'query'), func_get_args());
     }
