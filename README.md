@@ -1264,7 +1264,7 @@ Install docker using the following commands and then logout and login for the ch
 To run the docker tests run "build_all.sh" and "run_all.sh" from the docker directory. The output should be:
 
     ================================================
-    CentOS 8 (PHP 7.4)
+    CentOS 8 (PHP 8.0)
     ================================================
     [1/4] Starting MariaDB 10.5 ..... done
     [2/4] Starting PostgreSQL 12.5 .. done
