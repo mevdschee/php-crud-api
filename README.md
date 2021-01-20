@@ -1271,10 +1271,10 @@ To run the docker tests run "build_all.sh" and "run_all.sh" from the docker dire
     [3/4] Starting SQLServer 2017 ... skipped
     [4/4] Cloning PHP-CRUD-API v2 ... skipped
     ------------------------------------------------
-    mysql: 110 tests ran in 1911 ms, 1 skipped, 0 failed
-    pgsql: 110 tests ran in 1112 ms, 1 skipped, 0 failed
+    mysql: 110 tests ran in 957 ms, 1 skipped, 0 failed
+    pgsql: 110 tests ran in 817 ms, 1 skipped, 0 failed
     sqlsrv: skipped, driver not loaded
-    sqlite: 110 tests ran in 1178 ms, 12 skipped, 0 failed
+    sqlite: 110 tests ran in 685 ms, 12 skipped, 0 failed
     ================================================
     Debian 10 (PHP 7.3)
     ================================================
@@ -1283,10 +1283,10 @@ To run the docker tests run "build_all.sh" and "run_all.sh" from the docker dire
     [3/4] Starting SQLServer 2017 ... skipped
     [4/4] Cloning PHP-CRUD-API v2 ... skipped
     ------------------------------------------------
-    mysql: 110 tests ran in 3459 ms, 1 skipped, 0 failed
-    pgsql: 110 tests ran in 1134 ms, 1 skipped, 0 failed
+    mysql: 110 tests ran in 952 ms, 1 skipped, 0 failed
+    pgsql: 110 tests ran in 816 ms, 1 skipped, 0 failed
     sqlsrv: skipped, driver not loaded
-    sqlite: 110 tests ran in 1275 ms, 12 skipped, 0 failed
+    sqlite: 110 tests ran in 690 ms, 12 skipped, 0 failed
     ================================================
     Debian 9 (PHP 7.0)
     ================================================
@@ -1295,10 +1295,10 @@ To run the docker tests run "build_all.sh" and "run_all.sh" from the docker dire
     [3/4] Starting SQLServer 2017 ... skipped
     [4/4] Cloning PHP-CRUD-API v2 ... skipped
     ------------------------------------------------
-    mysql: 110 tests ran in 3181 ms, 1 skipped, 0 failed
-    pgsql: 110 tests ran in 1201 ms, 1 skipped, 0 failed
+    mysql: 110 tests ran in 1075 ms, 1 skipped, 0 failed
+    pgsql: 110 tests ran in 834 ms, 1 skipped, 0 failed
     sqlsrv: skipped, driver not loaded
-    sqlite: 110 tests ran in 1414 ms, 12 skipped, 0 failed
+    sqlite: 110 tests ran in 728 ms, 12 skipped, 0 failed
     ================================================
     Ubuntu 16.04 (PHP 7.0)
     ================================================
@@ -1307,9 +1307,9 @@ To run the docker tests run "build_all.sh" and "run_all.sh" from the docker dire
     [3/4] Starting SQLServer 2017 ... done
     [4/4] Cloning PHP-CRUD-API v2 ... skipped
     ------------------------------------------------
-    mysql: 110 tests ran in 3168 ms, 1 skipped, 0 failed
-    pgsql: 110 tests ran in 1197 ms, 1 skipped, 0 failed
-    sqlsrv: 110 tests ran in 10151 ms, 1 skipped, 0 failed
+    mysql: 110 tests ran in 1065 ms, 1 skipped, 0 failed
+    pgsql: 110 tests ran in 845 ms, 1 skipped, 0 failed
+    sqlsrv: 110 tests ran in 5404 ms, 1 skipped, 0 failed
     sqlite: skipped, driver not loaded
     ================================================
     Ubuntu 18.04 (PHP 7.2)
@@ -1319,10 +1319,10 @@ To run the docker tests run "build_all.sh" and "run_all.sh" from the docker dire
     [3/4] Starting SQLServer 2017 ... skipped
     [4/4] Cloning PHP-CRUD-API v2 ... skipped
     ------------------------------------------------
-    mysql: 110 tests ran in 3709 ms, 1 skipped, 0 failed
-    pgsql: 110 tests ran in 1334 ms, 1 skipped, 0 failed
+    mysql: 110 tests ran in 1261 ms, 1 skipped, 0 failed
+    pgsql: 110 tests ran in 859 ms, 1 skipped, 0 failed
     sqlsrv: skipped, driver not loaded
-    sqlite: 110 tests ran in 1477 ms, 12 skipped, 0 failed
+    sqlite: 110 tests ran in 725 ms, 12 skipped, 0 failed
     ================================================
     Ubuntu 20.04 (PHP 7.4)
     ================================================
@@ -1331,10 +1331,10 @@ To run the docker tests run "build_all.sh" and "run_all.sh" from the docker dire
     [3/4] Starting SQLServer 2017 ... skipped
     [4/4] Cloning PHP-CRUD-API v2 ... skipped
     ------------------------------------------------
-    mysql: 110 tests ran in 5102 ms, 1 skipped, 0 failed
-    pgsql: 110 tests ran in 1170 ms, 1 skipped, 0 failed
+    mysql: 110 tests ran in 1505 ms, 1 skipped, 0 failed
+    pgsql: 110 tests ran in 851 ms, 1 skipped, 0 failed
     sqlsrv: skipped, driver not loaded
-    sqlite: 110 tests ran in 1380 ms, 12 skipped, 0 failed
+    sqlite: 110 tests ran in 675 ms, 12 skipped, 0 failed
 
 The above test run (including starting up the databases) takes less than 5 minutes on my slow laptop.
 
@@ -1354,10 +1354,10 @@ The above test run (including starting up the databases) takes less than 5 minut
     [3/4] Starting SQLServer 2017 ... skipped
     [4/4] Cloning PHP-CRUD-API v2 ... skipped
     ------------------------------------------------
-    mysql: 105 tests ran in 3390 ms, 1 skipped, 0 failed
-    pgsql: 105 tests ran in 936 ms, 1 skipped, 0 failed
+    mysql: 110 tests ran in 1261 ms, 1 skipped, 0 failed
+    pgsql: 110 tests ran in 859 ms, 1 skipped, 0 failed
     sqlsrv: skipped, driver not loaded
-    sqlite: 105 tests ran in 1063 ms, 12 skipped, 0 failed
+    sqlite: 110 tests ran in 725 ms, 12 skipped, 0 failed
     root@b7ab9472e08f:/php-crud-api# 
 
 As you can see the "run.sh" script gives you access to a prompt in a chosen the docker environment.
