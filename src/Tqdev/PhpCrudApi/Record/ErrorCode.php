@@ -33,6 +33,7 @@ class ErrorCode
     const PAGINATION_FORBIDDEN = 1019;
     const USER_ALREADY_EXIST = 1020;
     const PASSWORD_TOO_SHORT = 1021;
+	const PROCEDURE_NOT_FOUND = 1022;
 
     private $values = [
         9999 => ["%s", ResponseFactory::INTERNAL_SERVER_ERROR],
@@ -58,6 +59,7 @@ class ErrorCode
         1019 => ["Pagination forbidden", ResponseFactory::FORBIDDEN],
         1020 => ["User '%s' already exists", ResponseFactory::CONFLICT],
         1021 => ["Password too short (<%d characters)", ResponseFactory::UNPROCESSABLE_ENTITY],
+        1022 => ["Procedure '%s' not found", ResponseFactory::NOT_FOUND],
     ];
 
     public function __construct(int $code)
