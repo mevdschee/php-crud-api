@@ -1,6 +1,6 @@
 #!/bin/bash
 echo "================================================"
-echo " CentOS 8 (PHP 7.4)"
+echo " CentOS 8 (PHP 8.0)"
 echo "================================================"
 echo -n "[1/4] Starting MariaDB 10.5 ..... "
 # initialize mysql

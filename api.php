@@ -6387,7 +6387,7 @@ namespace Tqdev\PhpCrudApi\Database {
             return $this->pdo()->lastInsertId($name);
         }
 
-        public function query(string $statement): \PDOStatement
+        public function query($query, /* ?int */$fetchMode = null, ...$fetchModeArgs): \PDOStatement
         {
             return call_user_func_array(array($this->pdo(), 'query'), func_get_args());
         }
@@ -7065,7 +7065,7 @@ namespace Tqdev\PhpCrudApi\Middleware\Router {
             $method = strtoupper($request->getMethod());
             $path = array();
             $segment = $method;
-            for ($i = 1; $segment; $i++) {
+            for ($i = 1; strlen($segment) > 0; $i++) {
                 array_push($path, $segment);
                 $segment = RequestUtils::getPathSegment($request, $i);
             }
@@ -7579,6 +7579,7 @@ namespace Tqdev\PhpCrudApi\Middleware {
                     $columnNames = array_map('trim', explode(',', $returnedColumns));
                     $columnNames[] = $passwordColumnName;
                     $columnNames[] = $pkName;
+                    $columnNames = array_values(array_unique($columnNames));
                 }
                 $columnOrdering = $this->ordering->getDefaultColumnOrdering($table);
                 if ($path == 'register') {
@@ -8745,7 +8746,11 @@ namespace Tqdev\PhpCrudApi\Middleware {
 
         private function xml2json($xml)
         {
-            $a = @dom_import_simplexml(simplexml_load_string($xml));
+            $o = @simplexml_load_string($xml);
+            if ($o===false) {
+                return null;
+            }
+            $a = @dom_import_simplexml($o);
             if (!$a) {
                 return null;
             }
