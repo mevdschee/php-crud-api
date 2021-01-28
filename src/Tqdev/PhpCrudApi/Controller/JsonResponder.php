@@ -39,17 +39,21 @@ class JsonResponder implements Responder
 
     public function multi($results): ResponseInterface
     {
-        $document = array();
+        $documents = array();
+        $errors = array();
         $success = true;
         foreach ($results as $i=>$result) {
             if ($result instanceof \Throwable) {
-                $document[$i] = ErrorDocument::fromException($result);
+                $documents[$i] = null;
+                $errors[$i] = ErrorDocument::fromException($result);
                 $success = false;
             } else {
-                $document[$i] = $result;
+                $documents[$i] = $result;
+                $errors[$i] = new ErrorDocument(new ErrorCode(0),'',null);
             }
         }
         $status = $success ? ResponseFactory::OK : ResponseFactory::FAILED_DEPENDENCY;
+        $document = $success ? $documents : $errors;
         $response = ResponseFactory::fromObject($status, $document);
         foreach ($results as $i=>$result) {
             if ($result instanceof \Throwable) {

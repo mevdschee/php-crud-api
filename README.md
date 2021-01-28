@@ -554,10 +554,25 @@ contain the same number of objects as there are primary keys in the URL:
 
 This adjusts the titles of the posts. And the return values are the number of rows that are set:
 
-    1,1
+    [1,1]
 
 Which means that there were two update operations and each of them had set one row. Batch operations use database
-transactions, so they either all succeed or all fail (successful ones get roled back).
+transactions, so they either all succeed or all fail (successful ones get roled back). If they fail the body will
+contain the list of error documents. In the following response the first operation succeeded and the second operation
+of the batch failed due to an integrity violation:
+
+    [   
+        {
+            "code": 0,
+            "message": "Success"
+        },
+        {
+            "code": 1010,
+            "message": "Data integrity violation"
+        }
+    ]
+
+The response status code will always be 424 (failed dependency) in case of failure of one of the batch operations.
 
 ### Spatial support
 
