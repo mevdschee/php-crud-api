@@ -59,8 +59,8 @@ class Api implements RequestHandlerInterface
         $prefix = sprintf('phpcrudapi-%s-', substr(md5(__FILE__), 0, 8));
         $cache = CacheFactory::create($config->getCacheType(), $prefix, $config->getCachePath());
         $reflection = new ReflectionService($db, $cache, $config->getCacheTime());
-        $responder = new JsonResponder();
-        $router = new SimpleRouter($config->getBasePath(), $responder, $cache, $config->getCacheTime(), $config->getDebug());
+        $responder = new JsonResponder($config->getDebug());
+        $router = new SimpleRouter($config->getBasePath(), $responder, $cache, $config->getCacheTime());
         foreach ($config->getMiddlewares() as $middleware => $properties) {
             switch ($middleware) {
                 case 'sslRedirect':

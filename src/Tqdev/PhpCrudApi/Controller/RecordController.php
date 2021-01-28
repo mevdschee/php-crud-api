@@ -70,7 +70,7 @@ class RecordController
                 $result[] = call_user_func_array($method, $arguments);
             } catch (\Throwable $e) {
                 $success = false;
-                $result[] = null;
+                $result[] = $e;
             }
         }
         if ($success) {
@@ -100,7 +100,7 @@ class RecordController
             foreach ($record as $r) {
                 $argumentLists[] = array($table, $r, $params);
             }
-            return $this->responder->success($this->multiCall([$this->service, 'create'], $argumentLists));
+            return $this->responder->multi($this->multiCall([$this->service, 'create'], $argumentLists));
         } else {
             return $this->responder->success($this->service->create($table, $record, $params));
         }
@@ -130,7 +130,7 @@ class RecordController
             for ($i = 0; $i < count($ids); $i++) {
                 $argumentLists[] = array($table, $ids[$i], $record[$i], $params);
             }
-            return $this->responder->success($this->multiCall([$this->service, 'update'], $argumentLists));
+            return $this->responder->multi($this->multiCall([$this->service, 'update'], $argumentLists));
         } else {
             if (count($ids) != 1) {
                 return $this->responder->error(ErrorCode::ARGUMENT_COUNT_MISMATCH, $id);

@@ -21,11 +21,11 @@ PUT /records/comments/7,8
 
 [{"user_id":1,"post_id":6,"message":"multi 3","category_id":3},{"user_id":1,"post_id":0,"message":"multi 4","category_id":3}]
 ===
-200
+424
 Content-Type: application/json; charset=utf-8
-Content-Length: 8
+Content-Length: 54
 
-[1,null]
+[1,{"code":1010,"message":"Data integrity violation"}]
 ===
 GET /records/comments?include=message&filter=post_id,eq,6
 ===

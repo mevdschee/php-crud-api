@@ -18,19 +18,17 @@ class SimpleRouter implements Router
     private $responder;
     private $cache;
     private $ttl;
-    private $debug;
     private $registration;
     private $routes;
     private $routeHandlers;
     private $middlewares;
 
-    public function __construct(string $basePath, Responder $responder, Cache $cache, int $ttl, bool $debug)
+    public function __construct(string $basePath, Responder $responder, Cache $cache, int $ttl)
     {
         $this->basePath = rtrim($this->detectBasePath($basePath), '/');
         $this->responder = $responder;
         $this->cache = $cache;
         $this->ttl = $ttl;
-        $this->debug = $debug;
         $this->registration = true;
         $this->routes = $this->loadPathTree();
         $this->routeHandlers = [];
@@ -141,23 +139,8 @@ class SimpleRouter implements Router
         }
         try {
             $response = call_user_func($this->routeHandlers[$routeNumbers[0]], $request);
-        } catch (\PDOException $e) {
-            if (strpos(strtolower($e->getMessage()), 'duplicate') !== false) {
-                $response = $this->responder->error(ErrorCode::DUPLICATE_KEY_EXCEPTION, '');
-            } elseif (strpos(strtolower($e->getMessage()), 'unique constraint') !== false) {
-                $response = $this->responder->error(ErrorCode::DUPLICATE_KEY_EXCEPTION, '');
-            } elseif (strpos(strtolower($e->getMessage()), 'default value') !== false) {
-                $response = $this->responder->error(ErrorCode::DATA_INTEGRITY_VIOLATION, '');
-            } elseif (strpos(strtolower($e->getMessage()), 'allow nulls') !== false) {
-                $response = $this->responder->error(ErrorCode::DATA_INTEGRITY_VIOLATION, '');
-            } elseif (strpos(strtolower($e->getMessage()), 'constraint') !== false) {
-                $response = $this->responder->error(ErrorCode::DATA_INTEGRITY_VIOLATION, '');
-            } else {
-                $response = $this->responder->error(ErrorCode::ERROR_NOT_FOUND, '');
-            }
-            if ($this->debug) {
-                $response = ResponseUtils::addExceptionHeaders($response, $e);
-            }
+        } catch (\Throwable $exception) {
+            $response = $this->responder->exception($exception);
         }
         return $response;
     }
