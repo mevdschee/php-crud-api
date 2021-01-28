@@ -1,6 +1,6 @@
 # PHP-CRUD-API
 
-Single file PHP 7 script that adds a REST API to a MySQL/MariaDB, PostgreSQL, SQL Server or SQLite database. 
+Single file PHP script that adds a REST API to a MySQL/MariaDB, PostgreSQL, SQL Server or SQLite database. 
 
 NB: This is the [TreeQL](https://treeql.org) reference implementation in PHP.
 
@@ -554,10 +554,25 @@ contain the same number of objects as there are primary keys in the URL:
 
 This adjusts the titles of the posts. And the return values are the number of rows that are set:
 
-    1,1
+    [1,1]
 
 Which means that there were two update operations and each of them had set one row. Batch operations use database
-transactions, so they either all succeed or all fail (successful ones get roled back).
+transactions, so they either all succeed or all fail (successful ones get roled back). If they fail the body will
+contain the list of error documents. In the following response the first operation succeeded and the second operation
+of the batch failed due to an integrity violation:
+
+    [   
+        {
+            "code": 0,
+            "message": "Success"
+        },
+        {
+            "code": 1010,
+            "message": "Data integrity violation"
+        }
+    ]
+
+The response status code will always be 424 (failed dependency) in case of failure of one of the batch operations.
 
 ### Spatial support
 
@@ -1168,29 +1183,29 @@ The valid floating point values 'Infinite' (calculated with '1/0') and 'Not a Nu
 
 The following errors may be reported:
 
-| Error | HTTP response code         | Message
-| ------| -------------------------- | --------------
-| 1000  | 404 Not found              | Route not found 
-| 1001  | 404 Not found              | Table not found 
-| 1002  | 422 Unprocessable entity   | Argument count mismatch 
-| 1003  | 404 Not found              | Record not found 
-| 1004  | 403 Forbidden              | Origin is forbidden 
-| 1005  | 404 Not found              | Column not found 
-| 1006  | 409 Conflict               | Table already exists 
-| 1007  | 409 Conflict               | Column already exists 
-| 1008  | 422 Unprocessable entity   | Cannot read HTTP message 
-| 1009  | 409 Conflict               | Duplicate key exception 
-| 1010  | 409 Conflict               | Data integrity violation 
-| 1011  | 401 Unauthorized           | Authentication required 
-| 1012  | 403 Forbidden              | Authentication failed 
-| 1013  | 422 Unprocessable entity   | Input validation failed 
-| 1014  | 403 Forbidden              | Operation forbidden 
-| 1015  | 405 Method not allowed     | Operation not supported 
-| 1016  | 403 Forbidden              | Temporary or permanently blocked 
-| 1017  | 403 Forbidden              | Bad or missing XSRF token 
-| 1018  | 403 Forbidden              | Only AJAX requests allowed 
-| 1019  | 403 Forbidden              | Pagination Forbidden 
-| 9999  | 500 Internal server error  | Unknown error 
+| Error | HTTP response code        | Message
+| ----- | ------------------------- | --------------
+| 1000  | 404 Not found             | Route not found 
+| 1001  | 404 Not found             | Table not found 
+| 1002  | 422 Unprocessable entity  | Argument count mismatch 
+| 1003  | 404 Not found             | Record not found 
+| 1004  | 403 Forbidden             | Origin is forbidden 
+| 1005  | 404 Not found             | Column not found 
+| 1006  | 409 Conflict              | Table already exists 
+| 1007  | 409 Conflict              | Column already exists 
+| 1008  | 422 Unprocessable entity  | Cannot read HTTP message 
+| 1009  | 409 Conflict              | Duplicate key exception 
+| 1010  | 409 Conflict              | Data integrity violation 
+| 1011  | 401 Unauthorized          | Authentication required 
+| 1012  | 403 Forbidden             | Authentication failed 
+| 1013  | 422 Unprocessable entity  | Input validation failed 
+| 1014  | 403 Forbidden             | Operation forbidden 
+| 1015  | 405 Method not allowed    | Operation not supported 
+| 1016  | 403 Forbidden             | Temporary or permanently blocked 
+| 1017  | 403 Forbidden             | Bad or missing XSRF token 
+| 1018  | 403 Forbidden             | Only AJAX requests allowed 
+| 1019  | 403 Forbidden             | Pagination Forbidden 
+| 9999  | 500 Internal server error | Unknown error 
 
 The following JSON structure is used:
 
@@ -1210,7 +1225,7 @@ I am testing mainly on Ubuntu and I have the following test setups:
   - (Docker) Ubuntu 18.04 with PHP 7.2, MySQL 5.7, PostgreSQL 10.4 (PostGIS 2.4) and SQLite 3.22
   - (Docker) Debian 10 with PHP 7.3, MariaDB 10.3, PostgreSQL 11.4 (PostGIS 2.5) and SQLite 3.27
   - (Docker) Ubuntu 20.04 with PHP 7.4, MySQL 8.0, PostgreSQL 12.2 (PostGIS 3.0) and SQLite 3.31
-  - (Docker) CentOS 8 with PHP 7.4, MariaDB 10.5, PostgreSQL 12.5 (PostGIS 3.0) and SQLite 3.26
+  - (Docker) CentOS 8 with PHP 8.0, MariaDB 10.5, PostgreSQL 12.5 (PostGIS 3.0) and SQLite 3.26
 
 This covers not all environments (yet), so please notify me of failing tests and report your environment. 
 I will try to cover most relevant setups in the "docker" folder of the project.
@@ -1225,6 +1240,7 @@ This runs the functional tests from the "tests" directory. It uses the database 
 database configuration (config) from the corresponding subdirectories.
 
 ## Nginx config example
+
 ```
 server {
     listen 80 default_server;
@@ -1264,17 +1280,17 @@ Install docker using the following commands and then logout and login for the ch
 To run the docker tests run "build_all.sh" and "run_all.sh" from the docker directory. The output should be:
 
     ================================================
-    CentOS 8 (PHP 7.4)
+    CentOS 8 (PHP 8.0)
     ================================================
     [1/4] Starting MariaDB 10.5 ..... done
     [2/4] Starting PostgreSQL 12.5 .. done
     [3/4] Starting SQLServer 2017 ... skipped
     [4/4] Cloning PHP-CRUD-API v2 ... skipped
     ------------------------------------------------
-    mysql: 110 tests ran in 1911 ms, 1 skipped, 0 failed
-    pgsql: 110 tests ran in 1112 ms, 1 skipped, 0 failed
+    mysql: 110 tests ran in 957 ms, 1 skipped, 0 failed
+    pgsql: 110 tests ran in 817 ms, 1 skipped, 0 failed
     sqlsrv: skipped, driver not loaded
-    sqlite: 110 tests ran in 1178 ms, 12 skipped, 0 failed
+    sqlite: 110 tests ran in 685 ms, 12 skipped, 0 failed
     ================================================
     Debian 10 (PHP 7.3)
     ================================================
@@ -1283,10 +1299,10 @@ To run the docker tests run "build_all.sh" and "run_all.sh" from the docker dire
     [3/4] Starting SQLServer 2017 ... skipped
     [4/4] Cloning PHP-CRUD-API v2 ... skipped
     ------------------------------------------------
-    mysql: 110 tests ran in 3459 ms, 1 skipped, 0 failed
-    pgsql: 110 tests ran in 1134 ms, 1 skipped, 0 failed
+    mysql: 110 tests ran in 952 ms, 1 skipped, 0 failed
+    pgsql: 110 tests ran in 816 ms, 1 skipped, 0 failed
     sqlsrv: skipped, driver not loaded
-    sqlite: 110 tests ran in 1275 ms, 12 skipped, 0 failed
+    sqlite: 110 tests ran in 690 ms, 12 skipped, 0 failed
     ================================================
     Debian 9 (PHP 7.0)
     ================================================
@@ -1295,10 +1311,10 @@ To run the docker tests run "build_all.sh" and "run_all.sh" from the docker dire
     [3/4] Starting SQLServer 2017 ... skipped
     [4/4] Cloning PHP-CRUD-API v2 ... skipped
     ------------------------------------------------
-    mysql: 110 tests ran in 3181 ms, 1 skipped, 0 failed
-    pgsql: 110 tests ran in 1201 ms, 1 skipped, 0 failed
+    mysql: 110 tests ran in 1075 ms, 1 skipped, 0 failed
+    pgsql: 110 tests ran in 834 ms, 1 skipped, 0 failed
     sqlsrv: skipped, driver not loaded
-    sqlite: 110 tests ran in 1414 ms, 12 skipped, 0 failed
+    sqlite: 110 tests ran in 728 ms, 12 skipped, 0 failed
     ================================================
     Ubuntu 16.04 (PHP 7.0)
     ================================================
@@ -1307,9 +1323,9 @@ To run the docker tests run "build_all.sh" and "run_all.sh" from the docker dire
     [3/4] Starting SQLServer 2017 ... done
     [4/4] Cloning PHP-CRUD-API v2 ... skipped
     ------------------------------------------------
-    mysql: 110 tests ran in 3168 ms, 1 skipped, 0 failed
-    pgsql: 110 tests ran in 1197 ms, 1 skipped, 0 failed
-    sqlsrv: 110 tests ran in 10151 ms, 1 skipped, 0 failed
+    mysql: 110 tests ran in 1065 ms, 1 skipped, 0 failed
+    pgsql: 110 tests ran in 845 ms, 1 skipped, 0 failed
+    sqlsrv: 110 tests ran in 5404 ms, 1 skipped, 0 failed
     sqlite: skipped, driver not loaded
     ================================================
     Ubuntu 18.04 (PHP 7.2)
@@ -1319,10 +1335,10 @@ To run the docker tests run "build_all.sh" and "run_all.sh" from the docker dire
     [3/4] Starting SQLServer 2017 ... skipped
     [4/4] Cloning PHP-CRUD-API v2 ... skipped
     ------------------------------------------------
-    mysql: 110 tests ran in 3709 ms, 1 skipped, 0 failed
-    pgsql: 110 tests ran in 1334 ms, 1 skipped, 0 failed
+    mysql: 110 tests ran in 1261 ms, 1 skipped, 0 failed
+    pgsql: 110 tests ran in 859 ms, 1 skipped, 0 failed
     sqlsrv: skipped, driver not loaded
-    sqlite: 110 tests ran in 1477 ms, 12 skipped, 0 failed
+    sqlite: 110 tests ran in 725 ms, 12 skipped, 0 failed
     ================================================
     Ubuntu 20.04 (PHP 7.4)
     ================================================
@@ -1331,10 +1347,10 @@ To run the docker tests run "build_all.sh" and "run_all.sh" from the docker dire
     [3/4] Starting SQLServer 2017 ... skipped
     [4/4] Cloning PHP-CRUD-API v2 ... skipped
     ------------------------------------------------
-    mysql: 110 tests ran in 5102 ms, 1 skipped, 0 failed
-    pgsql: 110 tests ran in 1170 ms, 1 skipped, 0 failed
+    mysql: 110 tests ran in 1505 ms, 1 skipped, 0 failed
+    pgsql: 110 tests ran in 851 ms, 1 skipped, 0 failed
     sqlsrv: skipped, driver not loaded
-    sqlite: 110 tests ran in 1380 ms, 12 skipped, 0 failed
+    sqlite: 110 tests ran in 675 ms, 12 skipped, 0 failed
 
 The above test run (including starting up the databases) takes less than 5 minutes on my slow laptop.
 
@@ -1354,10 +1370,10 @@ The above test run (including starting up the databases) takes less than 5 minut
     [3/4] Starting SQLServer 2017 ... skipped
     [4/4] Cloning PHP-CRUD-API v2 ... skipped
     ------------------------------------------------
-    mysql: 105 tests ran in 3390 ms, 1 skipped, 0 failed
-    pgsql: 105 tests ran in 936 ms, 1 skipped, 0 failed
+    mysql: 110 tests ran in 1261 ms, 1 skipped, 0 failed
+    pgsql: 110 tests ran in 859 ms, 1 skipped, 0 failed
     sqlsrv: skipped, driver not loaded
-    sqlite: 105 tests ran in 1063 ms, 12 skipped, 0 failed
+    sqlite: 110 tests ran in 725 ms, 12 skipped, 0 failed
     root@b7ab9472e08f:/php-crud-api# 
 
 As you can see the "run.sh" script gives you access to a prompt in a chosen the docker environment.

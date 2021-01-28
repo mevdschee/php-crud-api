@@ -83,7 +83,11 @@ class XmlMiddleware extends Middleware
 
     private function xml2json($xml)
     {
-        $a = @dom_import_simplexml(simplexml_load_string($xml));
+        $o = @simplexml_load_string($xml);
+        if ($o===false) {
+            return null;
+        }
+        $a = @dom_import_simplexml($o);
         if (!$a) {
             return null;
         }

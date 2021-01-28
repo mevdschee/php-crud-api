@@ -6,3 +6,11 @@ Content-Type: application/json; charset=utf-8
 Content-Length: 58
 
 {"id":2,"user_id":1,"category_id":2,"content":"It works!"}
+===
+GET /records/posts/0
+===
+404
+Content-Type: application/json; charset=utf-8
+Content-Length: 46
+
+{"code":1003,"message":"Record '0' not found"}

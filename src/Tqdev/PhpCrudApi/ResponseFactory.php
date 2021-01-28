@@ -16,6 +16,7 @@ class ResponseFactory
     const METHOD_NOT_ALLOWED = 405;
     const CONFLICT = 409;
     const UNPROCESSABLE_ENTITY = 422;
+    const FAILED_DEPENDENCY = 424;
     const INTERNAL_SERVER_ERROR = 500;
 
     public static function fromXml(int $status, string $xml): ResponseInterface
