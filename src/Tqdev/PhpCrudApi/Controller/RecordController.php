@@ -60,6 +60,27 @@ class RecordController
         }
     }
 
+    private function multiCall(callable $method, array $argumentLists): array
+    {
+        $result = array();
+        $success = true;
+        $this->service->beginTransaction();
+        foreach ($argumentLists as $arguments) {
+            try {
+                $result[] = call_user_func_array($method, $arguments);
+            } catch (\Throwable $e) {
+                $success = false;
+                $result[] = null;
+            }
+        }
+        if ($success) {
+            $this->service->commitTransaction();
+        } else {
+            $this->service->rollBackTransaction();
+        }
+        return $result;
+    }
+
     public function create(ServerRequestInterface $request): ResponseInterface
     {
         $table = RequestUtils::getPathSegment($request, 2);
@@ -75,11 +96,11 @@ class RecordController
         }
         $params = RequestUtils::getParams($request);
         if (is_array($record)) {
-            $result = array();
+            $argumentLists = array();
             foreach ($record as $r) {
-                $result[] = $this->service->create($table, $r, $params);
+                $argumentLists[] = array($table, $r, $params);
             }
-            return $this->responder->success($result);
+            return $this->responder->success($this->multiCall([$this->service, 'create'], $argumentLists));
         } else {
             return $this->responder->success($this->service->create($table, $record, $params));
         }
@@ -105,11 +126,11 @@ class RecordController
             if (count($ids) != count($record)) {
                 return $this->responder->error(ErrorCode::ARGUMENT_COUNT_MISMATCH, $id);
             }
-            $result = array();
+            $argumentLists = array();
             for ($i = 0; $i < count($ids); $i++) {
-                $result[] = $this->service->update($table, $ids[$i], $record[$i], $params);
+                $argumentLists[] = array($table, $ids[$i], $record[$i], $params);
             }
-            return $this->responder->success($result);
+            return $this->responder->success($this->multiCall([$this->service, 'update'], $argumentLists));
         } else {
             if (count($ids) != 1) {
                 return $this->responder->error(ErrorCode::ARGUMENT_COUNT_MISMATCH, $id);
