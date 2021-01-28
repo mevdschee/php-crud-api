@@ -1185,7 +1185,6 @@ The following errors may be reported:
 
 | Error | HTTP response code        | Message
 | ----- | ------------------------- | --------------
-| 0     | 200 Ok                    | Success
 | 1000  | 404 Not found             | Route not found 
 | 1001  | 404 Not found             | Table not found 
 | 1002  | 422 Unprocessable entity  | Argument count mismatch 
