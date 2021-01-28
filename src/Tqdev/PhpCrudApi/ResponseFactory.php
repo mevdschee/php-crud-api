@@ -8,6 +8,8 @@ use Psr\Http\Message\ResponseInterface;
 class ResponseFactory
 {
     const OK = 200;
+    const MOVED_PERMANENTLY = 301;
+    const FOUND = 302;
     const UNAUTHORIZED = 401;
     const FORBIDDEN = 403;
     const NOT_FOUND = 404;
@@ -23,8 +25,7 @@ class ResponseFactory
 
     public static function fromCsv(int $status, string $csv): ResponseInterface
     {
-        $response = self::from($status, 'text/csv', $csv);
-        return $response->withHeader('Content-Type', 'text/csv');
+        return self::from($status, 'text/csv', $csv);
     }
 
     public static function fromHtml(int $status, string $html): ResponseInterface
@@ -38,7 +39,7 @@ class ResponseFactory
         return self::from($status, 'application/json', $content);
     }
 
-    private static function from(int $status, string $contentType, string $content): ResponseInterface
+    public static function from(int $status, string $contentType, string $content): ResponseInterface
     {
         $psr17Factory = new Psr17Factory();
         $response = $psr17Factory->createResponse($status);

@@ -63,6 +63,17 @@ class RequestUtils
                     case 'PATCH':
                         return 'increment';
                 }
+            case 'procedures':
+                switch ($method) {
+                    case 'POST':
+                        return 'write';
+                    case 'GET':
+                        return 'read';
+                    case 'PUT':
+                        return 'update';
+                    case 'DELETE':
+                        return 'delete';
+                }
         }
         return 'unknown';
     }

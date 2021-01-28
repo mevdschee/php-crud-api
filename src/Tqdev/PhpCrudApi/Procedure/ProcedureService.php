@@ -1,19 +1,36 @@
 <?php
 
-namespace Tqdev\PhpCrudApi\Record;
+namespace Tqdev\PhpCrudApi\Procedure;
 
-use Tqdev\PhpCrudApi\Column\ReflectionService;
 use Tqdev\PhpCrudApi\Database\GenericDB;
-use Tqdev\PhpCrudApi\Record\Document\ListDocument;
 
 class ProcedureService
 {
     private $db;
-    private $reflection;
+    private $procedurePath;
 
-    public function __construct(GenericDB $db, ReflectionService $reflection)
+    public function __construct(GenericDB $db, string $procedurePath)
     {
         $this->db = $db;
-        $this->reflection = $reflection;
+        $this->procedurePath = $procedurePath;
+    }
+
+    public function hasProcedure(string $procedureName, string $operation)
+    {
+        return file_exists('./' . $this->procedurePath . '/' . $procedureName . '.' . $operation . '.sql');
+    }
+
+    public function execute(string $procedureName, string $operation, array $params = [])
+    {
+        $sql = $this->parseSqlTemplate($this->procedurePath . '/' . $procedureName . '.' . $operation . '.sql', $params);
+        return $this->db->rawSql($sql, $params);
+    }
+
+    private function parseSqlTemplate(string $path, array $context)
+    {
+        ob_start();
+        extract($context);
+        include $path;
+        return ob_get_clean();
     }
 }

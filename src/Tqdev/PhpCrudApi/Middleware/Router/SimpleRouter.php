@@ -50,7 +50,9 @@ class SimpleRouter implements Router
                     return substr($fullPath, 0, -1 * strlen($path));
                 }
             }
-            return $fullPath;
+            if ('/' . basename(__FILE__) == $fullPath) {
+                return $fullPath;
+            }
         }
         return '/';
     }
@@ -93,6 +95,7 @@ class SimpleRouter implements Router
             $data = gzcompress(json_encode($this->routes, JSON_UNESCAPED_UNICODE));
             $this->cache->set('PathTree', $data, $this->ttl);
         }
+
         return $this->handle($request);
     }
 

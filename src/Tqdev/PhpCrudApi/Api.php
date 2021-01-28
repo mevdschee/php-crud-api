@@ -13,6 +13,7 @@ use Tqdev\PhpCrudApi\Controller\ColumnController;
 use Tqdev\PhpCrudApi\Controller\GeoJsonController;
 use Tqdev\PhpCrudApi\Controller\JsonResponder;
 use Tqdev\PhpCrudApi\Controller\OpenApiController;
+use Tqdev\PhpCrudApi\Controller\ProcedureController;
 use Tqdev\PhpCrudApi\Controller\RecordController;
 use Tqdev\PhpCrudApi\Database\GenericDB;
 use Tqdev\PhpCrudApi\GeoJson\GeoJsonService;
@@ -25,17 +26,19 @@ use Tqdev\PhpCrudApi\Middleware\FirewallMiddleware;
 use Tqdev\PhpCrudApi\Middleware\IpAddressMiddleware;
 use Tqdev\PhpCrudApi\Middleware\JoinLimitsMiddleware;
 use Tqdev\PhpCrudApi\Middleware\JwtAuthMiddleware;
-use Tqdev\PhpCrudApi\Middleware\XmlMiddleware;
 use Tqdev\PhpCrudApi\Middleware\MultiTenancyMiddleware;
 use Tqdev\PhpCrudApi\Middleware\PageLimitsMiddleware;
 use Tqdev\PhpCrudApi\Middleware\ReconnectMiddleware;
 use Tqdev\PhpCrudApi\Middleware\Router\SimpleRouter;
 use Tqdev\PhpCrudApi\Middleware\SanitationMiddleware;
+use Tqdev\PhpCrudApi\Middleware\SslRedirectMiddleware;
 use Tqdev\PhpCrudApi\Middleware\ValidationMiddleware;
+use Tqdev\PhpCrudApi\Middleware\XmlMiddleware;
 use Tqdev\PhpCrudApi\Middleware\XsrfMiddleware;
 use Tqdev\PhpCrudApi\OpenApi\OpenApiService;
 use Tqdev\PhpCrudApi\Record\ErrorCode;
 use Tqdev\PhpCrudApi\Record\RecordService;
+use Tqdev\PhpCrudApi\Procedure\ProcedureService;
 use Tqdev\PhpCrudApi\ResponseUtils;
 
 class Api implements RequestHandlerInterface
@@ -62,8 +65,11 @@ class Api implements RequestHandlerInterface
         $router = new SimpleRouter($config->getBasePath(), $responder, $cache, $config->getCacheTime(), $config->getDebug());
         foreach ($config->getMiddlewares() as $middleware => $properties) {
             switch ($middleware) {
+                case 'sslRedirect':
+                    new SslRedirectMiddleware($router, $responder, $properties);
+                    break;
                 case 'cors':
-                    new CorsMiddleware($router, $responder, $properties);
+                    new CorsMiddleware($router, $responder, $properties, $config->getDebug());
                     break;
                 case 'firewall':
                     new FirewallMiddleware($router, $responder, $properties);
@@ -133,6 +139,10 @@ class Api implements RequestHandlerInterface
                     $records = new RecordService($db, $reflection);
                     $geoJson = new GeoJsonService($reflection, $records);
                     new GeoJsonController($router, $responder, $geoJson);
+                    break;
+                case 'procedures':
+                    $procedures = new ProcedureService($db, $config->getProcedurePath());
+                    new ProcedureController($router, $responder, $procedures);
                     break;
             }
         }
@@ -206,15 +216,6 @@ class Api implements RequestHandlerInterface
 
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
-        $response = null;
-        try {
-            $response = $this->router->route($this->addParsedBody($request));
-        } catch (\Throwable $e) {
-            $response = $this->responder->error(ErrorCode::ERROR_NOT_FOUND, $e->getMessage());
-            if ($this->debug) {
-                $response = ResponseUtils::addExceptionHeaders($response, $e);
-            }
-        }
-        return $response;
+        return $this->router->route($this->addParsedBody($request));
     }
 }

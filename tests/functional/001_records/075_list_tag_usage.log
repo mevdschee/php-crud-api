@@ -3,14 +3,22 @@ GET /records/tag_usage
 ===
 200
 Content-Type: application/json; charset=utf-8
-Content-Length: 71
+Content-Length: 85
 
-{"records":[{"name":"funny","count":2},{"name":"important","count":2}]}
+{"records":[{"id":1,"name":"funny","count":2},{"id":2,"name":"important","count":2}]}
 ===
 GET /records/tag_usage/1
 ===
+200
+Content-Type: application/json; charset=utf-8
+Content-Length: 33
+
+{"id":1,"name":"funny","count":2}
+===
+DELETE /records/tag_usage/1
+===
 405
 Content-Type: application/json; charset=utf-8
-Content-Length: 56
+Content-Length: 58
 
-{"code":1015,"message":"Operation 'read' not supported"}
+{"code":1015,"message":"Operation 'delete' not supported"}

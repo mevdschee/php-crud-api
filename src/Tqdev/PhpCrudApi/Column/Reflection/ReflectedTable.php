@@ -49,23 +49,43 @@ class ReflectedTable implements \JsonSerializable
             $columns[$column->getName()] = $column;
         }
         // set primary key
-        $columnNames = $reflection->getTablePrimaryKeys($name);
-        if (count($columnNames) == 1) {
-            $columnName = $columnNames[0];
-            if (isset($columns[$columnName])) {
-                $pk = $columns[$columnName];
-                $pk->setPk(true);
+        $columnName = false;
+        if ($type == 'view') {
+            $columnName = 'id';
+        } else {
+            $columnNames = $reflection->getTablePrimaryKeys($name);
+            if (count($columnNames) == 1) {
+                $columnName = $columnNames[0];
             }
         }
+        if ($columnName && isset($columns[$columnName])) {
+            $pk = $columns[$columnName];
+            $pk->setPk(true);
+        }
         // set foreign keys
-        $fks = $reflection->getTableForeignKeys($name);
-        foreach ($fks as $columnName => $table) {
-            $columns[$columnName]->setFk($table);
+        if ($type == 'view') {
+            $tables = $reflection->getTables();
+            foreach ($columns as $columnName => $column) {
+                if (substr($columnName, -3) == '_id') {
+                    foreach ($tables as $table) {
+                        $tableName = $table['TABLE_NAME'];
+                        $suffix = $tableName . '_id';
+                        if (substr($columnName, -1 * strlen($suffix)) == $suffix) {
+                            $column->setFk($tableName);
+                        }
+                    }
+                }
+            }
+        } else {
+            $fks = $reflection->getTableForeignKeys($name);
+            foreach ($fks as $columnName => $table) {
+                $columns[$columnName]->setFk($table);
+            }
         }
         return new ReflectedTable($name, $type, array_values($columns));
     }
 
-    public static function fromJson(/* object */$json): ReflectedTable
+    public static function fromJson( /* object */$json): ReflectedTable
     {
         $name = $json->name;
         $type = isset($json->type) ? $json->type : 'table';
@@ -117,7 +137,7 @@ class ReflectedTable implements \JsonSerializable
     {
         $columns = array();
         foreach ($this->fks as $columnName => $referencedTableName) {
-            if ($tableName == $referencedTableName) {
+            if ($tableName == $referencedTableName && !is_null($this->columns[$columnName])) {
                 $columns[] = $this->columns[$columnName];
             }
         }
