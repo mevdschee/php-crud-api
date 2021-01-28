@@ -1241,6 +1241,7 @@ This runs the functional tests from the "tests" directory. It uses the database 
 database configuration (config) from the corresponding subdirectories.
 
 ## Nginx config example
+
 ```
 server {
     listen 80 default_server;
