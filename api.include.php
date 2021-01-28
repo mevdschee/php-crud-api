@@ -4555,17 +4555,21 @@ namespace Tqdev\PhpCrudApi\Controller {
 
         public function multi($results): ResponseInterface
         {
-            $document = array();
+            $documents = array();
+            $errors = array();
             $success = true;
             foreach ($results as $i=>$result) {
                 if ($result instanceof \Throwable) {
-                    $document[$i] = ErrorDocument::fromException($result);
+                    $documents[$i] = null;
+                    $errors[$i] = ErrorDocument::fromException($result);
                     $success = false;
                 } else {
-                    $document[$i] = $result;
+                    $documents[$i] = $result;
+                    $errors[$i] = new ErrorDocument(new ErrorCode(0),'',null);
                 }
             }
             $status = $success ? ResponseFactory::OK : ResponseFactory::FAILED_DEPENDENCY;
+            $document = $success ? $documents : $errors;
             $response = ResponseFactory::fromObject($status, $document);
             foreach ($results as $i=>$result) {
                 if ($result instanceof \Throwable) {
@@ -9886,7 +9890,7 @@ namespace Tqdev\PhpCrudApi\Record\Document {
 
         public function jsonSerialize()
         {
-            return array_filter($this->serialize());
+            return array_filter($this->serialize(), function($v) {return $v!==null;});
         }
 
         public static function fromException(\Throwable $exception)
@@ -10062,7 +10066,7 @@ namespace Tqdev\PhpCrudApi\Record {
         const PASSWORD_TOO_SHORT = 1021;
 
         private $values = [
-            9999 => ["%s", ResponseFactory::INTERNAL_SERVER_ERROR],
+            0000 => ["Success", ResponseFactory::OK],
             1000 => ["Route '%s' not found", ResponseFactory::NOT_FOUND],
             1001 => ["Table '%s' not found", ResponseFactory::NOT_FOUND],
             1002 => ["Argument count mismatch in '%s'", ResponseFactory::UNPROCESSABLE_ENTITY],
@@ -10085,6 +10089,7 @@ namespace Tqdev\PhpCrudApi\Record {
             1019 => ["Pagination forbidden", ResponseFactory::FORBIDDEN],
             1020 => ["User '%s' already exists", ResponseFactory::CONFLICT],
             1021 => ["Password too short (<%d characters)", ResponseFactory::UNPROCESSABLE_ENTITY],
+            9999 => ["%s", ResponseFactory::INTERNAL_SERVER_ERROR],
         ];
 
         public function __construct(int $code)
