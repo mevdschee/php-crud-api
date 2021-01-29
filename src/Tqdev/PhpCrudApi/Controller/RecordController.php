@@ -42,18 +42,15 @@ class RecordController
         if (!$this->service->hasTable($table)) {
             return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $table);
         }
-        if ($this->service->getType($table) != 'table') {
-            return $this->responder->error(ErrorCode::OPERATION_NOT_SUPPORTED, __FUNCTION__);
-        }
         $id = RequestUtils::getPathSegment($request, 3);
         $params = RequestUtils::getParams($request);
         if (strpos($id, ',') !== false) {
             $ids = explode(',', $id);
-            $result = [];
+            $argumentLists = array();
             for ($i = 0; $i < count($ids); $i++) {
-                array_push($result, $this->service->read($table, $ids[$i], $params));
+                $argumentLists[] = array($table, $ids[$i], $params);
             }
-            return $this->responder->success($result);
+            return $this->responder->multi($this->multiCall([$this->service, 'read'], $argumentLists));
         } else {
             $response = $this->service->read($table, $id, $params);
             if ($response === null) {
@@ -61,6 +58,27 @@ class RecordController
             }
             return $this->responder->success($response);
         }
+    }
+
+    private function multiCall(callable $method, array $argumentLists): array
+    {
+        $result = array();
+        $success = true;
+        $this->service->beginTransaction();
+        foreach ($argumentLists as $arguments) {
+            try {
+                $result[] = call_user_func_array($method, $arguments);
+            } catch (\Throwable $e) {
+                $success = false;
+                $result[] = $e;
+            }
+        }
+        if ($success) {
+            $this->service->commitTransaction();
+        } else {
+            $this->service->rollBackTransaction();
+        }
+        return $result;
     }
 
     public function create(ServerRequestInterface $request): ResponseInterface
@@ -78,11 +96,11 @@ class RecordController
         }
         $params = RequestUtils::getParams($request);
         if (is_array($record)) {
-            $result = array();
+            $argumentLists = array();
             foreach ($record as $r) {
-                $result[] = $this->service->create($table, $r, $params);
+                $argumentLists[] = array($table, $r, $params);
             }
-            return $this->responder->success($result);
+            return $this->responder->multi($this->multiCall([$this->service, 'create'], $argumentLists));
         } else {
             return $this->responder->success($this->service->create($table, $record, $params));
         }
@@ -108,11 +126,11 @@ class RecordController
             if (count($ids) != count($record)) {
                 return $this->responder->error(ErrorCode::ARGUMENT_COUNT_MISMATCH, $id);
             }
-            $result = array();
+            $argumentLists = array();
             for ($i = 0; $i < count($ids); $i++) {
-                $result[] = $this->service->update($table, $ids[$i], $record[$i], $params);
+                $argumentLists[] = array($table, $ids[$i], $record[$i], $params);
             }
-            return $this->responder->success($result);
+            return $this->responder->multi($this->multiCall([$this->service, 'update'], $argumentLists));
         } else {
             if (count($ids) != 1) {
                 return $this->responder->error(ErrorCode::ARGUMENT_COUNT_MISMATCH, $id);
@@ -134,11 +152,11 @@ class RecordController
         $params = RequestUtils::getParams($request);
         $ids = explode(',', $id);
         if (count($ids) > 1) {
-            $result = array();
+            $argumentLists = array();
             for ($i = 0; $i < count($ids); $i++) {
-                $result[] = $this->service->delete($table, $ids[$i], $params);
+                $argumentLists[] = array($table, $ids[$i], $params);
             }
-            return $this->responder->success($result);
+            return $this->responder->multi($this->multiCall([$this->service, 'delete'], $argumentLists));
         } else {
             return $this->responder->success($this->service->delete($table, $id, $params));
         }
@@ -164,11 +182,11 @@ class RecordController
             if (count($ids) != count($record)) {
                 return $this->responder->error(ErrorCode::ARGUMENT_COUNT_MISMATCH, $id);
             }
-            $result = array();
+            $argumentLists = array();
             for ($i = 0; $i < count($ids); $i++) {
-                $result[] = $this->service->increment($table, $ids[$i], $record[$i], $params);
+                $argumentLists[] = array($table, $ids[$i], $record[$i], $params);
             }
-            return $this->responder->success($result);
+            return $this->responder->multi($this->multiCall([$this->service, 'increment'], $argumentLists));
         } else {
             if (count($ids) != 1) {
                 return $this->responder->error(ErrorCode::ARGUMENT_COUNT_MISMATCH, $id);

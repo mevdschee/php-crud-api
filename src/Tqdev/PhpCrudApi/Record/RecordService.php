@@ -56,6 +56,21 @@ class RecordService
         return $this->reflection->getType($table);
     }
 
+    public function beginTransaction() /*: void*/
+    {
+        $this->db->beginTransaction();
+    }
+
+    public function commitTransaction() /*: void*/
+    {
+        $this->db->commitTransaction();
+    }
+
+    public function rollBackTransaction() /*: void*/
+    {
+        $this->db->rollBackTransaction();
+    }
+
     public function create(string $tableName, /* object */ $record, array $params) /*: ?int*/
     {
         $this->sanitizeRecord($tableName, $record, '');

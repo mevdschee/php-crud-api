@@ -112,6 +112,26 @@ Content-Length: 101
 ===
 PUT /records/types/1
 
+{"decimal":"-1.23"}
+===
+200
+Content-Type: application/json; charset=utf-8
+Content-Length: 1
+
+1
+===
+PUT /records/types/1
+
+{"decimal":"1.23"}
+===
+200
+Content-Type: application/json; charset=utf-8
+Content-Length: 1
+
+1
+===
+PUT /records/types/1
+
 {"decimal":"12.23.34"}
 ===
 422
