@@ -572,7 +572,7 @@ of the batch failed due to an integrity violation:
         }
     ]
 
-The response status code will always be 424 (failed dependency) in case of failure of one of the batch operations.
+The response status code will always be 424 (failed dependency) in case of any failure of one of the batch operations.
 
 ### Spatial support
 
