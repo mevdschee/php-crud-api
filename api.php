@@ -4522,6 +4522,7 @@ namespace Tqdev\PhpCrudApi\Controller {
     use Tqdev\PhpCrudApi\Record\Document\ErrorDocument;
     use Tqdev\PhpCrudApi\Record\ErrorCode;
     use Tqdev\PhpCrudApi\ResponseFactory;
+    use Tqdev\PhpCrudApi\ResponseUtils;
 
     class JsonResponder implements Responder
     {
@@ -4558,20 +4559,20 @@ namespace Tqdev\PhpCrudApi\Controller {
             $documents = array();
             $errors = array();
             $success = true;
-            foreach ($results as $i=>$result) {
+            foreach ($results as $i => $result) {
                 if ($result instanceof \Throwable) {
                     $documents[$i] = null;
                     $errors[$i] = ErrorDocument::fromException($result);
                     $success = false;
                 } else {
                     $documents[$i] = $result;
-                    $errors[$i] = new ErrorDocument(new ErrorCode(0),'',null);
+                    $errors[$i] = new ErrorDocument(new ErrorCode(0), '', null);
                 }
             }
             $status = $success ? ResponseFactory::OK : ResponseFactory::FAILED_DEPENDENCY;
             $document = $success ? $documents : $errors;
             $response = ResponseFactory::fromObject($status, $document);
-            foreach ($results as $i=>$result) {
+            foreach ($results as $i => $result) {
                 if ($result instanceof \Throwable) {
                     if ($this->debug) {
                         $response = ResponseUtils::addExceptionHeaders($response, $result);
