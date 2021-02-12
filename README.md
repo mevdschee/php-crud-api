@@ -572,7 +572,7 @@ of the batch failed due to an integrity violation:
         }
     ]
 
-The response status code will always be 424 (failed dependency) in case of failure of one of the batch operations.
+The response status code will always be 424 (failed dependency) in case of any failure of one of the batch operations.
 
 ### Spatial support
 
@@ -1183,29 +1183,29 @@ The valid floating point values 'Infinite' (calculated with '1/0') and 'Not a Nu
 
 The following errors may be reported:
 
-| Error | HTTP response code         | Message
-| ------| -------------------------- | --------------
-| 1000  | 404 Not found              | Route not found 
-| 1001  | 404 Not found              | Table not found 
-| 1002  | 422 Unprocessable entity   | Argument count mismatch 
-| 1003  | 404 Not found              | Record not found 
-| 1004  | 403 Forbidden              | Origin is forbidden 
-| 1005  | 404 Not found              | Column not found 
-| 1006  | 409 Conflict               | Table already exists 
-| 1007  | 409 Conflict               | Column already exists 
-| 1008  | 422 Unprocessable entity   | Cannot read HTTP message 
-| 1009  | 409 Conflict               | Duplicate key exception 
-| 1010  | 409 Conflict               | Data integrity violation 
-| 1011  | 401 Unauthorized           | Authentication required 
-| 1012  | 403 Forbidden              | Authentication failed 
-| 1013  | 422 Unprocessable entity   | Input validation failed 
-| 1014  | 403 Forbidden              | Operation forbidden 
-| 1015  | 405 Method not allowed     | Operation not supported 
-| 1016  | 403 Forbidden              | Temporary or permanently blocked 
-| 1017  | 403 Forbidden              | Bad or missing XSRF token 
-| 1018  | 403 Forbidden              | Only AJAX requests allowed 
-| 1019  | 403 Forbidden              | Pagination Forbidden 
-| 9999  | 500 Internal server error  | Unknown error 
+| Error | HTTP response code        | Message
+| ----- | ------------------------- | --------------
+| 1000  | 404 Not found             | Route not found 
+| 1001  | 404 Not found             | Table not found 
+| 1002  | 422 Unprocessable entity  | Argument count mismatch 
+| 1003  | 404 Not found             | Record not found 
+| 1004  | 403 Forbidden             | Origin is forbidden 
+| 1005  | 404 Not found             | Column not found 
+| 1006  | 409 Conflict              | Table already exists 
+| 1007  | 409 Conflict              | Column already exists 
+| 1008  | 422 Unprocessable entity  | Cannot read HTTP message 
+| 1009  | 409 Conflict              | Duplicate key exception 
+| 1010  | 409 Conflict              | Data integrity violation 
+| 1011  | 401 Unauthorized          | Authentication required 
+| 1012  | 403 Forbidden             | Authentication failed 
+| 1013  | 422 Unprocessable entity  | Input validation failed 
+| 1014  | 403 Forbidden             | Operation forbidden 
+| 1015  | 405 Method not allowed    | Operation not supported 
+| 1016  | 403 Forbidden             | Temporary or permanently blocked 
+| 1017  | 403 Forbidden             | Bad or missing XSRF token 
+| 1018  | 403 Forbidden             | Only AJAX requests allowed 
+| 1019  | 403 Forbidden             | Pagination Forbidden 
+| 9999  | 500 Internal server error | Unknown error 
 
 The following JSON structure is used:
 
@@ -1240,6 +1240,7 @@ This runs the functional tests from the "tests" directory. It uses the database 
 database configuration (config) from the corresponding subdirectories.
 
 ## Nginx config example
+
 ```
 server {
     listen 80 default_server;
