@@ -26,7 +26,7 @@ class CorsMiddleware extends Middleware
     {
         $found = false;
         foreach (explode(',', $allowedOrigins) as $allowedOrigin) {
-            $hostname = preg_quote(strtolower(trim($allowedOrigin)));
+            $hostname = preg_quote(strtolower(trim($allowedOrigin)),'/');
             $regex = '/^' . str_replace('\*', '.*', $hostname) . '$/';
             if (preg_match($regex, $origin)) {
                 $found = true;
