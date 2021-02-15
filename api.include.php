@@ -4546,7 +4546,7 @@ namespace Tqdev\PhpCrudApi\Controller {
 
         public function exception($exception): ResponseInterface
         {
-            $document = ErrorDocument::fromException($exception);
+            $document = ErrorDocument::fromException($exception, $this->debug);
             $response = ResponseFactory::fromObject($document->getStatus(), $document);
             if ($this->debug) {
                 $response = ResponseUtils::addExceptionHeaders($response, $exception);
@@ -4562,7 +4562,7 @@ namespace Tqdev\PhpCrudApi\Controller {
             foreach ($results as $i => $result) {
                 if ($result instanceof \Throwable) {
                     $documents[$i] = null;
-                    $errors[$i] = ErrorDocument::fromException($result);
+                    $errors[$i] = ErrorDocument::fromException($result, $this->debug);
                     $success = false;
                 } else {
                     $documents[$i] = $result;
@@ -9894,7 +9894,7 @@ namespace Tqdev\PhpCrudApi\Record\Document {
             return array_filter($this->serialize(), function($v) {return $v!==null;});
         }
 
-        public static function fromException(\Throwable $exception)
+        public static function fromException(\Throwable $exception, bool $debug)
         {
             $document = new ErrorDocument(new ErrorCode(ErrorCode::ERROR_NOT_FOUND), $exception->getMessage(), null);
             if ($exception instanceof \PDOException) {
@@ -9909,7 +9909,8 @@ namespace Tqdev\PhpCrudApi\Record\Document {
                 } elseif (strpos(strtolower($exception->getMessage()), 'constraint') !== false) {
                     $document = new ErrorDocument(new ErrorCode(ErrorCode::DATA_INTEGRITY_VIOLATION), '', null);
                 } else {
-                    $document = new ErrorDocument(new ErrorCode(ErrorCode::ERROR_NOT_FOUND), '', null);
+                    $message = $debug?$exception->getMessage():'PDOException occurred (enable debug mode)';
+                    $document = new ErrorDocument(new ErrorCode(ErrorCode::ERROR_NOT_FOUND), $message, null);
                 }
             }
             return $document;
