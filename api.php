@@ -11509,8 +11509,8 @@ namespace Tqdev\PhpCrudApi {
 
     $config = new Config([
         // 'driver' => 'mysql',
-        // 'address' => 'localhost',
-        // 'port' => '3306',
+        'address' => getenv('DB_HOST') ?: 'localhost',
+        'port' => getenv('DB_PORT') ?: '3306',
         'username' => getenv('DB_USERNAME') ?: 'php-crud-api',
         'password' => getenv('DB_PASSWORD') ?: 'php-crud-api',
         'database' => getenv('DB_NAME') ?: 'php-crud-api',
