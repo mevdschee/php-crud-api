@@ -11511,9 +11511,9 @@ namespace Tqdev\PhpCrudApi {
         // 'driver' => 'mysql',
         // 'address' => 'localhost',
         // 'port' => '3306',
-        'username' => 'php-crud-api',
-        'password' => 'php-crud-api',
-        'database' => 'php-crud-api',
+        'username' => getenv('DB_USERNAME') ?: 'php-crud-api',
+        'password' => getenv('DB_PASSWORD') ?: 'php-crud-api',
+        'database' => getenv('DB_NAME') ?: 'php-crud-api',
         // 'debug' => false
     ]);
     $request = RequestFactory::fromGlobals();

@@ -13,3 +13,6 @@ RUN a2enmod rewrite
 
 COPY api.php /var/www/html/api.php
 COPY .htaccess /var/www/html/.htaccess
+
+# EXPOSE 80
+
