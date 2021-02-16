@@ -160,6 +160,21 @@ class GenericDB
         return $this->definition;
     }
 
+    public function beginTransaction() /*: void*/
+    {
+        $this->pdo->beginTransaction();
+    }
+
+    public function commitTransaction() /*: void*/
+    {
+        $this->pdo->commit();
+    }
+
+    public function rollBackTransaction() /*: void*/
+    {
+        $this->pdo->rollBack();
+    }
+
     private function addMiddlewareConditions(string $tableName, Condition $condition): Condition
     {
         $condition1 = VariableStore::get("authorization.conditions.$tableName");
@@ -334,7 +349,7 @@ class GenericDB
             $this->port,
             $this->database,
             $this->tables,
-            $this->username
+            $this->username,
         ]));
     }
 }

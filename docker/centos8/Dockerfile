@@ -16,10 +16,10 @@ RUN dnf -y install https://download.postgresql.org/pub/repos/yum/reporpms/EL-8-x
 # enable epel repo
 RUN dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
 # enable powertools repos
-RUN dnf -y install 'dnf-command(config-manager)' && dnf -y config-manager --set-enabled PowerTools
+RUN dnf -y install 'dnf-command(config-manager)' && dnf -y config-manager --set-enabled powertools
 
-# set php to remi 7.4
-RUN dnf -y module reset php && dnf -y module enable php:remi-7.4
+# set php to remi 8.0
+RUN dnf -y module reset php && dnf -y module enable php:remi-8.0
 # disable mariadb and postgresql default (appstream) repo
 RUN dnf -y module disable mariadb
 RUN dnf -y module disable postgresql

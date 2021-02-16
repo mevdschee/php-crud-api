@@ -31,9 +31,11 @@ class ErrorCode
     const BAD_OR_MISSING_XSRF_TOKEN = 1017;
     const ONLY_AJAX_REQUESTS_ALLOWED = 1018;
     const PAGINATION_FORBIDDEN = 1019;
+    const USER_ALREADY_EXIST = 1020;
+    const PASSWORD_TOO_SHORT = 1021;
 
     private $values = [
-        9999 => ["%s", ResponseFactory::INTERNAL_SERVER_ERROR],
+        0000 => ["Success", ResponseFactory::OK],
         1000 => ["Route '%s' not found", ResponseFactory::NOT_FOUND],
         1001 => ["Table '%s' not found", ResponseFactory::NOT_FOUND],
         1002 => ["Argument count mismatch in '%s'", ResponseFactory::UNPROCESSABLE_ENTITY],
@@ -54,6 +56,9 @@ class ErrorCode
         1017 => ["Bad or missing XSRF token", ResponseFactory::FORBIDDEN],
         1018 => ["Only AJAX requests allowed for '%s'", ResponseFactory::FORBIDDEN],
         1019 => ["Pagination forbidden", ResponseFactory::FORBIDDEN],
+        1020 => ["User '%s' already exists", ResponseFactory::CONFLICT],
+        1021 => ["Password too short (<%d characters)", ResponseFactory::UNPROCESSABLE_ENTITY],
+        9999 => ["%s", ResponseFactory::INTERNAL_SERVER_ERROR],
     ];
 
     public function __construct(int $code)

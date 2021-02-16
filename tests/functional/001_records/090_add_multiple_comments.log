@@ -1,0 +1,36 @@
+===
+POST /records/comments
+
+[{"user_id":1,"post_id":6,"message":"multi 1","category_id":3},{"user_id":1,"post_id":6,"message":"multi 2","category_id":3}]
+===
+200
+Content-Type: application/json; charset=utf-8
+Content-Length: 5
+
+[7,8]
+===
+GET /records/comments?include=id&filter=post_id,eq,6
+===
+200
+Content-Type: application/json; charset=utf-8
+Content-Length: 31
+
+{"records":[{"id":7},{"id":8}]}
+===
+POST /records/comments
+
+[{"user_id":1,"post_id":6,"message":"multi 3","category_id":3},{"user_id":1,"post_id":0,"message":"multi 4","category_id":3}]
+===
+424
+Content-Type: application/json; charset=utf-8
+Content-Length: 83
+
+[{"code":0,"message":"Success"},{"code":1010,"message":"Data integrity violation"}]
+===
+GET /records/comments?include=id&filter=post_id,eq,6
+===
+200
+Content-Type: application/json; charset=utf-8
+Content-Length: 31
+
+{"records":[{"id":7},{"id":8}]}

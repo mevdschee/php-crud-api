@@ -1,6 +1,6 @@
 # PHP-CRUD-API
 
-Single file PHP 7 script that adds a REST API to a MySQL 5.6 InnoDB database. PostgreSQL 9.1 and MS SQL Server 2012 are fully supported. 
+Single file PHP script that adds a REST API to a MySQL/MariaDB, PostgreSQL, SQL Server or SQLite database. 
 
 NB: This is the [TreeQL](https://treeql.org) reference implementation in PHP.
 
@@ -27,11 +27,11 @@ There are also proof-of-concept ports of this script that only support basic RES
 
 ## Requirements
 
-  - PHP 7.0 or higher with PDO drivers for MySQL, PgSQL, SqlSrv or SQLite enabled
-  - MySQL 5.6 / MariaDB 10.0 or higher for spatial features in MySQL
-  - PostGIS 2.0 or higher for spatial features in PostgreSQL 9.1 or higher
-  - SQL Server 2012 or higher (2017 for Linux support)
-  - SQLite 3.16 or higher (spatial features NOT supported)
+  - PHP 7.0 or higher with PDO drivers enabled for one of these database systems:
+    - MySQL 5.6 / MariaDB 10.0 or higher for spatial features in MySQL
+    - PostgreSQL 9.1 or higher with PostGIS 2.0 or higher for spatial features
+    - SQL Server 2012 or higher (2017 for Linux support)
+    - SQLite 3.16 or higher (spatial features NOT supported)
 
 ## Installation
 
@@ -54,6 +54,9 @@ Alternatively you can integrate this project into the web framework of your choi
 - [Automatic REST API for SlimPHP 4](https://tqdev.com/2019-automatic-api-slimphp-4)
 
 In these integrations [Composer](https://getcomposer.org/) is used to load this project as a dependency.
+
+For people that don't use composer, the file "`api.include.php`" is provided. This file contains everything 
+from "`api.php`" except the configuration from "`src/index.php`" and can be used by PHP's "include".
 
 ## Configuration
 
@@ -551,10 +554,25 @@ contain the same number of objects as there are primary keys in the URL:
 
 This adjusts the titles of the posts. And the return values are the number of rows that are set:
 
-    1,1
+    [1,1]
 
 Which means that there were two update operations and each of them had set one row. Batch operations use database
-transactions, so they either all succeed or all fail (successful ones get roled back).
+transactions, so they either all succeed or all fail (successful ones get roled back). If they fail the body will
+contain the list of error documents. In the following response the first operation succeeded and the second operation
+of the batch failed due to an integrity violation:
+
+    [   
+        {
+            "code": 0,
+            "message": "Success"
+        },
+        {
+            "code": 1010,
+            "message": "Data integrity violation"
+        }
+    ]
+
+The response status code will always be 424 (failed dependency) in case of any failure of one of the batch operations.
 
 ### Spatial support
 
@@ -642,6 +660,8 @@ You can tune the middleware behavior using middleware specific configuration par
 - "dbAuth.usernameColumn": The users table column that holds usernames ("username")
 - "dbAuth.passwordColumn": The users table column that holds passwords ("password")
 - "dbAuth.returnedColumns": The columns returned on successful login, empty means 'all' ("")
+- "dbAuth.registerUser": JSON user data (or "1") in case you want the /register endpoint enabled ("")
+- "dbAuth.passwordLength": Minimum length that the password must have ("12")
 - "dbAuth.sessionName": The name of the PHP session that is started ("")
 - "jwtAuth.mode": Set to "optional" if you want to allow anonymous access ("required")
 - "jwtAuth.header": Name of the header containing the JWT token ("X-Authorization")
@@ -705,20 +725,22 @@ Below you find more information on each of the authentication types.
 
 #### Database authentication
 
-The database authentication middleware defines two new routes:
+The database authentication middleware defines three new routes:
 
-    method path       - parameters               - description
-    ----------------------------------------------------------------------------------------
-    POST   /login     - username + password      - logs a user in by username and password
-    POST   /logout    -                          - logs out the currently logged in user
+    method path       - parameters                      - description
+    ---------------------------------------------------------------------------------------------------
+    GET    /me        -                                 - returns the user that is currently logged in
+    POST   /register  - username, password              - adds a user with given username and password
+    POST   /login     - username, password              - logs a user in by username and password
+    POST   /password  - username, password, newPassword - updates the password of the logged in user
+    POST   /logout    -                                 - logs out the currently logged in user
 
 A user can be logged in by sending it's username and password to the login endpoint (in JSON format).
 The authenticated user (with all it's properties) will be stored in the `$_SESSION['user']` variable.
 The user can be logged out by sending a POST request with an empty body to the logout endpoint.
-The passwords are stored as hashes in the password column in the users table. To generate the hash value
-for the password 'pass2' you can run on the command line:
-
-    php -r 'echo password_hash("pass2", PASSWORD_DEFAULT)."\n";'
+The passwords are stored as hashes in the password column in the users table. You can register a new user
+using the register endpoint, but this functionality must be turned on using the "dbAuth.regsiterUser"
+configuration parameter.
 
 It is IMPORTANT to restrict access to the users table using the 'authorization' middleware, otherwise all 
 users can freely add, modify or delete any account! The minimal configuration is shown below:
@@ -897,7 +919,7 @@ should not use the "authorization" middleware, but you do need to use the "recon
     },
 
 This will make the API connect to the database specifying "mevdschee" as the username and "secret123" as the password.
-The OpenAPI specification is less specific on allowed and disallowed operations, when you are using database permissions,
+The OpenAPI specification is less specific on allowed and disallowed operations when you are using database permissions,
 as the permissions are not read in the reflection step.
 
 NB: You may want to retrieve the username and password from the session (the "$_SESSION" variable).
@@ -915,7 +937,7 @@ The above example will strip all HTML tags from strings in the input.
 
 ### Type sanitation
 
-If you enable the 'sanitation' middleware, then you (automtically) also enable type sanitation. When this is enabled you may:
+If you enable the 'sanitation' middleware, then you (automatically) also enable type sanitation. When this is enabled you may:
 
 - send leading and trailing whitespace in a non-character field (it will be ignored).
 - send a float to an integer or bigint field (it will be rounded).
@@ -962,7 +984,7 @@ You can parse this output to make form fields show up with a red border and thei
 
 ### Type validations
 
-If you enable the 'validation' middleware, then you (automtically) also enable type validation. 
+If you enable the 'validation' middleware, then you (automatically) also enable type validation. 
 This includes the following error messages:
 
 | error message       | reason                      | applies to types                            |
@@ -1065,9 +1087,14 @@ You may use the "xml" middleware to translate input and output from JSON to XML.
 
     GET /records/posts/1
 
-Outputs:
+Outputs (when "pretty printed"):
 
-    {"id":1,"user_id":1,"category_id":1,"content":"blog started"}
+    {
+        "id": 1,
+        "user_id": 1,
+        "category_id": 1,
+        "content": "blog started"
+    }
 
 While (note the "format" query parameter):
 
@@ -1075,7 +1102,12 @@ While (note the "format" query parameter):
 
 Outputs:
 
-    <root><id>1</id><user_id>1</user_id><category_id>1</category_id><content>blog started</content></root>
+    <root>
+        <id>1</id>
+        <user_id>1</user_id>
+        <category_id>1</category_id>
+        <content>blog started</content>
+    </root>
 
 This functionality is disabled by default and must be enabled using the "middlewares" configuration setting.
 
@@ -1151,29 +1183,29 @@ The valid floating point values 'Infinite' (calculated with '1/0') and 'Not a Nu
 
 The following errors may be reported:
 
-| Error | HTTP response code         | Message
-| ------| -------------------------- | --------------
-| 1000  | 404 Not found              | Route not found 
-| 1001  | 404 Not found              | Table not found 
-| 1002  | 422 Unprocessable entity   | Argument count mismatch 
-| 1003  | 404 Not found              | Record not found 
-| 1004  | 403 Forbidden              | Origin is forbidden 
-| 1005  | 404 Not found              | Column not found 
-| 1006  | 409 Conflict               | Table already exists 
-| 1007  | 409 Conflict               | Column already exists 
-| 1008  | 422 Unprocessable entity   | Cannot read HTTP message 
-| 1009  | 409 Conflict               | Duplicate key exception 
-| 1010  | 409 Conflict               | Data integrity violation 
-| 1011  | 401 Unauthorized           | Authentication required 
-| 1012  | 403 Forbidden              | Authentication failed 
-| 1013  | 422 Unprocessable entity   | Input validation failed 
-| 1014  | 403 Forbidden              | Operation forbidden 
-| 1015  | 405 Method not allowed     | Operation not supported 
-| 1016  | 403 Forbidden              | Temporary or permanently blocked 
-| 1017  | 403 Forbidden              | Bad or missing XSRF token 
-| 1018  | 403 Forbidden              | Only AJAX requests allowed 
-| 1019  | 403 Forbidden              | Pagination Forbidden 
-| 9999  | 500 Internal server error  | Unknown error 
+| Error | HTTP response code        | Message
+| ----- | ------------------------- | --------------
+| 1000  | 404 Not found             | Route not found 
+| 1001  | 404 Not found             | Table not found 
+| 1002  | 422 Unprocessable entity  | Argument count mismatch 
+| 1003  | 404 Not found             | Record not found 
+| 1004  | 403 Forbidden             | Origin is forbidden 
+| 1005  | 404 Not found             | Column not found 
+| 1006  | 409 Conflict              | Table already exists 
+| 1007  | 409 Conflict              | Column already exists 
+| 1008  | 422 Unprocessable entity  | Cannot read HTTP message 
+| 1009  | 409 Conflict              | Duplicate key exception 
+| 1010  | 409 Conflict              | Data integrity violation 
+| 1011  | 401 Unauthorized          | Authentication required 
+| 1012  | 403 Forbidden             | Authentication failed 
+| 1013  | 422 Unprocessable entity  | Input validation failed 
+| 1014  | 403 Forbidden             | Operation forbidden 
+| 1015  | 405 Method not allowed    | Operation not supported 
+| 1016  | 403 Forbidden             | Temporary or permanently blocked 
+| 1017  | 403 Forbidden             | Bad or missing XSRF token 
+| 1018  | 403 Forbidden             | Only AJAX requests allowed 
+| 1019  | 403 Forbidden             | Pagination Forbidden 
+| 9999  | 500 Internal server error | Unknown error 
 
 The following JSON structure is used:
 
@@ -1193,7 +1225,7 @@ I am testing mainly on Ubuntu and I have the following test setups:
   - (Docker) Ubuntu 18.04 with PHP 7.2, MySQL 5.7, PostgreSQL 10.4 (PostGIS 2.4) and SQLite 3.22
   - (Docker) Debian 10 with PHP 7.3, MariaDB 10.3, PostgreSQL 11.4 (PostGIS 2.5) and SQLite 3.27
   - (Docker) Ubuntu 20.04 with PHP 7.4, MySQL 8.0, PostgreSQL 12.2 (PostGIS 3.0) and SQLite 3.31
-  - (Docker) CentOS 8 with PHP 7.4, MariaDB 10.4, PostgreSQL 12.2 (PostGIS 3.0) and SQLite 3.26
+  - (Docker) CentOS 8 with PHP 8.0, MariaDB 10.5, PostgreSQL 12.5 (PostGIS 3.0) and SQLite 3.26
 
 This covers not all environments (yet), so please notify me of failing tests and report your environment. 
 I will try to cover most relevant setups in the "docker" folder of the project.
@@ -1208,6 +1240,7 @@ This runs the functional tests from the "tests" directory. It uses the database 
 database configuration (config) from the corresponding subdirectories.
 
 ## Nginx config example
+
 ```
 server {
     listen 80 default_server;
@@ -1247,17 +1280,17 @@ Install docker using the following commands and then logout and login for the ch
 To run the docker tests run "build_all.sh" and "run_all.sh" from the docker directory. The output should be:
 
     ================================================
-    CentOS 8 (PHP 7.4)
+    CentOS 8 (PHP 8.0)
     ================================================
-    [1/4] Starting MariaDB 10.4 ..... done
-    [2/4] Starting PostgreSQL 12.2 .. done
+    [1/4] Starting MariaDB 10.5 ..... done
+    [2/4] Starting PostgreSQL 12.5 .. done
     [3/4] Starting SQLServer 2017 ... skipped
     [4/4] Cloning PHP-CRUD-API v2 ... skipped
     ------------------------------------------------
-    mysql: 105 tests ran in 2986 ms, 1 skipped, 0 failed
-    pgsql: 105 tests ran in 976 ms, 1 skipped, 0 failed
+    mysql: 110 tests ran in 957 ms, 1 skipped, 0 failed
+    pgsql: 110 tests ran in 817 ms, 1 skipped, 0 failed
     sqlsrv: skipped, driver not loaded
-    sqlite: 105 tests ran in 933 ms, 12 skipped, 0 failed
+    sqlite: 110 tests ran in 685 ms, 12 skipped, 0 failed
     ================================================
     Debian 10 (PHP 7.3)
     ================================================
@@ -1266,10 +1299,10 @@ To run the docker tests run "build_all.sh" and "run_all.sh" from the docker dire
     [3/4] Starting SQLServer 2017 ... skipped
     [4/4] Cloning PHP-CRUD-API v2 ... skipped
     ------------------------------------------------
-    mysql: 105 tests ran in 3214 ms, 1 skipped, 0 failed
-    pgsql: 105 tests ran in 904 ms, 1 skipped, 0 failed
+    mysql: 110 tests ran in 952 ms, 1 skipped, 0 failed
+    pgsql: 110 tests ran in 816 ms, 1 skipped, 0 failed
     sqlsrv: skipped, driver not loaded
-    sqlite: 105 tests ran in 1145 ms, 12 skipped, 0 failed
+    sqlite: 110 tests ran in 690 ms, 12 skipped, 0 failed
     ================================================
     Debian 9 (PHP 7.0)
     ================================================
@@ -1278,10 +1311,10 @@ To run the docker tests run "build_all.sh" and "run_all.sh" from the docker dire
     [3/4] Starting SQLServer 2017 ... skipped
     [4/4] Cloning PHP-CRUD-API v2 ... skipped
     ------------------------------------------------
-    mysql: 105 tests ran in 2940 ms, 1 skipped, 0 failed
-    pgsql: 105 tests ran in 992 ms, 1 skipped, 0 failed
+    mysql: 110 tests ran in 1075 ms, 1 skipped, 0 failed
+    pgsql: 110 tests ran in 834 ms, 1 skipped, 0 failed
     sqlsrv: skipped, driver not loaded
-    sqlite: 105 tests ran in 1063 ms, 12 skipped, 0 failed
+    sqlite: 110 tests ran in 728 ms, 12 skipped, 0 failed
     ================================================
     Ubuntu 16.04 (PHP 7.0)
     ================================================
@@ -1290,9 +1323,9 @@ To run the docker tests run "build_all.sh" and "run_all.sh" from the docker dire
     [3/4] Starting SQLServer 2017 ... done
     [4/4] Cloning PHP-CRUD-API v2 ... skipped
     ------------------------------------------------
-    mysql: 105 tests ran in 3015 ms, 1 skipped, 0 failed
-    pgsql: 105 tests ran in 992 ms, 1 skipped, 0 failed
-    sqlsrv: 105 tests ran in 10515 ms, 1 skipped, 0 failed
+    mysql: 110 tests ran in 1065 ms, 1 skipped, 0 failed
+    pgsql: 110 tests ran in 845 ms, 1 skipped, 0 failed
+    sqlsrv: 110 tests ran in 5404 ms, 1 skipped, 0 failed
     sqlite: skipped, driver not loaded
     ================================================
     Ubuntu 18.04 (PHP 7.2)
@@ -1302,10 +1335,10 @@ To run the docker tests run "build_all.sh" and "run_all.sh" from the docker dire
     [3/4] Starting SQLServer 2017 ... skipped
     [4/4] Cloning PHP-CRUD-API v2 ... skipped
     ------------------------------------------------
-    mysql: 105 tests ran in 3390 ms, 1 skipped, 0 failed
-    pgsql: 105 tests ran in 936 ms, 1 skipped, 0 failed
+    mysql: 110 tests ran in 1261 ms, 1 skipped, 0 failed
+    pgsql: 110 tests ran in 859 ms, 1 skipped, 0 failed
     sqlsrv: skipped, driver not loaded
-    sqlite: 105 tests ran in 1063 ms, 12 skipped, 0 failed
+    sqlite: 110 tests ran in 725 ms, 12 skipped, 0 failed
     ================================================
     Ubuntu 20.04 (PHP 7.4)
     ================================================
@@ -1314,10 +1347,10 @@ To run the docker tests run "build_all.sh" and "run_all.sh" from the docker dire
     [3/4] Starting SQLServer 2017 ... skipped
     [4/4] Cloning PHP-CRUD-API v2 ... skipped
     ------------------------------------------------
-    mysql: 105 tests ran in 6434 ms, 1 skipped, 0 failed
-    pgsql: 105 tests ran in 979 ms, 1 skipped, 0 failed
+    mysql: 110 tests ran in 1505 ms, 1 skipped, 0 failed
+    pgsql: 110 tests ran in 851 ms, 1 skipped, 0 failed
     sqlsrv: skipped, driver not loaded
-    sqlite: 105 tests ran in 1373 ms, 12 skipped, 0 failed
+    sqlite: 110 tests ran in 675 ms, 12 skipped, 0 failed
 
 The above test run (including starting up the databases) takes less than 5 minutes on my slow laptop.
 
@@ -1337,10 +1370,10 @@ The above test run (including starting up the databases) takes less than 5 minut
     [3/4] Starting SQLServer 2017 ... skipped
     [4/4] Cloning PHP-CRUD-API v2 ... skipped
     ------------------------------------------------
-    mysql: 105 tests ran in 3390 ms, 1 skipped, 0 failed
-    pgsql: 105 tests ran in 936 ms, 1 skipped, 0 failed
+    mysql: 110 tests ran in 1261 ms, 1 skipped, 0 failed
+    pgsql: 110 tests ran in 859 ms, 1 skipped, 0 failed
     sqlsrv: skipped, driver not loaded
-    sqlite: 105 tests ran in 1063 ms, 12 skipped, 0 failed
+    sqlite: 110 tests ran in 725 ms, 12 skipped, 0 failed
     root@b7ab9472e08f:/php-crud-api# 
 
 As you can see the "run.sh" script gives you access to a prompt in a chosen the docker environment.
