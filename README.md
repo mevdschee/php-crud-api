@@ -1388,6 +1388,20 @@ There is a `Dockerfile` in the repository that is used to build an image at:
 
 It will be automatically build on every release. The "latest" tag points to the last release.
 
+### Using the docker image
+
+The docker image accepts the following environment variable parameters:
+
+| Variable | Description | Default |
+|---|---|---|
+| DB_HOST | Hostname or IP address of database server/container | localhost |
+| DB_PORT | Database port | 3306 |
+| DB_USERNAME | Database username | php-crud-api |
+| DB_PASSWORD | Database password | php-crud-api |
+| DB_NAME | Database name to use | php-crud-api |
+
+
+
 ### Docker compose
 
 This repository also contains a `docker-compose.yml` file that you can install/build/run using:
