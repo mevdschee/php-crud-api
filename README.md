@@ -1388,6 +1388,8 @@ There is a `Dockerfile` in the repository that is used to build an image at:
 
 It will be automatically build on every release. The "latest" tag points to the last release.
 
+The docker image accepts the environment variable parameters from the configuration.
+
 ### Docker compose
 
 This repository also contains a `docker-compose.yml` file that you can install/build/run using:
