@@ -135,4 +135,9 @@ class RecordService
         $this->joiner->addJoins($table, $records, $params, $this->db);
         return new ListDocument($records, $count);
     }
+
+    public function ping(): int
+    {
+        return $this->db->ping();
+    }
 }

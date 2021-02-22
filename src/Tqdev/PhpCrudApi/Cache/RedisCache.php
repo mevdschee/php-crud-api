@@ -2,6 +2,8 @@
 
 namespace Tqdev\PhpCrudApi\Cache;
 
+use Tqdev\PhpCrudApi\Cache\Base\BaseCache;
+
 class RedisCache implements Cache
 {
     protected $prefix;

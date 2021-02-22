@@ -2,7 +2,9 @@
 
 namespace Tqdev\PhpCrudApi\Cache;
 
-class TempFileCache implements Cache
+use Tqdev\PhpCrudApi\Cache\Base\BaseCache;
+
+class TempFileCache extends BaseCache implements Cache
 {
     const SUFFIX = 'cache';
 

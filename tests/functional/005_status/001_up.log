@@ -1,0 +1,8 @@
+===
+GET /status/up
+===
+200
+Content-Type: application/json; charset=utf-8
+Content-Length: 24
+
+{"db":true,"cache":true}
