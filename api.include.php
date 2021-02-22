@@ -4871,20 +4871,10 @@ namespace Tqdev\PhpCrudApi\Controller {
 
         public function __construct(Router $router, Responder $responder, Cache $cache, GenericDB $db)
         {
-            $router->register('GET', '/status/up', array($this, 'up'));
             $router->register('GET', '/status/ping', array($this, 'ping'));
             $this->db = $db;
             $this->cache = $cache;
             $this->responder = $responder;
-        }
-
-        public function up(ServerRequestInterface $request): ResponseInterface
-        {
-            $result = [
-                'db' => $this->db->ping()<1000000,
-                'cache' => $this->cache->ping()<1000000,
-            ];
-            return $this->responder->success($result);
         }
 
         public function ping(ServerRequestInterface $request): ResponseInterface
@@ -9717,7 +9707,6 @@ namespace Tqdev\PhpCrudApi\OpenApi {
         private $openapi;
         private $operations = [
             'status' => [
-                'up' => 'get',
                 'ping' => 'get',
             ],        
         ];
@@ -9768,11 +9757,6 @@ namespace Tqdev\PhpCrudApi\OpenApi {
                             $this->openapi->set("$prefix|properties|db|format", "int64");
                             $this->openapi->set("$prefix|properties|cache|type", 'integer');
                             $this->openapi->set("$prefix|properties|cache|format", "int64");
-                            break;
-                        case 'up':
-                            $this->openapi->set("$prefix|required", ['db', 'cache']);
-                            $this->openapi->set("$prefix|properties|db|type", 'boolean');
-                            $this->openapi->set("$prefix|properties|cache|type", 'boolean');
                             break;
                     }
                 }
