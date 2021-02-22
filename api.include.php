@@ -7642,7 +7642,6 @@ namespace Tqdev\PhpCrudApi\Middleware {
                 } else {
                     $columnNames = array_map('trim', explode(',', $returnedColumns));
                     $columnNames[] = $passwordColumnName;
-                    $columnNames[] = $pkName;
                     $columnNames = array_values(array_unique($columnNames));
                 }
                 $columnOrdering = $this->ordering->getDefaultColumnOrdering($table);
