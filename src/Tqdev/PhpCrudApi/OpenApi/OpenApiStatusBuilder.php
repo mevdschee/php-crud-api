@@ -10,9 +10,8 @@ class OpenApiStatusBuilder
     private $operations = [
         'status' => [
             'ping' => 'get',
-        ],        
+        ],
     ];
-
 
     public function __construct(OpenApiDefinition $openapi)
     {
@@ -22,8 +21,6 @@ class OpenApiStatusBuilder
     public function build() /*: void*/
     {
         $this->setPaths();
-        $this->openapi->set("components|responses|boolSuccess|description", "boolean indicating success or failure");
-        $this->openapi->set("components|responses|boolSuccess|content|application/json|schema|type", "boolean");
         $this->setComponentSchema();
         $this->setComponentResponse();
         foreach (array_keys($this->operations) as $index => $type) {
@@ -41,7 +38,7 @@ class OpenApiStatusBuilder
                 $this->openapi->set("paths|$path|$method|operationId", "$operation" . "_" . "$type");
                 $this->openapi->set("paths|$path|$method|description", "Request API '$operation' status");
                 $this->openapi->set("paths|$path|$method|responses|200|\$ref", "#/components/responses/$operationType");
-        
+
             }
         }
     }
