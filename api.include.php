@@ -9747,7 +9747,7 @@ namespace Tqdev\PhpCrudApi\OpenApi {
                     $operationType = $operation . ucfirst($type);
                     $this->openapi->set("paths|$path|$method|tags|0", "$type");
                     $this->openapi->set("paths|$path|$method|operationId", "$operation" . "_" . "$type");
-                    $this->openapi->set("paths|$path|$method|description", "Request API '$type' status");
+                    $this->openapi->set("paths|$path|$method|description", "Request API '$operation' status");
                     $this->openapi->set("paths|$path|$method|responses|200|\$ref", "#/components/responses/$operationType");
             
                 }
@@ -9761,7 +9761,7 @@ namespace Tqdev\PhpCrudApi\OpenApi {
                     $operationType = $operation . ucfirst($type);
                     $prefix = "components|schemas|$operationType";
                     $this->openapi->set("$prefix|type", "object");
-                    switch ($type) {
+                    switch ($operation) {
                         case 'ping':
                             $this->openapi->set("$prefix|required", ['db', 'cache']);
                             $this->openapi->set("$prefix|properties|db|type", 'integer');
@@ -9784,7 +9784,7 @@ namespace Tqdev\PhpCrudApi\OpenApi {
             foreach ($this->operations as $type => $operationPair) {
                 foreach ($operationPair as $operation => $method) {
                     $operationType = $operation . ucfirst($type);
-                    $this->openapi->set("components|responses|$operationType|description", "status $type record");
+                    $this->openapi->set("components|responses|$operationType|description", "$operation status record");
                     $this->openapi->set("components|responses|$operationType|content|application/json|schema|\$ref", "#/components/schemas/$operationType");
                 }
             }
