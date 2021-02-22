@@ -30,7 +30,7 @@ class JsonResponder implements Responder
 
     public function exception($exception): ResponseInterface
     {
-        $document = ErrorDocument::fromException($exception);
+        $document = ErrorDocument::fromException($exception, $this->debug);
         $response = ResponseFactory::fromObject($document->getStatus(), $document);
         if ($this->debug) {
             $response = ResponseUtils::addExceptionHeaders($response, $exception);
@@ -46,7 +46,7 @@ class JsonResponder implements Responder
         foreach ($results as $i => $result) {
             if ($result instanceof \Throwable) {
                 $documents[$i] = null;
-                $errors[$i] = ErrorDocument::fromException($result);
+                $errors[$i] = ErrorDocument::fromException($result, $this->debug);
                 $success = false;
             } else {
                 $documents[$i] = $result;

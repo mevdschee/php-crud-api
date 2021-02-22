@@ -78,7 +78,7 @@ These are all the configuration options and their default value between brackets
 - "database": Database the connecting is made to (no default)
 - "tables": Comma separated list of tables to publish (defaults to 'all')
 - "middlewares": List of middlewares to load (`cors`)
-- "controllers": List of controllers to load (`records,geojson,openapi`)
+- "controllers": List of controllers to load (`records,geojson,openapi,status`)
 - "openApiBase": OpenAPI info (`{"info":{"title":"PHP-CRUD-API","version":"1.0.0"}}`)
 - "cacheType": `TempFile`, `Redis`, `Memcache`, `Memcached` or `NoCache` (`TempFile`)
 - "cachePath": Path/address of the cache (defaults to system's temp directory)
@@ -1216,6 +1216,21 @@ The following JSON structure is used:
 
 NB: Any non-error response will have status: 200 OK
 
+## Status
+
+To connect to your monitoring there is a 'ping' endpoint:
+
+    GET /status/ping
+
+And this should return status 200 and as data:
+
+    {
+        "db": 42,
+        "cache": 9
+    }
+
+These can be used to measure the time (in microseconds) to connect and read data from the database and the cache.
+
 ## Tests
 
 I am testing mainly on Ubuntu and I have the following test setups:
@@ -1387,6 +1402,8 @@ There is a `Dockerfile` in the repository that is used to build an image at:
 [https://hub.docker.com/r/mevdschee/php-crud-api](https://hub.docker.com/r/mevdschee/php-crud-api)
 
 It will be automatically build on every release. The "latest" tag points to the last release.
+
+The docker image accepts the environment variable parameters from the configuration.
 
 ### Docker compose
 

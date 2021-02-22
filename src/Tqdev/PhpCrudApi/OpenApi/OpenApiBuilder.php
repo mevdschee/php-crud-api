@@ -17,6 +17,7 @@ class OpenApiBuilder
         $this->openapi = new OpenApiDefinition($base);
         $this->records = in_array('records', $controllers) ? new OpenApiRecordsBuilder($this->openapi, $reflection) : null;
         $this->columns = in_array('columns', $controllers) ? new OpenApiColumnsBuilder($this->openapi) : null;
+        $this->status = in_array('status', $controllers) ? new OpenApiStatusBuilder($this->openapi) : null;
         $this->builders = array();
         foreach ($builders as $className) {
             $this->builders[] = new $className($this->openapi, $reflection);
@@ -44,6 +45,9 @@ class OpenApiBuilder
         }
         if ($this->columns) {
             $this->columns->build();
+        }
+        if ($this->status) {
+            $this->status->build();
         }
         foreach ($this->builders as $builder) {
             $builder->build();

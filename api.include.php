@@ -3226,6 +3226,41 @@ namespace Nyholm\Psr7Server {
     }
 }
 
+// file: src/Tqdev/PhpCrudApi/Cache/Base/BaseCache.php
+namespace Tqdev\PhpCrudApi\Cache\Base {
+
+    use Tqdev\PhpCrudApi\Cache\Cache;
+
+    class BaseCache implements Cache
+    {
+        public function __construct()
+        {
+        }
+
+        public function set(string $key, string $value, int $ttl = 0): bool
+        {
+            return true;
+        }
+
+        public function get(string $key): string
+        {
+            return '';
+        }
+
+        public function clear(): bool
+        {
+            return true;
+        }
+        
+        public function ping(): int
+        {
+            $start = microtime(true);
+            $this->get('__ping__');
+            return intval((microtime(true)-$start)*1000000);
+        }
+    }
+}
+
 // file: src/Tqdev/PhpCrudApi/Cache/Cache.php
 namespace Tqdev\PhpCrudApi\Cache {
 
@@ -3234,6 +3269,7 @@ namespace Tqdev\PhpCrudApi\Cache {
         public function set(string $key, string $value, int $ttl = 0): bool;
         public function get(string $key): string;
         public function clear(): bool;
+        public function ping(): int;
     }
 }
 
@@ -3268,7 +3304,9 @@ namespace Tqdev\PhpCrudApi\Cache {
 // file: src/Tqdev/PhpCrudApi/Cache/MemcacheCache.php
 namespace Tqdev\PhpCrudApi\Cache {
 
-    class MemcacheCache implements Cache
+    use Tqdev\PhpCrudApi\Cache\Base\BaseCache;
+
+    class MemcacheCache extends BaseCache implements Cache
     {
         protected $prefix;
         protected $memcache;
@@ -3331,33 +3369,19 @@ namespace Tqdev\PhpCrudApi\Cache {
 // file: src/Tqdev/PhpCrudApi/Cache/NoCache.php
 namespace Tqdev\PhpCrudApi\Cache {
 
-    class NoCache implements Cache
+    use Tqdev\PhpCrudApi\Cache\Base\BaseCache;
+
+    class NoCache extends BaseCache implements Cache
     {
-        public function __construct()
-        {
-        }
-
-        public function set(string $key, string $value, int $ttl = 0): bool
-        {
-            return true;
-        }
-
-        public function get(string $key): string
-        {
-            return '';
-        }
-
-        public function clear(): bool
-        {
-            return true;
-        }
     }
 }
 
 // file: src/Tqdev/PhpCrudApi/Cache/RedisCache.php
 namespace Tqdev\PhpCrudApi\Cache {
 
-    class RedisCache implements Cache
+    use Tqdev\PhpCrudApi\Cache\Base\BaseCache;
+
+    class RedisCache extends BaseCache implements Cache
     {
         protected $prefix;
         protected $redis;
@@ -3396,7 +3420,9 @@ namespace Tqdev\PhpCrudApi\Cache {
 // file: src/Tqdev/PhpCrudApi/Cache/TempFileCache.php
 namespace Tqdev\PhpCrudApi\Cache {
 
-    class TempFileCache implements Cache
+    use Tqdev\PhpCrudApi\Cache\Base\BaseCache;
+
+    class TempFileCache extends BaseCache implements Cache
     {
         const SUFFIX = 'cache';
 
@@ -4522,6 +4548,7 @@ namespace Tqdev\PhpCrudApi\Controller {
     use Tqdev\PhpCrudApi\Record\Document\ErrorDocument;
     use Tqdev\PhpCrudApi\Record\ErrorCode;
     use Tqdev\PhpCrudApi\ResponseFactory;
+    use Tqdev\PhpCrudApi\ResponseUtils;
 
     class JsonResponder implements Responder
     {
@@ -4545,7 +4572,7 @@ namespace Tqdev\PhpCrudApi\Controller {
 
         public function exception($exception): ResponseInterface
         {
-            $document = ErrorDocument::fromException($exception);
+            $document = ErrorDocument::fromException($exception, $this->debug);
             $response = ResponseFactory::fromObject($document->getStatus(), $document);
             if ($this->debug) {
                 $response = ResponseUtils::addExceptionHeaders($response, $exception);
@@ -4558,20 +4585,20 @@ namespace Tqdev\PhpCrudApi\Controller {
             $documents = array();
             $errors = array();
             $success = true;
-            foreach ($results as $i=>$result) {
+            foreach ($results as $i => $result) {
                 if ($result instanceof \Throwable) {
                     $documents[$i] = null;
-                    $errors[$i] = ErrorDocument::fromException($result);
+                    $errors[$i] = ErrorDocument::fromException($result, $this->debug);
                     $success = false;
                 } else {
                     $documents[$i] = $result;
-                    $errors[$i] = new ErrorDocument(new ErrorCode(0),'',null);
+                    $errors[$i] = new ErrorDocument(new ErrorCode(0), '', null);
                 }
             }
             $status = $success ? ResponseFactory::OK : ResponseFactory::FAILED_DEPENDENCY;
             $document = $success ? $documents : $errors;
             $response = ResponseFactory::fromObject($status, $document);
-            foreach ($results as $i=>$result) {
+            foreach ($results as $i => $result) {
                 if ($result instanceof \Throwable) {
                     if ($this->debug) {
                         $response = ResponseUtils::addExceptionHeaders($response, $result);
@@ -4607,6 +4634,35 @@ namespace Tqdev\PhpCrudApi\Controller {
         public function openapi(ServerRequestInterface $request): ResponseInterface
         {
             return $this->responder->success($this->openApi->get());
+        }
+    }
+}
+
+// file: src/Tqdev/PhpCrudApi/Controller/ProcedureController.php
+namespace Tqdev\PhpCrudApi\Controller {
+
+    use Psr\Http\Message\ResponseInterface;
+    use Psr\Http\Message\ServerRequestInterface;
+    use Tqdev\PhpCrudApi\Middleware\Router\Router;
+    use Tqdev\PhpCrudApi\Record\ErrorCode;
+    use Tqdev\PhpCrudApi\Procedure\ProcedureService;
+    use Tqdev\PhpCrudApi\RequestUtils;
+
+    class ProcedureController
+    {
+        private $service;
+        private $responder;
+
+        public function __construct(Router $router, Responder $responder, ProcedureService $service)
+        {
+            $router->register('GET', '/procedures/*', array($this, '_list'));
+            $router->register('POST', '/procedures/*', array($this, 'create'));
+            $router->register('GET', '/procedures/*/*', array($this, 'read'));
+            $router->register('PUT', '/procedures/*/*', array($this, 'update'));
+            $router->register('DELETE', '/procedures/*/*', array($this, 'delete'));
+            $router->register('PATCH', '/procedures/*/*', array($this, 'increment'));
+            $this->service = $service;
+            $this->responder = $responder;
         }
     }
 }
@@ -4819,6 +4875,46 @@ namespace Tqdev\PhpCrudApi\Controller {
         public function error(int $error, string $argument, $details = null): ResponseInterface;
 
         public function success($result): ResponseInterface;
+
+        public function multi($results): ResponseInterface;
+
+        public function exception($exception): ResponseInterface;
+
+    }
+}
+
+// file: src/Tqdev/PhpCrudApi/Controller/StatusController.php
+namespace Tqdev\PhpCrudApi\Controller {
+
+    use Psr\Http\Message\ResponseInterface;
+    use Psr\Http\Message\ServerRequestInterface;
+    use Tqdev\PhpCrudApi\Cache\Cache;
+    use Tqdev\PhpCrudApi\Database\GenericDB;
+    use Tqdev\PhpCrudApi\Middleware\Router\Router;
+
+    class StatusController
+    {
+        private $db;
+        private $cache;
+        private $responder;
+
+        public function __construct(Router $router, Responder $responder, Cache $cache, GenericDB $db)
+        {
+            $router->register('GET', '/status/ping', array($this, 'ping'));
+            $this->db = $db;
+            $this->cache = $cache;
+            $this->responder = $responder;
+        }
+
+        public function ping(ServerRequestInterface $request): ResponseInterface
+        {
+            $result = [
+                'db' => $this->db->ping(),
+                'cache' => $this->cache->ping(),
+            ];
+            return $this->responder->success($result);
+        }
+
     }
 }
 
@@ -5679,6 +5775,14 @@ namespace Tqdev\PhpCrudApi\Database {
             //echo "- $sql -- " . json_encode($parameters, JSON_UNESCAPED_UNICODE) . "\n";
             $stmt->execute($parameters);
             return $stmt;
+        }
+
+        public function ping(): int
+        {
+            $start = microtime(true);
+            $stmt = $this->pdo->prepare('SELECT 1');
+            $stmt->execute();
+            return intval((microtime(true)-$start)*1000000);
         }
 
         public function getCacheKey(): string
@@ -7467,7 +7571,7 @@ namespace Tqdev\PhpCrudApi\Middleware {
         {
             $found = false;
             foreach (explode(',', $allowedOrigins) as $allowedOrigin) {
-                $hostname = preg_quote(strtolower(trim($allowedOrigin)));
+                $hostname = preg_quote(strtolower(trim($allowedOrigin)),'/');
                 $regex = '/^' . str_replace('\*', '.*', $hostname) . '$/';
                 if (preg_match($regex, $origin)) {
                     $found = true;
@@ -7641,7 +7745,6 @@ namespace Tqdev\PhpCrudApi\Middleware {
                 } else {
                     $columnNames = array_map('trim', explode(',', $returnedColumns));
                     $columnNames[] = $passwordColumnName;
-                    $columnNames[] = $pkName;
                     $columnNames = array_values(array_unique($columnNames));
                 }
                 $columnOrdering = $this->ordering->getDefaultColumnOrdering($table);
@@ -8946,6 +9049,7 @@ namespace Tqdev\PhpCrudApi\OpenApi {
             $this->openapi = new OpenApiDefinition($base);
             $this->records = in_array('records', $controllers) ? new OpenApiRecordsBuilder($this->openapi, $reflection) : null;
             $this->columns = in_array('columns', $controllers) ? new OpenApiColumnsBuilder($this->openapi) : null;
+            $this->status = in_array('status', $controllers) ? new OpenApiStatusBuilder($this->openapi) : null;
             $this->builders = array();
             foreach ($builders as $className) {
                 $this->builders[] = new $className($this->openapi, $reflection);
@@ -8973,6 +9077,9 @@ namespace Tqdev\PhpCrudApi\OpenApi {
             }
             if ($this->columns) {
                 $this->columns->build();
+            }
+            if ($this->status) {
+                $this->status->build();
             }
             foreach ($this->builders as $builder) {
                 $builder->build();
@@ -9619,6 +9726,109 @@ namespace Tqdev\PhpCrudApi\OpenApi {
     }
 }
 
+// file: src/Tqdev/PhpCrudApi/OpenApi/OpenApiStatusBuilder.php
+namespace Tqdev\PhpCrudApi\OpenApi {
+
+    use Tqdev\PhpCrudApi\OpenApi\OpenApiDefinition;
+
+    class OpenApiStatusBuilder
+    {
+        private $openapi;
+        private $operations = [
+            'status' => [
+                'ping' => 'get',
+            ],
+        ];
+
+        public function __construct(OpenApiDefinition $openapi)
+        {
+            $this->openapi = $openapi;
+        }
+
+        public function build() /*: void*/
+        {
+            $this->setPaths();
+            $this->setComponentSchema();
+            $this->setComponentResponse();
+            foreach (array_keys($this->operations) as $index => $type) {
+                $this->setTag($index, $type);
+            }
+        }
+
+        private function setPaths() /*: void*/
+        {
+            foreach ($this->operations as $type => $operationPair) {
+                foreach ($operationPair as $operation => $method) {
+                    $path = "/$type/$operation";
+                    $operationType = $operation . ucfirst($type);
+                    $this->openapi->set("paths|$path|$method|tags|0", "$type");
+                    $this->openapi->set("paths|$path|$method|operationId", "$operation" . "_" . "$type");
+                    $this->openapi->set("paths|$path|$method|description", "Request API '$operation' status");
+                    $this->openapi->set("paths|$path|$method|responses|200|\$ref", "#/components/responses/$operationType");
+
+                }
+            }
+        }
+
+        private function setComponentSchema() /*: void*/
+        {
+            foreach ($this->operations as $type => $operationPair) {
+                foreach ($operationPair as $operation => $method) {
+                    $operationType = $operation . ucfirst($type);
+                    $prefix = "components|schemas|$operationType";
+                    $this->openapi->set("$prefix|type", "object");
+                    switch ($operation) {
+                        case 'ping':
+                            $this->openapi->set("$prefix|required", ['db', 'cache']);
+                            $this->openapi->set("$prefix|properties|db|type", 'integer');
+                            $this->openapi->set("$prefix|properties|db|format", "int64");
+                            $this->openapi->set("$prefix|properties|cache|type", 'integer');
+                            $this->openapi->set("$prefix|properties|cache|format", "int64");
+                            break;
+                    }
+                }
+            }
+        }
+
+        private function setComponentResponse() /*: void*/
+        {
+            foreach ($this->operations as $type => $operationPair) {
+                foreach ($operationPair as $operation => $method) {
+                    $operationType = $operation . ucfirst($type);
+                    $this->openapi->set("components|responses|$operationType|description", "$operation status record");
+                    $this->openapi->set("components|responses|$operationType|content|application/json|schema|\$ref", "#/components/schemas/$operationType");
+                }
+            }
+        }
+
+        private function setTag(int $index, string $type) /*: void*/
+        {
+            $this->openapi->set("tags|$index|name", "$type");
+            $this->openapi->set("tags|$index|description", "$type operations");
+        }
+    }
+}
+
+// file: src/Tqdev/PhpCrudApi/Procedure/ProcedureService.php
+namespace Tqdev\PhpCrudApi\Record {
+
+    use Tqdev\PhpCrudApi\Column\ReflectionService;
+    use Tqdev\PhpCrudApi\Database\GenericDB;
+    use Tqdev\PhpCrudApi\Record\Document\ListDocument;
+
+    class ProcedureService
+    {
+        private $db;
+        private $reflection;
+
+        public function __construct(GenericDB $db, ReflectionService $reflection)
+        {
+            $this->db = $db;
+            $this->reflection = $reflection;
+        }
+    }
+}
+
 // file: src/Tqdev/PhpCrudApi/Record/Condition/AndCondition.php
 namespace Tqdev\PhpCrudApi\Record\Condition {
 
@@ -9893,7 +10103,7 @@ namespace Tqdev\PhpCrudApi\Record\Document {
             return array_filter($this->serialize(), function($v) {return $v!==null;});
         }
 
-        public static function fromException(\Throwable $exception)
+        public static function fromException(\Throwable $exception, bool $debug)
         {
             $document = new ErrorDocument(new ErrorCode(ErrorCode::ERROR_NOT_FOUND), $exception->getMessage(), null);
             if ($exception instanceof \PDOException) {
@@ -9908,7 +10118,8 @@ namespace Tqdev\PhpCrudApi\Record\Document {
                 } elseif (strpos(strtolower($exception->getMessage()), 'constraint') !== false) {
                     $document = new ErrorDocument(new ErrorCode(ErrorCode::DATA_INTEGRITY_VIOLATION), '', null);
                 } else {
-                    $document = new ErrorDocument(new ErrorCode(ErrorCode::ERROR_NOT_FOUND), '', null);
+                    $message = $debug?$exception->getMessage():'PDOException occurred (enable debug mode)';
+                    $document = new ErrorDocument(new ErrorCode(ErrorCode::ERROR_NOT_FOUND), $message, null);
                 }
             }
             return $document;
@@ -10518,6 +10729,11 @@ namespace Tqdev\PhpCrudApi\Record {
             $this->joiner->addJoins($table, $records, $params, $this->db);
             return new ListDocument($records, $count);
         }
+
+        public function ping(): int
+        {
+            return $this->db->ping();
+        }
     }
 }
 
@@ -10833,6 +11049,7 @@ namespace Tqdev\PhpCrudApi {
     use Tqdev\PhpCrudApi\Controller\JsonResponder;
     use Tqdev\PhpCrudApi\Controller\OpenApiController;
     use Tqdev\PhpCrudApi\Controller\RecordController;
+    use Tqdev\PhpCrudApi\Controller\StatusController;
     use Tqdev\PhpCrudApi\Database\GenericDB;
     use Tqdev\PhpCrudApi\GeoJson\GeoJsonService;
     use Tqdev\PhpCrudApi\Middleware\AuthorizationMiddleware;
@@ -10957,6 +11174,9 @@ namespace Tqdev\PhpCrudApi {
                         $geoJson = new GeoJsonService($reflection, $records);
                         new GeoJsonController($router, $responder, $geoJson);
                         break;
+                    case 'status':
+                        new StatusController($router, $responder, $cache, $db);
+                        break;                    
                 }
             }
             foreach ($config->getCustomControllers() as $className) {
@@ -11048,7 +11268,7 @@ namespace Tqdev\PhpCrudApi {
             'database' => null,
             'tables' => '',
             'middlewares' => 'cors,errors',
-            'controllers' => 'records,geojson,openapi',
+            'controllers' => 'records,geojson,openapi,status',
             'customControllers' => '',
             'customOpenApiBuilders' => '',
             'cacheType' => 'TempFile',

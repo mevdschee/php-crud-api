@@ -46,7 +46,7 @@ class ErrorDocument implements \JsonSerializable
         return array_filter($this->serialize(), function($v) {return $v!==null;});
     }
 
-    public static function fromException(\Throwable $exception)
+    public static function fromException(\Throwable $exception, bool $debug)
     {
         $document = new ErrorDocument(new ErrorCode(ErrorCode::ERROR_NOT_FOUND), $exception->getMessage(), null);
         if ($exception instanceof \PDOException) {
@@ -61,7 +61,8 @@ class ErrorDocument implements \JsonSerializable
             } elseif (strpos(strtolower($exception->getMessage()), 'constraint') !== false) {
                 $document = new ErrorDocument(new ErrorCode(ErrorCode::DATA_INTEGRITY_VIOLATION), '', null);
             } else {
-                $document = new ErrorDocument(new ErrorCode(ErrorCode::ERROR_NOT_FOUND), '', null);
+                $message = $debug?$exception->getMessage():'PDOException occurred (enable debug mode)';
+                $document = new ErrorDocument(new ErrorCode(ErrorCode::ERROR_NOT_FOUND), $message, null);
             }
         }
         return $document;

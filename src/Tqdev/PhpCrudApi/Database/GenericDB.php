@@ -341,6 +341,14 @@ class GenericDB
         return $stmt;
     }
 
+    public function ping(): int
+    {
+        $start = microtime(true);
+        $stmt = $this->pdo->prepare('SELECT 1');
+        $stmt->execute();
+        return intval((microtime(true)-$start)*1000000);
+    }
+
     public function getCacheKey(): string
     {
         return md5(json_encode([

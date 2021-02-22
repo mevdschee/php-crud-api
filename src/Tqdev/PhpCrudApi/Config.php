@@ -13,7 +13,7 @@ class Config
         'database' => null,
         'tables' => '',
         'middlewares' => 'cors,errors',
-        'controllers' => 'records,geojson,openapi',
+        'controllers' => 'records,geojson,openapi,status',
         'customControllers' => '',
         'customOpenApiBuilders' => '',
         'cacheType' => 'TempFile',

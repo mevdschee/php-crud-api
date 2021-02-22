@@ -14,6 +14,7 @@ use Tqdev\PhpCrudApi\Controller\GeoJsonController;
 use Tqdev\PhpCrudApi\Controller\JsonResponder;
 use Tqdev\PhpCrudApi\Controller\OpenApiController;
 use Tqdev\PhpCrudApi\Controller\RecordController;
+use Tqdev\PhpCrudApi\Controller\StatusController;
 use Tqdev\PhpCrudApi\Database\GenericDB;
 use Tqdev\PhpCrudApi\GeoJson\GeoJsonService;
 use Tqdev\PhpCrudApi\Middleware\AuthorizationMiddleware;
@@ -138,6 +139,9 @@ class Api implements RequestHandlerInterface
                     $geoJson = new GeoJsonService($reflection, $records);
                     new GeoJsonController($router, $responder, $geoJson);
                     break;
+                case 'status':
+                    new StatusController($router, $responder, $cache, $db);
+                    break;                    
             }
         }
         foreach ($config->getCustomControllers() as $className) {
