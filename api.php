@@ -3226,6 +3226,41 @@ namespace Nyholm\Psr7Server {
     }
 }
 
+// file: src/Tqdev/PhpCrudApi/Cache/Base/BaseCache.php
+namespace Tqdev\PhpCrudApi\Cache\Base {
+
+    use Tqdev\PhpCrudApi\Cache\Cache;
+
+    class BaseCache implements Cache
+    {
+        public function __construct()
+        {
+        }
+
+        public function set(string $key, string $value, int $ttl = 0): bool
+        {
+            return true;
+        }
+
+        public function get(string $key): string
+        {
+            return '';
+        }
+
+        public function clear(): bool
+        {
+            return true;
+        }
+        
+        public function ping(): int
+        {
+            $start = microtime(true);
+            $this->get('__ping__');
+            return intval((microtime(true)-$start)*1000000);
+        }
+    }
+}
+
 // file: src/Tqdev/PhpCrudApi/Cache/Cache.php
 namespace Tqdev\PhpCrudApi\Cache {
 
@@ -3234,6 +3269,7 @@ namespace Tqdev\PhpCrudApi\Cache {
         public function set(string $key, string $value, int $ttl = 0): bool;
         public function get(string $key): string;
         public function clear(): bool;
+        public function ping(): int;
     }
 }
 
@@ -3268,7 +3304,9 @@ namespace Tqdev\PhpCrudApi\Cache {
 // file: src/Tqdev/PhpCrudApi/Cache/MemcacheCache.php
 namespace Tqdev\PhpCrudApi\Cache {
 
-    class MemcacheCache implements Cache
+    use Tqdev\PhpCrudApi\Cache\Base\BaseCache;
+
+    class MemcacheCache extends BaseCache implements Cache
     {
         protected $prefix;
         protected $memcache;
@@ -3331,33 +3369,19 @@ namespace Tqdev\PhpCrudApi\Cache {
 // file: src/Tqdev/PhpCrudApi/Cache/NoCache.php
 namespace Tqdev\PhpCrudApi\Cache {
 
-    class NoCache implements Cache
+    use Tqdev\PhpCrudApi\Cache\Base\BaseCache;
+
+    class NoCache extends BaseCache implements Cache
     {
-        public function __construct()
-        {
-        }
-
-        public function set(string $key, string $value, int $ttl = 0): bool
-        {
-            return true;
-        }
-
-        public function get(string $key): string
-        {
-            return '';
-        }
-
-        public function clear(): bool
-        {
-            return true;
-        }
     }
 }
 
 // file: src/Tqdev/PhpCrudApi/Cache/RedisCache.php
 namespace Tqdev\PhpCrudApi\Cache {
 
-    class RedisCache implements Cache
+    use Tqdev\PhpCrudApi\Cache\Base\BaseCache;
+
+    class RedisCache extends BaseCache implements Cache
     {
         protected $prefix;
         protected $redis;
@@ -3396,7 +3420,9 @@ namespace Tqdev\PhpCrudApi\Cache {
 // file: src/Tqdev/PhpCrudApi/Cache/TempFileCache.php
 namespace Tqdev\PhpCrudApi\Cache {
 
-    class TempFileCache implements Cache
+    use Tqdev\PhpCrudApi\Cache\Base\BaseCache;
+
+    class TempFileCache extends BaseCache implements Cache
     {
         const SUFFIX = 'cache';
 
@@ -4820,6 +4846,56 @@ namespace Tqdev\PhpCrudApi\Controller {
         public function error(int $error, string $argument, $details = null): ResponseInterface;
 
         public function success($result): ResponseInterface;
+
+        public function multi($results): ResponseInterface;
+
+        public function exception($exception): ResponseInterface;
+
+    }
+}
+
+// file: src/Tqdev/PhpCrudApi/Controller/StatusController.php
+namespace Tqdev\PhpCrudApi\Controller {
+
+    use Psr\Http\Message\ResponseInterface;
+    use Psr\Http\Message\ServerRequestInterface;
+    use Tqdev\PhpCrudApi\Cache\Cache;
+    use Tqdev\PhpCrudApi\Database\GenericDB;
+    use Tqdev\PhpCrudApi\Middleware\Router\Router;
+
+    class StatusController
+    {
+        private $db;
+        private $cache;
+        private $responder;
+
+        public function __construct(Router $router, Responder $responder, Cache $cache, GenericDB $db)
+        {
+            $router->register('GET', '/status/up', array($this, 'up'));
+            $router->register('GET', '/status/ping', array($this, 'ping'));
+            $this->db = $db;
+            $this->cache = $cache;
+            $this->responder = $responder;
+        }
+
+        public function up(ServerRequestInterface $request): ResponseInterface
+        {
+            $result = [
+                'db' => $this->db->ping()<1000000,
+                'cache' => $this->cache->ping()<1000000,
+            ];
+            return $this->responder->success($result);
+        }
+
+        public function ping(ServerRequestInterface $request): ResponseInterface
+        {
+            $result = [
+                'db' => $this->db->ping(),
+                'cache' => $this->cache->ping(),
+            ];
+            return $this->responder->success($result);
+        }
+
     }
 }
 
@@ -5680,6 +5756,14 @@ namespace Tqdev\PhpCrudApi\Database {
             //echo "- $sql -- " . json_encode($parameters, JSON_UNESCAPED_UNICODE) . "\n";
             $stmt->execute($parameters);
             return $stmt;
+        }
+
+        public function ping(): int
+        {
+            $start = microtime(true);
+            $stmt = $this->pdo->prepare('SELECT 1');
+            $stmt->execute();
+            return intval((microtime(true)-$start)*1000000);
         }
 
         public function getCacheKey(): string
@@ -10519,6 +10603,11 @@ namespace Tqdev\PhpCrudApi\Record {
             $this->joiner->addJoins($table, $records, $params, $this->db);
             return new ListDocument($records, $count);
         }
+
+        public function ping(): int
+        {
+            return $this->db->ping();
+        }
     }
 }
 
@@ -10834,6 +10923,7 @@ namespace Tqdev\PhpCrudApi {
     use Tqdev\PhpCrudApi\Controller\JsonResponder;
     use Tqdev\PhpCrudApi\Controller\OpenApiController;
     use Tqdev\PhpCrudApi\Controller\RecordController;
+    use Tqdev\PhpCrudApi\Controller\StatusController;
     use Tqdev\PhpCrudApi\Database\GenericDB;
     use Tqdev\PhpCrudApi\GeoJson\GeoJsonService;
     use Tqdev\PhpCrudApi\Middleware\AuthorizationMiddleware;
@@ -10958,6 +11048,9 @@ namespace Tqdev\PhpCrudApi {
                         $geoJson = new GeoJsonService($reflection, $records);
                         new GeoJsonController($router, $responder, $geoJson);
                         break;
+                    case 'status':
+                        new StatusController($router, $responder, $cache, $db);
+                        break;                    
                 }
             }
             foreach ($config->getCustomControllers() as $className) {
@@ -11049,7 +11142,7 @@ namespace Tqdev\PhpCrudApi {
             'database' => null,
             'tables' => '',
             'middlewares' => 'cors,errors',
-            'controllers' => 'records,geojson,openapi',
+            'controllers' => 'records,geojson,openapi,status',
             'customControllers' => '',
             'customOpenApiBuilders' => '',
             'cacheType' => 'TempFile',
