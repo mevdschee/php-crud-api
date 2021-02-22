@@ -9030,6 +9030,7 @@ namespace Tqdev\PhpCrudApi\OpenApi {
             $this->openapi = new OpenApiDefinition($base);
             $this->records = in_array('records', $controllers) ? new OpenApiRecordsBuilder($this->openapi, $reflection) : null;
             $this->columns = in_array('columns', $controllers) ? new OpenApiColumnsBuilder($this->openapi) : null;
+            $this->status = in_array('status', $controllers) ? new OpenApiStatusBuilder($this->openapi) : null;
             $this->builders = array();
             foreach ($builders as $className) {
                 $this->builders[] = new $className($this->openapi, $reflection);
@@ -9057,6 +9058,9 @@ namespace Tqdev\PhpCrudApi\OpenApi {
             }
             if ($this->columns) {
                 $this->columns->build();
+            }
+            if ($this->status) {
+                $this->status->build();
             }
             foreach ($this->builders as $builder) {
                 $builder->build();
@@ -9699,6 +9703,97 @@ namespace Tqdev\PhpCrudApi\OpenApi {
         public function get(): OpenApiDefinition
         {
             return $this->builder->build();
+        }
+    }
+}
+
+// file: src/Tqdev/PhpCrudApi/OpenApi/OpenApiStatusBuilder.php
+namespace Tqdev\PhpCrudApi\OpenApi {
+
+    use Tqdev\PhpCrudApi\OpenApi\OpenApiDefinition;
+
+    class OpenApiStatusBuilder
+    {
+        private $openapi;
+        private $operations = [
+            'status' => [
+                'up' => 'get',
+                'ping' => 'get',
+            ],        
+        ];
+
+        public function __construct(OpenApiDefinition $openapi)
+        {
+            $this->openapi = $openapi;
+        }
+
+        public function build() /*: void*/
+        {
+            $this->setPaths();
+            $this->openapi->set("components|responses|boolSuccess|description", "boolean indicating success or failure");
+            $this->openapi->set("components|responses|boolSuccess|content|application/json|schema|type", "boolean");
+            $this->setComponentSchema();
+            $this->setComponentResponse();
+            foreach (array_keys($this->operations) as $index => $type) {
+                $this->setTag($index, $type);
+            }
+        }
+
+        private function setPaths() /*: void*/
+        {
+            foreach ($this->operations as $type => $operationPair) {
+                foreach ($operationPair as $operation => $method) {
+                    $path = "/$type/$operation";
+                    $operationType = $operation . ucfirst($type);
+                    $this->openapi->set("paths|$path|$method|tags|0", "$type");
+                    $this->openapi->set("paths|$path|$method|operationId", "$operation" . "_" . "$type");
+                    $this->openapi->set("paths|$path|$method|description", "Request API '$type' status");
+                    $this->openapi->set("paths|$path|$method|responses|200|\$ref", "#/components/responses/$operationType");
+            
+                }
+            }
+        }
+
+        private function setComponentSchema() /*: void*/
+        {
+            foreach ($this->operations as $type => $operationPair) {
+                foreach ($operationPair as $operation => $method) {
+                    $operationType = $operation . ucfirst($type);
+                    $prefix = "components|schemas|$operationType";
+                    $this->openapi->set("$prefix|type", "object");
+                    switch ($type) {
+                        case 'ping':
+                            $this->openapi->set("$prefix|required", ['db', 'cache']);
+                            $this->openapi->set("$prefix|properties|db|type", 'integer');
+                            $this->openapi->set("$prefix|properties|db|format", "int64");
+                            $this->openapi->set("$prefix|properties|cache|type", 'integer');
+                            $this->openapi->set("$prefix|properties|cache|format", "int64");
+                            break;
+                        case 'up':
+                            $this->openapi->set("$prefix|required", ['db', 'cache']);
+                            $this->openapi->set("$prefix|properties|db|type", 'boolean');
+                            $this->openapi->set("$prefix|properties|cache|type", 'boolean');
+                            break;
+                    }
+                }
+            }
+        }
+
+        private function setComponentResponse() /*: void*/
+        {
+            foreach ($this->operations as $type => $operationPair) {
+                foreach ($operationPair as $operation => $method) {
+                    $operationType = $operation . ucfirst($type);
+                    $this->openapi->set("components|responses|$operationType|description", "status $type record");
+                    $this->openapi->set("components|responses|$operationType|content|application/json|schema|\$ref", "#/components/schemas/$operationType");
+                }
+            }
+        }
+
+        private function setTag(int $index, string $type) /*: void*/
+        {
+            $this->openapi->set("tags|$index|name", "$type");
+            $this->openapi->set("tags|$index|description", "$type operations");
         }
     }
 }
