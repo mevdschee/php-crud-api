@@ -1218,18 +1218,7 @@ NB: Any non-error response will have status: 200 OK
 
 ## Status
 
-To connect to your monitoring there are two endpoints, one is up:
-
-    GET /status/up
-
-And this should return status 200 and as data:
-
-    {
-        "db": true,
-        "cache": true
-    }
-
-Values will be false when reading takes longer than 1 second. Alternatively you can use:
+To connect to your monitoring there is a 'ping' endpoint:
 
     GET /status/ping
 

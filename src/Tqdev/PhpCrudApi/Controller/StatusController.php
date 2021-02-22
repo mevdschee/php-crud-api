@@ -16,20 +16,10 @@ class StatusController
 
     public function __construct(Router $router, Responder $responder, Cache $cache, GenericDB $db)
     {
-        $router->register('GET', '/status/up', array($this, 'up'));
         $router->register('GET', '/status/ping', array($this, 'ping'));
         $this->db = $db;
         $this->cache = $cache;
         $this->responder = $responder;
-    }
-
-    public function up(ServerRequestInterface $request): ResponseInterface
-    {
-        $result = [
-            'db' => $this->db->ping()<1000000,
-            'cache' => $this->cache->ping()<1000000,
-        ];
-        return $this->responder->success($result);
     }
 
     public function ping(ServerRequestInterface $request): ResponseInterface
