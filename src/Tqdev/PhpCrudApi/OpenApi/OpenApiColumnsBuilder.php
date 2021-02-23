@@ -33,8 +33,8 @@ class OpenApiColumnsBuilder
     public function build() /*: void*/
     {
         $this->setPaths();
-        $this->openapi->set("components|responses|boolSuccess|description", "boolean indicating success or failure");
-        $this->openapi->set("components|responses|boolSuccess|content|application/json|schema|type", "boolean");
+        $this->openapi->set("components|responses|bool-success|description", "boolean indicating success or failure");
+        $this->openapi->set("components|responses|bool-success|content|application/json|schema|type", "boolean");
         $this->setComponentSchema();
         $this->setComponentResponse();
         $this->setComponentRequestBody();
@@ -86,7 +86,7 @@ class OpenApiColumnsBuilder
                     case 'create':
                     case 'update':
                     case 'delete':
-                        $this->openapi->set("paths|$path|$method|responses|200|\$ref", "#/components/responses/boolSuccess");
+                        $this->openapi->set("paths|$path|$method|responses|200|\$ref", "#/components/responses/bool-success");
                         break;
                 }
             }
