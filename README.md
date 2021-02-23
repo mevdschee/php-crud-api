@@ -757,7 +757,7 @@ Note that this middleware uses session cookies and stores the logged in state on
 The Basic type supports a file (by default '.htpasswd') that holds the users and their (hashed) passwords separated by a colon (':'). 
 When the passwords are entered in plain text they fill be automatically hashed.
 The authenticated username will be stored in the `$_SESSION['username']` variable.
-You need to send an "Authorization" header containing a base64 url encoded and colon separated username and password after the word "Basic".
+You need to send an "Authorization" header containing a base64 url encoded version of your colon separated username and password, after the word "Basic".
 
     Authorization: Basic dXNlcm5hbWUxOnBhc3N3b3JkMQ
 
