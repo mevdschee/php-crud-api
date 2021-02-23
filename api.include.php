@@ -9337,6 +9337,11 @@ namespace Tqdev\PhpCrudApi\OpenApi {
             'boolean' => ['type' => 'boolean'],
         ];
 
+        private function normalize(string $value): string
+        {
+            return iconv('UTF-8', 'ASCII//TRANSLIT', $value);
+        }
+
         public function __construct(OpenApiDefinition $openapi, ReflectionService $reflection)
         {
             $this->openapi = $openapi;
@@ -9410,6 +9415,7 @@ namespace Tqdev\PhpCrudApi\OpenApi {
 
         private function setPath(string $tableName) /*: void*/
         {
+            $normalizedTableName = $this->normalize($tableName);
             $table = $this->reflection->getTable($tableName);
             $type = $table->getType();
             $pk = $table->getPk();
@@ -9442,14 +9448,14 @@ namespace Tqdev\PhpCrudApi\OpenApi {
                     $this->openapi->set("paths|$path|$method|parameters|$p|\$ref", "#/components/parameters/$parameter");
                 }
                 if (in_array($operation, ['create', 'update', 'increment'])) {
-                    $this->openapi->set("paths|$path|$method|requestBody|\$ref", "#/components/requestBodies/$operation-" . rawurlencode($tableName));
+                    $this->openapi->set("paths|$path|$method|requestBody|\$ref", "#/components/requestBodies/$operation-$normalizedTableName");
                 }
                 $this->openapi->set("paths|$path|$method|tags|0", "$tableName");
-                $this->openapi->set("paths|$path|$method|operationId", "$operation" . "_" . "$tableName");
+                $this->openapi->set("paths|$path|$method|operationId", "$operation" . "_" . "$normalizedTableName");
                 $this->openapi->set("paths|$path|$method|description", "$operation $tableName");
                 switch ($operation) {
                     case 'list':
-                        $this->openapi->set("paths|$path|$method|responses|200|\$ref", "#/components/responses/$operation-" . rawurlencode($tableName));
+                        $this->openapi->set("paths|$path|$method|responses|200|\$ref", "#/components/responses/$operation-$normalizedTableName");
                         break;
                     case 'create':
                         if ($pk->getType() == 'integer') {
@@ -9459,7 +9465,7 @@ namespace Tqdev\PhpCrudApi\OpenApi {
                         }
                         break;
                     case 'read':
-                        $this->openapi->set("paths|$path|$method|responses|200|\$ref", "#/components/responses/$operation-" . rawurlencode($tableName));
+                        $this->openapi->set("paths|$path|$method|responses|200|\$ref", "#/components/responses/$operation-$normalizedTableName");
                         break;
                     case 'update':
                     case 'delete':
@@ -9515,6 +9521,7 @@ namespace Tqdev\PhpCrudApi\OpenApi {
 
         private function setComponentSchema(string $tableName, array $references) /*: void*/
         {
+            $normalizedTableName = $this->normalize($tableName);
             $table = $this->reflection->getTable($tableName);
             $type = $table->getType();
             $pk = $table->getPk();
@@ -9536,13 +9543,13 @@ namespace Tqdev\PhpCrudApi\OpenApi {
                     continue;
                 }
                 if ($operation == 'list') {
-                    $this->openapi->set("components|schemas|$operation-$tableName|type", "object");
-                    $this->openapi->set("components|schemas|$operation-$tableName|properties|results|type", "integer");
-                    $this->openapi->set("components|schemas|$operation-$tableName|properties|results|format", "int64");
-                    $this->openapi->set("components|schemas|$operation-$tableName|properties|records|type", "array");
-                    $prefix = "components|schemas|$operation-$tableName|properties|records|items";
+                    $this->openapi->set("components|schemas|$operation-$normalizedTableName|type", "object");
+                    $this->openapi->set("components|schemas|$operation-$normalizedTableName|properties|results|type", "integer");
+                    $this->openapi->set("components|schemas|$operation-$normalizedTableName|properties|results|format", "int64");
+                    $this->openapi->set("components|schemas|$operation-$normalizedTableName|properties|records|type", "array");
+                    $prefix = "components|schemas|$operation-$normalizedTableName|properties|records|items";
                 } else {
-                    $prefix = "components|schemas|$operation-$tableName";
+                    $prefix = "components|schemas|$operation-$normalizedTableName";
                 }
                 $this->openapi->set("$prefix|type", "object");
                 foreach ($table->getColumnNames() as $columnName) {
@@ -9573,6 +9580,7 @@ namespace Tqdev\PhpCrudApi\OpenApi {
 
         private function setComponentResponse(string $tableName) /*: void*/
         {
+            $normalizedTableName = $this->normalize($tableName);
             $table = $this->reflection->getTable($tableName);
             $type = $table->getType();
             $pk = $table->getPk();
@@ -9588,16 +9596,17 @@ namespace Tqdev\PhpCrudApi\OpenApi {
                     continue;
                 }
                 if ($operation == 'list') {
-                    $this->openapi->set("components|responses|$operation-$tableName|description", "list of $tableName records");
+                    $this->openapi->set("components|responses|$operation-$normalizedTableName|description", "list of $tableName records");
                 } else {
-                    $this->openapi->set("components|responses|$operation-$tableName|description", "single $tableName record");
+                    $this->openapi->set("components|responses|$operation-$normalizedTableName|description", "single $tableName record");
                 }
-                $this->openapi->set("components|responses|$operation-$tableName|content|application/json|schema|\$ref", "#/components/schemas/$operation-" . rawurlencode($tableName));
+                $this->openapi->set("components|responses|$operation-$normalizedTableName|content|application/json|schema|\$ref", "#/components/schemas/$operation-$normalizedTableName");
             }
         }
 
         private function setComponentRequestBody(string $tableName) /*: void*/
         {
+            $normalizedTableName = $this->normalize($tableName);
             $table = $this->reflection->getTable($tableName);
             $type = $table->getType();
             $pk = $table->getPk();
@@ -9607,8 +9616,8 @@ namespace Tqdev\PhpCrudApi\OpenApi {
                     if (!$this->isOperationOnTableAllowed($operation, $tableName)) {
                         continue;
                     }
-                    $this->openapi->set("components|requestBodies|$operation-$tableName|description", "single $tableName record");
-                    $this->openapi->set("components|requestBodies|$operation-$tableName|content|application/json|schema|\$ref", "#/components/schemas/$operation-" . rawurlencode($tableName));
+                    $this->openapi->set("components|requestBodies|$operation-$normalizedTableName|description", "single $tableName record");
+                    $this->openapi->set("components|requestBodies|$operation-$normalizedTableName|content|application/json|schema|\$ref", "#/components/schemas/$operation-$normalizedTableName");
                 }
             }
         }
