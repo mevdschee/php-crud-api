@@ -22,7 +22,7 @@ class OpenApiColumnsBuilder
             'read' => 'get',
             'update' => 'put',
             'delete' => 'delete',
-        ]
+        ],
     ];
 
     public function __construct(OpenApiDefinition $openapi)
@@ -69,20 +69,19 @@ class OpenApiColumnsBuilder
                 foreach ($parameters as $p => $parameter) {
                     $this->openapi->set("paths|$path|$method|parameters|$p|\$ref", "#/components/parameters/$parameter");
                 }
-                $operationType = $operation . ucfirst($type);
                 if (in_array($operation, ['create', 'update'])) {
-                    $this->openapi->set("paths|$path|$method|requestBody|\$ref", "#/components/requestBodies/$operationType");
+                    $this->openapi->set("paths|$path|$method|requestBody|\$ref", "#/components/requestBodies/$operation-$type");
                 }
                 $this->openapi->set("paths|$path|$method|tags|0", "$type");
                 $this->openapi->set("paths|$path|$method|operationId", "$operation" . "_" . "$type");
-                if ($operationType == 'updateTable') {
+                if ($operation - $type == 'updateTable') {
                     $this->openapi->set("paths|$path|$method|description", "rename table");
                 } else {
                     $this->openapi->set("paths|$path|$method|description", "$operation $type");
                 }
                 switch ($operation) {
                     case 'read':
-                        $this->openapi->set("paths|$path|$method|responses|200|\$ref", "#/components/responses/$operationType");
+                        $this->openapi->set("paths|$path|$method|responses|200|\$ref", "#/components/responses/$operation-$type");
                         break;
                     case 'create':
                     case 'update':
@@ -101,8 +100,7 @@ class OpenApiColumnsBuilder
                 if ($operation == 'delete') {
                     continue;
                 }
-                $operationType = $operation . ucfirst($type);
-                $prefix = "components|schemas|$operationType";
+                $prefix = "components|schemas|$operation-$type";
                 $this->openapi->set("$prefix|type", "object");
                 switch ($type) {
                     case 'database':
@@ -148,9 +146,8 @@ class OpenApiColumnsBuilder
                 if ($operation != 'read') {
                     continue;
                 }
-                $operationType = $operation . ucfirst($type);
-                $this->openapi->set("components|responses|$operationType|description", "single $type record");
-                $this->openapi->set("components|responses|$operationType|content|application/json|schema|\$ref", "#/components/schemas/$operationType");
+                $this->openapi->set("components|responses|$operation-$type|description", "single $type record");
+                $this->openapi->set("components|responses|$operation-$type|content|application/json|schema|\$ref", "#/components/schemas/$operation-$type");
             }
         }
     }
@@ -162,13 +159,11 @@ class OpenApiColumnsBuilder
                 if (!in_array($operation, ['create', 'update'])) {
                     continue;
                 }
-                $operationType = $operation . ucfirst($type);
-                $this->openapi->set("components|requestBodies|$operationType|description", "single $type record");
-                $this->openapi->set("components|requestBodies|$operationType|content|application/json|schema|\$ref", "#/components/schemas/$operationType");
+                $this->openapi->set("components|requestBodies|$operation-$type|description", "single $type record");
+                $this->openapi->set("components|requestBodies|$operation-$type|content|application/json|schema|\$ref", "#/components/schemas/$operation-$type");
             }
         }
     }
-
 
     private function setComponentParameters() /*: void*/
     {
