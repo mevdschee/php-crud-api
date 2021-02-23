@@ -9740,11 +9740,10 @@ namespace Tqdev\PhpCrudApi\OpenApi {
             foreach ($this->operations as $type => $operationPair) {
                 foreach ($operationPair as $operation => $method) {
                     $path = "/$type/$operation";
-                    $operationType = $operation . ucfirst($type);
                     $this->openapi->set("paths|$path|$method|tags|0", "$type");
                     $this->openapi->set("paths|$path|$method|operationId", "$operation" . "_" . "$type");
                     $this->openapi->set("paths|$path|$method|description", "Request API '$operation' status");
-                    $this->openapi->set("paths|$path|$method|responses|200|\$ref", "#/components/responses/$operationType");
+                    $this->openapi->set("paths|$path|$method|responses|200|\$ref", "#/components/responses/$operation-$type");
 
                 }
             }
@@ -9754,8 +9753,7 @@ namespace Tqdev\PhpCrudApi\OpenApi {
         {
             foreach ($this->operations as $type => $operationPair) {
                 foreach ($operationPair as $operation => $method) {
-                    $operationType = $operation . ucfirst($type);
-                    $prefix = "components|schemas|$operationType";
+                    $prefix = "components|schemas|$operation-$type";
                     $this->openapi->set("$prefix|type", "object");
                     switch ($operation) {
                         case 'ping':
@@ -9774,9 +9772,8 @@ namespace Tqdev\PhpCrudApi\OpenApi {
         {
             foreach ($this->operations as $type => $operationPair) {
                 foreach ($operationPair as $operation => $method) {
-                    $operationType = $operation . ucfirst($type);
-                    $this->openapi->set("components|responses|$operationType|description", "$operation status record");
-                    $this->openapi->set("components|responses|$operationType|content|application/json|schema|\$ref", "#/components/schemas/$operationType");
+                    $this->openapi->set("components|responses|$operation-$type|description", "$operation status record");
+                    $this->openapi->set("components|responses|$operation-$type|content|application/json|schema|\$ref", "#/components/schemas/$operation-$type");
                 }
             }
         }
