@@ -5335,13 +5335,13 @@ namespace Tqdev\PhpCrudApi\Database {
 
         private function getRecordValueConversion(ReflectedColumn $column): string
         {
-            if (in_array($this->driver, ['mysql', 'sqlsrv', 'sqlite']) && $column->isBoolean()) {
+            if ($column->isBoolean()) {
                 return 'boolean';
             }
-            if (in_array($this->driver, ['sqlsrv', 'sqlite']) && in_array($column->getType(), ['integer', 'bigint'])) {
+            if (in_array($column->getType(), ['integer', 'bigint'])) {
                 return 'integer';
             }
-            if (in_array($this->driver, ['sqlite', 'pgsql']) && in_array($column->getType(), ['float', 'double'])) {
+            if (in_array($column->getType(), ['float', 'double'])) {
                 return 'float';
             }
             if (in_array($this->driver, ['sqlite']) && in_array($column->getType(), ['decimal'])) {
@@ -5475,20 +5475,15 @@ namespace Tqdev\PhpCrudApi\Database {
             switch ($this->driver) {
                 case 'mysql':
                     return $options + [
-                        \PDO::ATTR_EMULATE_PREPARES => false,
                         \PDO::MYSQL_ATTR_FOUND_ROWS => true,
                         \PDO::ATTR_PERSISTENT => true,
                     ];
                 case 'pgsql':
                     return $options + [
-                        \PDO::ATTR_EMULATE_PREPARES => false,
                         \PDO::ATTR_PERSISTENT => true,
                     ];
                 case 'sqlsrv':
-                    return $options + [
-                        \PDO::SQLSRV_ATTR_DIRECT_QUERY => false,
-                        \PDO::SQLSRV_ATTR_FETCHES_NUMERIC_TYPE => true,
-                    ];
+                    return $options + [];
                 case 'sqlite':
                     return $options + [];
             }
@@ -5618,10 +5613,10 @@ namespace Tqdev\PhpCrudApi\Database {
                     break;
             }
             $pkValue = $stmt->fetchColumn(0);
-            if ($this->driver == 'sqlsrv' && $table->getPk()->getType() == 'bigint') {
+            if ($table->getPk()->getType() == 'bigint') {
                 return (int) $pkValue;
             }
-            if ($this->driver == 'sqlite' && in_array($table->getPk()->getType(), ['integer', 'bigint'])) {
+            if (in_array($table->getPk()->getType(), ['integer', 'bigint'])) {
                 return (int) $pkValue;
             }
             return $pkValue;
@@ -5753,7 +5748,7 @@ namespace Tqdev\PhpCrudApi\Database {
             $start = microtime(true);
             $stmt = $this->pdo->prepare('SELECT 1');
             $stmt->execute();
-            return intval((microtime(true)-$start)*1000000);
+            return intval((microtime(true) - $start) * 1000000);
         }
 
         public function getCacheKey(): string
