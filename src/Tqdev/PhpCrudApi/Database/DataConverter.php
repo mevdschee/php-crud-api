@@ -33,13 +33,13 @@ class DataConverter
 
     private function getRecordValueConversion(ReflectedColumn $column): string
     {
-        if (in_array($this->driver, ['mysql', 'sqlsrv', 'sqlite']) && $column->isBoolean()) {
+        if ($column->isBoolean()) {
             return 'boolean';
         }
-        if (in_array($this->driver, ['sqlsrv', 'sqlite']) && in_array($column->getType(), ['integer', 'bigint'])) {
+        if (in_array($column->getType(), ['integer', 'bigint'])) {
             return 'integer';
         }
-        if (in_array($this->driver, ['sqlite', 'pgsql']) && in_array($column->getType(), ['float', 'double'])) {
+        if (in_array($column->getType(), ['float', 'double'])) {
             return 'float';
         }
         if (in_array($this->driver, ['sqlite']) && in_array($column->getType(), ['decimal'])) {
