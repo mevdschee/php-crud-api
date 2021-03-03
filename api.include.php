@@ -9112,7 +9112,7 @@ namespace Tqdev\PhpCrudApi\OpenApi {
                 'read' => 'get',
                 'update' => 'put',
                 'delete' => 'delete',
-            ]
+            ],
         ];
 
         public function __construct(OpenApiDefinition $openapi)
@@ -9123,8 +9123,8 @@ namespace Tqdev\PhpCrudApi\OpenApi {
         public function build() /*: void*/
         {
             $this->setPaths();
-            $this->openapi->set("components|responses|boolSuccess|description", "boolean indicating success or failure");
-            $this->openapi->set("components|responses|boolSuccess|content|application/json|schema|type", "boolean");
+            $this->openapi->set("components|responses|bool-success|description", "boolean indicating success or failure");
+            $this->openapi->set("components|responses|bool-success|content|application/json|schema|type", "boolean");
             $this->setComponentSchema();
             $this->setComponentResponse();
             $this->setComponentRequestBody();
@@ -9159,25 +9159,24 @@ namespace Tqdev\PhpCrudApi\OpenApi {
                     foreach ($parameters as $p => $parameter) {
                         $this->openapi->set("paths|$path|$method|parameters|$p|\$ref", "#/components/parameters/$parameter");
                     }
-                    $operationType = $operation . ucfirst($type);
                     if (in_array($operation, ['create', 'update'])) {
-                        $this->openapi->set("paths|$path|$method|requestBody|\$ref", "#/components/requestBodies/$operationType");
+                        $this->openapi->set("paths|$path|$method|requestBody|\$ref", "#/components/requestBodies/$operation-$type");
                     }
                     $this->openapi->set("paths|$path|$method|tags|0", "$type");
                     $this->openapi->set("paths|$path|$method|operationId", "$operation" . "_" . "$type");
-                    if ($operationType == 'updateTable') {
+                    if ($operation - $type == 'updateTable') {
                         $this->openapi->set("paths|$path|$method|description", "rename table");
                     } else {
                         $this->openapi->set("paths|$path|$method|description", "$operation $type");
                     }
                     switch ($operation) {
                         case 'read':
-                            $this->openapi->set("paths|$path|$method|responses|200|\$ref", "#/components/responses/$operationType");
+                            $this->openapi->set("paths|$path|$method|responses|200|\$ref", "#/components/responses/$operation-$type");
                             break;
                         case 'create':
                         case 'update':
                         case 'delete':
-                            $this->openapi->set("paths|$path|$method|responses|200|\$ref", "#/components/responses/boolSuccess");
+                            $this->openapi->set("paths|$path|$method|responses|200|\$ref", "#/components/responses/bool-success");
                             break;
                     }
                 }
@@ -9191,8 +9190,7 @@ namespace Tqdev\PhpCrudApi\OpenApi {
                     if ($operation == 'delete') {
                         continue;
                     }
-                    $operationType = $operation . ucfirst($type);
-                    $prefix = "components|schemas|$operationType";
+                    $prefix = "components|schemas|$operation-$type";
                     $this->openapi->set("$prefix|type", "object");
                     switch ($type) {
                         case 'database':
@@ -9238,9 +9236,8 @@ namespace Tqdev\PhpCrudApi\OpenApi {
                     if ($operation != 'read') {
                         continue;
                     }
-                    $operationType = $operation . ucfirst($type);
-                    $this->openapi->set("components|responses|$operationType|description", "single $type record");
-                    $this->openapi->set("components|responses|$operationType|content|application/json|schema|\$ref", "#/components/schemas/$operationType");
+                    $this->openapi->set("components|responses|$operation-$type|description", "single $type record");
+                    $this->openapi->set("components|responses|$operation-$type|content|application/json|schema|\$ref", "#/components/schemas/$operation-$type");
                 }
             }
         }
@@ -9252,9 +9249,8 @@ namespace Tqdev\PhpCrudApi\OpenApi {
                     if (!in_array($operation, ['create', 'update'])) {
                         continue;
                     }
-                    $operationType = $operation . ucfirst($type);
-                    $this->openapi->set("components|requestBodies|$operationType|description", "single $type record");
-                    $this->openapi->set("components|requestBodies|$operationType|content|application/json|schema|\$ref", "#/components/schemas/$operationType");
+                    $this->openapi->set("components|requestBodies|$operation-$type|description", "single $type record");
+                    $this->openapi->set("components|requestBodies|$operation-$type|content|application/json|schema|\$ref", "#/components/schemas/$operation-$type");
                 }
             }
         }
@@ -9366,6 +9362,11 @@ namespace Tqdev\PhpCrudApi\OpenApi {
             'boolean' => ['type' => 'boolean'],
         ];
 
+        private function normalize(string $value): string
+        {
+            return iconv('UTF-8', 'ASCII//TRANSLIT', $value);
+        }
+
         public function __construct(OpenApiDefinition $openapi, ReflectionService $reflection)
         {
             $this->openapi = $openapi;
@@ -9439,6 +9440,7 @@ namespace Tqdev\PhpCrudApi\OpenApi {
 
         private function setPath(string $tableName) /*: void*/
         {
+            $normalizedTableName = $this->normalize($tableName);
             $table = $this->reflection->getTable($tableName);
             $type = $table->getType();
             $pk = $table->getPk();
@@ -9471,14 +9473,14 @@ namespace Tqdev\PhpCrudApi\OpenApi {
                     $this->openapi->set("paths|$path|$method|parameters|$p|\$ref", "#/components/parameters/$parameter");
                 }
                 if (in_array($operation, ['create', 'update', 'increment'])) {
-                    $this->openapi->set("paths|$path|$method|requestBody|\$ref", "#/components/requestBodies/$operation-" . rawurlencode($tableName));
+                    $this->openapi->set("paths|$path|$method|requestBody|\$ref", "#/components/requestBodies/$operation-$normalizedTableName");
                 }
                 $this->openapi->set("paths|$path|$method|tags|0", "$tableName");
-                $this->openapi->set("paths|$path|$method|operationId", "$operation" . "_" . "$tableName");
+                $this->openapi->set("paths|$path|$method|operationId", "$operation" . "_" . "$normalizedTableName");
                 $this->openapi->set("paths|$path|$method|description", "$operation $tableName");
                 switch ($operation) {
                     case 'list':
-                        $this->openapi->set("paths|$path|$method|responses|200|\$ref", "#/components/responses/$operation-" . rawurlencode($tableName));
+                        $this->openapi->set("paths|$path|$method|responses|200|\$ref", "#/components/responses/$operation-$normalizedTableName");
                         break;
                     case 'create':
                         if ($pk->getType() == 'integer') {
@@ -9488,7 +9490,7 @@ namespace Tqdev\PhpCrudApi\OpenApi {
                         }
                         break;
                     case 'read':
-                        $this->openapi->set("paths|$path|$method|responses|200|\$ref", "#/components/responses/$operation-" . rawurlencode($tableName));
+                        $this->openapi->set("paths|$path|$method|responses|200|\$ref", "#/components/responses/$operation-$normalizedTableName");
                         break;
                     case 'update':
                     case 'delete':
@@ -9544,6 +9546,7 @@ namespace Tqdev\PhpCrudApi\OpenApi {
 
         private function setComponentSchema(string $tableName, array $references) /*: void*/
         {
+            $normalizedTableName = $this->normalize($tableName);
             $table = $this->reflection->getTable($tableName);
             $type = $table->getType();
             $pk = $table->getPk();
@@ -9565,13 +9568,13 @@ namespace Tqdev\PhpCrudApi\OpenApi {
                     continue;
                 }
                 if ($operation == 'list') {
-                    $this->openapi->set("components|schemas|$operation-$tableName|type", "object");
-                    $this->openapi->set("components|schemas|$operation-$tableName|properties|results|type", "integer");
-                    $this->openapi->set("components|schemas|$operation-$tableName|properties|results|format", "int64");
-                    $this->openapi->set("components|schemas|$operation-$tableName|properties|records|type", "array");
-                    $prefix = "components|schemas|$operation-$tableName|properties|records|items";
+                    $this->openapi->set("components|schemas|$operation-$normalizedTableName|type", "object");
+                    $this->openapi->set("components|schemas|$operation-$normalizedTableName|properties|results|type", "integer");
+                    $this->openapi->set("components|schemas|$operation-$normalizedTableName|properties|results|format", "int64");
+                    $this->openapi->set("components|schemas|$operation-$normalizedTableName|properties|records|type", "array");
+                    $prefix = "components|schemas|$operation-$normalizedTableName|properties|records|items";
                 } else {
-                    $prefix = "components|schemas|$operation-$tableName";
+                    $prefix = "components|schemas|$operation-$normalizedTableName";
                 }
                 $this->openapi->set("$prefix|type", "object");
                 foreach ($table->getColumnNames() as $columnName) {
@@ -9602,6 +9605,7 @@ namespace Tqdev\PhpCrudApi\OpenApi {
 
         private function setComponentResponse(string $tableName) /*: void*/
         {
+            $normalizedTableName = $this->normalize($tableName);
             $table = $this->reflection->getTable($tableName);
             $type = $table->getType();
             $pk = $table->getPk();
@@ -9617,16 +9621,17 @@ namespace Tqdev\PhpCrudApi\OpenApi {
                     continue;
                 }
                 if ($operation == 'list') {
-                    $this->openapi->set("components|responses|$operation-$tableName|description", "list of $tableName records");
+                    $this->openapi->set("components|responses|$operation-$normalizedTableName|description", "list of $tableName records");
                 } else {
-                    $this->openapi->set("components|responses|$operation-$tableName|description", "single $tableName record");
+                    $this->openapi->set("components|responses|$operation-$normalizedTableName|description", "single $tableName record");
                 }
-                $this->openapi->set("components|responses|$operation-$tableName|content|application/json|schema|\$ref", "#/components/schemas/$operation-" . rawurlencode($tableName));
+                $this->openapi->set("components|responses|$operation-$normalizedTableName|content|application/json|schema|\$ref", "#/components/schemas/$operation-$normalizedTableName");
             }
         }
 
         private function setComponentRequestBody(string $tableName) /*: void*/
         {
+            $normalizedTableName = $this->normalize($tableName);
             $table = $this->reflection->getTable($tableName);
             $type = $table->getType();
             $pk = $table->getPk();
@@ -9636,8 +9641,8 @@ namespace Tqdev\PhpCrudApi\OpenApi {
                     if (!$this->isOperationOnTableAllowed($operation, $tableName)) {
                         continue;
                     }
-                    $this->openapi->set("components|requestBodies|$operation-$tableName|description", "single $tableName record");
-                    $this->openapi->set("components|requestBodies|$operation-$tableName|content|application/json|schema|\$ref", "#/components/schemas/$operation-" . rawurlencode($tableName));
+                    $this->openapi->set("components|requestBodies|$operation-$normalizedTableName|description", "single $tableName record");
+                    $this->openapi->set("components|requestBodies|$operation-$normalizedTableName|content|application/json|schema|\$ref", "#/components/schemas/$operation-$normalizedTableName");
                 }
             }
         }
@@ -9760,11 +9765,10 @@ namespace Tqdev\PhpCrudApi\OpenApi {
             foreach ($this->operations as $type => $operationPair) {
                 foreach ($operationPair as $operation => $method) {
                     $path = "/$type/$operation";
-                    $operationType = $operation . ucfirst($type);
                     $this->openapi->set("paths|$path|$method|tags|0", "$type");
                     $this->openapi->set("paths|$path|$method|operationId", "$operation" . "_" . "$type");
                     $this->openapi->set("paths|$path|$method|description", "Request API '$operation' status");
-                    $this->openapi->set("paths|$path|$method|responses|200|\$ref", "#/components/responses/$operationType");
+                    $this->openapi->set("paths|$path|$method|responses|200|\$ref", "#/components/responses/$operation-$type");
 
                 }
             }
@@ -9774,8 +9778,7 @@ namespace Tqdev\PhpCrudApi\OpenApi {
         {
             foreach ($this->operations as $type => $operationPair) {
                 foreach ($operationPair as $operation => $method) {
-                    $operationType = $operation . ucfirst($type);
-                    $prefix = "components|schemas|$operationType";
+                    $prefix = "components|schemas|$operation-$type";
                     $this->openapi->set("$prefix|type", "object");
                     switch ($operation) {
                         case 'ping':
@@ -9794,9 +9797,8 @@ namespace Tqdev\PhpCrudApi\OpenApi {
         {
             foreach ($this->operations as $type => $operationPair) {
                 foreach ($operationPair as $operation => $method) {
-                    $operationType = $operation . ucfirst($type);
-                    $this->openapi->set("components|responses|$operationType|description", "$operation status record");
-                    $this->openapi->set("components|responses|$operationType|content|application/json|schema|\$ref", "#/components/schemas/$operationType");
+                    $this->openapi->set("components|responses|$operation-$type|description", "$operation status record");
+                    $this->openapi->set("components|responses|$operation-$type|content|application/json|schema|\$ref", "#/components/schemas/$operation-$type");
                 }
             }
         }
