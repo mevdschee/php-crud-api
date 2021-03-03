@@ -12,8 +12,8 @@ class Config
         'password' => null,
         'database' => null,
         'tables' => '',
-        'middlewares' => 'cors',
-        'controllers' => 'records,geojson,openapi',
+        'middlewares' => 'cors,errors',
+        'controllers' => 'records,geojson,procedures,openapi,status',
         'customControllers' => '',
         'customOpenApiBuilders' => '',
         'cacheType' => 'TempFile',
@@ -22,6 +22,7 @@ class Config
         'debug' => false,
         'basePath' => '',
         'openApiBase' => '{"info":{"title":"PHP-CRUD-API","version":"1.0.0"}}',
+        'procedurePath' => 'procedures',
     ];
 
     private function getDefaultDriver(array $values): string
@@ -69,6 +70,16 @@ class Config
         ];
     }
 
+    private function applyEnvironmentVariables(array $values): array
+    {
+        $newValues = array();
+        foreach ($values as $key => $value) {
+            $environmentKey = 'PHP_CRUD_API_' . strtoupper(preg_replace('/(?<!^)[A-Z]/', '_$0', str_replace('.', '_', $key)));
+            $newValues[$key] = getenv($environmentKey, true) ?: $value;
+        }
+        return $newValues;
+    }
+
     public function __construct(array $values)
     {
         $driver = $this->getDefaultDriver($values);
@@ -80,6 +91,7 @@ class Config
             $key = array_keys($diff)[0];
             throw new \Exception("Config has invalid value '$key'");
         }
+        $newValues = $this->applyEnvironmentVariables($newValues);
         $this->values = $newValues;
     }
 
@@ -190,5 +202,10 @@ class Config
     public function getOpenApiBase(): array
     {
         return json_decode($this->values['openApiBase'], true);
+    }
+
+    public function getProcedurePath(): string
+    {
+        return $this->values['procedurePath'];
     }
 }

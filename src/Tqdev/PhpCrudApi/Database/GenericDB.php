@@ -160,6 +160,21 @@ class GenericDB
         return $this->definition;
     }
 
+    public function beginTransaction() /*: void*/
+    {
+        $this->pdo->beginTransaction();
+    }
+
+    public function commitTransaction() /*: void*/
+    {
+        $this->pdo->commit();
+    }
+
+    public function rollBackTransaction() /*: void*/
+    {
+        $this->pdo->rollBack();
+    }
+
     private function addMiddlewareConditions(string $tableName, Condition $condition): Condition
     {
         $condition1 = VariableStore::get("authorization.conditions.$tableName");
@@ -318,12 +333,34 @@ class GenericDB
         return $stmt->rowCount();
     }
 
+    public function rawSql(string $sql, array $parameters)
+    {
+        $stmt = $this->query($sql, $parameters);
+        $stmt = $this->pdo->prepare($sql);
+        foreach ($parameters as $key => $value) {
+            if (strstr($sql, ':' . $key)) {
+                $stmt->bindParam(':' . $key, $value, \PDO::PARAM_STR);
+            }
+        }
+        $stmt->execute();
+        $records = $stmt->fetchAll();
+        return $records;
+    }
+
     private function query(string $sql, array $parameters): \PDOStatement
     {
         $stmt = $this->pdo->prepare($sql);
         //echo "- $sql -- " . json_encode($parameters, JSON_UNESCAPED_UNICODE) . "\n";
         $stmt->execute($parameters);
         return $stmt;
+    }
+
+    public function ping(): int
+    {
+        $start = microtime(true);
+        $stmt = $this->pdo->prepare('SELECT 1');
+        $stmt->execute();
+        return intval((microtime(true)-$start)*1000000);
     }
 
     public function getCacheKey(): string
@@ -334,7 +371,7 @@ class GenericDB
             $this->port,
             $this->database,
             $this->tables,
-            $this->username
+            $this->username,
         ]));
     }
 }

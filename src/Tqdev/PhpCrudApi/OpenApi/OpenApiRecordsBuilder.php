@@ -3,6 +3,7 @@
 namespace Tqdev\PhpCrudApi\OpenApi;
 
 use Tqdev\PhpCrudApi\Column\ReflectionService;
+use Tqdev\PhpCrudApi\Column\Reflection\ReflectedColumn;
 use Tqdev\PhpCrudApi\Middleware\Communication\VariableStore;
 use Tqdev\PhpCrudApi\OpenApi\OpenApiDefinition;
 
@@ -22,16 +23,16 @@ class OpenApiRecordsBuilder
         'integer' => ['type' => 'integer', 'format' => 'int32'],
         'bigint' => ['type' => 'integer', 'format' => 'int64'],
         'varchar' => ['type' => 'string'],
-        'clob' => ['type' => 'string'],
+        'clob' => ['type' => 'string', 'format' => 'large-string'], //custom format
         'varbinary' => ['type' => 'string', 'format' => 'byte'],
-        'blob' => ['type' => 'string', 'format' => 'byte'],
-        'decimal' => ['type' => 'string'],
+        'blob' => ['type' => 'string', 'format' => 'large-byte'], //custom format
+        'decimal' => ['type' => 'string', 'format' => 'decimal'], //custom format
         'float' => ['type' => 'number', 'format' => 'float'],
         'double' => ['type' => 'number', 'format' => 'double'],
         'date' => ['type' => 'string', 'format' => 'date'],
-        'time' => ['type' => 'string', 'format' => 'date-time'],
+        'time' => ['type' => 'string', 'format' => 'time'], //custom format
         'timestamp' => ['type' => 'string', 'format' => 'date-time'],
-        'geometry' => ['type' => 'string'],
+        'geometry' => ['type' => 'string', 'format' => 'geometry'], //custom format
         'boolean' => ['type' => 'boolean'],
     ];
 
@@ -168,6 +169,49 @@ class OpenApiRecordsBuilder
         }
     }
 
+    private function getPattern(ReflectedColumn $column): string
+    {
+        switch ($column->getType()) {
+            case 'integer':
+                $n = strlen(pow(2, 31));
+                return '^-?[0-9]{1,' . $n . '}$';
+            case 'bigint':
+                $n = strlen(pow(2, 63));
+                return '^-?[0-9]{1,' . $n . '}$';
+            case 'varchar':
+                $l = $column->getLength();
+                return '^.{0,' . $l . '}$';
+            case 'clob':
+                return '^.*$';
+            case 'varbinary':
+                $l = $column->getLength();
+                $b = (int) 4 * ceil($l / 3);
+                return '^[A-Za-z0-9+/]{0,' . $b . '}=*$';
+            case 'blob':
+                return '^[A-Za-z0-9+/]*=*$';
+            case 'decimal':
+                $p = $column->getPrecision();
+                $s = $column->getScale();
+                return '^-?[0-9]{1,' . ($p - $s) . '}(\.[0-9]{1,' . $s . '})?$';
+            case 'float':
+                return '^-?[0-9]+(\.[0-9]+)?([eE]-?[0-9]+)?$';
+            case 'double':
+                return '^-?[0-9]+(\.[0-9]+)?([eE]-?[0-9]+)?$';
+            case 'date':
+                return '^[0-9]{4}-[0-9]{2}-[0-9]{2}$';
+            case 'time':
+                return '^[0-9]{2}:[0-9]{2}:[0-9]{2}$';
+            case 'timestamp':
+                return '^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}$';
+                return '';
+            case 'geometry':
+                return '^(POINT|LINESTRING|POLYGON|MULTIPOINT|MULTILINESTRING|MULTIPOLYGON)\s*\(.*$';
+            case 'boolean':
+                return '^(true|false)$';
+        }
+        return '';
+    }
+
     private function setComponentSchema(string $tableName, array $references) /*: void*/
     {
         $table = $this->reflection->getTable($tableName);
@@ -178,7 +222,10 @@ class OpenApiRecordsBuilder
             if (!$pkName && $operation != 'list') {
                 continue;
             }
-            if ($type != 'table' && $operation != 'list') {
+            if ($type == 'view' && !in_array($operation, array('read', 'list'))) {
+                continue;
+            }
+            if ($type == 'view' && !$pkName && $operation == 'read') {
                 continue;
             }
             if ($operation == 'delete') {
@@ -203,8 +250,13 @@ class OpenApiRecordsBuilder
                 }
                 $column = $table->getColumn($columnName);
                 $properties = $this->types[$column->getType()];
+                $properties['maxLength'] = $column->hasLength() ? $column->getLength() : 0;
+                $properties['nullable'] = $column->getNullable();
+                $properties['pattern'] = $this->getPattern($column);
                 foreach ($properties as $key => $value) {
-                    $this->openapi->set("$prefix|properties|$columnName|$key", $value);
+                    if ($value) {
+                        $this->openapi->set("$prefix|properties|$columnName|$key", $value);
+                    }
                 }
                 if ($column->getPk()) {
                     $this->openapi->set("$prefix|properties|$columnName|x-primary-key", true);

@@ -23,6 +23,7 @@ function patchDir(string $base, string $dir): int
             }
             $patched = $original = file_get_contents($filename);
             $patched = preg_replace('/\):\s*(\?[a-zA-Z]+|void)\s*\n/', ") /*:$1*/\n", $patched);
+            $patched = preg_replace('/([\(,])\s*(\?[a-zA-Z]+|void)\s+\$/', "$1 /*$2*/ \$", $patched);
             $patched = preg_replace('/(private|public|protected) const/', "/*$1*/ const", $patched);
             if ($patched && $patched != $original) {
                 file_put_contents($filename, $patched);

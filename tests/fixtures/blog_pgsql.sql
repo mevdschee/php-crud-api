@@ -127,7 +127,7 @@ CREATE TABLE events (
 -- Name: tag_usage; Type: VIEW; Schema: public; Owner: postgres; Tablespace:
 --
 
-CREATE VIEW "tag_usage" AS select "name", count("name") AS "count" from "tags", "post_tags" where "tags"."id" = "post_tags"."tag_id" group by "name" order by "count" desc, "name";
+CREATE VIEW "tag_usage" AS select "tags"."id" as "id", "name", count("name") AS "count" from "tags", "post_tags" where "tags"."id" = "post_tags"."tag_id" group by "tags"."id", "name" order by "count" desc, "name";
 
 --
 -- Name: products; Type: TABLE; Schema: public; Owner: postgres; Tablespace:

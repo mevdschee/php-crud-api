@@ -18,6 +18,14 @@ Content-Length: 27
 
 {"id":2,"username":"user2"}
 ===
+GET /me
+===
+200
+Content-Type: application/json; charset=utf-8
+Content-Length: 27
+
+{"id":2,"username":"user2"}
+===
 GET /records/invisibles/e42c77c6-06a4-4502-816c-d112c7142e6d
 ===
 200
@@ -68,3 +76,109 @@ Content-Type: application/json; charset=utf-8
 Content-Length: 49
 
 {"code":1011,"message":"Authentication required"}
+===
+POST /register
+Content-Type: application/json; charset=utf-8
+
+{"username":"user2","password":""}
+===
+422
+Content-Type: application/json; charset=utf-8
+Content-Length: 60
+
+{"code":1021,"message":"Password too short (<4 characters)"}
+===
+POST /register
+Content-Type: application/json; charset=utf-8
+
+{"username":"user2","password":"pass2"}
+===
+409
+Content-Type: application/json; charset=utf-8
+Content-Length: 53
+
+{"code":1020,"message":"User 'user2' already exists"}
+===
+POST /register
+Content-Type: application/json; charset=utf-8
+
+{"username":"user3","password":"pass3"}
+===
+200
+Content-Type: application/json; charset=utf-8
+Content-Length: 27
+
+{"id":3,"username":"user3"}
+===
+POST /login
+Content-Type: application/json; charset=utf-8
+
+{"username":"user3","password":"pass3"}
+===
+200
+Content-Type: application/json; charset=utf-8
+Content-Length: 27
+
+{"id":3,"username":"user3"}
+===
+GET /me
+===
+200
+Content-Type: application/json; charset=utf-8
+Content-Length: 27
+
+{"id":3,"username":"user3"}
+===
+POST /password
+Content-Type: application/json; charset=utf-8
+
+{"username":"user3","password":"pass3","newPassword":"secret3"}
+===
+200
+Content-Type: application/json; charset=utf-8
+Content-Length: 27
+
+{"id":3,"username":"user3"}
+===
+POST /logout
+===
+200
+Content-Type: application/json; charset=utf-8
+Content-Length: 27
+
+{"id":3,"username":"user3"}
+===
+POST /login
+Content-Type: application/json; charset=utf-8
+
+{"username":"user3","password":"secret3"}
+===
+200
+Content-Type: application/json; charset=utf-8
+Content-Length: 27
+
+{"id":3,"username":"user3"}
+===
+GET /me
+===
+200
+Content-Type: application/json; charset=utf-8
+Content-Length: 27
+
+{"id":3,"username":"user3"}
+===
+POST /logout
+===
+200
+Content-Type: application/json; charset=utf-8
+Content-Length: 27
+
+{"id":3,"username":"user3"}
+===
+DELETE /records/users/3
+===
+200
+Content-Type: application/json; charset=utf-8
+Content-Length: 1
+
+1

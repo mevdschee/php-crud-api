@@ -83,9 +83,9 @@ class ValidationMiddleware extends Middleware
 						break;
 					case 'decimal':
 						if (strpos($value, '.') !== false) {
-							list($whole, $decimals) = explode('.', $value, 2);
+							list($whole, $decimals) = explode('.', ltrim($value, '-'), 2);
 						} else {
-							list($whole, $decimals) = array($value, '');
+							list($whole, $decimals) = array(ltrim($value, '-'), '');
 						}
 						if (strlen($whole) > 0 && !ctype_digit($whole)) {
 							return 'invalid decimal';

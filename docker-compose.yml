@@ -1,0 +1,33 @@
+version: '3'
+services:
+    database:
+        image: mysql:8.0
+        container_name: database
+        restart: always
+        environment:
+        - MYSQL_ROOT_PASSWORD=php-crud-api
+        - MYSQL_DATABASE=php-crud-api
+        - MYSQL_USER=php-crud-api
+        - MYSQL_PASSWORD=php-crud-api
+        #ports:
+        #- "33066:3306"
+        volumes:
+        - ./tests/fixtures/blog_mysql.sql:/docker-entrypoint-initdb.d/blog_mysql.sql
+    webserver:
+        container_name: webserver
+        build:
+            context: ./
+        environment:
+        #- PHP_CRUD_API_DRIVER=mysql
+        - PHP_CRUD_API_ADDRESS=database
+        #- PHP_CRUD_API_PORT=3306
+        #- PHP_CRUD_API_DATABASE=php-crud-api
+        #- PHP_CRUD_API_USERNAME=php-crud-api
+        #- PHP_CRUD_API_PASSWORD=php-crud-api
+        #- PHP_CRUD_API_DEBUG=1
+        ports:
+        - "8080:80"
+        depends_on:
+        - database
+        #volumes:
+        #- .:/php-crud-api:ro

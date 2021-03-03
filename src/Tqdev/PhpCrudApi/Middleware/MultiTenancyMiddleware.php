@@ -38,7 +38,7 @@ class MultiTenancyMiddleware extends Middleware
     private function getPairs($handler, string $operation, string $tableName): array
     {
         $result = array();
-        $pairs = call_user_func($handler, $operation, $tableName);
+        $pairs = call_user_func($handler, $operation, $tableName) ?: [];
         $table = $this->reflection->getTable($tableName);
         foreach ($pairs as $k => $v) {
             if ($table->hasColumn($k)) {

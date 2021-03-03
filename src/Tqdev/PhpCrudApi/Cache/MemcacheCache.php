@@ -2,7 +2,9 @@
 
 namespace Tqdev\PhpCrudApi\Cache;
 
-class MemcacheCache implements Cache
+use Tqdev\PhpCrudApi\Cache\Base\BaseCache;
+
+class MemcacheCache extends BaseCache implements Cache
 {
     protected $prefix;
     protected $memcache;
