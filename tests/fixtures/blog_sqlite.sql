@@ -122,7 +122,7 @@ CREATE TABLE "products" (
   "id" integer NOT NULL PRIMARY KEY AUTOINCREMENT,
   "name" varchar(255) NOT NULL,
   "price" decimal(10,2) NOT NULL,
-  "properties" clob NOT NULL,
+  "properties" json NOT NULL,
   "created_at" datetime NOT NULL,
   "deleted_at" datetime NULL
 );

@@ -87,7 +87,7 @@ class ReflectedColumn implements \JsonSerializable
         return new ReflectedColumn($name, $type, $length, $precision, $scale, $nullable, $pk, $fk);
     }
 
-    public static function fromJson(/* object */$json): ReflectedColumn
+    public static function fromJson( /* object */$json): ReflectedColumn
     {
         $name = $json->name;
         $type = $json->type;
@@ -165,6 +165,11 @@ class ReflectedColumn implements \JsonSerializable
     public function isGeometry(): bool
     {
         return $this->type == 'geometry';
+    }
+
+    public function isJson(): bool
+    {
+        return $this->type == 'json';
     }
 
     public function isInteger(): bool

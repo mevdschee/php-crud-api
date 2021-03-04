@@ -72,7 +72,6 @@ class TypeConverter
             'year' => 'integer',
             'enum' => 'varchar',
             'set' => 'varchar',
-            'json' => 'clob',
         ],
         'pgsql' => [
             'bigserial' => 'bigint',
@@ -87,8 +86,7 @@ class TypeConverter
             'double precision' => 'double',
             'inet' => 'integer',
             //'interval [ fields ]'
-            'json' => 'clob',
-            'jsonb' => 'clob',
+            'jsonb' => 'json',
             'line' => 'geometry',
             'lseg' => 'geometry',
             'macaddr' => 'varchar',
@@ -140,7 +138,7 @@ class TypeConverter
             'int4' => 'integer',
             'int8' => 'bigint',
             'double precision' => 'double',
-            'datetime' => 'timestamp'
+            'datetime' => 'timestamp',
         ],
     ];
 
@@ -187,6 +185,7 @@ class TypeConverter
         'varchar' => true,
         // extra:
         'geometry' => true,
+        'json' => true,
     ];
 
     public function toJdbc(string $type, string $size): string

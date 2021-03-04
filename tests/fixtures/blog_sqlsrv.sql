@@ -136,6 +136,10 @@ DROP TABLE [nopk]
 END
 GO
 
+DROP TYPE IF EXISTS [json];
+
+IF TYPE_ID('json') IS NULL CREATE TYPE [json] FROM [ntext];
+
 DROP SEQUENCE IF EXISTS [categories_id_seq]
 GO
 CREATE SEQUENCE [categories_id_seq] AS int START WITH 1 INCREMENT BY 1 NO CACHE
@@ -258,7 +262,7 @@ CREATE TABLE [products](
 	[id] [int] NOT NULL CONSTRAINT [products_id_def] DEFAULT NEXT VALUE FOR [products_id_seq],
 	[name] [nvarchar](255) NOT NULL,
 	[price] [decimal](10,2) NOT NULL,
-	[properties] [xml] NOT NULL,
+	[properties] [json] NOT NULL,
 	[created_at] [datetime2](0) NOT NULL,
 	[deleted_at] [datetime2](0),
 	CONSTRAINT [products_pkey] PRIMARY KEY CLUSTERED([id] ASC)

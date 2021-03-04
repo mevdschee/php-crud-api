@@ -25,6 +25,8 @@ class DataConverter
                 return (int) $value;
             case 'float':
                 return (float) $value;
+            case 'json':
+                return \json_decode($value);
             case 'decimal':
                 return number_format($value, $args[0], '.', '');
         }
@@ -41,6 +43,9 @@ class DataConverter
         }
         if (in_array($column->getType(), ['float', 'double'])) {
             return 'float';
+        }
+        if ($column->isJson()) {
+            return 'json';
         }
         if (in_array($this->driver, ['sqlite']) && in_array($column->getType(), ['decimal'])) {
             return 'decimal|' . $column->getScale();
@@ -72,6 +77,8 @@ class DataConverter
                 return $value ? 1 : 0;
             case 'base64url_to_base64':
                 return str_pad(strtr($value, '-_', '+/'), ceil(strlen($value) / 4) * 4, '=', STR_PAD_RIGHT);
+            case 'json_encode':
+                return json_encode($value);
         }
         return $value;
     }
@@ -83,6 +90,9 @@ class DataConverter
         }
         if ($column->isBinary()) {
             return 'base64url_to_base64';
+        }
+        if ($column->isJson()) {
+            return 'json_encode';
         }
         return 'none';
     }
