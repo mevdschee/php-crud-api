@@ -1100,7 +1100,7 @@ This will change the output of:
 
     GET /records/products/1
 
-Without "json" middleware will be:
+Without "json" middleware the output will be:
 
     {
         "id": 1,
@@ -1109,7 +1109,7 @@ Without "json" middleware will be:
         "properties": "{\"depth\":false,\"model\":\"TRX-120\",\"width\":100,\"height\":null}",
     }
 
-With "json" middleware will be:
+With "json" middleware the output will be:
 
     {
         "id": 1,
