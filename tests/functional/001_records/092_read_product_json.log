@@ -1,0 +1,8 @@
+===
+GET /records/products/1
+===
+200
+Content-Type: application/json; charset=utf-8
+Content-Length: 170
+
+{"id":1,"name":"Calculator","price":"23.01","properties":{"depth":false,"model":"TRX-120","width":100,"height":null},"created_at":"1970-01-01 01:01:01","deleted_at":null}

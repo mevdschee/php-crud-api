@@ -25,6 +25,7 @@ use Tqdev\PhpCrudApi\Middleware\DbAuthMiddleware;
 use Tqdev\PhpCrudApi\Middleware\FirewallMiddleware;
 use Tqdev\PhpCrudApi\Middleware\IpAddressMiddleware;
 use Tqdev\PhpCrudApi\Middleware\JoinLimitsMiddleware;
+use Tqdev\PhpCrudApi\Middleware\JsonMiddleware;
 use Tqdev\PhpCrudApi\Middleware\JwtAuthMiddleware;
 use Tqdev\PhpCrudApi\Middleware\MultiTenancyMiddleware;
 use Tqdev\PhpCrudApi\Middleware\PageLimitsMiddleware;
@@ -115,7 +116,10 @@ class Api implements RequestHandlerInterface
                 case 'xml':
                     new XmlMiddleware($router, $responder, $properties, $reflection);
                     break;
-            }
+                case 'json':
+                    new JsonMiddleware($router, $responder, $properties);
+                    break;
+                }
         }
         foreach ($config->getControllers() as $controller) {
             switch ($controller) {
