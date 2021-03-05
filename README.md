@@ -1089,6 +1089,10 @@ The above example will add a header "X-Time-Taken" with the number of seconds th
 
 You may use the "json" middleware to read/write JSON strings as JSON objects and arrays.
 
+JSON strings are automatically detected when the "json" middleware is enabled. 
+
+You may limit the scanning of by specifying specific table and/or field names: 
+
     'json.tables' => 'products',
     'json.columns' => 'properties',
 
