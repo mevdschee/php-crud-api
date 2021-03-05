@@ -5,57 +5,96 @@ namespace Tqdev\PhpCrudApi\Middleware;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
-use Tqdev\PhpCrudApi\Column\ReflectionService;
-use Tqdev\PhpCrudApi\Column\Reflection\ReflectedTable;
-use Tqdev\PhpCrudApi\Controller\Responder;
 use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
-use Tqdev\PhpCrudApi\Middleware\Router\Router;
 use Tqdev\PhpCrudApi\RequestUtils;
+use Tqdev\PhpCrudApi\ResponseFactory;
 
 class JsonMiddleware extends Middleware
 {
-    private $reflection;
-
-    public function __construct(Router $router, Responder $responder, array $properties, ReflectionService $reflection)
+    private function convertJsonRequestValue($value) /*: object */
     {
-        parent::__construct($router, $responder, $properties);
-        $this->reflection = $reflection;
-    }
-
-    private function processRecord($record, ReflectedTable $table) /*: object */
-    {
-        foreach ($record as $key => $value) {
-
+        if (is_array($value) || is_object($value)) {
+            $value = json_encode($value,JSON_UNESCAPED_UNICODE);
         }
+        return $value;
     }
-
-    private function processRecords($records, ReflectedTable $table) /*: object */
+    
+    private function convertJsonRequest($object, array $fieldNames) /*: object */
     {
-        if (is_array($records)) {
-            foreach ($records as $i => $record) {
-                $records[$i] = $this->processRecord($record, $operation, $table);
+        if (is_array($object)) {
+            foreach ($object as $i => $obj) {
+                foreach ($obj as $k => $v) {
+                    if (in_array('all', $fieldNames) || in_array($k, $fieldNames)) {
+                        $object[$i]->$k = $this->convertJsonRequestValue($v);
+                    }
+                }
             }
-        } else {
-            $records = $this->processRecord($records, $operation, $table);
+        } else if (is_object($object)) {
+            foreach ($object as $k => $v) {
+                if (in_array('all', $fieldNames) || in_array($k, $fieldNames)) {
+                    $object->$k = $this->convertJsonRequestValue($v);
+                }
+            }
         }
-        return $records;
+        return $object;
+    }
+
+    private function convertJsonResponseValue(string $value) /*: object */
+    {
+        if (strlen($value) > 0 && in_array($value[0],['[','{'])) {
+            $parsed = json_decode($value);
+            if (json_last_error() == JSON_ERROR_NONE) {
+                $value = $parsed;
+            }
+        }
+        return $value;
+    }
+    
+
+    private function convertJsonResponse($object, array $fieldNames) /*: object */
+    {
+        if (is_array($object)) {
+            foreach ($object as $k => $v) {
+                $object[$k] = $this->convertJsonResponse($v, $fieldNames);
+            }
+        } else if (is_object($object)) {
+            foreach ($object as $k => $v) {
+                if (in_array('all', $fieldNames) || in_array($k, $fieldNames)) {
+                    $object->$k = $this->convertJsonResponse($v, $fieldNames);
+                }
+            }
+        } else if (is_string($object)) {
+            $object = $this->convertJsonResponseValue($object);
+        }
+        return $object;
     }
 
     public function process(ServerRequestInterface $request, RequestHandlerInterface $next): ResponseInterface
     {
         $operation = RequestUtils::getOperation($request);
+        $controllerPath = RequestUtils::getPathSegment($request, 1);
         $tableName = RequestUtils::getPathSegment($request, 2);
-        $table = $this->reflection->hasTable($tableName) ? $this->reflection->getTable($tableName) : null;
-        if ($table && in_array($operation, ['create', 'update'])) {
-            $records = $request->getParsedBody();
-            $records = $this->processRecords($records, $table);
-            $request = $request->withParsedBody($records);
-        }
-        $response = $next->handle($request);
-        if ($table && in_array($operation, ['read', 'list'])) {
-            $record = $response->getBody()->getContents();
-            $records = $this->processRecords($records, $table);
-            $response = ResponseFactory::fromObject(ResponseFactory::OK, $records);
+
+        $controllerPaths = $this->getArrayProperty('controllers', 'all');
+		$tableNames = $this->getArrayProperty('tables', 'all');
+		$fieldNames = $this->getArrayProperty('fields', 'all');
+		if (
+			(in_array('all', $controllerPaths) || in_array($controllerPath, $controllerPaths)) &&
+			(in_array('all', $tableNames) || in_array($tableName, $tableNames))
+		) {
+            if (in_array($operation, ['create', 'update'])) {
+                $records = $request->getParsedBody();
+                $records = $this->convertJsonRequest($records,$fieldNames);
+                $request = $request->withParsedBody($records);
+            }
+            $response = $next->handle($request);
+            if (in_array($operation, ['read', 'list'])) {
+                $records = json_decode($response->getBody()->getContents());
+                $records = $this->convertJsonResponse($records, $fieldNames);
+                $response = ResponseFactory::fromObject($response->getStatusCode(), $records);
+            }
+        } else {
+            $response = $next->handle($request);
         }
         return $response;
     }

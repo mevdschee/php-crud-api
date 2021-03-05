@@ -4,7 +4,7 @@ $settings = [
     'username' => 'incorrect_username',
     'password' => 'incorrect_password',
     'controllers' => 'records,columns,cache,openapi,geojson,status',
-    'middlewares' => 'sslRedirect,xml,cors,reconnect,dbAuth,jwtAuth,basicAuth,authorization,sanitation,validation,ipAddress,multiTenancy,pageLimits,joinLimits,customization',
+    'middlewares' => 'sslRedirect,xml,cors,json,reconnect,dbAuth,jwtAuth,basicAuth,authorization,sanitation,validation,ipAddress,multiTenancy,pageLimits,joinLimits,customization',
     'dbAuth.mode' => 'optional',
     'dbAuth.returnedColumns' => 'id,username,password',
     'dbAuth.registerUser' => '1',
@@ -57,5 +57,8 @@ $settings = [
             return $response->withHeader('X-Time-Taken', 0.006/*microtime(true)*/ - $environment->start);
         }
     },
+    'json.controllers' => 'records',
+    'json.tables' => 'products',
+    'json.fields' => 'properties',
     'debug' => false,
 ];
