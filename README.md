@@ -1125,7 +1125,7 @@ With "json" middleware will be:
 
 This also applies when creating or modifying JSON string fields (also when using batch operations).
 
-NB: JSON string fields cannot be partially updated.
+Note that JSON string fields cannot be partially updated.
 
 ### XML middleware
 
