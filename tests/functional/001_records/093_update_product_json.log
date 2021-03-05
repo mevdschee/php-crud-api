@@ -34,3 +34,39 @@ Content-Type: application/json; charset=utf-8
 Content-Length: 170
 
 {"id":1,"name":"Calculator","price":"23.01","properties":{"depth":false,"model":"TRX-120","width":100,"height":null},"created_at":"1970-01-01 01:01:01","deleted_at":null}
+===
+POST /records/products/
+
+[{"name":"Calc v2","price":"24.01","properties":{"version":"v2"},"created_at":"1970-01-01 01:01:01"},{"name":"Calc v3","price":"25.01","properties":{"version":"v3"},"created_at":"1970-01-01 01:01:01"}]
+===
+200
+Content-Type: application/json; charset=utf-8
+Content-Length: 5
+
+[2,3]
+===
+PUT /records/products/2,3
+
+[{"properties":{"new":true}},{"properties":{"version":"v3","new":true}}]
+===
+200
+Content-Type: application/json; charset=utf-8
+Content-Length: 5
+
+[1,1]
+===
+GET /records/products/2,3
+===
+200
+Content-Type: application/json; charset=utf-8
+Content-Length: 258
+
+[{"id":2,"name":"Calc v2","price":"24.01","properties":{"new":true},"created_at":"1970-01-01 01:01:01","deleted_at":null},{"id":3,"name":"Calc v3","price":"25.01","properties":{"version":"v3","new":true},"created_at":"1970-01-01 01:01:01","deleted_at":null}]
+===
+DELETE /records/products/2,3
+===
+200
+Content-Type: application/json; charset=utf-8
+Content-Length: 5
+
+[1,1]

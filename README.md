@@ -1089,9 +1089,39 @@ The above example will add a header "X-Time-Taken" with the number of seconds th
 
 You may use the "json" middleware to read/write JSON strings as JSON objects and arrays.
 
-    'json.columns' => 'details',
+    'json.tables' => 'products',
+    'json.columns' => 'properties',
 
-The "pageLimits" middleware limits the page number and the number records returned from a list operation. 
+This will change the output of:
+
+    GET /records/products/1
+
+Without "json" middleware will be:
+
+    {
+        "id": 1,
+        "name": "Calculator",
+        "price": "23.01",
+        "properties": "{\"depth\":false,\"model\":\"TRX-120\",\"width\":100,\"height\":null}",
+    }
+
+With "json" middleware will be:
+
+    {
+        "id": 1,
+        "name": "Calculator",
+        "price": "23.01",
+        "properties": {
+            "depth": false,
+            "model": "TRX-120",
+            "width": 100,
+            "height": null
+        },
+    }
+
+This also applies when creating or modifying JSON string fields (also when using batch operations).
+
+NB: JSON string fields cannot be partially updated.
 
 ### XML middleware
 
