@@ -59,6 +59,6 @@ $settings = [
     },
     'json.controllers' => 'records',
     'json.tables' => 'products',
-    'json.fields' => 'properties',
+    'json.columns' => 'properties',
     'debug' => false,
 ];

@@ -19,19 +19,19 @@ class JsonMiddleware extends Middleware
         return $value;
     }
     
-    private function convertJsonRequest($object, array $fieldNames) /*: object */
+    private function convertJsonRequest($object, array $columnNames) /*: object */
     {
         if (is_array($object)) {
             foreach ($object as $i => $obj) {
                 foreach ($obj as $k => $v) {
-                    if (in_array('all', $fieldNames) || in_array($k, $fieldNames)) {
+                    if (in_array('all', $columnNames) || in_array($k, $columnNames)) {
                         $object[$i]->$k = $this->convertJsonRequestValue($v);
                     }
                 }
             }
         } else if (is_object($object)) {
             foreach ($object as $k => $v) {
-                if (in_array('all', $fieldNames) || in_array($k, $fieldNames)) {
+                if (in_array('all', $columnNames) || in_array($k, $columnNames)) {
                     $object->$k = $this->convertJsonRequestValue($v);
                 }
             }
@@ -51,16 +51,16 @@ class JsonMiddleware extends Middleware
     }
     
 
-    private function convertJsonResponse($object, array $fieldNames) /*: object */
+    private function convertJsonResponse($object, array $columnNames) /*: object */
     {
         if (is_array($object)) {
             foreach ($object as $k => $v) {
-                $object[$k] = $this->convertJsonResponse($v, $fieldNames);
+                $object[$k] = $this->convertJsonResponse($v, $columnNames);
             }
         } else if (is_object($object)) {
             foreach ($object as $k => $v) {
-                if (in_array('all', $fieldNames) || in_array($k, $fieldNames)) {
-                    $object->$k = $this->convertJsonResponse($v, $fieldNames);
+                if (in_array('all', $columnNames) || in_array($k, $columnNames)) {
+                    $object->$k = $this->convertJsonResponse($v, $columnNames);
                 }
             }
         } else if (is_string($object)) {
@@ -75,22 +75,22 @@ class JsonMiddleware extends Middleware
         $controllerPath = RequestUtils::getPathSegment($request, 1);
         $tableName = RequestUtils::getPathSegment($request, 2);
 
-        $controllerPaths = $this->getArrayProperty('controllers', 'all');
+        $controllerPaths = $this->getArrayProperty('controllers', 'records,geojson');
 		$tableNames = $this->getArrayProperty('tables', 'all');
-		$fieldNames = $this->getArrayProperty('fields', 'all');
+		$columnNames = $this->getArrayProperty('columns', 'all');
 		if (
 			(in_array('all', $controllerPaths) || in_array($controllerPath, $controllerPaths)) &&
 			(in_array('all', $tableNames) || in_array($tableName, $tableNames))
 		) {
             if (in_array($operation, ['create', 'update'])) {
                 $records = $request->getParsedBody();
-                $records = $this->convertJsonRequest($records,$fieldNames);
+                $records = $this->convertJsonRequest($records,$columnNames);
                 $request = $request->withParsedBody($records);
             }
             $response = $next->handle($request);
             if (in_array($operation, ['read', 'list'])) {
                 $records = json_decode($response->getBody()->getContents());
-                $records = $this->convertJsonResponse($records, $fieldNames);
+                $records = $this->convertJsonResponse($records, $columnNames);
                 $response = ResponseFactory::fromObject($response->getStatusCode(), $records);
             }
         } else {

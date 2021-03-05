@@ -258,7 +258,7 @@ CREATE TABLE [products](
 	[id] [int] NOT NULL CONSTRAINT [products_id_def] DEFAULT NEXT VALUE FOR [products_id_seq],
 	[name] [nvarchar](255) NOT NULL,
 	[price] [decimal](10,2) NOT NULL,
-	[properties] [xml] NOT NULL,
+	[properties] [ntext] NOT NULL,
 	[created_at] [datetime2](0) NOT NULL,
 	[deleted_at] [datetime2](0),
 	CONSTRAINT [products_pkey] PRIMARY KEY CLUSTERED([id] ASC)
@@ -367,7 +367,7 @@ GO
 INSERT [events] ([name], [datetime], [visitors]) VALUES (N'Launch', N'2016-01-01 13:01:01', 0)
 GO
 
-INSERT [products] ([name], [price], [properties], [created_at]) VALUES (N'Calculator', N'23.01', N'<root type="object"><depth type="boolean">false</depth><model type="string">TRX-120</model><width type="number">100</width><height type="null" /></root>', '1970-01-01 01:01:01')
+INSERT [products] ([name], [price], [properties], [created_at]) VALUES (N'Calculator', N'23.01', N'{"depth":false,"model":"TRX-120","width":100,"height":null}', '1970-01-01 01:01:01')
 GO
 
 INSERT [barcodes] ([product_id], [hex], [bin], [ip_address]) VALUES (1, N'00ff01', 0x00ff01, N'127.0.0.1')

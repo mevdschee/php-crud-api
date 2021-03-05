@@ -636,6 +636,7 @@ You can enable the following middleware using the "middlewares" config parameter
 - "pageLimits": Restricts list operations to prevent database scraping
 - "joinLimits": Restricts join parameters to prevent database scraping
 - "customization": Provides handlers for request and response customization
+- "json": Support read/write of JSON strings as JSON objects/arrays
 - "xml": Translates all input and output from JSON to XML
 
 The "middlewares" config parameter is a comma separated list of enabled middlewares.
@@ -703,6 +704,9 @@ You can tune the middleware behavior using middleware specific configuration par
 - "joinLimits.records": The maximum number of records returned for a joined entity ("1000")
 - "customization.beforeHandler": Handler to implement request customization ("")
 - "customization.afterHandler": Handler to implement response customization ("")
+- "json.controllers": Controllers to process JSON strings for ("records,geojson")
+- "json.tables": Tables to process JSON strings for ("all")
+- "json.columns": Columns to process JSON strings for ("all")
 - "xml.types": JSON types that should be added to the XML type attribute ("null,array")
 
 If you don't specify these parameters in the configuration, then the default values (between brackets) are used.
@@ -1080,6 +1084,14 @@ You may use the "customization" middleware to modify request and response and im
     },
 
 The above example will add a header "X-Time-Taken" with the number of seconds the API call has taken.
+
+### JSON middleware
+
+You may use the "json" middleware to read/write JSON strings as JSON objects and arrays.
+
+    'json.columns' => 'details',
+
+The "pageLimits" middleware limits the page number and the number records returned from a list operation. 
 
 ### XML middleware
 
