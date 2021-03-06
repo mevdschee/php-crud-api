@@ -9996,8 +9996,7 @@ namespace Tqdev\PhpCrudApi\Record\Condition {
                 if (substr($command, 0, 1) == 'n') {
                     $negate = true;
                     $command = substr($command, 1);
-                }
-                if (substr($command, 0, 1) == 's') {
+                } else if (substr($command, 0, 1) == 's') {
                     $spatial = true;
                     $command = substr($command, 1);
                 }
