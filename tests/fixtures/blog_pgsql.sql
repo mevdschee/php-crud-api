@@ -137,7 +137,7 @@ CREATE TABLE products (
     id serial NOT NULL,
     name character varying(255) NOT NULL,
     price decimal(10,2) NOT NULL,
-    properties jsonb NOT NULL,
+    properties json NOT NULL,
     created_at timestamp NOT NULL,
     deleted_at timestamp NULL
 );
