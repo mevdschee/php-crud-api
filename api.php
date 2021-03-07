@@ -11654,6 +11654,27 @@ namespace Tqdev\PhpCrudApi {
             }
             return $allTableNames;
         }
+
+        public static function toString(ServerRequestInterface $request): string
+        {
+            $method = $request->getMethod();
+            $uri = $request->getUri()->__toString();
+            $headers = $request->getHeaders();
+            $request->getBody()->rewind();
+            $body = $request->getBody()->getContents();
+
+            $str = "$method $uri\n";
+            foreach ($headers as $key => $values) {
+                foreach ($values as $value) {
+                    $str .= "$key: $value\n";
+                }
+            }
+            if ($body !== '') {
+                $str .= "\n";
+                $str .= "$body\n";
+            }
+            return $str;
+        }
     }
 }
 
@@ -11752,6 +11773,7 @@ namespace Tqdev\PhpCrudApi {
         {
             $status = $response->getStatusCode();
             $headers = $response->getHeaders();
+            $response->getBody()->rewind();
             $body = $response->getBody()->getContents();
 
             $str = "$status\n";
@@ -11790,4 +11812,7 @@ namespace Tqdev\PhpCrudApi {
     $api = new Api($config);
     $response = $api->handle($request);
     ResponseUtils::output($response);
+
+    //file_put_contents('request.log',RequestUtils::toString($request)."===\n",FILE_APPEND);
+    //file_put_contents('request.log',ResponseUtils::toString($response)."===\n",FILE_APPEND);
 }

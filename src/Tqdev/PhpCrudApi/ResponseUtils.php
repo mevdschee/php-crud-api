@@ -33,6 +33,7 @@ class ResponseUtils
     {
         $status = $response->getStatusCode();
         $headers = $response->getHeaders();
+        $response->getBody()->rewind();
         $body = $response->getBody()->getContents();
 
         $str = "$status\n";
