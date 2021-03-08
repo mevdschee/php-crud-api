@@ -1089,7 +1089,7 @@ The above example will add a header "X-Time-Taken" with the number of seconds th
 
 You may use the "json" middleware to read/write JSON strings as JSON objects and arrays.
 
-JSON strings are automatically detected when the "json" middleware is enabled. 
+JSON strings are automatically detected when the "json" middleware is enabled.
 
 You may limit the scanning of by specifying specific table and/or field names: 
 
@@ -1125,7 +1125,8 @@ With "json" middleware the output will be:
 
 This also applies when creating or modifying JSON string fields (also when using batch operations).
 
-Note that JSON string fields cannot be partially updated.
+Note that JSON string fields cannot be partially updated and that this middleware is disabled by default.
+You can enable the "json" middleware using the "middlewares" configuration setting.
 
 ### XML middleware
 
