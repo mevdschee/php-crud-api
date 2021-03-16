@@ -1,3 +1,4 @@
+skip-for-sqlite: no support for types on views
 ===
 GET /records/tag_usage
 ===

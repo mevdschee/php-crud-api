@@ -156,7 +156,7 @@ class GenericReflection
                 if (isset($matches[1])) {
                     $result['DATA_TYPE'] = $matches[1];
                 } else {
-                    $result['DATA_TYPE'] = 'integer';
+                    $result['DATA_TYPE'] = 'text';
                 }
                 if (isset($matches[5])) {
                     $result['NUMERIC_PRECISION'] = $matches[3];
