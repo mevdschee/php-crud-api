@@ -6364,7 +6364,7 @@ namespace Tqdev\PhpCrudApi\Database {
             }
             if ($this->driver == 'sqlite') {
                 foreach ($results as &$result) {
-                    // sqlite does not properly reflect display width of types
+                    // sqlite does not reflect types on view columns
                     preg_match('|([a-z]+)(\(([0-9]+)(,([0-9]+))?\))?|', $result['DATA_TYPE'], $matches);
                     if (isset($matches[1])) {
                         $result['DATA_TYPE'] = $matches[1];
