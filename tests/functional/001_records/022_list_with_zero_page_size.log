@@ -6,3 +6,11 @@ Content-Type: application/json; charset=utf-8
 Content-Length: 27
 
 {"records":[],"results":12}
+===
+GET /records/posts?filter=id,eq,0&page=1,0
+===
+200
+Content-Type: application/json; charset=utf-8
+Content-Length: 26
+
+{"records":[],"results":0}
