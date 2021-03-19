@@ -125,7 +125,7 @@ class RecordService
         if (!$this->pagination->hasPage($params)) {
             $offset = 0;
             $limit = $this->pagination->getPageLimit($params);
-            $count = 0;
+            $count = -1;
         } else {
             $offset = $this->pagination->getPageOffset($params);
             $limit = $this->pagination->getPageLimit($params);

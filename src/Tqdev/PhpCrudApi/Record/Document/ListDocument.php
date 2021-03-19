@@ -35,7 +35,7 @@ class ListDocument implements \JsonSerializable
     public function jsonSerialize()
     {
         return array_filter($this->serialize(), function ($v) {
-            return $v !== 0;
+            return $v !== -1;
         });
     }
 }
