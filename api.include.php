@@ -6824,7 +6824,7 @@ namespace Tqdev\PhpCrudApi\GeoJson {
         public function jsonSerialize()
         {
             return array_filter($this->serialize(), function ($v) {
-                return $v !== 0;
+                return $v !== -1;
             });
         }
     }
@@ -10211,7 +10211,7 @@ namespace Tqdev\PhpCrudApi\Record\Document {
         public function jsonSerialize()
         {
             return array_filter($this->serialize(), function ($v) {
-                return $v !== 0;
+                return $v !== -1;
             });
         }
     }
@@ -10767,7 +10767,7 @@ namespace Tqdev\PhpCrudApi\Record {
             if (!$this->pagination->hasPage($params)) {
                 $offset = 0;
                 $limit = $this->pagination->getPageLimit($params);
-                $count = 0;
+                $count = -1;
             } else {
                 $offset = $this->pagination->getPageOffset($params);
                 $limit = $this->pagination->getPageLimit($params);
