@@ -8394,6 +8394,122 @@ namespace Tqdev\PhpCrudApi\Middleware {
     }
 }
 
+// file: src/Tqdev/PhpCrudApi/Middleware/QueryQuotaMiddleware.php
+namespace Tqdev\PhpCrudApi\Middleware {
+
+    use Psr\Http\Message\ResponseInterface;
+    use Psr\Http\Message\ServerRequestInterface;
+    use Psr\Http\Server\RequestHandlerInterface;
+    use Tqdev\PhpCrudApi\Controller\Responder;
+    use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
+    use Tqdev\PhpCrudApi\Record\ErrorCode;
+
+    class QueryQuotaMiddleware extends Middleware
+    {
+        private function ipMatch(string $ip, string $cidr): bool
+        {
+            if (strpos($cidr, '/') !== false) {
+                list($subnet, $mask) = explode('/', trim($cidr));
+                if ((ip2long($ip) & ~((1 << (32 - $mask)) - 1)) == ip2long($subnet)) {
+                    return true;
+                }
+            } else {
+                if (ip2long($ip) == ip2long($cidr)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private function isIpAllowed(string $ipAddress, string $allowedIpAddresses): bool
+        {
+            foreach (explode(',', $allowedIpAddresses) as $allowedIp) {
+                if ($this->ipMatch($ipAddress, $allowedIp)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public function process(ServerRequestInterface $request, RequestHandlerInterface $next): ResponseInterface
+        {
+            $reverseProxy = $this->getProperty('reverseProxy', '');
+            if ($reverseProxy) {
+                $ipAddress = array_pop(explode(',', $request->getHeader('X-Forwarded-For')));
+            } elseif (isset($_SERVER['REMOTE_ADDR'])) {
+                $ipAddress = $_SERVER['REMOTE_ADDR'];
+            } else {
+                $ipAddress = '127.0.0.1';
+            }
+            $allowedIpAddresses = $this->getProperty('allowedIpAddresses', '');
+            if (!$this->isIpAllowed($ipAddress, $allowedIpAddresses)) {
+                $response = $this->responder->error(ErrorCode::TEMPORARY_OR_PERMANENTLY_BLOCKED, '');
+            } else {
+                $response = $next->handle($request);
+            }
+            return $response;
+        }
+    }
+}
+
+// file: src/Tqdev/PhpCrudApi/Middleware/RateLimitMiddleware copy.php
+namespace Tqdev\PhpCrudApi\Middleware {
+
+    use Psr\Http\Message\ResponseInterface;
+    use Psr\Http\Message\ServerRequestInterface;
+    use Psr\Http\Server\RequestHandlerInterface;
+    use Tqdev\PhpCrudApi\Controller\Responder;
+    use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
+    use Tqdev\PhpCrudApi\Record\ErrorCode;
+
+    class RateLimitMiddleware extends Middleware
+    {
+        private function ipMatch(string $ip, string $cidr): bool
+        {
+            if (strpos($cidr, '/') !== false) {
+                list($subnet, $mask) = explode('/', trim($cidr));
+                if ((ip2long($ip) & ~((1 << (32 - $mask)) - 1)) == ip2long($subnet)) {
+                    return true;
+                }
+            } else {
+                if (ip2long($ip) == ip2long($cidr)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private function isIpAllowed(string $ipAddress, string $allowedIpAddresses): bool
+        {
+            foreach (explode(',', $allowedIpAddresses) as $allowedIp) {
+                if ($this->ipMatch($ipAddress, $allowedIp)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public function process(ServerRequestInterface $request, RequestHandlerInterface $next): ResponseInterface
+        {
+            $reverseProxy = $this->getProperty('reverseProxy', '');
+            if ($reverseProxy) {
+                $ipAddress = array_pop(explode(',', $request->getHeader('X-Forwarded-For')));
+            } elseif (isset($_SERVER['REMOTE_ADDR'])) {
+                $ipAddress = $_SERVER['REMOTE_ADDR'];
+            } else {
+                $ipAddress = '127.0.0.1';
+            }
+            $allowedIpAddresses = $this->getProperty('allowedIpAddresses', '');
+            if (!$this->isIpAllowed($ipAddress, $allowedIpAddresses)) {
+                $response = $this->responder->error(ErrorCode::TEMPORARY_OR_PERMANENTLY_BLOCKED, '');
+            } else {
+                $response = $next->handle($request);
+            }
+            return $response;
+        }
+    }
+}
+
 // file: src/Tqdev/PhpCrudApi/Middleware/ReconnectMiddleware.php
 namespace Tqdev\PhpCrudApi\Middleware {
 
@@ -9076,7 +9192,7 @@ namespace Tqdev\PhpCrudApi\Middleware {
                 $secure = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == 'on';
                 $token = bin2hex(random_bytes(8));
                 if (!headers_sent()) {
-                    setcookie($cookieName, $token, 0, '', '', $secure);
+                    setcookie($cookieName, $token, 0, '/', '', $secure);
                 }
             }
             return $token;
@@ -9089,7 +9205,7 @@ namespace Tqdev\PhpCrudApi\Middleware {
             $excludeMethods = $this->getArrayProperty('excludeMethods', 'OPTIONS,GET');
             if (!in_array($method, $excludeMethods)) {
                 $headerName = $this->getProperty('headerName', 'X-XSRF-TOKEN');
-                if ($token != $request->getHeader($headerName)) {
+                if ($token != $request->getHeader($headerName)[0]) {
                     return $this->responder->error(ErrorCode::BAD_OR_MISSING_XSRF_TOKEN, '');
                 }
             }
