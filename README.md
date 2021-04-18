@@ -751,7 +751,7 @@ Valid API keys must be configured using the 'apiKeyAuth.keys' configuration para
 
 The authenticated API key will be stored in the `$_SESSION['apiKey']` variable.
 
-Note that the API key authentication does not require or use sessions (cookies).
+Note that the API key authentication does not require or use session cookies.
 
 #### API key database authentication
 
@@ -762,7 +762,7 @@ Valid API keys are read from the database from the column "api_key" of the "user
 
 The authenticated user will be stored in the `$_SESSION['apiUser']` variable.
 
-Note that the API key database authentication does not require or use sessions (cookies).
+Note that the API key database authentication does not require or use session cookies.
 
 #### Database authentication
 
