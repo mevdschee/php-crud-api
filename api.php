@@ -7287,6 +7287,100 @@ namespace Tqdev\PhpCrudApi\Middleware {
     }
 }
 
+// file: src/Tqdev/PhpCrudApi/Middleware/ApiKeyAuthMiddleware.php
+namespace Tqdev\PhpCrudApi\Middleware {
+
+    use Psr\Http\Message\ResponseInterface;
+    use Psr\Http\Message\ServerRequestInterface;
+    use Psr\Http\Server\RequestHandlerInterface;
+    use Tqdev\PhpCrudApi\Controller\Responder;
+    use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
+    use Tqdev\PhpCrudApi\Record\ErrorCode;
+    use Tqdev\PhpCrudApi\RequestUtils;
+
+    class ApiKeyAuthMiddleware extends Middleware
+    {
+        public function process(ServerRequestInterface $request, RequestHandlerInterface $next): ResponseInterface
+        {
+            $headerName = $this->getProperty('header', 'X-API-Key');
+            $apiKey = RequestUtils::getHeader($request, $headerName);
+            if ($apiKey) {
+                $apiKeys = $this->getArrayProperty('keys', '');
+                if (!in_array($apiKey, $apiKeys)) {
+                    return $this->responder->error(ErrorCode::AUTHENTICATION_FAILED, $apiKey);
+                }
+            } else {
+                $authenticationMode = $this->getProperty('mode', 'required');
+                if ($authenticationMode == 'required') {
+                    return $this->responder->error(ErrorCode::AUTHENTICATION_REQUIRED, '');
+                }
+            }
+            $_SESSION['apiKey'] = $apiKey;
+            return $next->handle($request);
+        }
+    }
+}
+
+// file: src/Tqdev/PhpCrudApi/Middleware/ApiKeyDbAuthMiddleware.php
+namespace Tqdev\PhpCrudApi\Middleware {
+
+    use Psr\Http\Message\ResponseInterface;
+    use Psr\Http\Message\ServerRequestInterface;
+    use Psr\Http\Server\RequestHandlerInterface;
+    use Tqdev\PhpCrudApi\Column\ReflectionService;
+    use Tqdev\PhpCrudApi\Controller\Responder;
+    use Tqdev\PhpCrudApi\Database\GenericDB;
+    use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
+    use Tqdev\PhpCrudApi\Middleware\Router\Router;
+    use Tqdev\PhpCrudApi\Record\Condition\ColumnCondition;
+    use Tqdev\PhpCrudApi\Record\ErrorCode;
+    use Tqdev\PhpCrudApi\Record\OrderingInfo;
+    use Tqdev\PhpCrudApi\RequestUtils;
+
+    class ApiKeyDbAuthMiddleware extends Middleware
+    {
+        private $reflection;
+        private $db;
+        private $ordering;
+
+        public function __construct(Router $router, Responder $responder, array $properties, ReflectionService $reflection, GenericDB $db)
+        {
+            parent::__construct($router, $responder, $properties);
+            $this->reflection = $reflection;
+            $this->db = $db;
+            $this->ordering = new OrderingInfo();
+        }
+
+        public function process(ServerRequestInterface $request, RequestHandlerInterface $next): ResponseInterface
+        {
+            $user = false;
+            $headerName = $this->getProperty('header', 'X-API-Key');
+            $apiKey = RequestUtils::getHeader($request, $headerName);
+            if ($apiKey) {
+                $tableName = $this->getProperty('usersTable', 'users');
+                $table = $this->reflection->getTable($tableName);
+                $apiKeyColumnName = $this->getProperty('apiKeyColumn', 'api_key');
+                $apiKeyColumn = $table->getColumn($apiKeyColumnName);
+                $condition = new ColumnCondition($apiKeyColumn, 'eq', $apiKey);
+                $columnNames = $table->getColumnNames();
+                $columnOrdering = $this->ordering->getDefaultColumnOrdering($table);
+                $users = $this->db->selectAll($table, $columnNames, $condition, $columnOrdering, 0, 1);
+                if (count($users) < 1) {
+                    return $this->responder->error(ErrorCode::AUTHENTICATION_FAILED, $apiKey);
+                }
+                $user = $users[0];
+            } else {
+                $authenticationMode = $this->getProperty('mode', 'required');
+                if ($authenticationMode == 'required') {
+                    return $this->responder->error(ErrorCode::AUTHENTICATION_REQUIRED, '');
+                }
+            }
+            $_SESSION['apiUser'] = $user;
+            return $next->handle($request);
+        }
+    }
+}
+
 // file: src/Tqdev/PhpCrudApi/Middleware/AuthorizationMiddleware.php
 namespace Tqdev\PhpCrudApi\Middleware {
 
@@ -8390,122 +8484,6 @@ namespace Tqdev\PhpCrudApi\Middleware {
                 $request = RequestUtils::setParams($request, $params);
             }
             return $next->handle($request);
-        }
-    }
-}
-
-// file: src/Tqdev/PhpCrudApi/Middleware/QueryQuotaMiddleware.php
-namespace Tqdev\PhpCrudApi\Middleware {
-
-    use Psr\Http\Message\ResponseInterface;
-    use Psr\Http\Message\ServerRequestInterface;
-    use Psr\Http\Server\RequestHandlerInterface;
-    use Tqdev\PhpCrudApi\Controller\Responder;
-    use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
-    use Tqdev\PhpCrudApi\Record\ErrorCode;
-
-    class QueryQuotaMiddleware extends Middleware
-    {
-        private function ipMatch(string $ip, string $cidr): bool
-        {
-            if (strpos($cidr, '/') !== false) {
-                list($subnet, $mask) = explode('/', trim($cidr));
-                if ((ip2long($ip) & ~((1 << (32 - $mask)) - 1)) == ip2long($subnet)) {
-                    return true;
-                }
-            } else {
-                if (ip2long($ip) == ip2long($cidr)) {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        private function isIpAllowed(string $ipAddress, string $allowedIpAddresses): bool
-        {
-            foreach (explode(',', $allowedIpAddresses) as $allowedIp) {
-                if ($this->ipMatch($ipAddress, $allowedIp)) {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        public function process(ServerRequestInterface $request, RequestHandlerInterface $next): ResponseInterface
-        {
-            $reverseProxy = $this->getProperty('reverseProxy', '');
-            if ($reverseProxy) {
-                $ipAddress = array_pop(explode(',', $request->getHeader('X-Forwarded-For')));
-            } elseif (isset($_SERVER['REMOTE_ADDR'])) {
-                $ipAddress = $_SERVER['REMOTE_ADDR'];
-            } else {
-                $ipAddress = '127.0.0.1';
-            }
-            $allowedIpAddresses = $this->getProperty('allowedIpAddresses', '');
-            if (!$this->isIpAllowed($ipAddress, $allowedIpAddresses)) {
-                $response = $this->responder->error(ErrorCode::TEMPORARY_OR_PERMANENTLY_BLOCKED, '');
-            } else {
-                $response = $next->handle($request);
-            }
-            return $response;
-        }
-    }
-}
-
-// file: src/Tqdev/PhpCrudApi/Middleware/RateLimitMiddleware copy.php
-namespace Tqdev\PhpCrudApi\Middleware {
-
-    use Psr\Http\Message\ResponseInterface;
-    use Psr\Http\Message\ServerRequestInterface;
-    use Psr\Http\Server\RequestHandlerInterface;
-    use Tqdev\PhpCrudApi\Controller\Responder;
-    use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
-    use Tqdev\PhpCrudApi\Record\ErrorCode;
-
-    class RateLimitMiddleware extends Middleware
-    {
-        private function ipMatch(string $ip, string $cidr): bool
-        {
-            if (strpos($cidr, '/') !== false) {
-                list($subnet, $mask) = explode('/', trim($cidr));
-                if ((ip2long($ip) & ~((1 << (32 - $mask)) - 1)) == ip2long($subnet)) {
-                    return true;
-                }
-            } else {
-                if (ip2long($ip) == ip2long($cidr)) {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        private function isIpAllowed(string $ipAddress, string $allowedIpAddresses): bool
-        {
-            foreach (explode(',', $allowedIpAddresses) as $allowedIp) {
-                if ($this->ipMatch($ipAddress, $allowedIp)) {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        public function process(ServerRequestInterface $request, RequestHandlerInterface $next): ResponseInterface
-        {
-            $reverseProxy = $this->getProperty('reverseProxy', '');
-            if ($reverseProxy) {
-                $ipAddress = array_pop(explode(',', $request->getHeader('X-Forwarded-For')));
-            } elseif (isset($_SERVER['REMOTE_ADDR'])) {
-                $ipAddress = $_SERVER['REMOTE_ADDR'];
-            } else {
-                $ipAddress = '127.0.0.1';
-            }
-            $allowedIpAddresses = $this->getProperty('allowedIpAddresses', '');
-            if (!$this->isIpAllowed($ipAddress, $allowedIpAddresses)) {
-                $response = $this->responder->error(ErrorCode::TEMPORARY_OR_PERMANENTLY_BLOCKED, '');
-            } else {
-                $response = $next->handle($request);
-            }
-            return $response;
         }
     }
 }
@@ -11216,6 +11194,8 @@ namespace Tqdev\PhpCrudApi {
     use Tqdev\PhpCrudApi\Controller\StatusController;
     use Tqdev\PhpCrudApi\Database\GenericDB;
     use Tqdev\PhpCrudApi\GeoJson\GeoJsonService;
+    use Tqdev\PhpCrudApi\Middleware\ApiKeyAuthMiddleware;
+    use Tqdev\PhpCrudApi\Middleware\ApiKeyDbAuthMiddleware;
     use Tqdev\PhpCrudApi\Middleware\AuthorizationMiddleware;
     use Tqdev\PhpCrudApi\Middleware\BasicAuthMiddleware;
     use Tqdev\PhpCrudApi\Middleware\CorsMiddleware;
@@ -11272,6 +11252,12 @@ namespace Tqdev\PhpCrudApi {
                         break;
                     case 'firewall':
                         new FirewallMiddleware($router, $responder, $properties);
+                        break;
+                    case 'apiKeyAuth':
+                        new ApiKeyAuthMiddleware($router, $responder, $properties);
+                        break;
+                    case 'apiKeyDbAuth':
+                        new ApiKeyDbAuthMiddleware($router, $responder, $properties, $reflection, $db);
                         break;
                     case 'basicAuth':
                         new BasicAuthMiddleware($router, $responder, $properties);
