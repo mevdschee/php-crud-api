@@ -426,6 +426,8 @@ Output:
     }
 ```
 
+The element "results" holds to total number of records in the table, which would be returned if no pagination would be used.
+
 NB: Since pages that are not ordered cannot be paginated, pages will be ordered by primary key.
 
 ### Joins
