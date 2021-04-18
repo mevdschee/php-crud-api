@@ -760,7 +760,7 @@ Valid API keys are read from the database from the column "api_key" of the "user
 
     X-API-Key: 02c042aa-c3c2-4d11-9dae-1a6e230ea95e
 
-The authenticated user will be stored in the `$_SESSION['apiUser']` variable.
+The authenticated user (record) will be stored in the `$_SESSION['apiUser']` variable.
 
 Note that the API key database authentication does not require or use session cookies.
 
