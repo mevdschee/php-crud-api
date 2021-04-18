@@ -18,6 +18,8 @@ use Tqdev\PhpCrudApi\Controller\RecordController;
 use Tqdev\PhpCrudApi\Controller\StatusController;
 use Tqdev\PhpCrudApi\Database\GenericDB;
 use Tqdev\PhpCrudApi\GeoJson\GeoJsonService;
+use Tqdev\PhpCrudApi\Middleware\ApiKeyAuthMiddleware;
+use Tqdev\PhpCrudApi\Middleware\ApiKeyDbAuthMiddleware;
 use Tqdev\PhpCrudApi\Middleware\AuthorizationMiddleware;
 use Tqdev\PhpCrudApi\Middleware\BasicAuthMiddleware;
 use Tqdev\PhpCrudApi\Middleware\CorsMiddleware;
@@ -72,6 +74,12 @@ class Api implements RequestHandlerInterface
                     break;
                 case 'firewall':
                     new FirewallMiddleware($router, $responder, $properties);
+                    break;
+                case 'apiKeyAuth':
+                    new ApiKeyAuthMiddleware($router, $responder, $properties);
+                    break;
+                case 'apiKeyDbAuth':
+                    new ApiKeyDbAuthMiddleware($router, $responder, $properties, $reflection, $db);
                     break;
                 case 'basicAuth':
                     new BasicAuthMiddleware($router, $responder, $properties);

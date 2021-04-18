@@ -624,6 +624,8 @@ You can enable the following middleware using the "middlewares" config parameter
 - "cors": Support for CORS requests (enabled by default)
 - "xsrf": Block XSRF attacks using the 'Double Submit Cookie' method
 - "ajaxOnly": Restrict non-AJAX requests to prevent XSRF attacks
+- "apiKeyAuth": Support for "API Key Authentication"
+- "apiKeyDbAuth": Support for "API Key Database Authentication"
 - "dbAuth": Support for "Database Authentication"
 - "jwtAuth": Support for "JWT Authentication"
 - "basicAuth": Support for "Basic Authentication"
@@ -655,6 +657,13 @@ You can tune the middleware behavior using middleware specific configuration par
 - "ajaxOnly.excludeMethods": The methods that do not require AJAX ("OPTIONS,GET")
 - "ajaxOnly.headerName": The name of the required header ("X-Requested-With")
 - "ajaxOnly.headerValue": The value of the required header ("XMLHttpRequest")
+- "apiKeyAuth.mode": Set to "optional" if you want to allow anonymous access ("required")
+- "apiKeyAuth.header": The name of the API key header ("X-API-Key")
+- "apiKeyAuth.keys": List of API keys that are valid ("")
+- "apiKeyDbAuth.mode": Set to "optional" if you want to allow anonymous access ("required")
+- "apiKeyDbAuth.header": The name of the API key header ("X-API-Key")
+- "apiKeyDbAuth.usersTable": The table that is used to store the users in ("users")
+- "apiKeyDbAuth.apiKeyColumn": The users table column that holds the API key ("api_key")
 - "dbAuth.mode": Set to "optional" if you want to allow anonymous access ("required")
 - "dbAuth.usersTable": The table that is used to store the users in ("users")
 - "dbAuth.usernameColumn": The users table column that holds usernames ("username")
@@ -711,17 +720,42 @@ In the sections below you find more information on the built-in middleware.
 
 ### Authentication
 
-Currently there are three types of authentication supported. They all store the authenticated user in the `$_SESSION` super global.
+Currently there are five types of authentication supported. They all store the authenticated user in the `$_SESSION` super global.
 This variable can be used in the authorization handlers to decide wether or not sombeody should have read or write access to certain tables, columns or records.
 The following overview shows the kinds of authentication middleware that you can enable.
 
-| Name     | Middleware | Authenticated via      | Users are stored in | Session variable        |
-| -------- | ---------- | ---------------------- | ------------------- | ----------------------- |
-| Database | dbAuth     | '/login' endpoint      | database table      | `$_SESSION['user']`     |
-| Basic    | basicAuth  | 'Authorization' header | '.htpasswd' file    | `$_SESSION['username']` |
-| JWT      | jwtAuth    | 'Authorization' header | identity provider   | `$_SESSION['claims']`   |
+| Name       | Middleware   | Authenticated via      | Users are stored in | Session variable        |
+| ---------- | ------------ | ---------------------- | ------------------- | ----------------------- |
+| API key    | apiKeyAuth   | 'X-API-Key' header     | configuration       | `$_SESSION['apiKey']`   |
+| API key DB | apiKeyDbAuth | 'X-API-Key' header     | database table      | `$_SESSION['apiUser']`  |
+| Database   | dbAuth       | '/login' endpoint      | database table      | `$_SESSION['user']`     |
+| Basic      | basicAuth    | 'Authorization' header | '.htpasswd' file    | `$_SESSION['username']` |
+| JWT        | jwtAuth      | 'Authorization' header | identity provider   | `$_SESSION['claims']`   |
 
 Below you find more information on each of the authentication types.
+
+#### API key authentication
+
+API key authentication works by sending an API key in a request header.
+The header name defaults to "X-API-Key" and can be configured using the 'apiKeyAuth.header' configuration parameter.
+Valid API keys must be configured using the 'apiKeyAuth.keys' configuration parameter (comma seperated list).
+
+    X-API-Key: 02c042aa-c3c2-4d11-9dae-1a6e230ea95e
+
+The authenticated API key will be stored in the `$_SESSION['apiKey']` variable.
+
+Note that the API key authentication does not require or use sessions (cookies).
+
+#### API key database authentication
+
+API key database authentication works by sending an API key in a request header "X-API-Key" (the name is configurable).
+Valid API keys are read from the database from the column "api_key" of the "users" table (both names are configurable).
+
+    X-API-Key: 02c042aa-c3c2-4d11-9dae-1a6e230ea95e
+
+The authenticated user will be stored in the `$_SESSION['apiUser']` variable.
+
+Note that the API key database authentication does not require or use sessions (cookies).
 
 #### Database authentication
 
@@ -739,7 +773,7 @@ A user can be logged in by sending it's username and password to the login endpo
 The authenticated user (with all it's properties) will be stored in the `$_SESSION['user']` variable.
 The user can be logged out by sending a POST request with an empty body to the logout endpoint.
 The passwords are stored as hashes in the password column in the users table. You can register a new user
-using the register endpoint, but this functionality must be turned on using the "dbAuth.regsiterUser"
+using the register endpoint, but this functionality must be turned on using the "dbAuth.registerUser"
 configuration parameter.
 
 It is IMPORTANT to restrict access to the users table using the 'authorization' middleware, otherwise all 
@@ -755,7 +789,7 @@ Note that this middleware uses session cookies and stores the logged in state on
 #### Basic authentication
 
 The Basic type supports a file (by default '.htpasswd') that holds the users and their (hashed) passwords separated by a colon (':'). 
-When the passwords are entered in plain text they fill be automatically hashed.
+When the passwords are entered in plain text they will be automatically hashed.
 The authenticated username will be stored in the `$_SESSION['username']` variable.
 You need to send an "Authorization" header containing a base64 url encoded version of your colon separated username and password, after the word "Basic".
 
