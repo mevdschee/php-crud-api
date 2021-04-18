@@ -79,11 +79,12 @@ CREATE TABLE "users" (
   "id" integer NOT NULL PRIMARY KEY AUTOINCREMENT,
   "username" varchar(255) NOT NULL,
   "password" varchar(255) NOT NULL,
+  "api_key" varchar(255) NULL,
   "location" text NULL
 );
 
-INSERT INTO "users" ("id", "username", "password", "location") VALUES (1, 'user1', 'pass1', NULL);
-INSERT INTO "users" ("id", "username", "password", "location") VALUES (2, 'user2', '$2y$10$cg7/nswxVZ0cmVIsMB/pVOh1OfcHScBJGq7Xu4KF9dFEQgRZ8HWe.', NULL);
+INSERT INTO "users" ("id", "username", "password", "api_key", "location") VALUES (1, 'user1', 'pass1', '123456789abc', NULL);
+INSERT INTO "users" ("id", "username", "password", "api_key", "location") VALUES (2, 'user2', '$2y$10$cg7/nswxVZ0cmVIsMB/pVOh1OfcHScBJGq7Xu4KF9dFEQgRZ8HWe.', NULL, NULL);
 
 DROP TABLE IF EXISTS "countries";
 CREATE TABLE "countries" (

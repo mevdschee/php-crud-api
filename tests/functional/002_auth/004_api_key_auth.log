@@ -1,0 +1,17 @@
+===
+GET /records/invisibles/e42c77c6-06a4-4502-816c-d112c7142e6d
+===
+404
+Content-Type: application/json; charset=utf-8
+Content-Length: 54
+
+{"code":1001,"message":"Table 'invisibles' not found"}
+===
+GET /records/invisibles/e42c77c6-06a4-4502-816c-d112c7142e6d
+X-API-Key: 123456789abc
+===
+200
+Content-Type: application/json; charset=utf-8
+Content-Length: 45
+
+{"id":"e42c77c6-06a4-4502-816c-d112c7142e6d"}

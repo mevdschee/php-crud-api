@@ -1,6 +1,6 @@
 skip-for-sqlite: no support for geometry functions (spatialite)
 ===
-GET /geojson/users/1?exclude=password
+GET /geojson/users/1?exclude=password,api_key
 ===
 200
 Content-Type: application/json; charset=utf-8
@@ -8,7 +8,7 @@ Content-Length: 109
 
 {"type":"Feature","id":1,"properties":{"username":"user1"},"geometry":{"type":"Point","coordinates":[30,20]}}
 ===
-GET /geojson/users/2?exclude=password
+GET /geojson/users/2?exclude=password,api_key
 ===
 200
 Content-Type: application/json; charset=utf-8
