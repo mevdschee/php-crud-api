@@ -1,6 +1,6 @@
 skip-for-sqlite: no support for geometry functions (spatialite)
 ===
-GET /geojson/users?exclude=password
+GET /geojson/users?exclude=password,api_key
 ===
 200
 Content-Type: application/json; charset=utf-8
@@ -8,7 +8,7 @@ Content-Length: 227
 
 {"type":"FeatureCollection","features":[{"type":"Feature","id":1,"properties":{"username":"user1"},"geometry":{"type":"Point","coordinates":[30,20]}},{"type":"Feature","id":2,"properties":{"username":"user2"},"geometry":null}]}
 ===
-GET /geojson/users?exclude=password&geometry=location
+GET /geojson/users?exclude=password,api_key&geometry=location
 ===
 200
 Content-Type: application/json; charset=utf-8
@@ -16,7 +16,7 @@ Content-Length: 227
 
 {"type":"FeatureCollection","features":[{"type":"Feature","id":1,"properties":{"username":"user1"},"geometry":{"type":"Point","coordinates":[30,20]}},{"type":"Feature","id":2,"properties":{"username":"user2"},"geometry":null}]}
 ===
-GET /geojson/users?exclude=password&geometry=notlocation
+GET /geojson/users?exclude=password,api_key&geometry=notlocation
 ===
 200
 Content-Type: application/json; charset=utf-8
@@ -24,7 +24,7 @@ Content-Length: 235
 
 {"type":"FeatureCollection","features":[{"type":"Feature","id":1,"properties":{"username":"user1","location":"POINT(30 20)"},"geometry":null},{"type":"Feature","id":2,"properties":{"username":"user2","location":null},"geometry":null}]}
 ===
-GET /geojson/users?exclude=password&page=1,1
+GET /geojson/users?exclude=password,api_key&page=1,1
 ===
 200
 Content-Type: application/json; charset=utf-8
@@ -32,7 +32,7 @@ Content-Length: 163
 
 {"type":"FeatureCollection","features":[{"type":"Feature","id":1,"properties":{"username":"user1"},"geometry":{"type":"Point","coordinates":[30,20]}}],"results":2}
 ===
-GET /geojson/users?exclude=password&bbox=29.99,19.99,30.01,20.01
+GET /geojson/users?exclude=password,api_key&bbox=29.99,19.99,30.01,20.01
 ===
 200
 Content-Type: application/json; charset=utf-8

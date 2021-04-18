@@ -35,25 +35,25 @@ GET /records/posts/1?join=users&format=xml
 ===
 200
 Content-Type: text/xml; charset=utf-8
-Content-Length: 200
+Content-Length: 231
 
-<root><id>1</id><user_id><id>1</id><username>user1</username><password>testtest2</password><location>POINT(30 20)</location></user_id><category_id>1</category_id><content>blog started</content></root>
+<root><id>1</id><user_id><id>1</id><username>user1</username><password>testtest2</password><api_key>123456789abc</api_key><location>POINT(30 20)</location></user_id><category_id>1</category_id><content>blog started</content></root>
 ===
 GET /records/posts/1?join=users&join=comments,categories
 ===
 200
 Content-Type: application/json; charset=utf-8
-Content-Length: 335
+Content-Length: 360
 
-{"id":1,"user_id":{"id":1,"username":"user1","password":"testtest2","location":"POINT(30 20)"},"category_id":1,"content":"blog started","comments":[{"id":1,"post_id":1,"message":"great","category_id":{"id":3,"name":"comment","icon":null}},{"id":2,"post_id":1,"message":"fantastic","category_id":{"id":3,"name":"comment","icon":null}}]}
+{"id":1,"user_id":{"id":1,"username":"user1","password":"testtest2","api_key":"123456789abc","location":"POINT(30 20)"},"category_id":1,"content":"blog started","comments":[{"id":1,"post_id":1,"message":"great","category_id":{"id":3,"name":"comment","icon":null}},{"id":2,"post_id":1,"message":"fantastic","category_id":{"id":3,"name":"comment","icon":null}}]}
 ===
 GET /records/posts/1?join=users&join=comments,categories&format=xml
 ===
 200
 Content-Type: text/xml; charset=utf-8
-Content-Length: 536
+Content-Length: 567
 
-<root><id>1</id><user_id><id>1</id><username>user1</username><password>testtest2</password><location>POINT(30 20)</location></user_id><category_id>1</category_id><content>blog started</content><comments type="array"><item><id>1</id><post_id>1</post_id><message>great</message><category_id><id>3</id><name>comment</name><icon type="null"></icon></category_id></item><item><id>2</id><post_id>1</post_id><message>fantastic</message><category_id><id>3</id><name>comment</name><icon type="null"></icon></category_id></item></comments></root>
+<root><id>1</id><user_id><id>1</id><username>user1</username><password>testtest2</password><api_key>123456789abc</api_key><location>POINT(30 20)</location></user_id><category_id>1</category_id><content>blog started</content><comments type="array"><item><id>1</id><post_id>1</post_id><message>great</message><category_id><id>3</id><name>comment</name><icon type="null"></icon></category_id></item><item><id>2</id><post_id>1</post_id><message>fantastic</message><category_id><id>3</id><name>comment</name><icon type="null"></icon></category_id></item></comments></root>
 ===
 GET /records/posts?page=2,1
 ===

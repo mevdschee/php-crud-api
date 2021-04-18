@@ -88,13 +88,14 @@ CREATE TABLE `users` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `username` varchar(255) NOT NULL,
   `password` varchar(255) NOT NULL,
+  `api_key` varchar(255) NULL,
   `location` point,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-INSERT INTO `users` (`username`, `password`, `location`) VALUES
-('user1',	'pass1', NULL),
-('user2',	'$2y$10$cg7/nswxVZ0cmVIsMB/pVOh1OfcHScBJGq7Xu4KF9dFEQgRZ8HWe.', NULL);
+INSERT INTO `users` (`username`, `password`, `api_key`, `location`) VALUES
+('user1',	'pass1', '123456789abc', NULL),
+('user2',	'$2y$10$cg7/nswxVZ0cmVIsMB/pVOh1OfcHScBJGq7Xu4KF9dFEQgRZ8HWe.', NULL, NULL);
 
 DROP TABLE IF EXISTS `countries`;
 CREATE TABLE `countries` (

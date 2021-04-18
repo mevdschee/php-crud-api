@@ -3,6 +3,6 @@ GET /records/posts?join=users&filter=id,eq,1
 ===
 200
 Content-Type: application/json; charset=utf-8
-Content-Length: 136
+Content-Length: 161
 
-{"records":[{"id":1,"user_id":{"id":1,"username":"user1","password":"pass1","location":null},"category_id":1,"content":"blog started"}]}
+{"records":[{"id":1,"user_id":{"id":1,"username":"user1","password":"pass1","api_key":"123456789abc","location":null},"category_id":1,"content":"blog started"}]}

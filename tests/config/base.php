@@ -4,7 +4,11 @@ $settings = [
     'username' => 'incorrect_username',
     'password' => 'incorrect_password',
     'controllers' => 'records,columns,cache,openapi,geojson,status',
-    'middlewares' => 'sslRedirect,xml,cors,reconnect,dbAuth,jwtAuth,basicAuth,authorization,sanitation,validation,ipAddress,multiTenancy,pageLimits,joinLimits,customization',
+    'middlewares' => 'sslRedirect,xml,cors,reconnect,apiKeyAuth,apiKeyDbAuth,dbAuth,jwtAuth,basicAuth,authorization,sanitation,validation,ipAddress,multiTenancy,pageLimits,joinLimits,customization',
+    'apiKeyAuth.mode' => 'optional',
+    'apiKeyAuth.keys' => '123456789abc',
+    'apiKeyDbAuth.mode' => 'optional',
+    'apiKeyDbAuth.header' => 'X-API-Key-DB',
     'dbAuth.mode' => 'optional',
     'dbAuth.returnedColumns' => 'id,username,password',
     'dbAuth.registerUser' => '1',
@@ -24,7 +28,7 @@ $settings = [
         return 'php-crud-api';
     },
     'authorization.tableHandler' => function ($operation, $tableName) {
-        return !($tableName == 'invisibles' && !isset($_SESSION['claims']['name']) && empty($_SESSION['username']) && empty($_SESSION['user']));
+        return !($tableName == 'invisibles' && !isset($_SESSION['claims']['name']) && empty($_SESSION['username']) && empty($_SESSION['user']) && empty($_SESSION['apiKey']) && empty($_SESSION['apiUser']));
     },
     'authorization.columnHandler' => function ($operation, $tableName, $columnName) {
         return !($columnName == 'invisible');

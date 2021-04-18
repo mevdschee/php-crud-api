@@ -99,6 +99,7 @@ CREATE TABLE users (
     id serial NOT NULL,
     username character varying(255) NOT NULL,
     password character varying(255) NOT NULL,
+    api_key character varying(255) NULL,
     location geometry
 );
 
@@ -231,9 +232,9 @@ INSERT INTO "tags" ("name", "is_important") VALUES
 -- Data for Name: users; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-INSERT INTO "users" ("username", "password", "location") VALUES
-('user1',	'pass1',	NULL),
-('user2',	'$2y$10$cg7/nswxVZ0cmVIsMB/pVOh1OfcHScBJGq7Xu4KF9dFEQgRZ8HWe.',	NULL);
+INSERT INTO "users" ("username", "password", "api_key", "location") VALUES
+('user1',	'pass1',	'123456789abc',	NULL),
+('user2',	'$2y$10$cg7/nswxVZ0cmVIsMB/pVOh1OfcHScBJGq7Xu4KF9dFEQgRZ8HWe.',	NULL,	NULL);
 
 --
 -- Data for Name: countries; Type: TABLE DATA; Schema: public; Owner: postgres

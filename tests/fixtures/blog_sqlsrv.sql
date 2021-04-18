@@ -212,6 +212,7 @@ CREATE TABLE [users](
 	[id] [int] NOT NULL CONSTRAINT [users_id_def] DEFAULT NEXT VALUE FOR [users_id_seq],
 	[username] [nvarchar](255) NOT NULL,
 	[password] [nvarchar](255) NOT NULL,
+	[api_key] [nvarchar](255) NULL,
 	[location] [geometry],
 	CONSTRAINT [users_pkey] PRIMARY KEY CLUSTERED([id] ASC)
 )
@@ -336,9 +337,9 @@ GO
 INSERT [tags] ([name], [is_important]) VALUES (N'important', 1)
 GO
 
-INSERT [users] ([username], [password], [location]) VALUES (N'user1', N'pass1', NULL)
+INSERT [users] ([username], [password], [api_key], [location]) VALUES (N'user1', N'pass1', N'123456789abc', NULL)
 GO
-INSERT [users] ([username], [password], [location]) VALUES (N'user2', N'$2y$10$cg7/nswxVZ0cmVIsMB/pVOh1OfcHScBJGq7Xu4KF9dFEQgRZ8HWe.', NULL)
+INSERT [users] ([username], [password], [api_key], [location]) VALUES (N'user2', N'$2y$10$cg7/nswxVZ0cmVIsMB/pVOh1OfcHScBJGq7Xu4KF9dFEQgRZ8HWe.', NULL, NULL)
 GO
 
 INSERT [countries] ([name], [shape]) VALUES (N'Left', N'POLYGON ((30 10, 40 40, 20 40, 10 20, 30 10))')
