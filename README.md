@@ -131,7 +131,7 @@ The following features are supported:
   - Binary fields supported with base64 encoding
   - Spatial/GIS fields and filters supported with WKT and GeoJSON
   - Generate API documentation using OpenAPI tools
-  - Authentication via JWT token or username/password
+  - Authentication via API key, JWT token or username/password
   - Database connection parameters may depend on authentication
   - Support for reading database structure in JSON
   - Support for modifying database structure using REST endpoint
