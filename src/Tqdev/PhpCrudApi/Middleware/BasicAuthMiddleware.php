@@ -63,8 +63,9 @@ class BasicAuthMiddleware extends Middleware
 
     private function getAuthorizationCredentials(ServerRequestInterface $request): string
     {
-        if (isset($_SERVER['PHP_AUTH_USER'])) {
-            return $_SERVER['PHP_AUTH_USER'] . ':' . $_SERVER['PHP_AUTH_PW'];
+        $serverParams = $request->getServerParams();
+        if (isset($serverParams['PHP_AUTH_USER'])) {
+            return $serverParams['PHP_AUTH_USER'] . ':' . $serverParams['PHP_AUTH_PW'];
         }
         $header = RequestUtils::getHeader($request, 'Authorization');
         $parts = explode(' ', trim($header), 2);
