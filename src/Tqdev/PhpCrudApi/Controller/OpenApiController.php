@@ -21,6 +21,6 @@ class OpenApiController
 
     public function openapi(ServerRequestInterface $request): ResponseInterface
     {
-        return $this->responder->success($this->openApi->get());
+        return $this->responder->success($this->openApi->get($request));
     }
 }

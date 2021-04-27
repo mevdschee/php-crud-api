@@ -2,6 +2,7 @@
 
 namespace Tqdev\PhpCrudApi\OpenApi;
 
+use Psr\Http\Message\ServerRequestInterface;
 use Tqdev\PhpCrudApi\Column\ReflectionService;
 use Tqdev\PhpCrudApi\OpenApi\OpenApiBuilder;
 
@@ -14,8 +15,8 @@ class OpenApiService
         $this->builder = new OpenApiBuilder($reflection, $base, $controllers, $customBuilders);
     }
 
-    public function get(): OpenApiDefinition
+    public function get(ServerRequestInterface $request): OpenApiDefinition
     {
-        return $this->builder->build();
+        return $this->builder->build($request);
     }
 }
