@@ -9230,7 +9230,7 @@ namespace Tqdev\PhpCrudApi\OpenApi {
         public function build(ServerRequestInterface $request): OpenApiDefinition
         {
             $this->openapi->set("openapi", "3.0.0");
-            if (!$this->openapi->has("servers") && isset($_SERVER['REQUEST_URI'])) {
+            if (!$this->openapi->has("servers")) {
                 $this->openapi->set("servers|0|url", $this->getServerUrl($request));
             }
             if ($this->records) {
