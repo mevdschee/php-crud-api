@@ -7935,12 +7935,11 @@ namespace Tqdev\PhpCrudApi\Middleware {
         public function process(ServerRequestInterface $request, RequestHandlerInterface $next): ResponseInterface
         {
             $reverseProxy = $this->getProperty('reverseProxy', '');
+            $serverParams = $request->getServerParams();
             if ($reverseProxy) {
-                $ipAddress = array_pop(explode(',', $request->getHeader('X-Forwarded-For')));
-            } elseif (isset($_SERVER['REMOTE_ADDR'])) {
-                $ipAddress = $_SERVER['REMOTE_ADDR'];
+                $ipAddress = array_pop($request->getHeader('X-Forwarded-For'));
             } else {
-                $ipAddress = '127.0.0.1';
+                $ipAddress = $serverParams['REMOTE_ADDR'] ?? '127.0.0.1';
             }
             $allowedIpAddresses = $this->getProperty('allowedIpAddresses', '');
             if (!$this->isIpAllowed($ipAddress, $allowedIpAddresses)) {
