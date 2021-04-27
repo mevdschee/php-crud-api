@@ -38,19 +38,19 @@ class FirewallMiddleware extends Middleware
 
     private function getIpAddress(ServerRequestInterface $request): string
     {
-        $serverParams = $request->getServerParams();
-        return $serverParams['REMOTE_ADDR'] ?? '127.0.0.1';
+        $reverseProxy = $this->getProperty('reverseProxy', '');
+        if ($reverseProxy) {
+            $ipAddress = array_pop($request->getHeader('X-Forwarded-For'));
+        } else {
+            $serverParams = $request->getServerParams();
+            $ipAddress = $serverParams['REMOTE_ADDR'] ?? '127.0.0.1';
+        }
+        return $ipAddress;
     }
 
     public function process(ServerRequestInterface $request, RequestHandlerInterface $next): ResponseInterface
     {
-        $reverseProxy = $this->getProperty('reverseProxy', '');
-        $serverParams = $request->getServerParams();
-        if ($reverseProxy) {
-            $ipAddress = array_pop($request->getHeader('X-Forwarded-For'));
-        } else {
-            $ipAddress = $this->getIpAddress($request);
-        }
+        $ipAddress = $this->getIpAddress($request);
         $allowedIpAddresses = $this->getProperty('allowedIpAddresses', '');
         if (!$this->isIpAllowed($ipAddress, $allowedIpAddresses)) {
             $response = $this->responder->error(ErrorCode::TEMPORARY_OR_PERMANENTLY_BLOCKED, '');
