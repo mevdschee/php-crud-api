@@ -7981,7 +7981,7 @@ namespace Tqdev\PhpCrudApi\Middleware {
             $this->reflection = $reflection;
         }
 
-        private function callHandler($record, string $operation, ReflectedTable $table) /*: object */
+        private function callHandler(ServerRequestInterface $request, $record, string $operation, ReflectedTable $table) /*: object */
         {
             $context = (array) $record;
             $columnNames = $this->getProperty('columns', '');
@@ -7989,7 +7989,7 @@ namespace Tqdev\PhpCrudApi\Middleware {
                 foreach (explode(',', $columnNames) as $columnName) {
                     if ($table->hasColumn($columnName)) {
                         if ($operation == 'create') {
-                            $context[$columnName] = $_SERVER['REMOTE_ADDR'];
+                            $context[$columnName] = $this->getIpAddress($request);
                         } else {
                             unset($context[$columnName]);
                         }
@@ -7997,6 +7997,18 @@ namespace Tqdev\PhpCrudApi\Middleware {
                 }
             }
             return (object) $context;
+        }
+
+        private function getIpAddress(ServerRequestInterface $request): string
+        {
+            $reverseProxy = $this->getProperty('reverseProxy', '');
+            if ($reverseProxy) {
+                $ipAddress = array_pop($request->getHeader('X-Forwarded-For'));
+            } else {
+                $serverParams = $request->getServerParams();
+                $ipAddress = $serverParams['REMOTE_ADDR'] ?? '127.0.0.1';
+            }
+            return $ipAddress;
         }
 
         public function process(ServerRequestInterface $request, RequestHandlerInterface $next): ResponseInterface
@@ -8012,10 +8024,10 @@ namespace Tqdev\PhpCrudApi\Middleware {
                             $table = $this->reflection->getTable($tableName);
                             if (is_array($record)) {
                                 foreach ($record as &$r) {
-                                    $r = $this->callHandler($r, $operation, $table);
+                                    $r = $this->callHandler($request, $r, $operation, $table);
                                 }
                             } else {
-                                $record = $this->callHandler($record, $operation, $table);
+                                $record = $this->callHandler($request, $record, $operation, $table);
                             }
                             $request = $request->withParsedBody($record);
                         }
