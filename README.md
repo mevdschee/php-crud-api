@@ -766,7 +766,7 @@ Note that the API key database authentication does not require or use session co
 
 #### Database authentication
 
-The database authentication middleware defines three new routes:
+The database authentication middleware defines five new routes:
 
     method path       - parameters                      - description
     ---------------------------------------------------------------------------------------------------
