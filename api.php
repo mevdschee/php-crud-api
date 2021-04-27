@@ -9161,13 +9161,14 @@ namespace Tqdev\PhpCrudApi\Middleware {
 
     class XsrfMiddleware extends Middleware
     {
-        private function getToken(): string
+        private function getToken(ServerRequestInterface $request): string
         {
             $cookieName = $this->getProperty('cookieName', 'XSRF-TOKEN');
-            if (isset($_COOKIE[$cookieName])) {
-                $token = $_COOKIE[$cookieName];
+            $cookieParams = $request->getCookieParams();
+            if (isset($cookieParams[$cookieName])) {
+                $token = $cookieParams[$cookieName];
             } else {
-                $secure = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == 'on';
+                $secure = $request->getUri()->getScheme() == 'https';
                 $token = bin2hex(random_bytes(8));
                 if (!headers_sent()) {
                     setcookie($cookieName, $token, 0, '/', '', $secure);
@@ -9178,7 +9179,7 @@ namespace Tqdev\PhpCrudApi\Middleware {
 
         public function process(ServerRequestInterface $request, RequestHandlerInterface $next): ResponseInterface
         {
-            $token = $this->getToken();
+            $token = $this->getToken($request);
             $method = $request->getMethod();
             $excludeMethods = $this->getArrayProperty('excludeMethods', 'OPTIONS,GET');
             if (!in_array($method, $excludeMethods)) {
