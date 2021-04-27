@@ -36,6 +36,12 @@ class FirewallMiddleware extends Middleware
         return false;
     }
 
+    private function getIpAddress(ServerRequestInterface $request): string
+    {
+        $serverParams = $request->getServerParams();
+        return $serverParams['REMOTE_ADDR'] ?? '127.0.0.1';
+    }
+
     public function process(ServerRequestInterface $request, RequestHandlerInterface $next): ResponseInterface
     {
         $reverseProxy = $this->getProperty('reverseProxy', '');
@@ -43,7 +49,7 @@ class FirewallMiddleware extends Middleware
         if ($reverseProxy) {
             $ipAddress = array_pop($request->getHeader('X-Forwarded-For'));
         } else {
-            $ipAddress = $serverParams['REMOTE_ADDR'] ?? '127.0.0.1';
+            $ipAddress = $this->getIpAddress($request);
         }
         $allowedIpAddresses = $this->getProperty('allowedIpAddresses', '');
         if (!$this->isIpAllowed($ipAddress, $allowedIpAddresses)) {

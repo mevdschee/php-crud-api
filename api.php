@@ -7932,6 +7932,12 @@ namespace Tqdev\PhpCrudApi\Middleware {
             return false;
         }
 
+        private function getIpAddress(ServerRequestInterface $request): string
+        {
+            $serverParams = $request->getServerParams();
+            return $serverParams['REMOTE_ADDR'] ?? '127.0.0.1';
+        }
+
         public function process(ServerRequestInterface $request, RequestHandlerInterface $next): ResponseInterface
         {
             $reverseProxy = $this->getProperty('reverseProxy', '');
@@ -7939,7 +7945,7 @@ namespace Tqdev\PhpCrudApi\Middleware {
             if ($reverseProxy) {
                 $ipAddress = array_pop($request->getHeader('X-Forwarded-For'));
             } else {
-                $ipAddress = $serverParams['REMOTE_ADDR'] ?? '127.0.0.1';
+                $ipAddress = $this->getIpAddress($request);
             }
             $allowedIpAddresses = $this->getProperty('allowedIpAddresses', '');
             if (!$this->isIpAllowed($ipAddress, $allowedIpAddresses)) {
@@ -7958,8 +7964,8 @@ namespace Tqdev\PhpCrudApi\Middleware {
     use Psr\Http\Message\ResponseInterface;
     use Psr\Http\Message\ServerRequestInterface;
     use Psr\Http\Server\RequestHandlerInterface;
-    use Tqdev\PhpCrudApi\Column\Reflection\ReflectedTable;
     use Tqdev\PhpCrudApi\Column\ReflectionService;
+    use Tqdev\PhpCrudApi\Column\Reflection\ReflectedTable;
     use Tqdev\PhpCrudApi\Controller\Responder;
     use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
     use Tqdev\PhpCrudApi\Middleware\Router\Router;
