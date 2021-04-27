@@ -84,7 +84,6 @@ function runTest(Config $config, string $file, string $category): array
             $in = $parts[$i];
             $exp = $parts[$i + 1];
             $api = new Api($config);
-            $_SERVER['REMOTE_ADDR'] = 'TEST_IP';
             $out = ResponseUtils::toString($api->handle(RequestFactory::fromString($in)));
             if ($recording) {
                 $parts[$i + 1] = $out;
@@ -132,7 +131,6 @@ function getPassword(Config $config)
     }
     return $config->getMiddlewares()['reconnect']['passwordHandler']();
 }
-
 
 function loadFixture(string $dir, Config $config)
 {
