@@ -11365,7 +11365,7 @@ namespace Tqdev\PhpCrudApi {
 
         private function parseBody(string $body) /*: ?object*/
         {
-            $first = substr($body, 0, 1);
+            $first = substr(ltrim($body), 0, 1);
             if ($first == '[' || $first == '{') {
                 $object = json_decode($body);
                 $causeCode = json_last_error();
