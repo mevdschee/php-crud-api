@@ -69,10 +69,15 @@ class JwtAuthMiddleware extends Middleware
         foreach ($requirements as $field => $values) {
             if (!empty($values)) {
                 if ($field != 'alg') {
-                    if (!isset($claims[$field]) ) {
-                        if ( is_string( $claims[$field] ) && !in_array($claims[$field], $values) ) {
+                    if (!isset($claims[$field])) {
+                        return array();
+                    }
+                    if (is_array($claims[$field])) {
+                        if (!array_intersect($claims[$field], $values)) {
                             return array();
-                        } else if ( is_array( $claims[$field] ) && !in_array($claims[$field][0], $values) && !in_array($claims[$field][1], $values) ) {
+                        }
+                    } else {
+                        if (!in_array($claims[$field], $values)) {
                             return array();
                         }
                     }
