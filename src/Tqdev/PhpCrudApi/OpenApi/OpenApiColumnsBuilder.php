@@ -74,7 +74,6 @@ class OpenApiColumnsBuilder
                 }
                 $this->openapi->set("paths|$path|$method|tags|0", "$type");
                 $this->openapi->set("paths|$path|$method|operationId", "$operation" . "_" . "$type");
-                //die(var_dump([$operation,$type]));
                 if ("$operation-$type" == 'update-table') {
                     $this->openapi->set("paths|$path|$method|description", "rename table");
                 } else {
