@@ -12005,7 +12005,6 @@ namespace Tqdev\PhpCrudApi {
         'password' => 'php-crud-api',
         'database' => 'php-crud-api',
         // 'debug' => false
-        'controllers' => 'records,status,columns,openapi'
     ]);
     $request = RequestFactory::fromGlobals();
     $api = new Api($config);
