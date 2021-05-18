@@ -74,7 +74,8 @@ class OpenApiColumnsBuilder
                 }
                 $this->openapi->set("paths|$path|$method|tags|0", "$type");
                 $this->openapi->set("paths|$path|$method|operationId", "$operation" . "_" . "$type");
-                if ($operation - $type == 'updateTable') {
+                //die(var_dump([$operation,$type]));
+                if ("$operation-$type" == 'update-table') {
                     $this->openapi->set("paths|$path|$method|description", "rename table");
                 } else {
                     $this->openapi->set("paths|$path|$method|description", "$operation $type");
@@ -105,7 +106,7 @@ class OpenApiColumnsBuilder
                 switch ($type) {
                     case 'database':
                         $this->openapi->set("$prefix|properties|tables|type", 'array');
-                        $this->openapi->set("$prefix|properties|tables|items|\$ref", "#/components/schemas/readTable");
+                        $this->openapi->set("$prefix|properties|tables|items|\$ref", "#/components/schemas/read-table");
                         break;
                     case 'table':
                         if ($operation == 'update') {
@@ -117,7 +118,7 @@ class OpenApiColumnsBuilder
                                 $this->openapi->set("$prefix|properties|type|type", 'string');
                             }
                             $this->openapi->set("$prefix|properties|columns|type", 'array');
-                            $this->openapi->set("$prefix|properties|columns|items|\$ref", "#/components/schemas/readColumn");
+                            $this->openapi->set("$prefix|properties|columns|items|\$ref", "#/components/schemas/read-column");
                         }
                         break;
                     case 'column':
