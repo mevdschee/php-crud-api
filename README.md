@@ -80,7 +80,7 @@ These are all the configuration options and their default value between brackets
 - "tables": Comma separated list of tables to publish (defaults to 'all')
 - "middlewares": List of middlewares to load (`cors`)
 - "controllers": List of controllers to load (`records,geojson,openapi,status`)
-- "customControllers": List of user custom controllers to load (`FooControoler,BarControoler`)
+- "customControllers": List of user custom controllers to load (no default)
 - "openApiBase": OpenAPI info (`{"info":{"title":"PHP-CRUD-API","version":"1.0.0"}}`)
 - "cacheType": `TempFile`, `Redis`, `Memcache`, `Memcached` or `NoCache` (`TempFile`)
 - "cachePath": Path/address of the cache (defaults to system's temp directory)
