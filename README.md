@@ -1506,10 +1506,12 @@ Test the script (running in the container) by opening the following URL:
 
 Enjoy!
 
-## Custom Endpoint with Controller
+## Custom Endpoints with Controller
 
-You can add your own custom REST API endpoints by writing your own custom controller class. The class must provider a constructor that accepts three parameters. These parameters will allow you to add
-custom endpoints to the Router and implements your own logic.
+You can add your own custom REST API endpoints by writing your own custom controller class. The class must provide a constructor that accepts three parameters. These parameters will allow you to register
+custom endpoints to the existing router and with a callback that implements your own logic.
+
+Here is an example of custom controller class:
 
 ```
 class MyHelloController {
@@ -1525,7 +1527,7 @@ class MyHelloController {
 }
 ```
 
-And then you may register your custom controller in the config object like this:
+And then you may register your custom controller class in the config object like this:
 
 ```
 $config = new Config([
@@ -1534,4 +1536,4 @@ $config = new Config([
 ]);
 ```
 
-The `customControllers` supports comma separated list of custom controllers.
+The `customControllers` config supports a comma separated list of custom controllers classes.
