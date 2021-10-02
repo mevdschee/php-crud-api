@@ -80,6 +80,7 @@ These are all the configuration options and their default value between brackets
 - "tables": Comma separated list of tables to publish (defaults to 'all')
 - "middlewares": List of middlewares to load (`cors`)
 - "controllers": List of controllers to load (`records,geojson,openapi,status`)
+- "customControllers": List of user custom controllers to load (`FooControoler,BarControoler`)
 - "openApiBase": OpenAPI info (`{"info":{"title":"PHP-CRUD-API","version":"1.0.0"}}`)
 - "cacheType": `TempFile`, `Redis`, `Memcache`, `Memcached` or `NoCache` (`TempFile`)
 - "cachePath": Path/address of the cache (defaults to system's temp directory)
@@ -1504,3 +1505,33 @@ Test the script (running in the container) by opening the following URL:
     http://localhost:8080/records/posts/1
 
 Enjoy!
+
+## Custom Endpoint with Controller
+
+You can add your own custom REST API endpoints by writing your own custom controller class. The class must provider a constructor that accepts three parameters. These parameters will allow you to add
+custom endpoints to the Router and implements your own logic.
+
+```
+class MyHelloController {
+    public function __construct(Router $router, Responder $responder, RecordService $service)
+    {
+        $router->register('GET', '/hello', array($this, '_getHello'));
+    }
+
+    function _getHello(ServerRequestInterface $request): ResponseInterface
+    {
+        return $this->responder->success(['message' => "Hello World!"]);
+    }
+}
+```
+
+And then you may register your custom controller in the config object like this:
+
+```
+$config = new Config([
+    'customControllers' => 'MyHelloController',
+    ...
+]);
+```
+
+The `customControllers` supports comma separated list of custom controllers.
