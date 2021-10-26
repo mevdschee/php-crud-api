@@ -11431,8 +11431,7 @@ namespace Tqdev\PhpCrudApi {
             }
             foreach ($config->getCustomControllers() as $className) {
                 if (class_exists($className)) {
-                    $records = new RecordService($db, $reflection);
-                    new $className($router, $responder, $records);
+                    new $className($router, $responder, $db, $reflection, $cache);
                 }
             }
             $this->router = $router;

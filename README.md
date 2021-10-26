@@ -1316,6 +1316,43 @@ And this should return status 200 and as data:
 
 These can be used to measure the time (in microseconds) to connect and read data from the database and the cache.
 
+## Custom Endpoints with Controller
+
+You can add your own custom REST API endpoints by writing your own custom controller class. 
+The class must provide a constructor that accepts three parameters. These parameters will allow you to register
+custom endpoints to the existing router and with a callback that implements your own logic.
+
+Here is an example of a custom controller class:
+
+```
+class MyHelloController {
+
+    private $responder;
+
+    public function __construct(Router $router, Responder $responder, GenericDB $db, ReflectionService $reflection, Cache $cache)
+    {
+        $router->register('GET', '/hello', array($this, 'getHello'));
+        $this->responder = $responder;
+    }
+
+    public function getHello(ServerRequestInterface $request): ResponseInterface
+    {
+        return $this->responder->success(['message' => "Hello World!"]);
+    }
+}
+```
+
+And then you may register your custom controller class in the config object like this:
+
+```
+$config = new Config([
+    'customControllers' => 'MyHelloController',
+    ...
+]);
+```
+
+The `customControllers` config supports a comma separated list of custom controllers classes.
+
 ## Tests
 
 I am testing mainly on Ubuntu and I have the following test setups:
@@ -1505,35 +1542,3 @@ Test the script (running in the container) by opening the following URL:
     http://localhost:8080/records/posts/1
 
 Enjoy!
-
-## Custom Endpoints with Controller
-
-You can add your own custom REST API endpoints by writing your own custom controller class. The class must provide a constructor that accepts three parameters. These parameters will allow you to register
-custom endpoints to the existing router and with a callback that implements your own logic.
-
-Here is an example of custom controller class:
-
-```
-class MyHelloController {
-    public function __construct(Router $router, Responder $responder, RecordService $service)
-    {
-        $router->register('GET', '/hello', array($this, '_getHello'));
-    }
-
-    function _getHello(ServerRequestInterface $request): ResponseInterface
-    {
-        return $this->responder->success(['message' => "Hello World!"]);
-    }
-}
-```
-
-And then you may register your custom controller class in the config object like this:
-
-```
-$config = new Config([
-    'customControllers' => 'MyHelloController',
-    ...
-]);
-```
-
-The `customControllers` config supports a comma separated list of custom controllers classes.

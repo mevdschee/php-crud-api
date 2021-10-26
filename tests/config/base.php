@@ -1,4 +1,7 @@
 <?php
+
+include_once 'controller.php';
+
 $settings = [
     'database' => 'incorrect_database',
     'username' => 'incorrect_username',
@@ -64,5 +67,6 @@ $settings = [
     'json.controllers' => 'records',
     'json.tables' => 'products',
     'json.columns' => 'properties',
+    'customControllers' => 'MyHelloController',
     'debug' => false,
 ];

@@ -1,0 +1,8 @@
+===
+GET /hello
+===
+200
+Content-Type: application/json; charset=utf-8
+Content-Length: 26
+
+{"message":"Hello World!"}
