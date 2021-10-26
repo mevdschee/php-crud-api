@@ -1316,10 +1316,10 @@ And this should return status 200 and as data:
 
 These can be used to measure the time (in microseconds) to connect and read data from the database and the cache.
 
-## Custom Endpoints with Controller
+## Custom controller
 
 You can add your own custom REST API endpoints by writing your own custom controller class. 
-The class must provide a constructor that accepts three parameters. These parameters will allow you to register
+The class must provide a constructor that accepts five parameters. These parameters will allow you to register
 custom endpoints to the existing router and with a callback that implements your own logic.
 
 Here is an example of a custom controller class:
@@ -1346,6 +1346,7 @@ And then you may register your custom controller class in the config object like
 
 ```
 $config = new Config([
+    ...
     'customControllers' => 'MyHelloController',
     ...
 ]);
