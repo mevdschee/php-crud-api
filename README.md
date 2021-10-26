@@ -1352,7 +1352,7 @@ $config = new Config([
 ]);
 ```
 
-The `customControllers` config supports a comma separated list of custom controllers classes.
+The `customControllers` config supports a comma separated list of custom controller classes.
 
 ## Tests
 
