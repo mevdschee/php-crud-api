@@ -1325,6 +1325,14 @@ custom endpoints to the existing router and with a callback that implements your
 Here is an example of a custom controller class:
 
 ```
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use Tqdev\PhpCrudApi\Cache\Cache;
+use Tqdev\PhpCrudApi\Column\ReflectionService;
+use Tqdev\PhpCrudApi\Controller\Responder;
+use Tqdev\PhpCrudApi\Database\GenericDB;
+use Tqdev\PhpCrudApi\Middleware\Router\Router;
+
 class MyHelloController {
 
     private $responder;
