@@ -1319,8 +1319,9 @@ These can be used to measure the time (in microseconds) to connect and read data
 ## Custom controller
 
 You can add your own custom REST API endpoints by writing your own custom controller class. 
-The class must provide a constructor that accepts five parameters. These parameters will allow you to register
-custom endpoints to the existing router and with a callback that implements your own logic.
+The class must provide a constructor that accepts five parameters. With these parameters you can register
+your own endpoint to the existing router. This endpoint may use the database and/or the reflection class
+of the database.
 
 Here is an example of a custom controller class:
 
