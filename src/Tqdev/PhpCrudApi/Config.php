@@ -6,11 +6,11 @@ class Config
 {
     private $values = [
         'driver' => null,
-        'address' => 'localhost',
+        'address' => null,
         'port' => null,
-        'username' => null,
-        'password' => null,
-        'database' => null,
+        'username' => '',
+        'password' => '',
+        'database' => '',
         'tables' => '',
         'middlewares' => 'cors,errors',
         'controllers' => 'records,geojson,openapi,status',
