@@ -1372,7 +1372,8 @@ I am testing mainly on Ubuntu and I have the following test setups:
   - (Docker) Ubuntu 18.04 with PHP 7.2, MySQL 5.7, PostgreSQL 10.4 (PostGIS 2.4) and SQLite 3.22
   - (Docker) Debian 10 with PHP 7.3, MariaDB 10.3, PostgreSQL 11.4 (PostGIS 2.5) and SQLite 3.27
   - (Docker) Ubuntu 20.04 with PHP 7.4, MySQL 8.0, PostgreSQL 12.2 (PostGIS 3.0) and SQLite 3.31
-  - (Docker) CentOS 8 with PHP 8.0, MariaDB 10.5, PostgreSQL 12.5 (PostGIS 3.0) and SQLite 3.26
+  - (Docker) CentOS 8 with PHP 8.0, MariaDB 10.6, PostgreSQL 12.8 (PostGIS 3.0) and SQLite 3.26
+  - (Docker) Debian 11 with PHP 7.4, MariaDB 10.5, PostgreSQL 13.4 (PostGIS 3.1) and SQLite 3.34
 
 This covers not all environments (yet), so please notify me of failing tests and report your environment. 
 I will try to cover most relevant setups in the "docker" folder of the project.
@@ -1429,8 +1430,8 @@ To run the docker tests run "build_all.sh" and "run_all.sh" from the docker dire
     ================================================
     CentOS 8 (PHP 8.0)
     ================================================
-    [1/4] Starting MariaDB 10.5 ..... done
-    [2/4] Starting PostgreSQL 12.5 .. done
+    [1/4] Starting MariaDB 10.6 ..... done
+    [2/4] Starting PostgreSQL 12.8 .. done
     [3/4] Starting SQLServer 2017 ... skipped
     [4/4] Cloning PHP-CRUD-API v2 ... skipped
     ------------------------------------------------
@@ -1450,6 +1451,18 @@ To run the docker tests run "build_all.sh" and "run_all.sh" from the docker dire
     pgsql: 110 tests ran in 816 ms, 1 skipped, 0 failed
     sqlsrv: skipped, driver not loaded
     sqlite: 110 tests ran in 690 ms, 12 skipped, 0 failed
+    ================================================
+     Debian 11 (PHP 7.3)
+    ================================================
+    [1/4] Starting MariaDB 10.5 ..... done
+    [2/4] Starting PostgreSQL 13.4 .. done
+    [3/4] Starting SQLServer 2017 ... skipped
+    [4/4] Cloning PHP-CRUD-API v2 ... skipped
+    ------------------------------------------------
+    mysql: 110 tests ran in 1236 ms, 1 skipped, 0 failed
+    pgsql: 110 tests ran in 1291 ms, 1 skipped, 0 failed
+    sqlsrv: skipped, driver not loaded
+    sqlite: 110 tests ran in 938 ms, 13 skipped, 0 failed
     ================================================
     Debian 9 (PHP 7.0)
     ================================================

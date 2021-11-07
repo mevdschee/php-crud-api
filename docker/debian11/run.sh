@@ -1,13 +1,13 @@
 #!/bin/bash
 echo "================================================"
-echo " CentOS 8 (PHP 8.0)"
+echo " Debian 11 (PHP 7.4)"
 echo "================================================"
-echo -n "[1/4] Starting MariaDB 10.6 ..... "
-# initialize mysql
-mysql_install_db > /dev/null
-chown -R mysql:mysql /var/lib/mysql
+
+echo -n "[1/4] Starting MariaDB 10.5 ..... "
+# make sure mysql can create socket and lock
+mkdir /var/run/mysqld && chmod 777 /var/run/mysqld
 # run mysql server
-nohup /usr/sbin/mysqld -u mysql > /root/mysql.log 2>&1 &
+nohup mysqld > /root/mysql.log 2>&1 &
 # wait for mysql to become available
 while ! mysqladmin ping -hlocalhost >/dev/null 2>&1; do
     sleep 1
@@ -21,11 +21,9 @@ FLUSH PRIVILEGES;
 EOF
 echo "done"
 
-echo -n "[2/4] Starting PostgreSQL 12.8 .. "
-# initialize postgresql
-su - -c "/usr/pgsql-12/bin/initdb --auth-local peer --auth-host password -D /var/lib/pgsql/data" postgres > /dev/null
+echo -n "[2/4] Starting PostgreSQL 13.4 .. "
 # run postgres server
-nohup su - -c "/usr/pgsql-12/bin/postgres -D /var/lib/pgsql/data" postgres > /root/postgres.log 2>&1 &
+nohup su - -c "/usr/lib/postgresql/13/bin/postgres -D /etc/postgresql/13/main" postgres > /root/postgres.log 2>&1 &
 # wait for postgres to become available
 until su - -c "psql -U postgres -c '\q'" postgres >/dev/null 2>&1; do
    sleep 1;
