@@ -41,8 +41,23 @@ CREATE EXTENSION IF NOT EXISTS postgis;
 EOF
 echo "done"
 
-echo -n "[3/4] Starting SQLServer 2017 ... "
-echo "skipped"
+echo -n "[3/4] Starting SQLServer 2019 ... "
+# run sqlserver server
+nohup /opt/mssql/bin/sqlservr --accept-eula > /root/mssql.log 2>&1 &
+# create database and user on postgres
+/opt/mssql-tools/bin/sqlcmd -l 30 -S localhost -U SA -P sapwd123! >/dev/null << 'EOF'
+CREATE DATABASE [php-crud-api]
+GO
+CREATE LOGIN [php-crud-api] WITH PASSWORD=N'php-crud-api', DEFAULT_DATABASE=[php-crud-api], CHECK_EXPIRATION=OFF, CHECK_POLICY=OFF
+GO
+USE [php-crud-api]
+GO
+CREATE USER [php-crud-api] FOR LOGIN [php-crud-api] WITH DEFAULT_SCHEMA=[dbo]
+exec sp_addrolemember 'db_owner', 'php-crud-api';
+GO
+exit
+EOF
+echo "done"
 
 echo -n "[4/4] Cloning PHP-CRUD-API v2 ... "
 # install software
