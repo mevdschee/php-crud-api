@@ -1515,13 +1515,18 @@ namespace Nyholm\Psr7\Factory {
 
         public function createStreamFromFile(string $filename, string $mode = 'r'): StreamInterface
         {
-            $resource = @\fopen($filename, $mode);
+            try {
+                $resource = @\fopen($filename, $mode);
+            } catch (\Throwable $e) {
+                throw new \RuntimeException(\sprintf('The file "%s" cannot be opened.', $filename));
+            }
+
             if (false === $resource) {
-                if ('' === $mode || false === \in_array($mode[0], ['r', 'w', 'a', 'x', 'c'])) {
-                    throw new \InvalidArgumentException('The mode ' . $mode . ' is invalid.');
+                if ('' === $mode || false === \in_array($mode[0], ['r', 'w', 'a', 'x', 'c'], true)) {
+                    throw new \InvalidArgumentException(\sprintf('The mode "%s" is invalid.', $mode));
                 }
 
-                throw new \RuntimeException('The file ' . $filename . ' cannot be opened.');
+                throw new \RuntimeException(\sprintf('The file "%s" cannot be opened.', $filename));
             }
 
             return Stream::create($resource);
@@ -1687,7 +1692,7 @@ namespace Nyholm\Psr7 {
             return $new;
         }
 
-        private function setHeaders(array $headers): void
+        private function setHeaders(array $headers) /*:void*/
         {
             foreach ($headers as $header => $value) {
                 if (\is_int($header)) {
@@ -1894,7 +1899,7 @@ namespace Nyholm\Psr7 {
             return $new;
         }
 
-        private function updateHostFromUri(): void
+        private function updateHostFromUri() /*:void*/
         {
             if ('' === $host = $this->uri->getHost()) {
                 return;
@@ -1934,7 +1939,7 @@ namespace Nyholm\Psr7 {
         use MessageTrait;
 
         /** @var array Map of standard HTTP status code/reason phrases */
-        private const PHRASES = [
+        /*private*/ const PHRASES = [
             100 => 'Continue', 101 => 'Switching Protocols', 102 => 'Processing',
             200 => 'OK', 201 => 'Created', 202 => 'Accepted', 203 => 'Non-Authoritative Information', 204 => 'No Content', 205 => 'Reset Content', 206 => 'Partial Content', 207 => 'Multi-status', 208 => 'Already Reported',
             300 => 'Multiple Choices', 301 => 'Moved Permanently', 302 => 'Found', 303 => 'See Other', 304 => 'Not Modified', 305 => 'Use Proxy', 306 => 'Switch Proxy', 307 => 'Temporary Redirect',
@@ -2204,7 +2209,7 @@ namespace Nyholm\Psr7 {
         private $size;
 
         /** @var array Hash of readable and writable stream types */
-        private const READ_WRITE_HASH = [
+        /*private*/ const READ_WRITE_HASH = [
             'read' => [
                 'r' => true, 'w+' => true, 'r+' => true, 'x+' => true, 'c+' => true,
                 'rb' => true, 'w+b' => true, 'r+b' => true, 'x+b' => true,
@@ -2293,7 +2298,7 @@ namespace Nyholm\Psr7 {
             }
         }
 
-        public function close(): void
+        public function close() /*:void*/
         {
             if (isset($this->stream)) {
                 if (\is_resource($this->stream)) {
@@ -2326,7 +2331,7 @@ namespace Nyholm\Psr7 {
             return $this->uri;
         }
 
-        public function getSize(): ?int
+        public function getSize() /*:?int*/
         {
             if (null !== $this->size) {
                 return $this->size;
@@ -2370,18 +2375,18 @@ namespace Nyholm\Psr7 {
             return $this->seekable;
         }
 
-        public function seek($offset, $whence = \SEEK_SET): void
+        public function seek($offset, $whence = \SEEK_SET) /*:void*/
         {
             if (!$this->seekable) {
                 throw new \RuntimeException('Stream is not seekable');
             }
 
             if (-1 === \fseek($this->stream, $offset, $whence)) {
-                throw new \RuntimeException('Unable to seek to stream position ' . $offset . ' with whence ' . \var_export($whence, true));
+                throw new \RuntimeException('Unable to seek to stream position "' . $offset . '" with whence ' . \var_export($whence, true));
             }
         }
 
-        public function rewind(): void
+        public function rewind() /*:void*/
         {
             $this->seek(0);
         }
@@ -2470,7 +2475,7 @@ namespace Nyholm\Psr7 {
     class UploadedFile implements UploadedFileInterface
     {
         /** @var array */
-        private const ERRORS = [
+        /*private*/ const ERRORS = [
             \UPLOAD_ERR_OK => 1,
             \UPLOAD_ERR_INI_SIZE => 1,
             \UPLOAD_ERR_FORM_SIZE => 1,
@@ -2549,7 +2554,7 @@ namespace Nyholm\Psr7 {
         /**
          * @throws \RuntimeException if is moved or not ok
          */
-        private function validateActive(): void
+        private function validateActive() /*:void*/
         {
             if (\UPLOAD_ERR_OK !== $this->error) {
                 throw new \RuntimeException('Cannot retrieve stream due to upload error');
@@ -2568,12 +2573,14 @@ namespace Nyholm\Psr7 {
                 return $this->stream;
             }
 
-            $resource = \fopen($this->file, 'r');
-
-            return Stream::create($resource);
+            try {
+                return Stream::create(\fopen($this->file, 'r'));
+            } catch (\Throwable $e) {
+                throw new \RuntimeException(\sprintf('The file "%s" cannot be opened.', $this->file));
+            }
         }
 
-        public function moveTo($targetPath): void
+        public function moveTo($targetPath) /*:void*/
         {
             $this->validateActive();
 
@@ -2589,8 +2596,13 @@ namespace Nyholm\Psr7 {
                     $stream->rewind();
                 }
 
-                // Copy the contents of a stream into another stream until end-of-file.
-                $dest = Stream::create(\fopen($targetPath, 'w'));
+                try {
+                    // Copy the contents of a stream into another stream until end-of-file.
+                    $dest = Stream::create(\fopen($targetPath, 'w'));
+                } catch (\Throwable $e) {
+                    throw new \RuntimeException(\sprintf('The file "%s" cannot be opened.', $targetPath));
+                }
+
                 while (!$stream->eof()) {
                     if (!$dest->write($stream->read(1048576))) {
                         break;
@@ -2601,7 +2613,7 @@ namespace Nyholm\Psr7 {
             }
 
             if (false === $this->moved) {
-                throw new \RuntimeException(\sprintf('Uploaded file could not be moved to %s', $targetPath));
+                throw new \RuntimeException(\sprintf('Uploaded file could not be moved to "%s"', $targetPath));
             }
         }
 
@@ -2615,12 +2627,12 @@ namespace Nyholm\Psr7 {
             return $this->error;
         }
 
-        public function getClientFilename(): ?string
+        public function getClientFilename() /*:?string*/
         {
             return $this->clientFilename;
         }
 
-        public function getClientMediaType(): ?string
+        public function getClientMediaType() /*:?string*/
         {
             return $this->clientMediaType;
         }
@@ -2645,11 +2657,11 @@ namespace Nyholm\Psr7 {
      */
     class Uri implements UriInterface
     {
-        private const SCHEMES = ['http' => 80, 'https' => 443];
+        /*private*/ const SCHEMES = ['http' => 80, 'https' => 443];
 
-        private const CHAR_UNRESERVED = 'a-zA-Z0-9_\-\.~';
+        /*private*/ const CHAR_UNRESERVED = 'a-zA-Z0-9_\-\.~';
 
-        private const CHAR_SUB_DELIMS = '!\$&\'\(\)\*\+,;=';
+        /*private*/ const CHAR_SUB_DELIMS = '!\$&\'\(\)\*\+,;=';
 
         /** @var string Uri scheme. */
         private $scheme = '';
@@ -2676,7 +2688,7 @@ namespace Nyholm\Psr7 {
         {
             if ('' !== $uri) {
                 if (false === $parts = \parse_url($uri)) {
-                    throw new \InvalidArgumentException("Unable to parse URI: $uri");
+                    throw new \InvalidArgumentException(\sprintf('Unable to parse URI: "%s"', $uri));
                 }
 
                 // Apply parse_url parts to a URI.
@@ -2731,7 +2743,7 @@ namespace Nyholm\Psr7 {
             return $this->host;
         }
 
-        public function getPort(): ?int
+        public function getPort() /*:?int*/
         {
             return $this->port;
         }
@@ -2899,7 +2911,7 @@ namespace Nyholm\Psr7 {
             return !isset(self::SCHEMES[$scheme]) || $port !== self::SCHEMES[$scheme];
         }
 
-        private function filterPort($port): ?int
+        private function filterPort($port) /*:?int*/
         {
             if (null === $port) {
                 return null;
@@ -3011,7 +3023,7 @@ namespace Nyholm\Psr7Server {
         /**
          * {@inheritdoc}
          */
-        public function fromArrays(array $server, array $headers = [], array $cookie = [], array $get = [], ?array $post = null, array $files = [], $body = null): ServerRequestInterface
+        public function fromArrays(array $server, array $headers = [], array $cookie = [], array $get = [], /*?array*/ $post = null, array $files = [], $body = null): ServerRequestInterface
         {
             $method = $this->getMethodFromEnv($server);
             $uri = $this->getUriFromEnvWithHTTP($server);
@@ -3280,8 +3292,7 @@ namespace Nyholm\Psr7Server {
             array $server,
             array $headers = [],
             array $cookie = [],
-            array $get = [],
-            ?array $post = null,
+            array $get = [], /*?array*/ $post = null,
             array $files = [],
             $body = null
         ): ServerRequestInterface;
