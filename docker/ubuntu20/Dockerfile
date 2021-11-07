@@ -10,7 +10,7 @@ postgresql php-pgsql \
 postgresql-12-postgis-3 \
 sqlite3 php-sqlite3 \
 git wget \
-curl apt-transport-https debconf-utils sudo gnupg
+curl gnupg
 
 # adding custom MS repository
 RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add -
