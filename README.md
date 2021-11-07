@@ -1505,12 +1505,12 @@ To run the docker tests run "build_all.sh" and "run_all.sh" from the docker dire
     ================================================
     [1/4] Starting MySQL 8.0 ........ done
     [2/4] Starting PostgreSQL 12.2 .. done
-    [3/4] Starting SQLServer 2017 ... skipped
+    [3/4] Starting SQLServer 2019 ... done
     [4/4] Cloning PHP-CRUD-API v2 ... skipped
     ------------------------------------------------
     mysql: 110 tests ran in 1505 ms, 1 skipped, 0 failed
     pgsql: 110 tests ran in 851 ms, 1 skipped, 0 failed
-    sqlsrv: skipped, driver not loaded
+    sqlsrv: 110 tests ran in 5640 ms, 1 skipped, 0 failed
     sqlite: 110 tests ran in 675 ms, 12 skipped, 0 failed
 
 The above test run (including starting up the databases) takes less than 5 minutes on my slow laptop.
