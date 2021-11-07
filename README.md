@@ -1518,11 +1518,12 @@ The above test run (including starting up the databases) takes less than 5 minut
     $ ./run.sh
     1) centos8
     2) debian10
-    3) debian9
-    4) ubuntu16
-    5) ubuntu18
-    6) ubuntu20
-    > 5
+    3) debian11
+    4) debian9
+    5) ubuntu16
+    6) ubuntu18
+    7) ubuntu20
+    > 6
     ================================================
     Ubuntu 18.04 (PHP 7.2)
     ================================================
