@@ -1380,8 +1380,9 @@ I will try to cover most relevant setups in the "docker" folder of the project.
 
 ### Running
 
-To run the functional tests locally you may run the following command:
+To run the functional tests locally you may run the following commands:
 
+    php build.php
     php test.php
 
 This runs the functional tests from the "tests" directory. It uses the database dumps (fixtures) and
