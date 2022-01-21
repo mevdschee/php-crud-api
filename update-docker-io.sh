@@ -13,6 +13,9 @@ docker build . -t mevdschee/php-crud-api:$dockerTag
 # Build latest
 docker build . -t mevdschee/php-crud-api:latest
 
+# Revert
+git switch -
+
 # Press enter to publish
 echo -n Press enter to publish..; read
 
