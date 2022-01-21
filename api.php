@@ -1515,18 +1515,13 @@ namespace Nyholm\Psr7\Factory {
 
         public function createStreamFromFile(string $filename, string $mode = 'r'): StreamInterface
         {
-            try {
-                $resource = @\fopen($filename, $mode);
-            } catch (\Throwable $e) {
-                throw new \RuntimeException(\sprintf('The file "%s" cannot be opened.', $filename));
-            }
-
+            $resource = @\fopen($filename, $mode);
             if (false === $resource) {
-                if ('' === $mode || false === \in_array($mode[0], ['r', 'w', 'a', 'x', 'c'], true)) {
-                    throw new \InvalidArgumentException(\sprintf('The mode "%s" is invalid.', $mode));
+                if ('' === $mode || false === \in_array($mode[0], ['r', 'w', 'a', 'x', 'c'])) {
+                    throw new \InvalidArgumentException('The mode ' . $mode . ' is invalid.');
                 }
 
-                throw new \RuntimeException(\sprintf('The file "%s" cannot be opened.', $filename));
+                throw new \RuntimeException('The file ' . $filename . ' cannot be opened.');
             }
 
             return Stream::create($resource);
@@ -2382,7 +2377,7 @@ namespace Nyholm\Psr7 {
             }
 
             if (-1 === \fseek($this->stream, $offset, $whence)) {
-                throw new \RuntimeException('Unable to seek to stream position "' . $offset . '" with whence ' . \var_export($whence, true));
+                throw new \RuntimeException('Unable to seek to stream position ' . $offset . ' with whence ' . \var_export($whence, true));
             }
         }
 
@@ -2573,11 +2568,9 @@ namespace Nyholm\Psr7 {
                 return $this->stream;
             }
 
-            try {
-                return Stream::create(\fopen($this->file, 'r'));
-            } catch (\Throwable $e) {
-                throw new \RuntimeException(\sprintf('The file "%s" cannot be opened.', $this->file));
-            }
+            $resource = \fopen($this->file, 'r');
+
+            return Stream::create($resource);
         }
 
         public function moveTo($targetPath) /*:void*/
@@ -2596,13 +2589,8 @@ namespace Nyholm\Psr7 {
                     $stream->rewind();
                 }
 
-                try {
-                    // Copy the contents of a stream into another stream until end-of-file.
-                    $dest = Stream::create(\fopen($targetPath, 'w'));
-                } catch (\Throwable $e) {
-                    throw new \RuntimeException(\sprintf('The file "%s" cannot be opened.', $targetPath));
-                }
-
+                // Copy the contents of a stream into another stream until end-of-file.
+                $dest = Stream::create(\fopen($targetPath, 'w'));
                 while (!$stream->eof()) {
                     if (!$dest->write($stream->read(1048576))) {
                         break;
@@ -2613,7 +2601,7 @@ namespace Nyholm\Psr7 {
             }
 
             if (false === $this->moved) {
-                throw new \RuntimeException(\sprintf('Uploaded file could not be moved to "%s"', $targetPath));
+                throw new \RuntimeException(\sprintf('Uploaded file could not be moved to %s', $targetPath));
             }
         }
 
@@ -2688,7 +2676,7 @@ namespace Nyholm\Psr7 {
         {
             if ('' !== $uri) {
                 if (false === $parts = \parse_url($uri)) {
-                    throw new \InvalidArgumentException(\sprintf('Unable to parse URI: "%s"', $uri));
+                    throw new \InvalidArgumentException("Unable to parse URI: $uri");
                 }
 
                 // Apply parse_url parts to a URI.
@@ -6522,7 +6510,7 @@ namespace Tqdev\PhpCrudApi\Database {
             // explicitly NOT calling super::__construct
         }
 
-        public function addInitCommand(string $command)/*: void*/
+        public function addInitCommand(string $command) /*: void*/
         {
             $this->commands[] = $command;
         }
@@ -6607,17 +6595,17 @@ namespace Tqdev\PhpCrudApi\Database {
             return $this->pdo()->prepare($statement, $options);
         }
 
-        public function quote($string, $parameter_type = null): string
+        public function quote($string, $parameter_type = \PDO::PARAM_STR): string
         {
             return $this->pdo()->quote($string, $parameter_type);
         }
 
-        public function lastInsertId(/* ?string */$name = null): string
+        public function lastInsertId( /* ?string */$name = null): string
         {
             return $this->pdo()->lastInsertId($name);
         }
 
-        public function query($query, /* ?int */$fetchMode = null, ...$fetchModeArgs): \PDOStatement
+        public function query($query, /* ?int */ $fetchMode = null, ...$fetchModeArgs): \PDOStatement
         {
             return call_user_func_array(array($this->pdo(), 'query'), func_get_args());
         }
@@ -9106,7 +9094,6 @@ namespace Tqdev\PhpCrudApi\Middleware {
     use Tqdev\PhpCrudApi\Controller\Responder;
     use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
     use Tqdev\PhpCrudApi\Middleware\Router\Router;
-    use Tqdev\PhpCrudApi\RequestUtils;
     use Tqdev\PhpCrudApi\ResponseFactory;
 
     class XmlMiddleware extends Middleware
@@ -9163,7 +9150,7 @@ namespace Tqdev\PhpCrudApi\Middleware {
                                 if ($t($v) == 'boolean') {
                                     $va->appendChild($d->createTextNode($v ? 'true' : 'false'));
                                 } else {
-                                    $va->appendChild($d->createTextNode($v));
+                                    $va->appendChild($d->createTextNode((string) $v));
                                 }
                                 $ch = $c->appendChild($va);
                                 if (in_array($t($v), $ts)) {
@@ -9178,15 +9165,15 @@ namespace Tqdev\PhpCrudApi\Middleware {
             return $d->saveXML($d->documentElement);
         }
 
-        private function xml2json($xml)
+        private function xml2json($xml): string
         {
             $o = @simplexml_load_string($xml);
-            if ($o===false) {
-                return null;
+            if ($o === false) {
+                return '';
             }
             $a = @dom_import_simplexml($o);
             if (!$a) {
-                return null;
+                return '';
             }
             $t = function ($v) {
                 $t = $v->getAttribute('type');
@@ -9224,7 +9211,7 @@ namespace Tqdev\PhpCrudApi\Middleware {
                 return $c;
             };
             $c = $f($f, $a);
-            return json_encode($c);
+            return (string) json_encode($c);
         }
 
         public function process(ServerRequestInterface $request, RequestHandlerInterface $next): ResponseInterface

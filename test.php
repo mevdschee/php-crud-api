@@ -197,4 +197,5 @@ function run(array $drivers, string $dir, array $matches)
     }
 }
 
+error_reporting(-1);
 run(['mysql', 'pgsql', 'sqlsrv', 'sqlite'], __DIR__ . '/tests', array_slice($argv, 1));
