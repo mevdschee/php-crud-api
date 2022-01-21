@@ -3737,7 +3737,7 @@ namespace Tqdev\PhpCrudApi\Column\Reflection {
             return new ReflectedColumn($name, $type, $length, $precision, $scale, $nullable, $pk, $fk);
         }
 
-        public static function fromJson(/* object */$json): ReflectedColumn
+        public static function fromJson( /* object */$json): ReflectedColumn
         {
             $name = $json->name;
             $type = $json->type;
@@ -3856,7 +3856,7 @@ namespace Tqdev\PhpCrudApi\Column\Reflection {
             ];
         }
 
-        public function jsonSerialize()
+        public function jsonSerialize(): mixed
         {
             return array_filter($this->serialize());
         }
@@ -3891,7 +3891,7 @@ namespace Tqdev\PhpCrudApi\Column\Reflection {
             return new ReflectedDatabase($tableTypes);
         }
 
-        public static function fromJson(/* object */$json): ReflectedDatabase
+        public static function fromJson( /* object */$json): ReflectedDatabase
         {
             $tableTypes = (array) $json->tables;
             return new ReflectedDatabase($tableTypes);
@@ -3928,7 +3928,7 @@ namespace Tqdev\PhpCrudApi\Column\Reflection {
             ];
         }
 
-        public function jsonSerialize()
+        public function jsonSerialize(): mixed
         {
             return $this->serialize();
         }
@@ -4098,7 +4098,7 @@ namespace Tqdev\PhpCrudApi\Column\Reflection {
             ];
         }
 
-        public function jsonSerialize()
+        public function jsonSerialize(): mixed
         {
             return $this->serialize();
         }
@@ -6587,6 +6587,7 @@ namespace Tqdev\PhpCrudApi\Database {
             return $this->pdo()->rollBack();
         }
 
+        #[\ReturnTypeWillChange]
         public function errorCode(): mixed
         {
             return $this->pdo()->errorCode();
@@ -6602,7 +6603,8 @@ namespace Tqdev\PhpCrudApi\Database {
             return $this->pdo()->exec($query);
         }
 
-        public function prepare($statement, $options = array())
+        #[\ReturnTypeWillChange]
+        public function prepare($statement, $options = array()): mixed
         {
             return $this->pdo()->prepare($statement, $options);
         }
@@ -6870,7 +6872,7 @@ namespace Tqdev\PhpCrudApi\GeoJson {
             ];
         }
 
-        public function jsonSerialize()
+        public function jsonSerialize(): mixed
         {
             return $this->serialize();
         }
@@ -6901,7 +6903,7 @@ namespace Tqdev\PhpCrudApi\GeoJson {
             ];
         }
 
-        public function jsonSerialize()
+        public function jsonSerialize(): mixed
         {
             return array_filter($this->serialize(), function ($v) {
                 return $v !== -1;
@@ -7096,7 +7098,7 @@ namespace Tqdev\PhpCrudApi\GeoJson {
             ];
         }
 
-        public function jsonSerialize()
+        public function jsonSerialize(): mixed
         {
             return $this->serialize();
         }
@@ -9585,7 +9587,7 @@ namespace Tqdev\PhpCrudApi\OpenApi {
             return true;
         }
 
-        public function jsonSerialize()
+        public function jsonSerialize(): mixed
         {
             return $this->root;
         }
@@ -10347,9 +10349,9 @@ namespace Tqdev\PhpCrudApi\Record\Document {
             ];
         }
 
-        public function jsonSerialize()
+        public function jsonSerialize(): mixed
         {
-            return array_filter($this->serialize(), function($v) {return $v!==null;});
+            return array_filter($this->serialize(), function ($v) {return $v !== null;});
         }
 
         public static function fromException(\Throwable $exception, bool $debug)
@@ -10367,7 +10369,7 @@ namespace Tqdev\PhpCrudApi\Record\Document {
                 } elseif (strpos(strtolower($exception->getMessage()), 'constraint') !== false) {
                     $document = new ErrorDocument(new ErrorCode(ErrorCode::DATA_INTEGRITY_VIOLATION), '', null);
                 } else {
-                    $message = $debug?$exception->getMessage():'PDOException occurred (enable debug mode)';
+                    $message = $debug ? $exception->getMessage() : 'PDOException occurred (enable debug mode)';
                     $document = new ErrorDocument(new ErrorCode(ErrorCode::ERROR_NOT_FOUND), $message, null);
                 }
             }
@@ -10409,7 +10411,7 @@ namespace Tqdev\PhpCrudApi\Record\Document {
             ];
         }
 
-        public function jsonSerialize()
+        public function jsonSerialize(): mixed
         {
             return array_filter($this->serialize(), function ($v) {
                 return $v !== -1;
@@ -10770,7 +10772,7 @@ namespace Tqdev\PhpCrudApi\Record {
 
         private $tree;
 
-        public function __construct(/* object */&$tree = null)
+        public function __construct( /* object */&$tree = null)
         {
             if (!$tree) {
                 $tree = $this->newTree();
@@ -10830,12 +10832,12 @@ namespace Tqdev\PhpCrudApi\Record {
             return $tree->values;
         }
 
-        public static function fromJson(/* object */$tree): PathTree
+        public static function fromJson( /* object */$tree): PathTree
         {
             return new PathTree($tree);
         }
 
-        public function jsonSerialize()
+        public function jsonSerialize(): mixed
         {
             return $this->tree;
         }

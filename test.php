@@ -6,6 +6,7 @@ use Tqdev\PhpCrudApi\Database\GenericDB;
 use Tqdev\PhpCrudApi\RequestFactory;
 use Tqdev\PhpCrudApi\ResponseUtils;
 
+error_reporting(-1);
 require 'api.include.php';
 
 function runDir(Config $config, string $dir, array $matches, string $category): array
@@ -197,5 +198,4 @@ function run(array $drivers, string $dir, array $matches)
     }
 }
 
-error_reporting(-1);
 run(['mysql', 'pgsql', 'sqlsrv', 'sqlite'], __DIR__ . '/tests', array_slice($argv, 1));

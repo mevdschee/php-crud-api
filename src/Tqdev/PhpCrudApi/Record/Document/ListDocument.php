@@ -32,7 +32,7 @@ class ListDocument implements \JsonSerializable
         ];
     }
 
-    public function jsonSerialize()
+    public function jsonSerialize(): mixed
     {
         return array_filter($this->serialize(), function ($v) {
             return $v !== -1;
