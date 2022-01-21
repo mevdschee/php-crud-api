@@ -17,8 +17,9 @@ docker build . -t mevdschee/php-crud-api:latest
 git switch -
 
 # Confirm to publish
+echo; echo; echo
 read -p "Publish $latestTag to mevdschee/php-crud-api:$dockerTag? " -n 1 -r
-echo    # (optional) move to a new line
+echo
 if [[ $REPLY =~ ^[Yy]$ ]]
 then
 
