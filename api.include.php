@@ -1515,13 +1515,18 @@ namespace Nyholm\Psr7\Factory {
 
         public function createStreamFromFile(string $filename, string $mode = 'r'): StreamInterface
         {
-            $resource = @\fopen($filename, $mode);
+            try {
+                $resource = @\fopen($filename, $mode);
+            } catch (\Throwable $e) {
+                throw new \RuntimeException(\sprintf('The file "%s" cannot be opened.', $filename));
+            }
+
             if (false === $resource) {
-                if ('' === $mode || false === \in_array($mode[0], ['r', 'w', 'a', 'x', 'c'])) {
-                    throw new \InvalidArgumentException('The mode ' . $mode . ' is invalid.');
+                if ('' === $mode || false === \in_array($mode[0], ['r', 'w', 'a', 'x', 'c'], true)) {
+                    throw new \InvalidArgumentException(\sprintf('The mode "%s" is invalid.', $mode));
                 }
 
-                throw new \RuntimeException('The file ' . $filename . ' cannot be opened.');
+                throw new \RuntimeException(\sprintf('The file "%s" cannot be opened.', $filename));
             }
 
             return Stream::create($resource);
@@ -2377,7 +2382,7 @@ namespace Nyholm\Psr7 {
             }
 
             if (-1 === \fseek($this->stream, $offset, $whence)) {
-                throw new \RuntimeException('Unable to seek to stream position ' . $offset . ' with whence ' . \var_export($whence, true));
+                throw new \RuntimeException('Unable to seek to stream position "' . $offset . '" with whence ' . \var_export($whence, true));
             }
         }
 
@@ -2568,9 +2573,11 @@ namespace Nyholm\Psr7 {
                 return $this->stream;
             }
 
-            $resource = \fopen($this->file, 'r');
-
-            return Stream::create($resource);
+            try {
+                return Stream::create(\fopen($this->file, 'r'));
+            } catch (\Throwable $e) {
+                throw new \RuntimeException(\sprintf('The file "%s" cannot be opened.', $this->file));
+            }
         }
 
         public function moveTo($targetPath) /*:void*/
@@ -2589,8 +2596,13 @@ namespace Nyholm\Psr7 {
                     $stream->rewind();
                 }
 
-                // Copy the contents of a stream into another stream until end-of-file.
-                $dest = Stream::create(\fopen($targetPath, 'w'));
+                try {
+                    // Copy the contents of a stream into another stream until end-of-file.
+                    $dest = Stream::create(\fopen($targetPath, 'w'));
+                } catch (\Throwable $e) {
+                    throw new \RuntimeException(\sprintf('The file "%s" cannot be opened.', $targetPath));
+                }
+
                 while (!$stream->eof()) {
                     if (!$dest->write($stream->read(1048576))) {
                         break;
@@ -2601,7 +2613,7 @@ namespace Nyholm\Psr7 {
             }
 
             if (false === $this->moved) {
-                throw new \RuntimeException(\sprintf('Uploaded file could not be moved to %s', $targetPath));
+                throw new \RuntimeException(\sprintf('Uploaded file could not be moved to "%s"', $targetPath));
             }
         }
 
@@ -2676,7 +2688,7 @@ namespace Nyholm\Psr7 {
         {
             if ('' !== $uri) {
                 if (false === $parts = \parse_url($uri)) {
-                    throw new \InvalidArgumentException("Unable to parse URI: $uri");
+                    throw new \InvalidArgumentException(\sprintf('Unable to parse URI: "%s"', $uri));
                 }
 
                 // Apply parse_url parts to a URI.
