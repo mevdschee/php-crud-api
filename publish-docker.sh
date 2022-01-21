@@ -16,8 +16,11 @@ docker build . -t mevdschee/php-crud-api:latest
 # Revert
 git switch -
 
-# Press enter to publish
-echo -n Press enter to publish..; read
+# Confirm to publish
+read -p "Publish $latestTag to mevdschee/php-crud-api:$dockerTag? " -n 1 -r
+echo    # (optional) move to a new line
+if [[ $REPLY =~ ^[Yy]$ ]]
+then
 
 # Login to DockerHub
 docker login
@@ -26,3 +29,4 @@ docker push mevdschee/php-crud-api:$dockerTag
 # Push latest
 docker push mevdschee/php-crud-api:latest
 
+fi
