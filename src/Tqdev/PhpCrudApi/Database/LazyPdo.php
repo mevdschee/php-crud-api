@@ -88,7 +88,7 @@ class LazyPdo extends \PDO
     }
 
     #[\ReturnTypeWillChange]
-    public function errorCode(): mixed
+    public function errorCode()
     {
         return $this->pdo()->errorCode();
     }
@@ -104,7 +104,7 @@ class LazyPdo extends \PDO
     }
 
     #[\ReturnTypeWillChange]
-    public function prepare($statement, $options = array()): mixed
+    public function prepare($statement, $options = array())
     {
         return $this->pdo()->prepare($statement, $options);
     }

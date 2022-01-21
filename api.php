@@ -3856,7 +3856,8 @@ namespace Tqdev\PhpCrudApi\Column\Reflection {
             ];
         }
 
-        public function jsonSerialize(): mixed
+        #[\ReturnTypeWillChange]
+        public function jsonSerialize()
         {
             return array_filter($this->serialize());
         }
@@ -3928,7 +3929,8 @@ namespace Tqdev\PhpCrudApi\Column\Reflection {
             ];
         }
 
-        public function jsonSerialize(): mixed
+        #[\ReturnTypeWillChange]
+        public function jsonSerialize()
         {
             return $this->serialize();
         }
@@ -4098,7 +4100,8 @@ namespace Tqdev\PhpCrudApi\Column\Reflection {
             ];
         }
 
-        public function jsonSerialize(): mixed
+        #[\ReturnTypeWillChange]
+        public function jsonSerialize()
         {
             return $this->serialize();
         }
@@ -6588,7 +6591,7 @@ namespace Tqdev\PhpCrudApi\Database {
         }
 
         #[\ReturnTypeWillChange]
-        public function errorCode(): mixed
+        public function errorCode()
         {
             return $this->pdo()->errorCode();
         }
@@ -6604,7 +6607,7 @@ namespace Tqdev\PhpCrudApi\Database {
         }
 
         #[\ReturnTypeWillChange]
-        public function prepare($statement, $options = array()): mixed
+        public function prepare($statement, $options = array())
         {
             return $this->pdo()->prepare($statement, $options);
         }
@@ -6872,7 +6875,8 @@ namespace Tqdev\PhpCrudApi\GeoJson {
             ];
         }
 
-        public function jsonSerialize(): mixed
+        #[\ReturnTypeWillChange]
+        public function jsonSerialize()
         {
             return $this->serialize();
         }
@@ -6903,7 +6907,8 @@ namespace Tqdev\PhpCrudApi\GeoJson {
             ];
         }
 
-        public function jsonSerialize(): mixed
+        #[\ReturnTypeWillChange]
+        public function jsonSerialize()
         {
             return array_filter($this->serialize(), function ($v) {
                 return $v !== -1;
@@ -7098,7 +7103,8 @@ namespace Tqdev\PhpCrudApi\GeoJson {
             ];
         }
 
-        public function jsonSerialize(): mixed
+        #[\ReturnTypeWillChange]
+        public function jsonSerialize()
         {
             return $this->serialize();
         }
@@ -9587,7 +9593,8 @@ namespace Tqdev\PhpCrudApi\OpenApi {
             return true;
         }
 
-        public function jsonSerialize(): mixed
+        #[\ReturnTypeWillChange]
+        public function jsonSerialize()
         {
             return $this->root;
         }
@@ -10349,7 +10356,8 @@ namespace Tqdev\PhpCrudApi\Record\Document {
             ];
         }
 
-        public function jsonSerialize(): mixed
+        #[\ReturnTypeWillChange]
+        public function jsonSerialize()
         {
             return array_filter($this->serialize(), function ($v) {return $v !== null;});
         }
@@ -10411,7 +10419,8 @@ namespace Tqdev\PhpCrudApi\Record\Document {
             ];
         }
 
-        public function jsonSerialize(): mixed
+        #[\ReturnTypeWillChange]
+        public function jsonSerialize()
         {
             return array_filter($this->serialize(), function ($v) {
                 return $v !== -1;
@@ -10837,7 +10846,8 @@ namespace Tqdev\PhpCrudApi\Record {
             return new PathTree($tree);
         }
 
-        public function jsonSerialize(): mixed
+        #[\ReturnTypeWillChange]
+        public function jsonSerialize()
         {
             return $this->tree;
         }

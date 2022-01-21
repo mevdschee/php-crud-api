@@ -73,7 +73,8 @@ class PathTree implements \JsonSerializable
         return new PathTree($tree);
     }
 
-    public function jsonSerialize(): mixed
+    #[\ReturnTypeWillChange]
+    public function jsonSerialize()
     {
         return $this->tree;
     }

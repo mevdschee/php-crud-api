@@ -162,7 +162,8 @@ class ReflectedTable implements \JsonSerializable
         ];
     }
 
-    public function jsonSerialize(): mixed
+    #[\ReturnTypeWillChange]
+    public function jsonSerialize()
     {
         return $this->serialize();
     }
