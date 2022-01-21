@@ -19,6 +19,9 @@ docker build . -t mevdschee/php-crud-api:latest
 # Apply stashed changes
 git stash apply
 
+# Press enter to publish
+echo -n Press enter to publish..; read
+
 # Login to DockerHub
 docker login
 # Push release
