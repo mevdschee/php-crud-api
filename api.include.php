@@ -11596,21 +11596,28 @@ namespace Tqdev\PhpCrudApi {
             ];
         }
 
-        private function applyEnvironmentVariables(array $values): array
+        private function applyEnvironmentVariables(array $values, string $prefix = 'PHP_CRUD_API'): array
         {
-            $newValues = array();
+            $result = [];
             foreach ($values as $key => $value) {
-                $environmentKey = 'PHP_CRUD_API_' . strtoupper(preg_replace('/(?<!^)[A-Z]/', '_$0', str_replace('.', '_', $key)));
-                $newValues[$key] = getenv($environmentKey, true) ?: $value;
+                $suffix = strtoupper(preg_replace('/(?<!^)[A-Z]/', '_$0', str_replace('.', '_', $key)));
+                $newPrefix = $prefix . "_" . $suffix;
+                if (is_array($value)) {
+                    $newPrefix = str_replace('PHP_CRUD_API_MIDDLEWARES_','PHP_CRUD_API_',$newPrefix);
+                    $result[$key] = $this->applyEnvironmentVariables($value, $newPrefix);
+                } else {
+                    $result[$key] = getenv($newPrefix, true) ?: $value;
+                }
             }
-            return $newValues;
+            return $result;
         }
-
+        
         public function __construct(array $values)
         {
             $driver = $this->getDefaultDriver($values);
             $defaults = $this->getDriverDefaults($driver);
             $newValues = array_merge($this->values, $defaults, $values);
+            $newValues['middlewares'] = getenv('PHP_CRUD_API_MIDDLEWARES', true) ?: $newValues['middlewares'];
             $newValues = $this->parseMiddlewares($newValues);
             $diff = array_diff_key($newValues, $this->values);
             if (!empty($diff)) {
