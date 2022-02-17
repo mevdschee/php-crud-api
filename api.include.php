@@ -7896,8 +7896,8 @@ namespace Tqdev\PhpCrudApi\Middleware {
             if ($method == 'POST' && in_array($path, ['login', 'register', 'password'])) {
                 $body = $request->getParsedBody();
                 $usernameFormFieldName = $this->getProperty('usernameFormField', 'username');
-                $passwordFormFieldName = $this->getProperty('passwordFormField', 'username');
-                $newPasswordFormFieldName = $this->getProperty('newPasswordFormField', 'username');
+                $passwordFormFieldName = $this->getProperty('passwordFormField', 'password');
+                $newPasswordFormFieldName = $this->getProperty('newPasswordFormField', 'newPassword');
                 $username = isset($body->usernameFormFieldName) ? $body->usernameFormFieldName : '';
                 $password = isset($body->passwordFormFieldName) ? $body->passwordFormFieldName : '';
                 $newPassword = isset($body->newPasswordFormFieldName) ? $body->newPasswordFormFieldName : '';
