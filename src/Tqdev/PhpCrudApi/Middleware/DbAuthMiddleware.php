@@ -37,6 +37,9 @@ class DbAuthMiddleware extends Middleware
                 if ($sessionName) {
                     session_name($sessionName);
                 }
+                if(isset($body->allowSameSite)) {
+                    session_set_cookie_params(['samesite' => 'None', 'secure' => true]);
+                }
                 session_start();
             }
         }
