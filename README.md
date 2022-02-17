@@ -680,6 +680,7 @@ You can tune the middleware behavior using middleware specific configuration par
 - "dbAuth.registerUser": JSON user data (or "1") in case you want the /register endpoint enabled ("")
 - "dbAuth.passwordLength": Minimum length that the password must have ("12")
 - "dbAuth.sessionName": The name of the PHP session that is started ("")
+- "dbAuth.allowSameSite": "1" to set session cookie "samesite" option to "None" and "secure" to "true" ("")
 - "jwtAuth.mode": Set to "optional" if you want to allow anonymous access ("required")
 - "jwtAuth.header": Name of the header containing the JWT token ("X-Authorization")
 - "jwtAuth.leeway": The acceptable number of seconds of clock skew ("5")
