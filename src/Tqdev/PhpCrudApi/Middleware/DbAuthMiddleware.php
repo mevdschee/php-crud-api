@@ -47,9 +47,9 @@ class DbAuthMiddleware extends Middleware
             $usernameFormFieldName = $this->getProperty('usernameFormField', 'username');
             $passwordFormFieldName = $this->getProperty('passwordFormField', 'password');
             $newPasswordFormFieldName = $this->getProperty('newPasswordFormField', 'newPassword');
-            $username = isset($body->usernameFormFieldName) ? $body->usernameFormFieldName : '';
-            $password = isset($body->passwordFormFieldName) ? $body->passwordFormFieldName : '';
-            $newPassword = isset($body->newPasswordFormFieldName) ? $body->newPasswordFormFieldName : '';
+            $username = isset($body->$usernameFormFieldName) ? $body->$usernameFormFieldName : '';
+            $password = isset($body->$passwordFormFieldName) ? $body->$passwordFormFieldName : '';
+            $newPassword = isset($body->$newPasswordFormFieldName) ? $body->$newPasswordFormFieldName : '';
             $tableName = $this->getProperty('usersTable', 'users');
             $table = $this->reflection->getTable($tableName);
             $usernameColumnName = $this->getProperty('usernameColumn', 'username');
