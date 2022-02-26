@@ -7963,7 +7963,11 @@ namespace Tqdev\PhpCrudApi\Middleware {
                     if (strlen($newPassword) < $passwordLength) {
                         return $this->responder->error(ErrorCode::PASSWORD_TOO_SHORT, $passwordLength);
                     }
-                    $users = $this->db->selectAll($table, $columnNames, $condition, $columnOrdering, 0, 1);
+                    $userColumns = $columnNames;
+                    if(!in_array($pkName, $columnNames)){
+                        array_push($userColumns, $pkName);
+                    }
+                    $users = $this->db->selectAll($table, $userColumns, $condition, $columnOrdering, 0, 1);
                     foreach ($users as $user) {
                         if (password_verify($password, $user[$passwordColumnName]) == 1) {
                             if (!headers_sent()) {
@@ -7972,6 +7976,9 @@ namespace Tqdev\PhpCrudApi\Middleware {
                             $data = [$passwordColumnName => password_hash($newPassword, PASSWORD_DEFAULT)];
                             $this->db->updateSingle($table, $data, $user[$pkName]);
                             unset($user[$passwordColumnName]);
+                            if(!in_array($pkName, $columnNames)){
+                                unset($user[$pkName]);
+                            }
                             return $this->responder->success($user);
                         }
                     }
