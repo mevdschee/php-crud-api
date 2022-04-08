@@ -2,9 +2,9 @@
 
 Single file PHP script that adds a REST API to a MySQL/MariaDB, PostgreSQL, SQL Server or SQLite database. 
 
-NB: This is the [TreeQL](https://treeql.org) reference implementation in PHP.
+Promise: Upload "api.php", configure it to connect to your database, have an instant full-featured REST API
 
-Promise: 1) Upload "api.php" 2) configure it to connect to your database 3) have an instant full-featured REST API
+NB: This is the [TreeQL](https://treeql.org) reference implementation in PHP.
 
 ## Requirements
 
