@@ -4,28 +4,7 @@ Single file PHP script that adds a REST API to a MySQL/MariaDB, PostgreSQL, SQL 
 
 NB: This is the [TreeQL](https://treeql.org) reference implementation in PHP.
 
-Related projects:
-
-  - [JS-CRUD-API](https://github.com/thipages/js-crud-api): A JavaScript client library for the API of PHP-CRUD-API
-  - [PHP-API-AUTH](https://github.com/mevdschee/php-api-auth): Single file PHP script that is an authentication provider for PHP-CRUD-API
-  - [PHP-CRUD-UI](https://github.com/mevdschee/php-crud-ui): Single file PHP script that adds a UI to a PHP-CRUD-API project.
-  - [PHP-CRUD-ADMIN](https://github.com/mevdschee/php-crud-admin): Single file PHP script that adds a database admin interface to a PHP-CRUD-API project.
-  - [PHP-SP-API](https://github.com/mevdschee/php-sp-api): Single file PHP script that adds a REST API to a SQL database.
-  - [VUE-CRUD-UI](https://github.com/nlware/vue-crud-ui): Single file Vue.js script that adds a UI to a PHP-CRUD-API project.
-  
-There are also ports of this script in:
-
-- [Go-CRUD-API](https://github.com/dranih/go-crud-api) (work in progress)
-- [Java JDBC by Ivan Kolchagov](https://github.com/kolchagov/java-crud-api) (v1)
-- [Java Spring Boot + jOOQ](https://github.com/mevdschee/java-crud-api/tree/master/full) (v2: work in progress)
-
-There are also proof-of-concept ports of this script that only support basic REST CRUD functionality in:
-[PHP](https://github.com/mevdschee/php-crud-api/blob/master/extras/core.php),
-[Java](https://github.com/mevdschee/java-crud-api/blob/master/core/src/main/java/com/tqdev/CrudApiHandler.java),
-[Go](https://github.com/mevdschee/go-crud-api/blob/master/api.go),
-[C# .net core](https://github.com/mevdschee/core-data-api/blob/master/Program.cs),
-[Node.js](https://github.com/mevdschee/js-crud-api/blob/master/app.js) and
-[Python](https://github.com/mevdschee/py-crud-api/blob/master/api.py).
+Promise: 1) Upload "api.php" 2) configure it to connect to your database 3) have an instant full-featured REST API
 
 ## Requirements
 
@@ -140,6 +119,31 @@ The following features are supported:
   - Support for modifying database structure using REST endpoint
   - Security enhancing middleware is included
   - Standard compliant: PSR-4, PSR-7, PSR-12, PSR-15 and PSR-17
+
+## Related projects and ports
+
+Related projects:
+
+  - [JS-CRUD-API](https://github.com/thipages/js-crud-api): A JavaScript client library for the API of PHP-CRUD-API
+  - [PHP-API-AUTH](https://github.com/mevdschee/php-api-auth): Single file PHP script that is an authentication provider for PHP-CRUD-API
+  - [PHP-CRUD-UI](https://github.com/mevdschee/php-crud-ui): Single file PHP script that adds a UI to a PHP-CRUD-API project.
+  - [PHP-CRUD-ADMIN](https://github.com/mevdschee/php-crud-admin): Single file PHP script that adds a database admin interface to a PHP-CRUD-API project.
+  - [PHP-SP-API](https://github.com/mevdschee/php-sp-api): Single file PHP script that adds a REST API to a SQL database.
+  - [VUE-CRUD-UI](https://github.com/nlware/vue-crud-ui): Single file Vue.js script that adds a UI to a PHP-CRUD-API project.
+  
+There are also ports of this script in:
+
+- [Go-CRUD-API](https://github.com/dranih/go-crud-api) (work in progress)
+- [Java JDBC by Ivan Kolchagov](https://github.com/kolchagov/java-crud-api) (v1)
+- [Java Spring Boot + jOOQ](https://github.com/mevdschee/java-crud-api/tree/master/full) (v2: work in progress)
+
+There are also proof-of-concept ports of this script that only support basic REST CRUD functionality in:
+[PHP](https://github.com/mevdschee/php-crud-api/blob/master/extras/core.php),
+[Java](https://github.com/mevdschee/java-crud-api/blob/master/core/src/main/java/com/tqdev/CrudApiHandler.java),
+[Go](https://github.com/mevdschee/go-crud-api/blob/master/api.go),
+[C# .net core](https://github.com/mevdschee/core-data-api/blob/master/Program.cs),
+[Node.js](https://github.com/mevdschee/js-crud-api/blob/master/app.js) and
+[Python](https://github.com/mevdschee/py-crud-api/blob/master/api.py).
 
 ## Compilation
 
