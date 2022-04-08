@@ -15,6 +15,7 @@ Related projects:
   
 There are also ports of this script in:
 
+- [Go-CRUD-API](https://github.com/dranih/go-crud-api) (work in progress)
 - [Java JDBC by Ivan Kolchagov](https://github.com/kolchagov/java-crud-api) (v1)
 - [Java Spring Boot + jOOQ](https://github.com/mevdschee/java-crud-api/tree/master/full) (v2: work in progress)
 
