@@ -57,6 +57,7 @@ These are all the configuration options and their default value between brackets
 - "username": Username of the user connecting to the database (no default)
 - "password": Password of the user connecting to the database (no default)
 - "database": Database the connecting is made to (no default)
+- "mapping": Comma separated list of table/column mappings (no mappping)
 - "tables": Comma separated list of tables to publish (defaults to 'all')
 - "middlewares": List of middlewares to load (`cors`)
 - "controllers": List of controllers to load (`records,geojson,openapi,status`)
@@ -112,6 +113,7 @@ The following features are supported:
   - Atomic increment support via PATCH (for counters)
   - Binary fields supported with base64 encoding
   - Spatial/GIS fields and filters supported with WKT and GeoJSON
+  - Mapping table and column names to support legacy systems
   - Generate API documentation using OpenAPI tools
   - Authentication via API key, JWT token or username/password
   - Database connection parameters may depend on authentication
@@ -623,6 +625,17 @@ The following Geometry types are supported by the GeoJSON implementation:
   - MultiPolygon
 
 The GeoJSON functionality is enabled by default, but can be disabled using the "controllers" configuration.
+
+## Mapping names for legacy systems
+
+To support creating an API for (a part of) a legacy system (such as Wordpress) you may want to map the table and column names as you
+may not be able to alter them without breaking the software. The config allows you to rename tables and columns with a
+comma separated list of mappings that are split with an equal sign, like this:
+
+    'mapping' => 'wp_posts=posts,wp_posts.ID=posts.id',
+
+This specific example will expose the "wp_posts" table as "posts" and the field "ID" within that table as "id" (notice
+the casing).
 
 ## Middleware
 
