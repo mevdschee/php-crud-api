@@ -107,7 +107,7 @@ class GenericDefinition
     {
         $p1 = $this->quote($tableName);
         $p2 = $this->quote($columnName);
-        $p3 = $this->quote($newColumn->getName());
+        $p3 = $this->quote($newColumn->getRealName());
 
         switch ($this->driver) {
             case 'mysql':
@@ -127,7 +127,7 @@ class GenericDefinition
     {
         $p1 = $this->quote($tableName);
         $p2 = $this->quote($columnName);
-        $p3 = $this->quote($newColumn->getName());
+        $p3 = $this->quote($newColumn->getRealName());
         $p4 = $this->getColumnType($newColumn, true);
 
         switch ($this->driver) {
@@ -144,7 +144,7 @@ class GenericDefinition
     {
         $p1 = $this->quote($tableName);
         $p2 = $this->quote($columnName);
-        $p3 = $this->quote($newColumn->getName());
+        $p3 = $this->quote($newColumn->getRealName());
         $p4 = $this->getColumnType($newColumn, true);
 
         switch ($this->driver) {
@@ -216,7 +216,7 @@ class GenericDefinition
 
         switch ($this->driver) {
             case 'mysql':
-                $p3 = $this->quote($newColumn->getName());
+                $p3 = $this->quote($newColumn->getRealName());
                 $p4 = $this->getColumnType($newColumn, true);
                 return "ALTER TABLE $p1 CHANGE $p2 $p3 $p4";
             case 'pgsql':
@@ -265,7 +265,7 @@ class GenericDefinition
 
     private function getAddTableSQL(ReflectedTable $newTable): string
     {
-        $tableName = $newTable->getName();
+        $tableName = $newTable->getRealName();
         $p1 = $this->quote($tableName);
         $fields = [];
         $constraints = [];
@@ -304,7 +304,7 @@ class GenericDefinition
     private function getAddColumnSQL(string $tableName, ReflectedColumn $newColumn): string
     {
         $p1 = $this->quote($tableName);
-        $p2 = $this->quote($newColumn->getName());
+        $p2 = $this->quote($newColumn->getRealName());
         $p3 = $this->getColumnType($newColumn, false);
 
         switch ($this->driver) {

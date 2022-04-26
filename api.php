@@ -4181,8 +4181,8 @@ namespace Tqdev\PhpCrudApi\Column {
         {
             $table = $this->reflection->getTable($tableName);
             $newTable = ReflectedTable::fromJson((object) array_merge((array) $table->jsonSerialize(), (array) $changes));
-            if ($table->getName() != $newTable->getName()) {
-                if (!$this->db->definition()->renameTable($table->getName(), $newTable->getName())) {
+            if ($table->getRealName() != $newTable->getRealName()) {
+                if (!$this->db->definition()->renameTable($table->getRealName(), $newTable->getRealName())) {
                     return false;
                 }
             }

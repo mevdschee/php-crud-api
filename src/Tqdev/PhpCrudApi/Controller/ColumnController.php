@@ -73,7 +73,8 @@ class ColumnController
         if (!$this->reflection->hasTable($tableName)) {
             return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $tableName);
         }
-        $success = $this->definition->updateTable($tableName, $request->getParsedBody());
+        $table = $this->reflection->getTable($tableName);
+        $success = $this->definition->updateTable($table, $request->getParsedBody());
         if ($success) {
             $this->reflection->refreshTables();
         }
@@ -91,7 +92,8 @@ class ColumnController
         if (!$table->hasColumn($columnName)) {
             return $this->responder->error(ErrorCode::COLUMN_NOT_FOUND, $columnName);
         }
-        $success = $this->definition->updateColumn($tableName, $columnName, $request->getParsedBody());
+        $column = $table->getColumn($columnName);
+        $success = $this->definition->updateColumn($table, $column, $request->getParsedBody());
         if ($success) {
             $this->reflection->refreshTable($tableName);
         }
@@ -122,7 +124,7 @@ class ColumnController
         if ($table->hasColumn($columnName)) {
             return $this->responder->error(ErrorCode::COLUMN_ALREADY_EXISTS, $columnName);
         }
-        $success = $this->definition->addColumn($tableName, $request->getParsedBody());
+        $success = $this->definition->addColumn($table, $request->getParsedBody());
         if ($success) {
             $this->reflection->refreshTable($tableName);
         }
@@ -135,7 +137,8 @@ class ColumnController
         if (!$this->reflection->hasTable($tableName)) {
             return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $tableName);
         }
-        $success = $this->definition->removeTable($tableName);
+        $table = $this->reflection->getTable($tableName);
+        $success = $this->definition->removeTable($table);
         if ($success) {
             $this->reflection->refreshTables();
         }
@@ -153,7 +156,8 @@ class ColumnController
         if (!$table->hasColumn($columnName)) {
             return $this->responder->error(ErrorCode::COLUMN_NOT_FOUND, $columnName);
         }
-        $success = $this->definition->removeColumn($tableName, $columnName);
+        $column = $table->getColumn($columnName);
+        $success = $this->definition->removeColumn($table, $column);
         if ($success) {
             $this->reflection->refreshTable($tableName);
         }

@@ -1,0 +1,8 @@
+===
+GET /columns/posts
+===
+200
+Content-Type: application/json; charset=utf-8
+Content-Length: 347
+
+{"name":"abc_posts","alias":"posts","type":"table","columns":[{"name":"abc_id","alias":"id","type":"integer","pk":true},{"name":"abc_user_id","alias":"user_id","type":"integer","fk":"users"},{"name":"abc_category_id","alias":"category_id","type":"integer","fk":"categories"},{"name":"abc_content","alias":"content","type":"varchar","length":255}]}
