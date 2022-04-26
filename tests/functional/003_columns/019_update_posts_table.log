@@ -19,7 +19,7 @@ Content-Length: 257
 ===
 PUT /columns/posts2
 
-{"name":"posts"}
+{"name":"abc_posts","alias":"posts"}
 ===
 200
 Content-Type: application/json; charset=utf-8

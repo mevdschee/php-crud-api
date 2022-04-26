@@ -31,9 +31,6 @@ $settings = [
     'reconnect.passwordHandler' => function () {
         return 'php-crud-api';
     },
-    'reconnect.mappingHandler' => function () {
-        return ['abc_posts.abc_id' => 'posts.id', 'abc_posts.abc_user_id' => 'posts.user_id', 'abc_posts.abc_category_id' => 'posts.category_id', 'abc_posts.abc_content' => 'posts.content'];
-    },
     'authorization.tableHandler'  => function ($operation, $tableName) {
         return !($tableName == 'invisibles' && !isset($_SESSION['claims']['name']) && empty($_SESSION['username']) && empty($_SESSION['user']) && empty($_SESSION['apiKey']) && empty($_SESSION['apiUser']));
     },
