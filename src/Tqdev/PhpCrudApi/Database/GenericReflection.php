@@ -102,14 +102,14 @@ class GenericReflection
     {
         $sql = $this->getTablesSQL();
         $results = $this->query($sql, [$this->database]);
-        foreach ($results as &$result) {
-            $result['TABLE_REAL_NAME'] = $result['TABLE_NAME'];
-            $result['TABLE_NAME'] = $this->realNameMapper->getTableName($result['TABLE_REAL_NAME']);
-        }
         $tables = $this->tables;
         $results = array_filter($results, function ($v) use ($tables) {
             return !$tables || in_array($v['TABLE_NAME'], $tables);
         });
+        foreach ($results as &$result) {
+            $result['TABLE_REAL_NAME'] = $result['TABLE_NAME'];
+            $result['TABLE_NAME'] = $this->realNameMapper->getTableName($result['TABLE_REAL_NAME']);
+        }
         foreach ($results as &$result) {
             $map = [];
             switch ($this->driver) {
