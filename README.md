@@ -628,14 +628,17 @@ The GeoJSON functionality is enabled by default, but can be disabled using the "
 
 ## Mapping names for legacy systems
 
-To support creating an API for (a part of) a legacy system (such as Wordpress) you may want to map the table and column names as you
-may not be able to alter them without breaking the software. The config allows you to rename tables and columns with a
-comma separated list of mappings that are split with an equal sign, like this:
+To support creating an API for (a part of) a legacy system (such as Wordpress) you may want to map the table and column 
+names as can not improve them without changing the software, while the names may need some improvement for consistency.
+The config allows you to rename tables and columns with a comma separated list of mappings that are split with an 
+equal sign, like this:
 
     'mapping' => 'wp_posts=posts,wp_posts.ID=posts.id',
 
-This specific example will expose the "wp_posts" table as "posts" and the field "ID" within that table as "id" (notice
-the casing).
+This specific example will expose the "wp_posts" table at a "posts" end-point (instead of "wp_posts") and the 
+column "ID" within that table as the "id" property (in lower case instead of upper case).
+
+NB: Since these two mappings overlap the first (less specific) mapping may be omitted.
 
 ## Middleware
 
