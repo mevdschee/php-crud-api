@@ -30,7 +30,7 @@ class ReflectedDatabase implements \JsonSerializable
         return new ReflectedDatabase($tableTypes, $tableRealNames);
     }
 
-    public static function fromJson(/* object */$json): ReflectedDatabase
+    public static function fromJson( /* object */$json): ReflectedDatabase
     {
         $tableTypes = (array) $json->types;
         $tableRealNames = (array) $json->realNames;
@@ -75,6 +75,7 @@ class ReflectedDatabase implements \JsonSerializable
         ];
     }
 
+    #[\ReturnTypeWillChange]
     public function jsonSerialize()
     {
         return $this->serialize();

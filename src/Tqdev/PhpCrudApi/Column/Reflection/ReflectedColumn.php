@@ -90,7 +90,7 @@ class ReflectedColumn implements \JsonSerializable
         return new ReflectedColumn($name, $realName, $type, $length, $precision, $scale, $nullable, $pk, $fk);
     }
 
-    public static function fromJson(/* object */$json): ReflectedColumn
+    public static function fromJson( /* object */$json): ReflectedColumn
     {
         $name = $json->alias ?? $json->name;
         $realName = $json->name;
@@ -217,6 +217,7 @@ class ReflectedColumn implements \JsonSerializable
         return array_filter($json);
     }
 
+    #[\ReturnTypeWillChange]
     public function jsonSerialize()
     {
         return $this->serialize();

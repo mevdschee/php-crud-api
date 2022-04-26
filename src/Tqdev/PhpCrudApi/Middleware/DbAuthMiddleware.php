@@ -44,9 +44,12 @@ class DbAuthMiddleware extends Middleware
         $method = $request->getMethod();
         if ($method == 'POST' && in_array($path, ['login', 'register', 'password'])) {
             $body = $request->getParsedBody();
-            $username = isset($body->username) ? $body->username : '';
-            $password = isset($body->password) ? $body->password : '';
-            $newPassword = isset($body->newPassword) ? $body->newPassword : '';
+            $usernameFormFieldName = $this->getProperty('usernameFormField', 'username');
+            $passwordFormFieldName = $this->getProperty('passwordFormField', 'password');
+            $newPasswordFormFieldName = $this->getProperty('newPasswordFormField', 'newPassword');
+            $username = isset($body->$usernameFormFieldName) ? $body->$usernameFormFieldName : '';
+            $password = isset($body->$passwordFormFieldName) ? $body->$passwordFormFieldName : '';
+            $newPassword = isset($body->$newPasswordFormFieldName) ? $body->$newPasswordFormFieldName : '';
             $tableName = $this->getProperty('usersTable', 'users');
             $table = $this->reflection->getTable($tableName);
             $usernameColumnName = $this->getProperty('usernameColumn', 'username');
@@ -109,7 +112,11 @@ class DbAuthMiddleware extends Middleware
                 if (strlen($newPassword) < $passwordLength) {
                     return $this->responder->error(ErrorCode::PASSWORD_TOO_SHORT, $passwordLength);
                 }
-                $users = $this->db->selectAll($table, $columnNames, $condition, $columnOrdering, 0, 1);
+                $userColumns = $columnNames;
+                if(!in_array($pkName, $columnNames)){
+                    array_push($userColumns, $pkName);
+                }
+                $users = $this->db->selectAll($table, $userColumns, $condition, $columnOrdering, 0, 1);
                 foreach ($users as $user) {
                     if (password_verify($password, $user[$passwordColumnName]) == 1) {
                         if (!headers_sent()) {
@@ -118,6 +125,9 @@ class DbAuthMiddleware extends Middleware
                         $data = [$passwordColumnName => password_hash($newPassword, PASSWORD_DEFAULT)];
                         $this->db->updateSingle($table, $data, $user[$pkName]);
                         unset($user[$passwordColumnName]);
+                        if(!in_array($pkName, $columnNames)){
+                            unset($user[$pkName]);
+                        }
                         return $this->responder->success($user);
                     }
                 }

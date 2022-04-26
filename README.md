@@ -2,29 +2,9 @@
 
 Single file PHP script that adds a REST API to a MySQL/MariaDB, PostgreSQL, SQL Server or SQLite database. 
 
+Howto: Upload "`api.php`" to your webserver, configure it to connect to your database, have an instant full-featured REST API.
+
 NB: This is the [TreeQL](https://treeql.org) reference implementation in PHP.
-
-Related projects:
-
-  - [JS-CRUD-API](https://github.com/thipages/js-crud-api): A JavaScript client library for the API of PHP-CRUD-API
-  - [PHP-API-AUTH](https://github.com/mevdschee/php-api-auth): Single file PHP script that is an authentication provider for PHP-CRUD-API
-  - [PHP-CRUD-UI](https://github.com/mevdschee/php-crud-ui): Single file PHP script that adds a UI to a PHP-CRUD-API project.
-  - [PHP-CRUD-ADMIN](https://github.com/mevdschee/php-crud-admin): Single file PHP script that adds a database admin interface to a PHP-CRUD-API project.
-  - [PHP-SP-API](https://github.com/mevdschee/php-sp-api): Single file PHP script that adds a REST API to a SQL database.
-  - [VUE-CRUD-UI](https://github.com/nlware/vue-crud-ui): Single file Vue.js script that adds a UI to a PHP-CRUD-API project.
-  
-There are also ports of this script in:
-
-- [Java JDBC by Ivan Kolchagov](https://github.com/kolchagov/java-crud-api) (v1)
-- [Java Spring Boot + jOOQ](https://github.com/mevdschee/java-crud-api/tree/master/full) (v2: work in progress)
-
-There are also proof-of-concept ports of this script that only support basic REST CRUD functionality in:
-[PHP](https://github.com/mevdschee/php-crud-api/blob/master/extras/core.php),
-[Java](https://github.com/mevdschee/java-crud-api/blob/master/core/src/main/java/com/tqdev/CrudApiHandler.java),
-[Go](https://github.com/mevdschee/go-crud-api/blob/master/api.go),
-[C# .net core](https://github.com/mevdschee/core-data-api/blob/master/Program.cs),
-[Node.js](https://github.com/mevdschee/js-crud-api/blob/master/app.js) and
-[Python](https://github.com/mevdschee/py-crud-api/blob/master/api.py).
 
 ## Requirements
 
@@ -80,6 +60,7 @@ These are all the configuration options and their default value between brackets
 - "tables": Comma separated list of tables to publish (defaults to 'all')
 - "middlewares": List of middlewares to load (`cors`)
 - "controllers": List of controllers to load (`records,geojson,openapi,status`)
+- "customControllers": List of user custom controllers to load (no default)
 - "openApiBase": OpenAPI info (`{"info":{"title":"PHP-CRUD-API","version":"1.0.0"}}`)
 - "cacheType": `TempFile`, `Redis`, `Memcache`, `Memcached` or `NoCache` (`TempFile`)
 - "cachePath": Path/address of the cache (defaults to system's temp directory)
@@ -138,6 +119,31 @@ The following features are supported:
   - Support for modifying database structure using REST endpoint
   - Security enhancing middleware is included
   - Standard compliant: PSR-4, PSR-7, PSR-12, PSR-15 and PSR-17
+
+## Related projects and ports
+
+Related projects:
+
+  - [JS-CRUD-API](https://github.com/thipages/js-crud-api): A JavaScript client library for the API of PHP-CRUD-API
+  - [PHP-API-AUTH](https://github.com/mevdschee/php-api-auth): Single file PHP script that is an authentication provider for PHP-CRUD-API
+  - [PHP-CRUD-UI](https://github.com/mevdschee/php-crud-ui): Single file PHP script that adds a UI to a PHP-CRUD-API project.
+  - [PHP-CRUD-ADMIN](https://github.com/mevdschee/php-crud-admin): Single file PHP script that adds a database admin interface to a PHP-CRUD-API project.
+  - [PHP-SP-API](https://github.com/mevdschee/php-sp-api): Single file PHP script that adds a REST API to a SQL database.
+  - [VUE-CRUD-UI](https://github.com/nlware/vue-crud-ui): Single file Vue.js script that adds a UI to a PHP-CRUD-API project.
+  
+There are also ports of this script in:
+
+- [Go-CRUD-API](https://github.com/dranih/go-crud-api) (work in progress)
+- [Java JDBC by Ivan Kolchagov](https://github.com/kolchagov/java-crud-api) (v1)
+- [Java Spring Boot + jOOQ](https://github.com/mevdschee/java-crud-api/tree/master/full) (v2: work in progress)
+
+There are also proof-of-concept ports of this script that only support basic REST CRUD functionality in:
+[PHP](https://github.com/mevdschee/php-crud-api/blob/master/extras/core.php),
+[Java](https://github.com/mevdschee/java-crud-api/blob/master/core/src/main/java/com/tqdev/CrudApiHandler.java),
+[Go](https://github.com/mevdschee/go-crud-api/blob/master/api.go),
+[C# .net core](https://github.com/mevdschee/core-data-api/blob/master/Program.cs),
+[Node.js](https://github.com/mevdschee/js-crud-api/blob/master/app.js) and
+[Python](https://github.com/mevdschee/py-crud-api/blob/master/api.py).
 
 ## Compilation
 
@@ -673,6 +679,9 @@ You can tune the middleware behavior using middleware specific configuration par
 - "dbAuth.usernameColumn": The users table column that holds usernames ("username")
 - "dbAuth.passwordColumn": The users table column that holds passwords ("password")
 - "dbAuth.returnedColumns": The columns returned on successful login, empty means 'all' ("")
+- "dbAuth.usernameFormField": The name of the form field that holds the username ("username")
+- "dbAuth.passwordFormField": The name of the form field that holds the password ("password")
+- "dbAuth.newPasswordFormField": The name of the form field that holds the new password ("newPassword")
 - "dbAuth.registerUser": JSON user data (or "1") in case you want the /register endpoint enabled ("")
 - "dbAuth.passwordLength": Minimum length that the password must have ("12")
 - "dbAuth.sessionName": The name of the PHP session that is started ("")
@@ -1315,6 +1324,53 @@ And this should return status 200 and as data:
 
 These can be used to measure the time (in microseconds) to connect and read data from the database and the cache.
 
+## Custom controller
+
+You can add your own custom REST API endpoints by writing your own custom controller class. 
+The class must provide a constructor that accepts five parameters. With these parameters you can register
+your own endpoint to the existing router. This endpoint may use the database and/or the reflection class
+of the database.
+
+Here is an example of a custom controller class:
+
+```
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use Tqdev\PhpCrudApi\Cache\Cache;
+use Tqdev\PhpCrudApi\Column\ReflectionService;
+use Tqdev\PhpCrudApi\Controller\Responder;
+use Tqdev\PhpCrudApi\Database\GenericDB;
+use Tqdev\PhpCrudApi\Middleware\Router\Router;
+
+class MyHelloController {
+
+    private $responder;
+
+    public function __construct(Router $router, Responder $responder, GenericDB $db, ReflectionService $reflection, Cache $cache)
+    {
+        $router->register('GET', '/hello', array($this, 'getHello'));
+        $this->responder = $responder;
+    }
+
+    public function getHello(ServerRequestInterface $request): ResponseInterface
+    {
+        return $this->responder->success(['message' => "Hello World!"]);
+    }
+}
+```
+
+And then you may register your custom controller class in the config object like this:
+
+```
+$config = new Config([
+    ...
+    'customControllers' => 'MyHelloController',
+    ...
+]);
+```
+
+The `customControllers` config supports a comma separated list of custom controller classes.
+
 ## Tests
 
 I am testing mainly on Ubuntu and I have the following test setups:
@@ -1324,15 +1380,17 @@ I am testing mainly on Ubuntu and I have the following test setups:
   - (Docker) Ubuntu 18.04 with PHP 7.2, MySQL 5.7, PostgreSQL 10.4 (PostGIS 2.4) and SQLite 3.22
   - (Docker) Debian 10 with PHP 7.3, MariaDB 10.3, PostgreSQL 11.4 (PostGIS 2.5) and SQLite 3.27
   - (Docker) Ubuntu 20.04 with PHP 7.4, MySQL 8.0, PostgreSQL 12.2 (PostGIS 3.0) and SQLite 3.31
-  - (Docker) CentOS 8 with PHP 8.0, MariaDB 10.5, PostgreSQL 12.5 (PostGIS 3.0) and SQLite 3.26
+  - (Docker) CentOS 8 with PHP 8.1, MariaDB 10.6, PostgreSQL 12.8 (PostGIS 3.0) and SQLite 3.26
+  - (Docker) Debian 11 with PHP 7.4, MariaDB 10.5, PostgreSQL 13.4 (PostGIS 3.1) and SQLite 3.34
 
 This covers not all environments (yet), so please notify me of failing tests and report your environment. 
 I will try to cover most relevant setups in the "docker" folder of the project.
 
 ### Running
 
-To run the functional tests locally you may run the following command:
+To run the functional tests locally you may run the following commands:
 
+    php build.php
     php test.php
 
 This runs the functional tests from the "tests" directory. It uses the database dumps (fixtures) and
@@ -1379,17 +1437,17 @@ Install docker using the following commands and then logout and login for the ch
 To run the docker tests run "build_all.sh" and "run_all.sh" from the docker directory. The output should be:
 
     ================================================
-    CentOS 8 (PHP 8.0)
+    CentOS 8 (PHP 8.1)
     ================================================
-    [1/4] Starting MariaDB 10.5 ..... done
-    [2/4] Starting PostgreSQL 12.5 .. done
+    [1/4] Starting MariaDB 10.6 ..... done
+    [2/4] Starting PostgreSQL 12.8 .. done
     [3/4] Starting SQLServer 2017 ... skipped
     [4/4] Cloning PHP-CRUD-API v2 ... skipped
     ------------------------------------------------
-    mysql: 110 tests ran in 957 ms, 1 skipped, 0 failed
-    pgsql: 110 tests ran in 817 ms, 1 skipped, 0 failed
+    mysql: 117 tests ran in 1336 ms, 1 skipped, 0 failed
+    pgsql: 117 tests ran in 1316 ms, 1 skipped, 0 failed
     sqlsrv: skipped, driver not loaded
-    sqlite: 110 tests ran in 685 ms, 12 skipped, 0 failed
+    sqlite: 117 tests ran in 958 ms, 13 skipped, 0 failed
     ================================================
     Debian 10 (PHP 7.3)
     ================================================
@@ -1398,10 +1456,22 @@ To run the docker tests run "build_all.sh" and "run_all.sh" from the docker dire
     [3/4] Starting SQLServer 2017 ... skipped
     [4/4] Cloning PHP-CRUD-API v2 ... skipped
     ------------------------------------------------
-    mysql: 110 tests ran in 952 ms, 1 skipped, 0 failed
-    pgsql: 110 tests ran in 816 ms, 1 skipped, 0 failed
+    mysql: 117 tests ran in 1276 ms, 1 skipped, 0 failed
+    pgsql: 117 tests ran in 1364 ms, 1 skipped, 0 failed
     sqlsrv: skipped, driver not loaded
-    sqlite: 110 tests ran in 690 ms, 12 skipped, 0 failed
+    sqlite: 117 tests ran in 948 ms, 13 skipped, 0 failed
+    ================================================
+    Debian 11 (PHP 7.4)
+    ================================================
+    [1/4] Starting MariaDB 10.5 ..... done
+    [2/4] Starting PostgreSQL 13.4 .. done
+    [3/4] Starting SQLServer 2017 ... skipped
+    [4/4] Cloning PHP-CRUD-API v2 ... skipped
+    ------------------------------------------------
+    mysql: 117 tests ran in 1255 ms, 1 skipped, 0 failed
+    pgsql: 117 tests ran in 1329 ms, 1 skipped, 0 failed
+    sqlsrv: skipped, driver not loaded
+    sqlite: 117 tests ran in 972 ms, 13 skipped, 0 failed
     ================================================
     Debian 9 (PHP 7.0)
     ================================================
@@ -1410,10 +1480,10 @@ To run the docker tests run "build_all.sh" and "run_all.sh" from the docker dire
     [3/4] Starting SQLServer 2017 ... skipped
     [4/4] Cloning PHP-CRUD-API v2 ... skipped
     ------------------------------------------------
-    mysql: 110 tests ran in 1075 ms, 1 skipped, 0 failed
-    pgsql: 110 tests ran in 834 ms, 1 skipped, 0 failed
+    mysql: 117 tests ran in 1475 ms, 1 skipped, 0 failed
+    pgsql: 117 tests ran in 1394 ms, 1 skipped, 0 failed
     sqlsrv: skipped, driver not loaded
-    sqlite: 110 tests ran in 728 ms, 12 skipped, 0 failed
+    sqlite: 117 tests ran in 1065 ms, 13 skipped, 0 failed
     ================================================
     Ubuntu 16.04 (PHP 7.0)
     ================================================
@@ -1422,9 +1492,9 @@ To run the docker tests run "build_all.sh" and "run_all.sh" from the docker dire
     [3/4] Starting SQLServer 2017 ... done
     [4/4] Cloning PHP-CRUD-API v2 ... skipped
     ------------------------------------------------
-    mysql: 110 tests ran in 1065 ms, 1 skipped, 0 failed
-    pgsql: 110 tests ran in 845 ms, 1 skipped, 0 failed
-    sqlsrv: 110 tests ran in 5404 ms, 1 skipped, 0 failed
+    mysql: 117 tests ran in 1434 ms, 1 skipped, 0 failed
+    pgsql: 117 tests ran in 1432 ms, 1 skipped, 0 failed
+    sqlsrv: 117 tests ran in 8634 ms, 1 skipped, 0 failed
     sqlite: skipped, driver not loaded
     ================================================
     Ubuntu 18.04 (PHP 7.2)
@@ -1434,33 +1504,34 @@ To run the docker tests run "build_all.sh" and "run_all.sh" from the docker dire
     [3/4] Starting SQLServer 2017 ... skipped
     [4/4] Cloning PHP-CRUD-API v2 ... skipped
     ------------------------------------------------
-    mysql: 110 tests ran in 1261 ms, 1 skipped, 0 failed
-    pgsql: 110 tests ran in 859 ms, 1 skipped, 0 failed
+    mysql: 117 tests ran in 1687 ms, 1 skipped, 0 failed
+    pgsql: 117 tests ran in 1393 ms, 1 skipped, 0 failed
     sqlsrv: skipped, driver not loaded
-    sqlite: 110 tests ran in 725 ms, 12 skipped, 0 failed
+    sqlite: 117 tests ran in 1158 ms, 13 skipped, 0 failed
     ================================================
     Ubuntu 20.04 (PHP 7.4)
     ================================================
     [1/4] Starting MySQL 8.0 ........ done
     [2/4] Starting PostgreSQL 12.2 .. done
-    [3/4] Starting SQLServer 2017 ... skipped
+    [3/4] Starting SQLServer 2019 ... done
     [4/4] Cloning PHP-CRUD-API v2 ... skipped
     ------------------------------------------------
-    mysql: 110 tests ran in 1505 ms, 1 skipped, 0 failed
-    pgsql: 110 tests ran in 851 ms, 1 skipped, 0 failed
-    sqlsrv: skipped, driver not loaded
-    sqlite: 110 tests ran in 675 ms, 12 skipped, 0 failed
+    mysql: 117 tests ran in 2096 ms, 1 skipped, 0 failed
+    pgsql: 117 tests ran in 1368 ms, 1 skipped, 0 failed
+    sqlsrv: 117 tests ran in 8410 ms, 1 skipped, 0 failed
+    sqlite: 117 tests ran in 1053 ms, 13 skipped, 0 failed
 
 The above test run (including starting up the databases) takes less than 5 minutes on my slow laptop.
 
     $ ./run.sh
     1) centos8
     2) debian10
-    3) debian9
-    4) ubuntu16
-    5) ubuntu18
-    6) ubuntu20
-    > 5
+    3) debian11
+    4) debian9
+    5) ubuntu16
+    6) ubuntu18
+    7) ubuntu20
+    > 6
     ================================================
     Ubuntu 18.04 (PHP 7.2)
     ================================================
@@ -1469,13 +1540,13 @@ The above test run (including starting up the databases) takes less than 5 minut
     [3/4] Starting SQLServer 2017 ... skipped
     [4/4] Cloning PHP-CRUD-API v2 ... skipped
     ------------------------------------------------
-    mysql: 110 tests ran in 1261 ms, 1 skipped, 0 failed
-    pgsql: 110 tests ran in 859 ms, 1 skipped, 0 failed
+    mysql: 117 tests ran in 1687 ms, 1 skipped, 0 failed
+    pgsql: 117 tests ran in 1393 ms, 1 skipped, 0 failed
     sqlsrv: skipped, driver not loaded
-    sqlite: 110 tests ran in 725 ms, 12 skipped, 0 failed
+    sqlite: 117 tests ran in 1158 ms, 13 skipped, 0 failed
     root@b7ab9472e08f:/php-crud-api# 
 
-As you can see the "run.sh" script gives you access to a prompt in a chosen the docker environment.
+As you can see the "run.sh" script gives you access to a prompt in the chosen docker environment.
 In this environment the local files are mounted. This allows for easy debugging on different environments.
 You may type "exit" when you are done.
 

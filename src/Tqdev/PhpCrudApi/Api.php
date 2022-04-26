@@ -159,8 +159,7 @@ class Api implements RequestHandlerInterface
         }
         foreach ($config->getCustomControllers() as $className) {
             if (class_exists($className)) {
-                $records = new RecordService($db, $reflection);
-                new $className($router, $responder, $records);
+                new $className($router, $responder, $db, $reflection, $cache);
             }
         }
         $this->router = $router;
@@ -170,7 +169,7 @@ class Api implements RequestHandlerInterface
 
     private function parseBody(string $body) /*: ?object*/
     {
-        $first = substr($body, 0, 1);
+        $first = substr(ltrim($body), 0, 1);
         if ($first == '[' || $first == '{') {
             $object = json_decode($body);
             $causeCode = json_last_error();

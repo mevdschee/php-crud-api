@@ -57,6 +57,7 @@ class Geometry implements \JsonSerializable
         ];
     }
 
+    #[\ReturnTypeWillChange]
     public function jsonSerialize()
     {
         return $this->serialize();

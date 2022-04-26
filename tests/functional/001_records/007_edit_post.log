@@ -16,3 +16,25 @@ Content-Type: application/json; charset=utf-8
 Content-Length: 62
 
 {"id":3,"user_id":1,"category_id":1,"content":"test (edited)"}
+===
+PUT /records/posts/3
+
+    {
+        "user_id": 1,
+        "category_id": 1,
+        "content": "test (edited 1)"
+    }
+===
+200
+Content-Type: application/json; charset=utf-8
+Content-Length: 1
+
+1
+===
+GET /records/posts/3
+===
+200
+Content-Type: application/json; charset=utf-8
+Content-Length: 64
+
+{"id":3,"user_id":1,"category_id":1,"content":"test (edited 1)"}

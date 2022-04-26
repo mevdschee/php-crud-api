@@ -22,7 +22,7 @@ class LazyPdo extends \PDO
         // explicitly NOT calling super::__construct
     }
 
-    public function addInitCommand(string $command)/*: void*/
+    public function addInitCommand(string $command) /*: void*/
     {
         $this->commands[] = $command;
     }
@@ -87,7 +87,8 @@ class LazyPdo extends \PDO
         return $this->pdo()->rollBack();
     }
 
-    public function errorCode(): mixed
+    #[\ReturnTypeWillChange]
+    public function errorCode()
     {
         return $this->pdo()->errorCode();
     }
@@ -102,22 +103,23 @@ class LazyPdo extends \PDO
         return $this->pdo()->exec($query);
     }
 
+    #[\ReturnTypeWillChange]
     public function prepare($statement, $options = array())
     {
         return $this->pdo()->prepare($statement, $options);
     }
 
-    public function quote($string, $parameter_type = null): string
+    public function quote($string, $parameter_type = \PDO::PARAM_STR): string
     {
         return $this->pdo()->quote($string, $parameter_type);
     }
 
-    public function lastInsertId(/* ?string */$name = null): string
+    public function lastInsertId( /* ?string */$name = null): string
     {
         return $this->pdo()->lastInsertId($name);
     }
 
-    public function query($query, /* ?int */$fetchMode = null, ...$fetchModeArgs): \PDOStatement
+    public function query($query, /* ?int */ $fetchMode = null, ...$fetchModeArgs): \PDOStatement
     {
         return call_user_func_array(array($this->pdo(), 'query'), func_get_args());
     }

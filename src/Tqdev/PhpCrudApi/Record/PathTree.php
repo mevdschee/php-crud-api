@@ -8,7 +8,7 @@ class PathTree implements \JsonSerializable
 
     private $tree;
 
-    public function __construct(/* object */&$tree = null)
+    public function __construct( /* object */&$tree = null)
     {
         if (!$tree) {
             $tree = $this->newTree();
@@ -68,11 +68,12 @@ class PathTree implements \JsonSerializable
         return $tree->values;
     }
 
-    public static function fromJson(/* object */$tree): PathTree
+    public static function fromJson( /* object */$tree): PathTree
     {
         return new PathTree($tree);
     }
 
+    #[\ReturnTypeWillChange]
     public function jsonSerialize()
     {
         return $this->tree;

@@ -6,7 +6,8 @@ use Tqdev\PhpCrudApi\Database\GenericDB;
 use Tqdev\PhpCrudApi\RequestFactory;
 use Tqdev\PhpCrudApi\ResponseUtils;
 
-require 'vendor/autoload.php';
+error_reporting(-1);
+require 'api.include.php';
 
 function runDir(Config $config, string $dir, array $matches, string $category): array
 {

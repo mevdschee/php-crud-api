@@ -39,6 +39,7 @@ class OpenApiDefinition implements \JsonSerializable
         return true;
     }
 
+    #[\ReturnTypeWillChange]
     public function jsonSerialize()
     {
         return $this->root;

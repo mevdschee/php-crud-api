@@ -172,6 +172,7 @@ class ReflectedTable implements \JsonSerializable
         return array_filter($json);
     }
 
+    #[\ReturnTypeWillChange]
     public function jsonSerialize()
     {
         return $this->serialize();
