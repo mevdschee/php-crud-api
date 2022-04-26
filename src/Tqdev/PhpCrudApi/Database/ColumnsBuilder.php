@@ -35,7 +35,7 @@ class ColumnsBuilder
 
     private function quoteColumnName(ReflectedColumn $column): string
     {
-        return '"' . $column->getName() . '"';
+        return '"' . $column->getRealName() . '"';
     }
 
     public function getOrderBy(ReflectedTable $table, array $columnOrdering): string

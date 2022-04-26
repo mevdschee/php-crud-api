@@ -11,6 +11,7 @@ class ReflectedColumn implements \JsonSerializable
     const DEFAULT_SCALE = 4;
 
     private $name;
+    private $realName;
     private $type;
     private $length;
     private $precision;
@@ -19,9 +20,10 @@ class ReflectedColumn implements \JsonSerializable
     private $pk;
     private $fk;
 
-    public function __construct(string $name, string $type, int $length, int $precision, int $scale, bool $nullable, bool $pk, string $fk)
+    public function __construct(string $name, string $realName, string $type, int $length, int $precision, int $scale, bool $nullable, bool $pk, string $fk)
     {
         $this->name = $name;
+        $this->realName = $realName;
         $this->type = $type;
         $this->length = $length;
         $this->precision = $precision;
@@ -73,6 +75,7 @@ class ReflectedColumn implements \JsonSerializable
     public static function fromReflection(GenericReflection $reflection, array $columnResult): ReflectedColumn
     {
         $name = $columnResult['COLUMN_NAME'];
+        $realName = $columnResult['COLUMN_REAL_NAME'];
         $dataType = $columnResult['DATA_TYPE'];
         $length = (int) $columnResult['CHARACTER_MAXIMUM_LENGTH'];
         $precision = (int) $columnResult['NUMERIC_PRECISION'];
@@ -84,12 +87,13 @@ class ReflectedColumn implements \JsonSerializable
         $nullable = in_array(strtoupper($columnResult['IS_NULLABLE']), ['TRUE', 'YES', 'T', 'Y', '1']);
         $pk = false;
         $fk = '';
-        return new ReflectedColumn($name, $type, $length, $precision, $scale, $nullable, $pk, $fk);
+        return new ReflectedColumn($name, $realName, $type, $length, $precision, $scale, $nullable, $pk, $fk);
     }
 
     public static function fromJson(/* object */$json): ReflectedColumn
     {
-        $name = $json->name;
+        $name = $json->alias ?? $json->name;
+        $realName = $json->name;
         $type = $json->type;
         $length = isset($json->length) ? (int) $json->length : 0;
         $precision = isset($json->precision) ? (int) $json->precision : 0;
@@ -97,7 +101,7 @@ class ReflectedColumn implements \JsonSerializable
         $nullable = isset($json->nullable) ? (bool) $json->nullable : false;
         $pk = isset($json->pk) ? (bool) $json->pk : false;
         $fk = isset($json->fk) ? $json->fk : '';
-        return new ReflectedColumn($name, $type, $length, $precision, $scale, $nullable, $pk, $fk);
+        return new ReflectedColumn($name, $realName, $type, $length, $precision, $scale, $nullable, $pk, $fk);
     }
 
     private function sanitize()
@@ -110,6 +114,11 @@ class ReflectedColumn implements \JsonSerializable
     public function getName(): string
     {
         return $this->name;
+    }
+
+    public function getRealName(): string
+    {
+        return $this->realName;
     }
 
     public function getNullable(): bool
@@ -194,8 +203,9 @@ class ReflectedColumn implements \JsonSerializable
 
     public function serialize()
     {
-        return [
-            'name' => $this->name,
+        $json = [
+            'name' => $this->realName,
+            'alias' => $this->name!=$this->realName?$this->name:null,
             'type' => $this->type,
             'length' => $this->length,
             'precision' => $this->precision,
@@ -204,10 +214,11 @@ class ReflectedColumn implements \JsonSerializable
             'pk' => $this->pk,
             'fk' => $this->fk,
         ];
+        return array_filter($json);
     }
 
     public function jsonSerialize()
     {
-        return array_filter($this->serialize());
+        return $this->serialize();
     }
 }

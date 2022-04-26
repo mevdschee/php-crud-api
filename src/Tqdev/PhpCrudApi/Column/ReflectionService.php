@@ -55,7 +55,8 @@ class ReflectionService
             $table = ReflectedTable::fromJson(json_decode(gzuncompress($data)));
         } else {
             $tableType = $this->database()->getType($tableName);
-            $table = ReflectedTable::fromReflection($this->db->reflection(), $tableName, $tableType);
+            $tableRealName = $this->database()->getRealName($tableName);
+            $table = ReflectedTable::fromReflection($this->db->reflection(), $tableName, $tableRealName, $tableType);
             $data = gzcompress(json_encode($table, JSON_UNESCAPED_UNICODE));
             $this->cache->set($key, $data, $this->ttl);
         }

@@ -57,6 +57,7 @@ class Api implements RequestHandlerInterface
             $config->getPort(),
             $config->getDatabase(),
             $config->getTables(),
+            $config->getMapping(),
             $config->getUsername(),
             $config->getPassword()
         );

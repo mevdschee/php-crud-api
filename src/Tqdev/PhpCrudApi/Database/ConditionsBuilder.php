@@ -66,7 +66,7 @@ class ConditionsBuilder
 
     private function quoteColumnName(ReflectedColumn $column): string
     {
-        return '"' . $column->getName() . '"';
+        return '"' . $column->getRealName() . '"';
     }
 
     private function escapeLikeValue(string $value): string

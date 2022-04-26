@@ -18,71 +18,6 @@ INSERT INTO `categories` (`name`, `icon`) VALUES
 ('article',	NULL),
 ('comment',	NULL);
 
-DROP TABLE IF EXISTS `comments`;
-CREATE TABLE `comments` (
-  `id` bigint(20) NOT NULL AUTO_INCREMENT,
-  `post_id` int(11) NOT NULL,
-  `message` varchar(255) NOT NULL,
-  `category_id` int(11) NOT NULL,
-  PRIMARY KEY (`id`),
-  KEY `post_id` (`post_id`),
-  CONSTRAINT `comments_post_id_fkey` FOREIGN KEY (`post_id`) REFERENCES `posts` (`id`),
-  CONSTRAINT `comments_category_id_fkey` FOREIGN KEY (`category_id`) REFERENCES `categories` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-INSERT INTO `comments` (`post_id`, `message`, `category_id`) VALUES
-(1,	'great', 3),
-(1,	'fantastic', 3),
-(2,	'thank you', 3),
-(2,	'awesome', 3);
-
-DROP TABLE IF EXISTS `posts`;
-CREATE TABLE `posts` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `user_id` int(11) NOT NULL,
-  `category_id` int(11) NOT NULL,
-  `content` varchar(255) NOT NULL,
-  PRIMARY KEY (`id`),
-  KEY `category_id` (`category_id`),
-  KEY `user_id` (`user_id`),
-  CONSTRAINT `posts_category_id_fkey` FOREIGN KEY (`category_id`) REFERENCES `categories` (`id`),
-  CONSTRAINT `posts_user_id_fkey` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-INSERT INTO `posts` (`user_id`, `category_id`, `content`) VALUES
-(1,	1,	'blog started'),
-(1,	2,	'It works!');
-
-DROP TABLE IF EXISTS `post_tags`;
-CREATE TABLE `post_tags` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `post_id` int(11) NOT NULL,
-  `tag_id` int(11) NOT NULL,
-  PRIMARY KEY (`id`),
-  KEY `post_id` (`post_id`),
-  KEY `tag_id` (`tag_id`),
-  CONSTRAINT `post_tags_post_id_fkey` FOREIGN KEY (`post_id`) REFERENCES `posts` (`id`),
-  CONSTRAINT `post_tags_tag_id_fkey` FOREIGN KEY (`tag_id`) REFERENCES `tags` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-INSERT INTO `post_tags` (`post_id`, `tag_id`) VALUES
-(1,	1),
-(1,	2),
-(2,	1),
-(2,	2);
-
-DROP TABLE IF EXISTS `tags`;
-CREATE TABLE `tags` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `name` varchar(255) NOT NULL,
-  `is_important` bit(1) NOT NULL,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-INSERT INTO `tags` (`name`, `is_important`) VALUES
-('funny', 0),
-('important', 1);
-
 DROP TABLE IF EXISTS `users`;
 CREATE TABLE `users` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -96,6 +31,71 @@ CREATE TABLE `users` (
 INSERT INTO `users` (`username`, `password`, `api_key`, `location`) VALUES
 ('user1',	'pass1', '123456789abc', NULL),
 ('user2',	'$2y$10$cg7/nswxVZ0cmVIsMB/pVOh1OfcHScBJGq7Xu4KF9dFEQgRZ8HWe.', NULL, NULL);
+
+DROP TABLE IF EXISTS `abc_posts`;
+CREATE TABLE `abc_posts` (
+  `abc_id` int(11) NOT NULL AUTO_INCREMENT,
+  `abc_user_id` int(11) NOT NULL,
+  `abc_category_id` int(11) NOT NULL,
+  `abc_content` varchar(255) NOT NULL,
+  PRIMARY KEY (`abc_id`),
+  KEY `abc_category_id` (`abc_category_id`),
+  KEY `abc_user_id` (`abc_user_id`),
+  CONSTRAINT `abc_posts_abc_category_id_fkey` FOREIGN KEY (`abc_category_id`) REFERENCES `categories` (`id`),
+  CONSTRAINT `abc_posts_abc_user_id_fkey` FOREIGN KEY (`abc_user_id`) REFERENCES `users` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+INSERT INTO `abc_posts` (`abc_user_id`, `abc_category_id`, `abc_content`) VALUES
+(1,	1,	'blog started'),
+(1,	2,	'It works!');
+
+DROP TABLE IF EXISTS `comments`;
+CREATE TABLE `comments` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `post_id` int(11) NOT NULL,
+  `message` varchar(255) NOT NULL,
+  `category_id` int(11) NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `post_id` (`post_id`),
+  CONSTRAINT `comments_post_id_fkey` FOREIGN KEY (`post_id`) REFERENCES `abc_posts` (`abc_id`),
+  CONSTRAINT `comments_category_id_fkey` FOREIGN KEY (`category_id`) REFERENCES `categories` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+INSERT INTO `comments` (`post_id`, `message`, `category_id`) VALUES
+(1,	'great', 3),
+(1,	'fantastic', 3),
+(2,	'thank you', 3),
+(2,	'awesome', 3);
+
+DROP TABLE IF EXISTS `tags`;
+CREATE TABLE `tags` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) NOT NULL,
+  `is_important` bit(1) NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+INSERT INTO `tags` (`name`, `is_important`) VALUES
+('funny', 0),
+('important', 1);
+
+DROP TABLE IF EXISTS `post_tags`;
+CREATE TABLE `post_tags` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `post_id` int(11) NOT NULL,
+  `tag_id` int(11) NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `post_id` (`post_id`),
+  KEY `tag_id` (`tag_id`),
+  CONSTRAINT `post_tags_post_id_fkey` FOREIGN KEY (`post_id`) REFERENCES `abc_posts` (`abc_id`),
+  CONSTRAINT `post_tags_tag_id_fkey` FOREIGN KEY (`tag_id`) REFERENCES `tags` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+INSERT INTO `post_tags` (`post_id`, `tag_id`) VALUES
+(1,	1),
+(1,	2),
+(2,	1),
+(2,	2);
 
 DROP TABLE IF EXISTS `countries`;
 CREATE TABLE `countries` (

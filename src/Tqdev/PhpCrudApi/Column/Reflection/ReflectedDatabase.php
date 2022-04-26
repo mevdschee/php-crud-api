@@ -7,30 +7,34 @@ use Tqdev\PhpCrudApi\Database\GenericReflection;
 class ReflectedDatabase implements \JsonSerializable
 {
     private $tableTypes;
+    private $tableRealNames;
 
-    public function __construct(array $tableTypes)
+    public function __construct(array $tableTypes, array $tableRealNames)
     {
         $this->tableTypes = $tableTypes;
+        $this->tableRealNames = $tableRealNames;
     }
 
     public static function fromReflection(GenericReflection $reflection): ReflectedDatabase
     {
         $tableTypes = [];
+        $tableRealNames = [];
         foreach ($reflection->getTables() as $table) {
             $tableName = $table['TABLE_NAME'];
-            $tableType = $table['TABLE_TYPE'];
             if (in_array($tableName, $reflection->getIgnoredTables())) {
                 continue;
             }
-            $tableTypes[$tableName] = $tableType;
+            $tableTypes[$tableName] = $table['TABLE_TYPE'];
+            $tableRealNames[$tableName] = $table['TABLE_REAL_NAME'];
         }
-        return new ReflectedDatabase($tableTypes);
+        return new ReflectedDatabase($tableTypes, $tableRealNames);
     }
 
     public static function fromJson(/* object */$json): ReflectedDatabase
     {
-        $tableTypes = (array) $json->tables;
-        return new ReflectedDatabase($tableTypes);
+        $tableTypes = (array) $json->types;
+        $tableRealNames = (array) $json->realNames;
+        return new ReflectedDatabase($tableTypes, $tableRealNames);
     }
 
     public function hasTable(string $tableName): bool
@@ -41,6 +45,11 @@ class ReflectedDatabase implements \JsonSerializable
     public function getType(string $tableName): string
     {
         return isset($this->tableTypes[$tableName]) ? $this->tableTypes[$tableName] : '';
+    }
+
+    public function getRealName(string $tableName): string
+    {
+        return isset($this->tableRealNames[$tableName]) ? $this->tableRealNames[$tableName] : '';
     }
 
     public function getTableNames(): array
@@ -54,13 +63,15 @@ class ReflectedDatabase implements \JsonSerializable
             return false;
         }
         unset($this->tableTypes[$tableName]);
+        unset($this->tableRealNames[$tableName]);
         return true;
     }
 
     public function serialize()
     {
         return [
-            'tables' => $this->tableTypes,
+            'types' => $this->tableTypes,
+            'realNames' => $this->tableRealNames,
         ];
     }
 

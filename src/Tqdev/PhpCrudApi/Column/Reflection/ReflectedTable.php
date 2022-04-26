@@ -7,14 +7,16 @@ use Tqdev\PhpCrudApi\Database\GenericReflection;
 class ReflectedTable implements \JsonSerializable
 {
     private $name;
+    private $realName;
     private $type;
     private $columns;
     private $pk;
     private $fks;
 
-    public function __construct(string $name, string $type, array $columns)
+    public function __construct(string $name, string $realName, string $type, array $columns)
     {
         $this->name = $name;
+        $this->realName = $realName;
         $this->type = $type;
         // set columns
         $this->columns = [];
@@ -40,7 +42,7 @@ class ReflectedTable implements \JsonSerializable
         }
     }
 
-    public static function fromReflection(GenericReflection $reflection, string $name, string $type): ReflectedTable
+    public static function fromReflection(GenericReflection $reflection, string $name, string $realName, string $type): ReflectedTable
     {
         // set columns
         $columns = [];
@@ -82,12 +84,13 @@ class ReflectedTable implements \JsonSerializable
                 $columns[$columnName]->setFk($table);
             }
         }
-        return new ReflectedTable($name, $type, array_values($columns));
+        return new ReflectedTable($name, $realName, $type, array_values($columns));
     }
 
     public static function fromJson( /* object */$json): ReflectedTable
     {
-        $name = $json->name;
+        $name = $json->alias??$json->name;
+        $realName = $json->name;
         $type = isset($json->type) ? $json->type : 'table';
         $columns = [];
         if (isset($json->columns) && is_array($json->columns)) {
@@ -95,7 +98,7 @@ class ReflectedTable implements \JsonSerializable
                 $columns[] = ReflectedColumn::fromJson($column);
             }
         }
-        return new ReflectedTable($name, $type, $columns);
+        return new ReflectedTable($name, $realName, $type, $columns);
     }
 
     public function hasColumn(string $columnName): bool
@@ -116,6 +119,11 @@ class ReflectedTable implements \JsonSerializable
     public function getName(): string
     {
         return $this->name;
+    }
+
+    public function getRealName(): string
+    {
+        return $this->realName;
     }
 
     public function getType(): string
@@ -155,11 +163,13 @@ class ReflectedTable implements \JsonSerializable
 
     public function serialize()
     {
-        return [
-            'name' => $this->name,
+        $json = [
+            'name' => $this->realName,
+            'alias' => $this->name!=$this->realName?$this->name:null,
             'type' => $this->type,
             'columns' => array_values($this->columns),
         ];
+        return array_filter($json);
     }
 
     public function jsonSerialize()

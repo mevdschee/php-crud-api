@@ -12,6 +12,7 @@ class Config
         'password' => null,
         'database' => null,
         'tables' => '',
+        'mapping' => '',
         'middlewares' => 'cors,errors',
         'controllers' => 'records,geojson,openapi,status',
         'customControllers' => '',
@@ -151,6 +152,12 @@ class Config
     public function getTables(): array
     {
         return array_filter(array_map('trim', explode(',', $this->values['tables'])));
+    }
+
+    public function getMapping(): array
+    {
+        $mapping = array_map(function($v){ return explode('=', $v); }, array_filter(array_map('trim', explode(',', $this->values['mapping']))));
+        return array_combine(array_column($mapping,0),array_column($mapping,1));
     }
 
     public function getMiddlewares(): array

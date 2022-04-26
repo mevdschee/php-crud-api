@@ -14,13 +14,13 @@ class GenericDefinition
     private $typeConverter;
     private $reflection;
 
-    public function __construct(LazyPdo $pdo, string $driver, string $database, array $tables)
+    public function __construct(LazyPdo $pdo, string $driver, string $database, array $tables, RealNameMapper $mapper)
     {
         $this->pdo = $pdo;
         $this->driver = $driver;
         $this->database = $database;
         $this->typeConverter = new TypeConverter($driver);
-        $this->reflection = new GenericReflection($pdo, $driver, $database, $tables);
+        $this->reflection = new GenericReflection($pdo, $driver, $database, $tables, $mapper);
     }
 
     private function quote(string $identifier): string

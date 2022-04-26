@@ -3,6 +3,7 @@ $settings = [
     'database' => 'incorrect_database',
     'username' => 'incorrect_username',
     'password' => 'incorrect_password',
+    'mapping' => 'abc_posts.abc_id=posts.id,abc_posts.abc_user_id=posts.user_id,abc_posts.abc_category_id=posts.category_id,abc_posts.abc_content=posts.content',
     'controllers' => 'records,columns,cache,openapi,geojson,status',
     'middlewares' => 'sslRedirect,xml,cors,json,reconnect,apiKeyAuth,apiKeyDbAuth,dbAuth,jwtAuth,basicAuth,authorization,sanitation,validation,ipAddress,multiTenancy,pageLimits,joinLimits,customization',
     'apiKeyAuth.mode' => 'optional',
@@ -27,7 +28,10 @@ $settings = [
     'reconnect.passwordHandler' => function () {
         return 'php-crud-api';
     },
-    'authorization.tableHandler' => function ($operation, $tableName) {
+    'reconnect.mappingHandler' => function () {
+        return ['abc_posts.abc_id' => 'posts.id', 'abc_posts.abc_user_id' => 'posts.user_id', 'abc_posts.abc_category_id' => 'posts.category_id', 'abc_posts.abc_content' => 'posts.content'];
+    },
+    'authorization.tableHandler'  => function ($operation, $tableName) {
         return !($tableName == 'invisibles' && !isset($_SESSION['claims']['name']) && empty($_SESSION['username']) && empty($_SESSION['user']) && empty($_SESSION['apiKey']) && empty($_SESSION['apiUser']));
     },
     'authorization.columnHandler' => function ($operation, $tableName, $columnName) {

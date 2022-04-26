@@ -14,9 +14,11 @@ class GenericDB
     private $port;
     private $database;
     private $tables;
+    private $mapping;
     private $username;
     private $password;
     private $pdo;
+    private $mapper;
     private $reflection;
     private $definition;
     private $conditions;
@@ -94,27 +96,29 @@ class GenericDB
         foreach ($commands as $command) {
             $this->pdo->addInitCommand($command);
         }
-        $this->reflection = new GenericReflection($this->pdo, $this->driver, $this->database, $this->tables);
-        $this->definition = new GenericDefinition($this->pdo, $this->driver, $this->database, $this->tables);
+        $this->mapper = new RealNameMapper($this->mapping);
+        $this->reflection = new GenericReflection($this->pdo, $this->driver, $this->database, $this->tables, $this->mapper);
+        $this->definition = new GenericDefinition($this->pdo, $this->driver, $this->database, $this->tables, $this->mapper);
         $this->conditions = new ConditionsBuilder($this->driver);
         $this->columns = new ColumnsBuilder($this->driver);
         $this->converter = new DataConverter($this->driver);
         return $result;
     }
 
-    public function __construct(string $driver, string $address, int $port, string $database, array $tables, string $username, string $password)
+    public function __construct(string $driver, string $address, int $port, string $database, array $tables, array $mapping, string $username, string $password)
     {
         $this->driver = $driver;
         $this->address = $address;
         $this->port = $port;
         $this->database = $database;
         $this->tables = $tables;
+        $this->mapping = $mapping;
         $this->username = $username;
         $this->password = $password;
         $this->initPdo();
     }
 
-    public function reconstruct(string $driver, string $address, int $port, string $database, array $tables, string $username, string $password): bool
+    public function reconstruct(string $driver, string $address, int $port, string $database, array $tables, array $mapping, string $username, string $password): bool
     {
         if ($driver) {
             $this->driver = $driver;
@@ -130,6 +134,9 @@ class GenericDB
         }
         if ($tables) {
             $this->tables = $tables;
+        }
+        if ($mapping) {
+            $this->mapping = $mapping;
         }
         if ($username) {
             $this->username = $username;
@@ -187,10 +194,10 @@ class GenericDB
     {
         $this->converter->convertColumnValues($table, $columnValues);
         $insertColumns = $this->columns->getInsert($table, $columnValues);
-        $tableName = $table->getName();
+        $tableRealName = $table->getRealName();
         $pkName = $table->getPk()->getName();
         $parameters = array_values($columnValues);
-        $sql = 'INSERT INTO "' . $tableName . '" ' . $insertColumns;
+        $sql = 'INSERT INTO "' . $tableRealName . '" ' . $insertColumns;
         $stmt = $this->query($sql, $parameters);
         // return primary key value if specified in the input
         if (isset($columnValues[$pkName])) {
@@ -219,17 +226,19 @@ class GenericDB
     {
         $selectColumns = $this->columns->getSelect($table, $columnNames);
         $tableName = $table->getName();
+        $tableRealName = $table->getRealName();
         $condition = new ColumnCondition($table->getPk(), 'eq', $id);
         $condition = $this->addMiddlewareConditions($tableName, $condition);
         $parameters = array();
         $whereClause = $this->conditions->getWhereClause($condition, $parameters);
-        $sql = 'SELECT ' . $selectColumns . ' FROM "' . $tableName . '" ' . $whereClause;
+        $sql = 'SELECT ' . $selectColumns . ' FROM "' . $tableRealName . '" ' . $whereClause;
         $stmt = $this->query($sql, $parameters);
         $record = $stmt->fetch() ?: null;
         if ($record === null) {
             return null;
         }
         $records = array($record);
+        $records = $this->mapRecords($tableRealName, $records);
         $this->converter->convertRecords($table, $columnNames, $records);
         return $records[0];
     }
@@ -241,13 +250,15 @@ class GenericDB
         }
         $selectColumns = $this->columns->getSelect($table, $columnNames);
         $tableName = $table->getName();
+        $tableRealName = $table->getRealName();
         $condition = new ColumnCondition($table->getPk(), 'in', implode(',', $ids));
         $condition = $this->addMiddlewareConditions($tableName, $condition);
         $parameters = array();
         $whereClause = $this->conditions->getWhereClause($condition, $parameters);
-        $sql = 'SELECT ' . $selectColumns . ' FROM "' . $tableName . '" ' . $whereClause;
+        $sql = 'SELECT ' . $selectColumns . ' FROM "' . $tableRealName . '" ' . $whereClause;
         $stmt = $this->query($sql, $parameters);
         $records = $stmt->fetchAll();
+        $records = $this->mapRecords($tableRealName, $records);
         $this->converter->convertRecords($table, $columnNames, $records);
         return $records;
     }
@@ -255,12 +266,26 @@ class GenericDB
     public function selectCount(ReflectedTable $table, Condition $condition): int
     {
         $tableName = $table->getName();
+        $tableRealName = $table->getRealName();
         $condition = $this->addMiddlewareConditions($tableName, $condition);
         $parameters = array();
         $whereClause = $this->conditions->getWhereClause($condition, $parameters);
-        $sql = 'SELECT COUNT(*) FROM "' . $tableName . '"' . $whereClause;
+        $sql = 'SELECT COUNT(*) FROM "' . $tableRealName . '"' . $whereClause;
         $stmt = $this->query($sql, $parameters);
         return $stmt->fetchColumn(0);
+    }
+
+    private function mapRecords(string $tableRealName, array $records): array
+    {
+        $mappedRecords = [];
+        foreach ($records as $record) {
+            $mappedRecord = [];
+            foreach ($record as $columnRealName => $columnValue) {
+                $mappedRecord[$this->mapper->getColumnName($tableRealName, $columnRealName)] = $columnValue;
+            }
+            $mappedRecords[] = $mappedRecord;
+        }
+        return $mappedRecords;
     }
 
     public function selectAll(ReflectedTable $table, array $columnNames, Condition $condition, array $columnOrdering, int $offset, int $limit): array
@@ -270,14 +295,16 @@ class GenericDB
         }
         $selectColumns = $this->columns->getSelect($table, $columnNames);
         $tableName = $table->getName();
+        $tableRealName = $table->getRealName();
         $condition = $this->addMiddlewareConditions($tableName, $condition);
         $parameters = array();
         $whereClause = $this->conditions->getWhereClause($condition, $parameters);
         $orderBy = $this->columns->getOrderBy($table, $columnOrdering);
         $offsetLimit = $this->columns->getOffsetLimit($offset, $limit);
-        $sql = 'SELECT ' . $selectColumns . ' FROM "' . $tableName . '"' . $whereClause . $orderBy . $offsetLimit;
+        $sql = 'SELECT ' . $selectColumns . ' FROM "' . $tableRealName . '"' . $whereClause . $orderBy . $offsetLimit;
         $stmt = $this->query($sql, $parameters);
         $records = $stmt->fetchAll();
+        $records = $this->mapRecords($tableRealName, $records);
         $this->converter->convertRecords($table, $columnNames, $records);
         return $records;
     }
@@ -290,11 +317,12 @@ class GenericDB
         $this->converter->convertColumnValues($table, $columnValues);
         $updateColumns = $this->columns->getUpdate($table, $columnValues);
         $tableName = $table->getName();
+        $tableRealName = $table->getRealName();
         $condition = new ColumnCondition($table->getPk(), 'eq', $id);
         $condition = $this->addMiddlewareConditions($tableName, $condition);
         $parameters = array_values($columnValues);
         $whereClause = $this->conditions->getWhereClause($condition, $parameters);
-        $sql = 'UPDATE "' . $tableName . '" SET ' . $updateColumns . $whereClause;
+        $sql = 'UPDATE "' . $tableRealName . '" SET ' . $updateColumns . $whereClause;
         $stmt = $this->query($sql, $parameters);
         return $stmt->rowCount();
     }
@@ -302,11 +330,12 @@ class GenericDB
     public function deleteSingle(ReflectedTable $table, string $id)
     {
         $tableName = $table->getName();
+        $tableRealName = $table->getRealName();
         $condition = new ColumnCondition($table->getPk(), 'eq', $id);
         $condition = $this->addMiddlewareConditions($tableName, $condition);
         $parameters = array();
         $whereClause = $this->conditions->getWhereClause($condition, $parameters);
-        $sql = 'DELETE FROM "' . $tableName . '" ' . $whereClause;
+        $sql = 'DELETE FROM "' . $tableRealName . '" ' . $whereClause;
         $stmt = $this->query($sql, $parameters);
         return $stmt->rowCount();
     }
@@ -319,11 +348,12 @@ class GenericDB
         $this->converter->convertColumnValues($table, $columnValues);
         $updateColumns = $this->columns->getIncrement($table, $columnValues);
         $tableName = $table->getName();
+        $tableRealName = $table->getRealName();
         $condition = new ColumnCondition($table->getPk(), 'eq', $id);
         $condition = $this->addMiddlewareConditions($tableName, $condition);
         $parameters = array_values($columnValues);
         $whereClause = $this->conditions->getWhereClause($condition, $parameters);
-        $sql = 'UPDATE "' . $tableName . '" SET ' . $updateColumns . $whereClause;
+        $sql = 'UPDATE "' . $tableRealName . '" SET ' . $updateColumns . $whereClause;
         $stmt = $this->query($sql, $parameters);
         return $stmt->rowCount();
     }
@@ -352,6 +382,7 @@ class GenericDB
             $this->port,
             $this->database,
             $this->tables,
+            $this->mapping,
             $this->username,
         ]));
     }
