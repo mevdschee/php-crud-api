@@ -10,7 +10,7 @@ class GenericReflection
     private $driver;
     private $database;
     private $tables;
-    private $realNameMapper;
+    private $mapper;
     private $typeConverter;
 
     public function __construct(LazyPdo $pdo, string $driver, string $database, array $tables, RealNameMapper $mapper)
@@ -19,7 +19,7 @@ class GenericReflection
         $this->driver = $driver;
         $this->database = $database;
         $this->tables = $tables;
-        $this->realNameMapper = $mapper;
+        $this->mapper = $mapper;
         $this->typeConverter = new TypeConverter($driver);
     }
 
@@ -108,7 +108,7 @@ class GenericReflection
         });
         foreach ($results as &$result) {
             $result['TABLE_REAL_NAME'] = $result['TABLE_NAME'];
-            $result['TABLE_NAME'] = $this->realNameMapper->getTableName($result['TABLE_REAL_NAME']);
+            $result['TABLE_NAME'] = $this->mapper->getTableName($result['TABLE_REAL_NAME']);
         }
         foreach ($results as &$result) {
             $map = [];
@@ -133,12 +133,12 @@ class GenericReflection
 
     public function getTableColumns(string $tableName, string $type): array
     {
-        $tableRealName = $this->realNameMapper->getTableRealName($tableName);        
+        $tableRealName = $this->mapper->getTableRealName($tableName);        
         $sql = $this->getTableColumnsSQL();
         $results = $this->query($sql, [$tableRealName, $this->database]);
         foreach ($results as &$result) {
             $result['COLUMN_REAL_NAME'] = $result['COLUMN_NAME'];
-            $result['COLUMN_NAME'] = $this->realNameMapper->getColumnName($tableRealName, $result['COLUMN_REAL_NAME']);
+            $result['COLUMN_NAME'] = $this->mapper->getColumnName($tableRealName, $result['COLUMN_REAL_NAME']);
         }
         if ($type == 'view') {
             foreach ($results as &$result) {
@@ -182,25 +182,25 @@ class GenericReflection
 
     public function getTablePrimaryKeys(string $tableName): array
     {
-        $tableRealName = $this->realNameMapper->getTableRealName($tableName);        
+        $tableRealName = $this->mapper->getTableRealName($tableName);        
         $sql = $this->getTablePrimaryKeysSQL();
         $results = $this->query($sql, [$tableRealName, $this->database]);
         $primaryKeys = [];
         foreach ($results as $result) {
-            $primaryKeys[] = $this->realNameMapper->getColumnName($tableRealName, $result['COLUMN_NAME']);
+            $primaryKeys[] = $this->mapper->getColumnName($tableRealName, $result['COLUMN_NAME']);
         }
         return $primaryKeys;
     }
 
     public function getTableForeignKeys(string $tableName): array
     {
-        $tableRealName = $this->realNameMapper->getTableRealName($tableName);        
+        $tableRealName = $this->mapper->getTableRealName($tableName);        
         $sql = $this->getTableForeignKeysSQL();
         $results = $this->query($sql, [$tableRealName, $this->database]);
         $foreignKeys = [];
         foreach ($results as $result) {
-            $columnName = $this->realNameMapper->getColumnName($tableRealName, $result['COLUMN_NAME']);
-            $otherTableName = $this->realNameMapper->getTableName($result['REFERENCED_TABLE_NAME']);
+            $columnName = $this->mapper->getColumnName($tableRealName, $result['COLUMN_NAME']);
+            $otherTableName = $this->mapper->getTableName($result['REFERENCED_TABLE_NAME']);
             $foreignKeys[$columnName] = $otherTableName;
         }
         return $foreignKeys;

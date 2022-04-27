@@ -4177,9 +4177,8 @@ namespace Tqdev\PhpCrudApi\Column {
             $this->reflection = $reflection;
         }
 
-        public function updateTable(string $tableName, /* object */ $changes): bool
+        public function updateTable(ReflectedTable $table, /* object */ $changes): bool
         {
-            $table = $this->reflection->getTable($tableName);
             $newTable = ReflectedTable::fromJson((object) array_merge((array) $table->jsonSerialize(), (array) $changes));
             if ($table->getRealName() != $newTable->getRealName()) {
                 if (!$this->db->definition()->renameTable($table->getRealName(), $newTable->getRealName())) {
@@ -4189,18 +4188,15 @@ namespace Tqdev\PhpCrudApi\Column {
             return true;
         }
 
-        public function updateColumn(string $tableName, string $columnName, /* object */ $changes): bool
+        public function updateColumn(ReflectedTable $table, ReflectedColumn $column, /* object */ $changes): bool
         {
-            $table = $this->reflection->getTable($tableName);
-            $column = $table->getColumn($columnName);
-
             // remove constraints on other column
             $newColumn = ReflectedColumn::fromJson((object) array_merge((array) $column->jsonSerialize(), (array) $changes));
             if ($newColumn->getPk() != $column->getPk() && $table->hasPk()) {
                 $oldColumn = $table->getPk();
-                if ($oldColumn->getName() != $columnName) {
+                if ($oldColumn->getRealName() != $column->getRealName()) {
                     $oldColumn->setPk(false);
-                    if (!$this->db->definition()->removeColumnPrimaryKey($table->getName(), $oldColumn->getName(), $oldColumn)) {
+                    if (!$this->db->definition()->removeColumnPrimaryKey($table->getRealName(), $oldColumn->getRealName(), $oldColumn)) {
                         return false;
                     }
                 }
@@ -4209,12 +4205,12 @@ namespace Tqdev\PhpCrudApi\Column {
             // remove constraints
             $newColumn = ReflectedColumn::fromJson((object) array_merge((array) $column->jsonSerialize(), ['pk' => false, 'fk' => false]));
             if ($newColumn->getPk() != $column->getPk() && !$newColumn->getPk()) {
-                if (!$this->db->definition()->removeColumnPrimaryKey($table->getName(), $column->getName(), $newColumn)) {
+                if (!$this->db->definition()->removeColumnPrimaryKey($table->getRealName(), $column->getRealName(), $newColumn)) {
                     return false;
                 }
             }
             if ($newColumn->getFk() != $column->getFk() && !$newColumn->getFk()) {
-                if (!$this->db->definition()->removeColumnForeignKey($table->getName(), $column->getName(), $newColumn)) {
+                if (!$this->db->definition()->removeColumnForeignKey($table->getRealName(), $column->getRealName(), $newColumn)) {
                     return false;
                 }
             }
@@ -4223,8 +4219,8 @@ namespace Tqdev\PhpCrudApi\Column {
             $newColumn = ReflectedColumn::fromJson((object) array_merge((array) $column->jsonSerialize(), (array) $changes));
             $newColumn->setPk(false);
             $newColumn->setFk('');
-            if ($newColumn->getName() != $column->getName()) {
-                if (!$this->db->definition()->renameColumn($table->getName(), $column->getName(), $newColumn)) {
+            if ($newColumn->getRealName() != $column->getRealName()) {
+                if (!$this->db->definition()->renameColumn($table->getRealName(), $column->getRealName(), $newColumn)) {
                     return false;
                 }
             }
@@ -4234,12 +4230,12 @@ namespace Tqdev\PhpCrudApi\Column {
                 $newColumn->getPrecision() != $column->getPrecision() ||
                 $newColumn->getScale() != $column->getScale()
             ) {
-                if (!$this->db->definition()->retypeColumn($table->getName(), $newColumn->getName(), $newColumn)) {
+                if (!$this->db->definition()->retypeColumn($table->getRealName(), $newColumn->getRealName(), $newColumn)) {
                     return false;
                 }
             }
             if ($newColumn->getNullable() != $column->getNullable()) {
-                if (!$this->db->definition()->setColumnNullable($table->getName(), $newColumn->getName(), $newColumn)) {
+                if (!$this->db->definition()->setColumnNullable($table->getRealName(), $newColumn->getRealName(), $newColumn)) {
                     return false;
                 }
             }
@@ -4247,12 +4243,12 @@ namespace Tqdev\PhpCrudApi\Column {
             // add constraints
             $newColumn = ReflectedColumn::fromJson((object) array_merge((array) $column->jsonSerialize(), (array) $changes));
             if ($newColumn->getFk()) {
-                if (!$this->db->definition()->addColumnForeignKey($table->getName(), $newColumn->getName(), $newColumn)) {
+                if (!$this->db->definition()->addColumnForeignKey($table->getRealName(), $newColumn->getRealName(), $newColumn)) {
                     return false;
                 }
             }
             if ($newColumn->getPk()) {
-                if (!$this->db->definition()->addColumnPrimaryKey($table->getName(), $newColumn->getName(), $newColumn)) {
+                if (!$this->db->definition()->addColumnPrimaryKey($table->getRealName(), $newColumn->getRealName(), $newColumn)) {
                     return false;
                 }
             }
@@ -4268,50 +4264,48 @@ namespace Tqdev\PhpCrudApi\Column {
             return true;
         }
 
-        public function addColumn(string $tableName, /* object */ $definition)
+        public function addColumn(ReflectedTable $table, /* object */ $definition)
         {
             $newColumn = ReflectedColumn::fromJson($definition);
-            if (!$this->db->definition()->addColumn($tableName, $newColumn)) {
+            if (!$this->db->definition()->addColumn($table->getRealName(), $newColumn)) {
                 return false;
             }
             if ($newColumn->getFk()) {
-                if (!$this->db->definition()->addColumnForeignKey($tableName, $newColumn->getName(), $newColumn)) {
+                if (!$this->db->definition()->addColumnForeignKey($table->getRealName(), $newColumn->getRealName(), $newColumn)) {
                     return false;
                 }
             }
             if ($newColumn->getPk()) {
-                if (!$this->db->definition()->addColumnPrimaryKey($tableName, $newColumn->getName(), $newColumn)) {
+                if (!$this->db->definition()->addColumnPrimaryKey($table->getRealName(), $newColumn->getRealName(), $newColumn)) {
                     return false;
                 }
             }
             return true;
         }
 
-        public function removeTable(string $tableName)
+        public function removeTable(ReflectedTable $table)
         {
-            if (!$this->db->definition()->removeTable($tableName)) {
+            if (!$this->db->definition()->removeTable($table->getRealName())) {
                 return false;
             }
             return true;
         }
 
-        public function removeColumn(string $tableName, string $columnName)
+        public function removeColumn(ReflectedTable $table, ReflectedColumn $column)
         {
-            $table = $this->reflection->getTable($tableName);
-            $newColumn = $table->getColumn($columnName);
-            if ($newColumn->getPk()) {
-                $newColumn->setPk(false);
-                if (!$this->db->definition()->removeColumnPrimaryKey($table->getName(), $newColumn->getName(), $newColumn)) {
+            if ($column->getPk()) {
+                $column->setPk(false);
+                if (!$this->db->definition()->removeColumnPrimaryKey($table->getRealName(), $column->getRealName(), $column)) {
                     return false;
                 }
             }
-            if ($newColumn->getFk()) {
-                $newColumn->setFk("");
-                if (!$this->db->definition()->removeColumnForeignKey($tableName, $columnName, $newColumn)) {
+            if ($column->getFk()) {
+                $column->setFk("");
+                if (!$this->db->definition()->removeColumnForeignKey($table->getRealName(), $column->getRealName(), $column)) {
                     return false;
                 }
             }
-            if (!$this->db->definition()->removeColumn($tableName, $columnName)) {
+            if (!$this->db->definition()->removeColumn($table->getRealName(), $column->getRealName())) {
                 return false;
             }
             return true;
@@ -4525,7 +4519,8 @@ namespace Tqdev\PhpCrudApi\Controller {
             if (!$this->reflection->hasTable($tableName)) {
                 return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $tableName);
             }
-            $success = $this->definition->updateTable($tableName, $request->getParsedBody());
+            $table = $this->reflection->getTable($tableName);
+            $success = $this->definition->updateTable($table, $request->getParsedBody());
             if ($success) {
                 $this->reflection->refreshTables();
             }
@@ -4543,7 +4538,8 @@ namespace Tqdev\PhpCrudApi\Controller {
             if (!$table->hasColumn($columnName)) {
                 return $this->responder->error(ErrorCode::COLUMN_NOT_FOUND, $columnName);
             }
-            $success = $this->definition->updateColumn($tableName, $columnName, $request->getParsedBody());
+            $column = $table->getColumn($columnName);
+            $success = $this->definition->updateColumn($table, $column, $request->getParsedBody());
             if ($success) {
                 $this->reflection->refreshTable($tableName);
             }
@@ -4574,7 +4570,7 @@ namespace Tqdev\PhpCrudApi\Controller {
             if ($table->hasColumn($columnName)) {
                 return $this->responder->error(ErrorCode::COLUMN_ALREADY_EXISTS, $columnName);
             }
-            $success = $this->definition->addColumn($tableName, $request->getParsedBody());
+            $success = $this->definition->addColumn($table, $request->getParsedBody());
             if ($success) {
                 $this->reflection->refreshTable($tableName);
             }
@@ -4587,7 +4583,8 @@ namespace Tqdev\PhpCrudApi\Controller {
             if (!$this->reflection->hasTable($tableName)) {
                 return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $tableName);
             }
-            $success = $this->definition->removeTable($tableName);
+            $table = $this->reflection->getTable($tableName);
+            $success = $this->definition->removeTable($table);
             if ($success) {
                 $this->reflection->refreshTables();
             }
@@ -4605,7 +4602,8 @@ namespace Tqdev\PhpCrudApi\Controller {
             if (!$table->hasColumn($columnName)) {
                 return $this->responder->error(ErrorCode::COLUMN_NOT_FOUND, $columnName);
             }
-            $success = $this->definition->removeColumn($tableName, $columnName);
+            $column = $table->getColumn($columnName);
+            $success = $this->definition->removeColumn($table, $column);
             if ($success) {
                 $this->reflection->refreshTable($tableName);
             }
@@ -6039,7 +6037,7 @@ namespace Tqdev\PhpCrudApi\Database {
         {
             $p1 = $this->quote($tableName);
             $p2 = $this->quote($columnName);
-            $p3 = $this->quote($newColumn->getName());
+            $p3 = $this->quote($newColumn->getRealName());
 
             switch ($this->driver) {
                 case 'mysql':
@@ -6059,7 +6057,7 @@ namespace Tqdev\PhpCrudApi\Database {
         {
             $p1 = $this->quote($tableName);
             $p2 = $this->quote($columnName);
-            $p3 = $this->quote($newColumn->getName());
+            $p3 = $this->quote($newColumn->getRealName());
             $p4 = $this->getColumnType($newColumn, true);
 
             switch ($this->driver) {
@@ -6076,7 +6074,7 @@ namespace Tqdev\PhpCrudApi\Database {
         {
             $p1 = $this->quote($tableName);
             $p2 = $this->quote($columnName);
-            $p3 = $this->quote($newColumn->getName());
+            $p3 = $this->quote($newColumn->getRealName());
             $p4 = $this->getColumnType($newColumn, true);
 
             switch ($this->driver) {
@@ -6148,7 +6146,7 @@ namespace Tqdev\PhpCrudApi\Database {
 
             switch ($this->driver) {
                 case 'mysql':
-                    $p3 = $this->quote($newColumn->getName());
+                    $p3 = $this->quote($newColumn->getRealName());
                     $p4 = $this->getColumnType($newColumn, true);
                     return "ALTER TABLE $p1 CHANGE $p2 $p3 $p4";
                 case 'pgsql':
@@ -6197,7 +6195,7 @@ namespace Tqdev\PhpCrudApi\Database {
 
         private function getAddTableSQL(ReflectedTable $newTable): string
         {
-            $tableName = $newTable->getName();
+            $tableName = $newTable->getRealName();
             $p1 = $this->quote($tableName);
             $fields = [];
             $constraints = [];
@@ -6236,7 +6234,7 @@ namespace Tqdev\PhpCrudApi\Database {
         private function getAddColumnSQL(string $tableName, ReflectedColumn $newColumn): string
         {
             $p1 = $this->quote($tableName);
-            $p2 = $this->quote($newColumn->getName());
+            $p2 = $this->quote($newColumn->getRealName());
             $p3 = $this->getColumnType($newColumn, false);
 
             switch ($this->driver) {
@@ -6389,7 +6387,7 @@ namespace Tqdev\PhpCrudApi\Database {
         private $driver;
         private $database;
         private $tables;
-        private $realNameMapper;
+        private $mapper;
         private $typeConverter;
 
         public function __construct(LazyPdo $pdo, string $driver, string $database, array $tables, RealNameMapper $mapper)
@@ -6398,7 +6396,7 @@ namespace Tqdev\PhpCrudApi\Database {
             $this->driver = $driver;
             $this->database = $database;
             $this->tables = $tables;
-            $this->realNameMapper = $mapper;
+            $this->mapper = $mapper;
             $this->typeConverter = new TypeConverter($driver);
         }
 
@@ -6481,14 +6479,14 @@ namespace Tqdev\PhpCrudApi\Database {
         {
             $sql = $this->getTablesSQL();
             $results = $this->query($sql, [$this->database]);
-            foreach ($results as &$result) {
-                $result['TABLE_REAL_NAME'] = $result['TABLE_NAME'];
-                $result['TABLE_NAME'] = $this->realNameMapper->getTableName($result['TABLE_REAL_NAME']);
-            }
             $tables = $this->tables;
             $results = array_filter($results, function ($v) use ($tables) {
                 return !$tables || in_array($v['TABLE_NAME'], $tables);
             });
+            foreach ($results as &$result) {
+                $result['TABLE_REAL_NAME'] = $result['TABLE_NAME'];
+                $result['TABLE_NAME'] = $this->mapper->getTableName($result['TABLE_REAL_NAME']);
+            }
             foreach ($results as &$result) {
                 $map = [];
                 switch ($this->driver) {
@@ -6512,12 +6510,12 @@ namespace Tqdev\PhpCrudApi\Database {
 
         public function getTableColumns(string $tableName, string $type): array
         {
-            $tableRealName = $this->realNameMapper->getTableRealName($tableName);        
+            $tableRealName = $this->mapper->getTableRealName($tableName);        
             $sql = $this->getTableColumnsSQL();
             $results = $this->query($sql, [$tableRealName, $this->database]);
             foreach ($results as &$result) {
                 $result['COLUMN_REAL_NAME'] = $result['COLUMN_NAME'];
-                $result['COLUMN_NAME'] = $this->realNameMapper->getColumnName($tableRealName, $result['COLUMN_REAL_NAME']);
+                $result['COLUMN_NAME'] = $this->mapper->getColumnName($tableRealName, $result['COLUMN_REAL_NAME']);
             }
             if ($type == 'view') {
                 foreach ($results as &$result) {
@@ -6561,25 +6559,25 @@ namespace Tqdev\PhpCrudApi\Database {
 
         public function getTablePrimaryKeys(string $tableName): array
         {
-            $tableRealName = $this->realNameMapper->getTableRealName($tableName);        
+            $tableRealName = $this->mapper->getTableRealName($tableName);        
             $sql = $this->getTablePrimaryKeysSQL();
             $results = $this->query($sql, [$tableRealName, $this->database]);
             $primaryKeys = [];
             foreach ($results as $result) {
-                $primaryKeys[] = $this->realNameMapper->getColumnName($tableRealName, $result['COLUMN_NAME']);
+                $primaryKeys[] = $this->mapper->getColumnName($tableRealName, $result['COLUMN_NAME']);
             }
             return $primaryKeys;
         }
 
         public function getTableForeignKeys(string $tableName): array
         {
-            $tableRealName = $this->realNameMapper->getTableRealName($tableName);        
+            $tableRealName = $this->mapper->getTableRealName($tableName);        
             $sql = $this->getTableForeignKeysSQL();
             $results = $this->query($sql, [$tableRealName, $this->database]);
             $foreignKeys = [];
             foreach ($results as $result) {
-                $columnName = $this->realNameMapper->getColumnName($tableRealName, $result['COLUMN_NAME']);
-                $otherTableName = $this->realNameMapper->getTableName($result['REFERENCED_TABLE_NAME']);
+                $columnName = $this->mapper->getColumnName($tableRealName, $result['COLUMN_NAME']);
+                $otherTableName = $this->mapper->getTableName($result['REFERENCED_TABLE_NAME']);
                 $foreignKeys[$columnName] = $otherTableName;
             }
             return $foreignKeys;
