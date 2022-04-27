@@ -635,8 +635,8 @@ equal sign, like this:
 
     'mapping' => 'wp_posts=posts,wp_posts.ID=posts.id',
 
-This specific example will expose the "wp_posts" table at a "posts" end-point (instead of "wp_posts") and the 
-column "ID" within that table as the "id" property (in lower case instead of upper case).
+This specific example will expose the "`wp_posts`" table at a "`posts`" end-point (instead of "`wp_posts`") and the 
+column "`ID`" within that table as the "`id`" property (in lower case instead of upper case).
 
 NB: Since these two mappings overlap the first (less specific) mapping may be omitted.
 
