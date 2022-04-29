@@ -1456,8 +1456,8 @@ To run the docker tests run "build_all.sh" and "run_all.sh" from the docker dire
     ================================================
     CentOS 8 (PHP 8.1)
     ================================================
-    [1/4] Starting MariaDB 10.6 ..... done
-    [2/4] Starting PostgreSQL 12.8 .. done
+    [1/4] Starting MariaDB 10.7 ..... done
+    [2/4] Starting PostgreSQL 12.10 .. done
     [3/4] Starting SQLServer 2017 ... skipped
     [4/4] Cloning PHP-CRUD-API v2 ... skipped
     ------------------------------------------------
