@@ -12,13 +12,13 @@ GO
 
 IF (OBJECT_ID('posts_user_id_fkey', 'F') IS NOT NULL)
 BEGIN
-ALTER TABLE [posts] DROP	CONSTRAINT [posts_user_id_fkey]
+ALTER TABLE [abc_posts] DROP	CONSTRAINT [abc_posts_user_id_fkey]
 END
 GO
 
 IF (OBJECT_ID('posts_category_id_fkey', 'F') IS NOT NULL)
 BEGIN
-ALTER TABLE [posts] DROP	CONSTRAINT [posts_category_id_fkey]
+ALTER TABLE [abc_posts] DROP	CONSTRAINT [abc_posts_category_id_fkey]
 END
 GO
 
@@ -90,7 +90,7 @@ GO
 
 IF (OBJECT_ID('posts', 'U') IS NOT NULL)
 BEGIN
-DROP TABLE [posts]
+DROP TABLE [abc_posts]
 END
 GO
 
@@ -176,17 +176,17 @@ CREATE TABLE [post_tags](
 )
 GO
 
-DROP SEQUENCE IF EXISTS [posts_id_seq]
+DROP SEQUENCE IF EXISTS [abc_posts_id_seq]
 GO
-CREATE SEQUENCE [posts_id_seq] AS int START WITH 1 INCREMENT BY 1 NO CACHE
+CREATE SEQUENCE [abc_posts_id_seq] AS int START WITH 1 INCREMENT BY 1 NO CACHE
 GO
 
-CREATE TABLE [posts](
-	[id] [int] NOT NULL CONSTRAINT [posts_id_def] DEFAULT NEXT VALUE FOR [posts_id_seq],
-	[user_id] [int] NOT NULL,
-	[category_id] [int] NOT NULL,
-	[content] [nvarchar](255) NOT NULL,
-	CONSTRAINT [posts_pkey] PRIMARY KEY CLUSTERED([id] ASC)
+CREATE TABLE [abc_posts](
+	[abc_id] [int] NOT NULL CONSTRAINT [abc_posts_id_def] DEFAULT NEXT VALUE FOR [abc_posts_id_seq],
+	[abc_user_id] [int] NOT NULL,
+	[abc_category_id] [int] NOT NULL,
+	[abc_content] [nvarchar](255) NOT NULL,
+	CONSTRAINT [abc_posts_pkey] PRIMARY KEY CLUSTERED([abc_id] ASC)
 )
 GO
 
@@ -327,9 +327,9 @@ GO
 INSERT [post_tags] ([post_id], [tag_id]) VALUES (2, 2)
 GO
 
-INSERT [posts] ([user_id], [category_id], [content]) VALUES (1, 1, N'blog started')
+INSERT [abc_posts] ([abc_user_id], [abc_category_id], [abc_content]) VALUES (1, 1, N'blog started')
 GO
-INSERT [posts] ([user_id], [category_id], [content]) VALUES (1, 2, N'It works!')
+INSERT [abc_posts] ([abc_user_id], [abc_category_id], [abc_content]) VALUES (1, 2, N'It works!')
 GO
 
 INSERT [tags] ([name], [is_important]) VALUES (N'funny', 0)
@@ -386,7 +386,7 @@ INSERT [nopk] ([id]) VALUES ('e42c77c6-06a4-4502-816c-d112c7142e6d')
 GO
 
 ALTER TABLE [comments]  WITH CHECK ADD 	CONSTRAINT [comments_post_id_fkey] FOREIGN KEY([post_id])
-REFERENCES [posts] ([id])
+REFERENCES [abc_posts] ([abc_id])
 GO
 ALTER TABLE [comments] CHECK	CONSTRAINT [comments_post_id_fkey]
 GO
@@ -398,7 +398,7 @@ ALTER TABLE [comments] CHECK	CONSTRAINT [comments_category_id_fkey]
 GO
 
 ALTER TABLE [post_tags]  WITH CHECK ADD 	CONSTRAINT [post_tags_post_id_fkey] FOREIGN KEY([post_id])
-REFERENCES [posts] ([id])
+REFERENCES [abc_posts] ([abc_id])
 GO
 ALTER TABLE [post_tags] CHECK	CONSTRAINT [post_tags_post_id_fkey]
 GO
@@ -409,16 +409,16 @@ GO
 ALTER TABLE [post_tags] CHECK	CONSTRAINT [post_tags_tag_id_fkey]
 GO
 
-ALTER TABLE [posts]  WITH CHECK ADD 	CONSTRAINT [posts_category_id_fkey] FOREIGN KEY([category_id])
+ALTER TABLE [abc_posts]  WITH CHECK ADD 	CONSTRAINT [abc_posts_category_id_fkey] FOREIGN KEY([abc_category_id])
 REFERENCES [categories] ([id])
 GO
-ALTER TABLE [posts] CHECK	CONSTRAINT [posts_category_id_fkey]
+ALTER TABLE [abc_posts] CHECK	CONSTRAINT [abc_posts_category_id_fkey]
 GO
 
-ALTER TABLE [posts]  WITH CHECK ADD 	CONSTRAINT [posts_user_id_fkey] FOREIGN KEY([user_id])
+ALTER TABLE [abc_posts]  WITH CHECK ADD 	CONSTRAINT [abc_posts_user_id_fkey] FOREIGN KEY([abc_user_id])
 REFERENCES [users] ([id])
 GO
-ALTER TABLE [posts] CHECK	CONSTRAINT [posts_user_id_fkey]
+ALTER TABLE [abc_posts] CHECK	CONSTRAINT [abc_posts_user_id_fkey]
 GO
 
 ALTER TABLE [barcodes]  WITH CHECK ADD 	CONSTRAINT [barcodes_product_id_fkey] FOREIGN KEY([product_id])

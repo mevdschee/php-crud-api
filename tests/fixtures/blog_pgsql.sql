@@ -21,7 +21,7 @@ SET default_with_oids = false;
 DROP TABLE IF EXISTS categories CASCADE;
 DROP TABLE IF EXISTS comments CASCADE;
 DROP TABLE IF EXISTS post_tags CASCADE;
-DROP TABLE IF EXISTS posts CASCADE;
+DROP TABLE IF EXISTS abc_posts CASCADE;
 DROP TABLE IF EXISTS tags CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
 DROP TABLE IF EXISTS countries CASCADE;
@@ -72,11 +72,11 @@ CREATE TABLE post_tags (
 -- Name: posts; Type: TABLE; Schema: public; Owner: postgres; Tablespace:
 --
 
-CREATE TABLE posts (
-    id serial NOT NULL,
-    user_id integer NOT NULL,
-    category_id integer NOT NULL,
-    content character varying(255) NOT NULL
+CREATE TABLE abc_posts (
+    abc_id serial NOT NULL,
+    abc_user_id integer NOT NULL,
+    abc_category_id integer NOT NULL,
+    abc_content character varying(255) NOT NULL
 );
 
 
@@ -213,10 +213,10 @@ INSERT INTO "post_tags" ("post_id", "tag_id") VALUES
 (2,	2);
 
 --
--- Data for Name: posts; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: abc_posts; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-INSERT INTO "posts" ("user_id", "category_id", "content") VALUES
+INSERT INTO "abc_posts" ("abc_user_id", "abc_category_id", "abc_content") VALUES
 (1,	1,	'blog started'),
 (1,	2,	'It works!');
 
@@ -332,8 +332,8 @@ ALTER TABLE ONLY post_tags
 -- Name: posts_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres; Tablespace:
 --
 
-ALTER TABLE ONLY posts
-    ADD CONSTRAINT posts_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY abc_posts
+    ADD CONSTRAINT abc_posts_pkey PRIMARY KEY (abc_id);
 
 
 --
@@ -427,14 +427,14 @@ CREATE INDEX post_tags_tag_id_idx ON post_tags USING btree (tag_id);
 -- Name: posts_category_id_idx; Type: INDEX; Schema: public; Owner: postgres; Tablespace:
 --
 
-CREATE INDEX posts_category_id_idx ON posts USING btree (category_id);
+CREATE INDEX abc_posts_category_id_idx ON abc_posts USING btree (abc_category_id);
 
 
 --
 -- Name: posts_user_id_idx; Type: INDEX; Schema: public; Owner: postgres; Tablespace:
 --
 
-CREATE INDEX posts_user_id_idx ON posts USING btree (user_id);
+CREATE INDEX abc_posts_user_id_idx ON abc_posts USING btree (abc_user_id);
 
 
 --
@@ -470,7 +470,7 @@ CREATE INDEX "kunsthåndværk_invisible_id_idx" ON "kunsthåndværk" USING btree
 --
 
 ALTER TABLE ONLY comments
-    ADD CONSTRAINT comments_post_id_fkey FOREIGN KEY (post_id) REFERENCES posts(id);
+    ADD CONSTRAINT comments_post_id_fkey FOREIGN KEY (post_id) REFERENCES abc_posts(abc_id);
 
 
 --
@@ -486,7 +486,7 @@ ALTER TABLE ONLY comments
 --
 
 ALTER TABLE ONLY post_tags
-    ADD CONSTRAINT post_tags_post_id_fkey FOREIGN KEY (post_id) REFERENCES posts(id);
+    ADD CONSTRAINT post_tags_post_id_fkey FOREIGN KEY (post_id) REFERENCES abc_posts(abc_id);
 
 
 --
@@ -501,16 +501,16 @@ ALTER TABLE ONLY post_tags
 -- Name: posts_category_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY posts
-    ADD CONSTRAINT posts_category_id_fkey FOREIGN KEY (category_id) REFERENCES categories(id);
+ALTER TABLE ONLY abc_posts
+    ADD CONSTRAINT abc_posts_category_id_fkey FOREIGN KEY (abc_category_id) REFERENCES categories(id);
 
 
 --
 -- Name: posts_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY posts
-    ADD CONSTRAINT posts_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id);
+ALTER TABLE ONLY abc_posts
+    ADD CONSTRAINT abc_posts_user_id_fkey FOREIGN KEY (abc_user_id) REFERENCES users(id);
 
 
 --
