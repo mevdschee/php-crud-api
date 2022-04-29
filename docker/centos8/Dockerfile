@@ -1,5 +1,10 @@
 FROM centos:8
 
+# centos has reached EOL on December 31st, 2021 use vault:
+RUN sed -i 's/mirrorlist/#mirrorlist/g' /etc/yum.repos.d/CentOS-*
+RUN sed -i 's|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g' /etc/yum.repos.d/CentOS-*
+RUN yum update -y
+
 # add this to avoid locale warnings
 RUN dnf -y install glibc-locale-source glibc-langpack-en
 RUN localedef -i en_US -f UTF-8 en_US.UTF-8
