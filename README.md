@@ -1561,6 +1561,7 @@ The above test run (including starting up the databases) takes less than 5 minut
     5) ubuntu16
     6) ubuntu18
     7) ubuntu20
+    8) ubuntu22
     > 6
     ================================================
     Ubuntu 18.04 (PHP 7.2)
