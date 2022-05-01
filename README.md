@@ -1432,9 +1432,10 @@ I am testing mainly on Ubuntu and I have the following test setups:
   - (Docker) Debian 9 with PHP 7.0, MariaDB 10.1, PostgreSQL 9.6 (PostGIS 2.3) and SQLite 3.16
   - (Docker) Ubuntu 18.04 with PHP 7.2, MySQL 5.7, PostgreSQL 10.4 (PostGIS 2.4) and SQLite 3.22
   - (Docker) Debian 10 with PHP 7.3, MariaDB 10.3, PostgreSQL 11.4 (PostGIS 2.5) and SQLite 3.27
-  - (Docker) Ubuntu 20.04 with PHP 7.4, MySQL 8.0, PostgreSQL 12.2 (PostGIS 3.0) and SQLite 3.31
+  - (Docker) Ubuntu 20.04 with PHP 7.4, MySQL 8.0, PostgreSQL 12.2 (PostGIS 3.0) and SQL Server 2019 and SQLite 3.31 
   - (Docker) CentOS 8 with PHP 8.1, MariaDB 10.7, PostgreSQL 12.10 (PostGIS 3.0) and SQLite 3.26
   - (Docker) Debian 11 with PHP 7.4, MariaDB 10.5, PostgreSQL 13.4 (PostGIS 3.1) and SQLite 3.34
+  - (Docker) Ubuntu 22.04 with PHP 8.1, MySQL 8.0, PostgreSQL 14.2 (PostGIS 3.2) and SQLite 3.37 
 
 This covers not all environments (yet), so please notify me of failing tests and report your environment. 
 I will try to cover most relevant setups in the "docker" folder of the project.
@@ -1573,6 +1574,18 @@ To run the docker tests run "build_all.sh" and "run_all.sh" from the docker dire
     pgsql: 119 tests ran in 1368 ms, 1 skipped, 0 failed
     sqlsrv: 119 tests ran in 8410 ms, 1 skipped, 0 failed
     sqlite: 119 tests ran in 1053 ms, 13 skipped, 0 failed
+    ================================================
+    Ubuntu 22.04 (PHP 8.1)
+    ================================================
+    [1/4] Starting MySQL 8.0 ........ done
+    [2/4] Starting PostgreSQL 14.2 .. done
+    [3/4] Starting SQLServer 2019 ... skipped
+    [4/4] Cloning PHP-CRUD-API v2 ... skipped
+    ------------------------------------------------
+    mysql: 119 tests ran in 6882 ms, 1 skipped, 0 failed
+    pgsql: 119 tests ran in 2570 ms, 1 skipped, 0 failed
+    sqlsrv: skipped, driver not loaded
+    sqlite: 119 tests ran in 2548 ms, 13 skipped, 0 failed
 
 The above test run (including starting up the databases) takes less than 5 minutes on my slow laptop.
 
@@ -1584,6 +1597,7 @@ The above test run (including starting up the databases) takes less than 5 minut
     5) ubuntu16
     6) ubuntu18
     7) ubuntu20
+    8) ubuntu22
     > 6
     ================================================
     Ubuntu 18.04 (PHP 7.2)
