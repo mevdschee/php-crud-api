@@ -1166,7 +1166,9 @@ The above example will set JSON options to 128+256+64 = 448, as per the table of
     JSON_HEX_QUOT (8)
         All " are converted to \u0022. 
     JSON_FORCE_OBJECT (16)
-        Outputs an object rather than an array when a non-associative array is used. Especially useful when the recipient of the output is expecting an object and the array is empty. 
+        Outputs an object rather than an array when a non-associative array is used. 
+        Especially useful when the recipient of the output is expecting an object and 
+        the array is empty. 
     JSON_NUMERIC_CHECK (32)
         Encodes numeric strings as numbers. 
     JSON_UNESCAPED_SLASHES (64)
@@ -1180,7 +1182,9 @@ The above example will set JSON options to 128+256+64 = 448, as per the table of
     JSON_PRESERVE_ZERO_FRACTION (1024)
         Ensures that float values are always encoded as a float value. 
     JSON_UNESCAPED_LINE_TERMINATORS (2048)
-        The line terminators are kept unescaped when JSON_UNESCAPED_UNICODE is supplied. It uses the same behaviour as it was before PHP 7.1 without this constant. Available as of PHP 7.1.0. 
+        The line terminators are kept unescaped when JSON_UNESCAPED_UNICODE is supplied. 
+        It uses the same behaviour as it was before PHP 7.1 without this constant. 
+        Available as of PHP 7.1.0. 
 
 Source: [PHP's JSON constants documentation](https://www.php.net/manual/en/json.constants.php) 
 
