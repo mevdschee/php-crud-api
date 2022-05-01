@@ -89,9 +89,11 @@ class JsonMiddleware extends Middleware
             }
             $response = $next->handle($request);
             if (in_array($operation, ['read', 'list'])) {
-                $records = json_decode($response->getBody()->getContents());
-                $records = $this->convertJsonResponse($records, $columnNames);
-                $response = ResponseFactory::fromObject($response->getStatusCode(), $records);
+                if ($response->getStatusCode() == ResponseFactory::OK) {
+                    $records = json_decode($response->getBody()->getContents());
+                    $records = $this->convertJsonResponse($records, $columnNames);
+                    $response = $this->responder->success($records);
+                }
             }
         } else {
             $response = $next->handle($request);

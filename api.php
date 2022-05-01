@@ -4685,28 +4685,30 @@ namespace Tqdev\PhpCrudApi\Controller {
 
     class JsonResponder implements Responder
     {
+        private $jsonOptions;
         private $debug;
 
-        public function __construct(bool $debug)
+        public function __construct(int $jsonOptions, bool $debug)
         {
+            $this->jsonOptions = $jsonOptions;
             $this->debug = $debug;
         }
 
         public function error(int $error, string $argument, $details = null): ResponseInterface
         {
             $document = new ErrorDocument(new ErrorCode($error), $argument, $details);
-            return ResponseFactory::fromObject($document->getStatus(), $document);
+            return ResponseFactory::fromObject($document->getStatus(), $document, $this->jsonOptions);
         }
 
         public function success($result): ResponseInterface
         {
-            return ResponseFactory::fromObject(ResponseFactory::OK, $result);
+            return ResponseFactory::fromObject(ResponseFactory::OK, $result, $this->jsonOptions);
         }
 
         public function exception($exception): ResponseInterface
         {
             $document = ErrorDocument::fromException($exception, $this->debug);
-            $response = ResponseFactory::fromObject($document->getStatus(), $document);
+            $response = ResponseFactory::fromObject($document->getStatus(), $document, $this->jsonOptions);
             if ($this->debug) {
                 $response = ResponseUtils::addExceptionHeaders($response, $exception);
             }
@@ -4730,7 +4732,7 @@ namespace Tqdev\PhpCrudApi\Controller {
             }
             $status = $success ? ResponseFactory::OK : ResponseFactory::FAILED_DEPENDENCY;
             $document = $success ? $documents : $errors;
-            $response = ResponseFactory::fromObject($status, $document);
+            $response = ResponseFactory::fromObject($status, $document, $this->jsonOptions);
             foreach ($results as $i => $result) {
                 if ($result instanceof \Throwable) {
                     if ($this->debug) {
@@ -8439,9 +8441,11 @@ namespace Tqdev\PhpCrudApi\Middleware {
                 }
                 $response = $next->handle($request);
                 if (in_array($operation, ['read', 'list'])) {
-                    $records = json_decode($response->getBody()->getContents());
-                    $records = $this->convertJsonResponse($records, $columnNames);
-                    $response = ResponseFactory::fromObject($response->getStatusCode(), $records);
+                    if ($response->getStatusCode() == ResponseFactory::OK) {
+                        $records = json_decode($response->getBody()->getContents());
+                        $records = $this->convertJsonResponse($records, $columnNames);
+                        $response = $this->responder->success($records);
+                    }
                 }
             } else {
                 $response = $next->handle($request);
@@ -11517,8 +11521,6 @@ namespace Tqdev\PhpCrudApi {
     class Api implements RequestHandlerInterface
     {
         private $router;
-        private $responder;
-        private $debug;
 
         public function __construct(Config $config)
         {
@@ -11535,7 +11537,7 @@ namespace Tqdev\PhpCrudApi {
             $prefix = sprintf('phpcrudapi-%s-', substr(md5(__FILE__), 0, 8));
             $cache = CacheFactory::create($config->getCacheType(), $prefix, $config->getCachePath());
             $reflection = new ReflectionService($db, $cache, $config->getCacheTime());
-            $responder = new JsonResponder($config->getDebug());
+            $responder = new JsonResponder($config->getJsonOptions(), $config->getDebug());
             $router = new SimpleRouter($config->getBasePath(), $responder, $cache, $config->getCacheTime());
             foreach ($config->getMiddlewares() as $middleware => $properties) {
                 switch ($middleware) {
@@ -11634,8 +11636,6 @@ namespace Tqdev\PhpCrudApi {
                 }
             }
             $this->router = $router;
-            $this->responder = $responder;
-            $this->debug = $config->getDebug();
         }
 
         private function parseBody(string $body) /*: ?object*/
@@ -11723,6 +11723,7 @@ namespace Tqdev\PhpCrudApi {
             'cacheType' => 'TempFile',
             'cachePath' => '',
             'cacheTime' => 10,
+            'jsonOptions' => JSON_UNESCAPED_UNICODE,
             'debug' => false,
             'basePath' => '',
             'openApiBase' => '{"info":{"title":"PHP-CRUD-API","version":"1.0.0"}}',
@@ -11903,6 +11904,11 @@ namespace Tqdev\PhpCrudApi {
         public function getCacheTime(): int
         {
             return $this->values['cacheTime'];
+        }
+
+        public function getJsonOptions(): int
+        {
+            return $this->values['jsonOptions'];
         }
 
         public function getDebug(): bool
@@ -12123,9 +12129,9 @@ namespace Tqdev\PhpCrudApi {
             return self::from($status, 'text/html', $html);
         }
 
-        public static function fromObject(int $status, $body): ResponseInterface
+        public static function fromObject(int $status, $body, int $jsonOptions): ResponseInterface
         {
-            $content = json_encode($body, JSON_UNESCAPED_UNICODE);
+            $content = json_encode($body, $jsonOptions);
             return self::from($status, 'application/json', $content);
         }
 

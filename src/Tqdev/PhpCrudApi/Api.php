@@ -46,8 +46,6 @@ use Tqdev\PhpCrudApi\ResponseUtils;
 class Api implements RequestHandlerInterface
 {
     private $router;
-    private $responder;
-    private $debug;
 
     public function __construct(Config $config)
     {
@@ -64,7 +62,7 @@ class Api implements RequestHandlerInterface
         $prefix = sprintf('phpcrudapi-%s-', substr(md5(__FILE__), 0, 8));
         $cache = CacheFactory::create($config->getCacheType(), $prefix, $config->getCachePath());
         $reflection = new ReflectionService($db, $cache, $config->getCacheTime());
-        $responder = new JsonResponder($config->getDebug());
+        $responder = new JsonResponder($config->getJsonOptions(), $config->getDebug());
         $router = new SimpleRouter($config->getBasePath(), $responder, $cache, $config->getCacheTime());
         foreach ($config->getMiddlewares() as $middleware => $properties) {
             switch ($middleware) {
@@ -163,8 +161,6 @@ class Api implements RequestHandlerInterface
             }
         }
         $this->router = $router;
-        $this->responder = $responder;
-        $this->debug = $config->getDebug();
     }
 
     private function parseBody(string $body) /*: ?object*/
