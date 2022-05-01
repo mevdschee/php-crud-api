@@ -10,28 +10,30 @@ use Tqdev\PhpCrudApi\ResponseUtils;
 
 class JsonResponder implements Responder
 {
+    private $jsonOptions;
     private $debug;
 
-    public function __construct(bool $debug)
+    public function __construct(int $jsonOptions, bool $debug)
     {
+        $this->jsonOptions = $jsonOptions;
         $this->debug = $debug;
     }
 
     public function error(int $error, string $argument, $details = null): ResponseInterface
     {
         $document = new ErrorDocument(new ErrorCode($error), $argument, $details);
-        return ResponseFactory::fromObject($document->getStatus(), $document);
+        return ResponseFactory::fromObject($document->getStatus(), $document, $this->jsonOptions);
     }
 
     public function success($result): ResponseInterface
     {
-        return ResponseFactory::fromObject(ResponseFactory::OK, $result);
+        return ResponseFactory::fromObject(ResponseFactory::OK, $result, $this->jsonOptions);
     }
 
     public function exception($exception): ResponseInterface
     {
         $document = ErrorDocument::fromException($exception, $this->debug);
-        $response = ResponseFactory::fromObject($document->getStatus(), $document);
+        $response = ResponseFactory::fromObject($document->getStatus(), $document, $this->jsonOptions);
         if ($this->debug) {
             $response = ResponseUtils::addExceptionHeaders($response, $exception);
         }
@@ -55,7 +57,7 @@ class JsonResponder implements Responder
         }
         $status = $success ? ResponseFactory::OK : ResponseFactory::FAILED_DEPENDENCY;
         $document = $success ? $documents : $errors;
-        $response = ResponseFactory::fromObject($status, $document);
+        $response = ResponseFactory::fromObject($status, $document, $this->jsonOptions);
         foreach ($results as $i => $result) {
             if ($result instanceof \Throwable) {
                 if ($this->debug) {

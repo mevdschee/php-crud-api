@@ -20,6 +20,7 @@ class Config
         'cacheType' => 'TempFile',
         'cachePath' => '',
         'cacheTime' => 10,
+        'jsonOptions' => JSON_UNESCAPED_UNICODE,
         'debug' => false,
         'basePath' => '',
         'openApiBase' => '{"info":{"title":"PHP-CRUD-API","version":"1.0.0"}}',
@@ -200,6 +201,11 @@ class Config
     public function getCacheTime(): int
     {
         return $this->values['cacheTime'];
+    }
+
+    public function getJsonOptions(): int
+    {
+        return $this->values['jsonOptions'];
     }
 
     public function getDebug(): bool

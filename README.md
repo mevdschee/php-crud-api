@@ -66,6 +66,7 @@ These are all the configuration options and their default value between brackets
 - "cacheType": `TempFile`, `Redis`, `Memcache`, `Memcached` or `NoCache` (`TempFile`)
 - "cachePath": Path/address of the cache (defaults to system's temp directory)
 - "cacheTime": Number of seconds the cache is valid (`10`)
+- "jsonOptions": Options used for encoding JSON (`JSON_UNESCAPED_UNICODE`)
 - "debug": Show errors in the "X-Exception" headers (`false`)
 - "basePath": URI base path of the API (determined using PATH_INFO by default)
 
@@ -1147,6 +1148,41 @@ You may use the "customization" middleware to modify request and response and im
     },
 
 The above example will add a header "X-Time-Taken" with the number of seconds the API call has taken.
+
+### JSON encoding options
+
+You can change the way the JSON is encoded by setting the configuration parameter "jsonOptions".
+
+    'jsonOptions' => JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES,
+
+The above example will set JSON options to 128+256+64 = 448, as per the table of options below:
+
+    JSON_HEX_TAG (1)
+        All < and > are converted to \u003C and \u003E. 
+    JSON_HEX_AMP (2)
+        All & are converted to \u0026. 
+    JSON_HEX_APOS (4)
+        All ' are converted to \u0027. 
+    JSON_HEX_QUOT (8)
+        All " are converted to \u0022. 
+    JSON_FORCE_OBJECT (16)
+        Outputs an object rather than an array when a non-associative array is used. Especially useful when the recipient of the output is expecting an object and the array is empty. 
+    JSON_NUMERIC_CHECK (32)
+        Encodes numeric strings as numbers. 
+    JSON_UNESCAPED_SLASHES (64)
+        Don't escape /. 
+    JSON_PRETTY_PRINT (128)
+        Use whitespace in returned data to format it. 
+    JSON_UNESCAPED_UNICODE (256)
+        Encode multibyte Unicode characters literally (default is to escape as \uXXXX). 
+    JSON_PARTIAL_OUTPUT_ON_ERROR (512)
+        Substitute some unencodable values instead of failing. 
+    JSON_PRESERVE_ZERO_FRACTION (1024)
+        Ensures that float values are always encoded as a float value. 
+    JSON_UNESCAPED_LINE_TERMINATORS (2048)
+        The line terminators are kept unescaped when JSON_UNESCAPED_UNICODE is supplied. It uses the same behaviour as it was before PHP 7.1 without this constant. Available as of PHP 7.1.0. 
+
+Source: [PHP's JSON constants documentation](https://www.php.net/manual/en/json.constants.php) 
 
 ### JSON middleware
 
