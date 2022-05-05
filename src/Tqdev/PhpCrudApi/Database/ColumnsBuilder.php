@@ -56,6 +56,11 @@ class ColumnsBuilder
     {
         $results = array();
         foreach ($columnNames as $columnName) {
+            //support SELECT COUNT(*) AS c .., by huangyifu
+            if(strpos($columnName,'(')>0 || strpos(trim($columnName),' ')>0){
+                $results[] = $columnName;
+                continue;
+            }//~
             $column = $table->getColumn($columnName);
             $quotedColumnName = $this->quoteColumnName($column);
             $quotedColumnName = $this->converter->convertColumnName($column, $quotedColumnName);
