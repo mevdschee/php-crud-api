@@ -45,6 +45,12 @@ class ColumnIncluder
                 }
             }
         }
+        //support SELECT COUNT(*) AS C function in SELECT, by huangyifu
+        foreach (array_keys($columns) as $c) {				
+            if(strpos($c,'(')>0 || strpos(trim($c),' ')>0){
+                $result[] = $c;
+            }
+        }//~
         return $result;
     }
 
