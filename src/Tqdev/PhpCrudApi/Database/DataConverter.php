@@ -51,6 +51,10 @@ class DataConverter
     public function convertRecords(ReflectedTable $table, array $columnNames, array &$records) /*: void*/
     {
         foreach ($columnNames as $columnName) {
+            //support SELECT COUNT(*) AS C function in SELECT, by huangyifu
+            if(strpos($columnName,'(')>0 || strpos(trim($columnName),' ')>0){
+                continue;
+            }//~
             $column = $table->getColumn($columnName);
             $conversion = $this->getRecordValueConversion($column);
             if ($conversion != 'none') {
