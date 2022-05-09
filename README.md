@@ -58,6 +58,7 @@ These are all the configuration options and their default value between brackets
 - "password": Password of the user connecting to the database (no default)
 - "database": Database the connecting is made to (no default)
 - "tables": Comma separated list of tables to publish (defaults to 'all')
+- "initcommand": Command to execute on init connection. 
 - "mapping": Comma separated list of table/column mappings (no mappping)
 - "middlewares": List of middlewares to load (`cors`)
 - "controllers": List of controllers to load (`records,geojson,openapi,status`)

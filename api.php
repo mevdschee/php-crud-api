@@ -5583,24 +5583,36 @@ namespace Tqdev\PhpCrudApi\Database {
 
         private function getCommands(): array
         {
+            $initcommands = [] ; 
             switch ($this->driver) {
                 case 'mysql':
-                    return [
+                    $initcommands =  [
                         'SET SESSION sql_warnings=1;',
                         'SET NAMES utf8mb4;',
                         'SET SESSION sql_mode = "ANSI,TRADITIONAL";',
                     ];
+                    break;
                 case 'pgsql':
-                    return [
+                    $initcommands =  [
                         "SET NAMES 'UTF8';",
                     ];
+                    break;
                 case 'sqlsrv':
-                    return [];
+                    $initcommands =  [];
+                    break;
                 case 'sqlite':
-                    return [
+                    $initcommands =  [
                         'PRAGMA foreign_keys = on;',
                     ];
+                    break;
             }
+            
+            if ($this->initcommand!='' ) {
+                $initcommands[] = $this->initcommand; 
+            } 
+
+            return $initcommands ; 
+
         }
 
         private function getOptions(): array
@@ -5646,21 +5658,22 @@ namespace Tqdev\PhpCrudApi\Database {
             $this->converter = new DataConverter($this->driver);
             return $result;
         }
-
-        public function __construct(string $driver, string $address, int $port, string $database, array $tables, array $mapping, string $username, string $password)
+        
+        public function __construct(string $driver, string $address, int $port, string $database, array $tables, string $initcommand, array $mapping, string $username, string $password)
         {
             $this->driver = $driver;
             $this->address = $address;
             $this->port = $port;
             $this->database = $database;
             $this->tables = $tables;
+            $this->initcommand = $initcommand;
             $this->mapping = $mapping;
             $this->username = $username;
             $this->password = $password;
             $this->initPdo();
         }
 
-        public function reconstruct(string $driver, string $address, int $port, string $database, array $tables, array $mapping, string $username, string $password): bool
+        public function reconstruct(string $driver, string $address, int $port, string $database, array $tables, string $initcommand, array $mapping, string $username, string $password): bool
         {
             if ($driver) {
                 $this->driver = $driver;
@@ -5676,6 +5689,9 @@ namespace Tqdev\PhpCrudApi\Database {
             }
             if ($tables) {
                 $this->tables = $tables;
+            }
+            if ($initcommand) {
+                $this->initcommand = $initcommand;
             }
             if ($mapping) {
                 $this->mapping = $mapping;
@@ -7388,6 +7404,7 @@ namespace Tqdev\PhpCrudApi\Middleware\Router {
             $this->routes = $this->loadPathTree();
             $this->routeHandlers = [];
             $this->middlewares = array();
+
         }
 
         private function detectBasePath(ServerRequestInterface $request): string
@@ -8875,11 +8892,13 @@ namespace Tqdev\PhpCrudApi\Middleware {
             $port = $this->getPort();
             $database = $this->getDatabase();
             $tables = $this->getTables();
+            $initcommand = $this->getInitcommand();
             $mapping = $this->getMapping();
             $username = $this->getUsername();
             $password = $this->getPassword();
+
             if ($driver || $address || $port || $database || $tables || $mapping || $username || $password) {
-                $this->db->reconstruct($driver, $address, $port, $database, $tables, $mapping, $username, $password);
+                $this->db->reconstruct($driver, $address, $port, $database, $tables,$initcommand, $mapping, $username, $password);
             }
             return $next->handle($request);
         }
@@ -11530,6 +11549,7 @@ namespace Tqdev\PhpCrudApi {
                 $config->getPort(),
                 $config->getDatabase(),
                 $config->getTables(),
+                $config->getInitcommand(),
                 $config->getMapping(),
                 $config->getUsername(),
                 $config->getPassword()
@@ -11715,6 +11735,7 @@ namespace Tqdev\PhpCrudApi {
             'password' => '',
             'database' => '',
             'tables' => '',
+            'initcommand' =>'',
             'mapping' => '',
             'middlewares' => 'cors,errors',
             'controllers' => 'records,geojson,openapi,status',
@@ -11863,6 +11884,10 @@ namespace Tqdev\PhpCrudApi {
         public function getTables(): array
         {
             return array_filter(array_map('trim', explode(',', $this->values['tables'])));
+        }
+        public function getInitcommand(): string
+        {
+            return $this->values['initcommand']; 
         }
 
         public function getMapping(): array
@@ -12223,6 +12248,8 @@ namespace Tqdev\PhpCrudApi {
         'password' => 'php-crud-api',
         'database' => 'php-crud-api',
         // 'debug' => false
+        //'initcommand'=>'set search_path to sales,public; ' // to allow other schemas in pgsql
+
     ]);
     $request = RequestFactory::fromGlobals();
     $api = new Api($config);
