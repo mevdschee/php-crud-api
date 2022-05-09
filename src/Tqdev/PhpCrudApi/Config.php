@@ -11,6 +11,7 @@ class Config
         'username' => '',
         'password' => '',
         'database' => '',
+        'command' => '',
         'tables' => '',
         'mapping' => '',
         'middlewares' => 'cors,errors',
@@ -78,7 +79,7 @@ class Config
             $suffix = strtoupper(preg_replace('/(?<!^)[A-Z]/', '_$0', str_replace('.', '_', $key)));
             $newPrefix = $prefix . "_" . $suffix;
             if (is_array($value)) {
-                $newPrefix = str_replace('PHP_CRUD_API_MIDDLEWARES_','PHP_CRUD_API_',$newPrefix);
+                $newPrefix = str_replace('PHP_CRUD_API_MIDDLEWARES_', 'PHP_CRUD_API_', $newPrefix);
                 $result[$key] = $this->applyEnvironmentVariables($value, $newPrefix);
             } else {
                 $result[$key] = getenv($newPrefix, true) ?: $value;
@@ -86,7 +87,7 @@ class Config
         }
         return $result;
     }
-    
+
     public function __construct(array $values)
     {
         $driver = $this->getDefaultDriver($values);
@@ -157,6 +158,12 @@ class Config
         return $this->values['database'];
     }
 
+    public function getCommand(): string
+    {
+        return $this->values['command'];
+    }
+
+
     public function getTables(): array
     {
         return array_filter(array_map('trim', explode(',', $this->values['tables'])));
@@ -164,8 +171,10 @@ class Config
 
     public function getMapping(): array
     {
-        $mapping = array_map(function($v){ return explode('=', $v); }, array_filter(array_map('trim', explode(',', $this->values['mapping']))));
-        return array_combine(array_column($mapping,0),array_column($mapping,1));
+        $mapping = array_map(function ($v) {
+            return explode('=', $v);
+        }, array_filter(array_map('trim', explode(',', $this->values['mapping']))));
+        return array_combine(array_column($mapping, 0), array_column($mapping, 1));
     }
 
     public function getMiddlewares(): array

@@ -54,6 +54,7 @@ class Api implements RequestHandlerInterface
             $config->getAddress(),
             $config->getPort(),
             $config->getDatabase(),
+            $config->getCommand(),
             $config->getTables(),
             $config->getMapping(),
             $config->getUsername(),
@@ -126,7 +127,7 @@ class Api implements RequestHandlerInterface
                 case 'json':
                     new JsonMiddleware($router, $responder, $properties);
                     break;
-                }
+            }
         }
         foreach ($config->getControllers() as $controller) {
             switch ($controller) {
@@ -152,7 +153,7 @@ class Api implements RequestHandlerInterface
                     break;
                 case 'status':
                     new StatusController($router, $responder, $cache, $db);
-                    break;                    
+                    break;
             }
         }
         foreach ($config->getCustomControllers() as $className) {
