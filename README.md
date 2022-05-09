@@ -57,7 +57,7 @@ These are all the configuration options and their default value between brackets
 - "username": Username of the user connecting to the database (no default)
 - "password": Password of the user connecting to the database (no default)
 - "database": Database the connecting is made to (no default)
-- "command": SQL command to execute on initializing the database connection (none)
+- "command": Extra SQL to initialize the database connection (none)
 - "tables": Comma separated list of tables to publish (defaults to 'all')
 - "mapping": Comma separated list of table/column mappings (no mappping)
 - "middlewares": List of middlewares to load (`cors`)
