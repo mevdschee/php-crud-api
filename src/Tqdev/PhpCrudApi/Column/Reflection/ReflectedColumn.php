@@ -181,6 +181,11 @@ class ReflectedColumn implements \JsonSerializable
         return in_array($this->type, ['integer', 'bigint', 'smallint', 'tinyint']);
     }
 
+    public function isText(): bool
+    {
+        return in_array($this->type, ['varchar', 'clob']);
+    }
+
     public function setPk($value) /*: void*/
     {
         $this->pk = $value;
@@ -205,7 +210,7 @@ class ReflectedColumn implements \JsonSerializable
     {
         $json = [
             'name' => $this->realName,
-            'alias' => $this->name!=$this->realName?$this->name:null,
+            'alias' => $this->name != $this->realName ? $this->name : null,
             'type' => $this->type,
             'length' => $this->length,
             'precision' => $this->precision,

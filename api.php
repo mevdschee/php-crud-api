@@ -3850,6 +3850,11 @@ namespace Tqdev\PhpCrudApi\Column\Reflection {
             return in_array($this->type, ['integer', 'bigint', 'smallint', 'tinyint']);
         }
 
+        public function isText(): bool
+        {
+            return in_array($this->type, ['varchar', 'clob']);
+        }
+
         public function setPk($value) /*: void*/
         {
             $this->pk = $value;
@@ -3874,7 +3879,7 @@ namespace Tqdev\PhpCrudApi\Column\Reflection {
         {
             $json = [
                 'name' => $this->realName,
-                'alias' => $this->name!=$this->realName?$this->name:null,
+                'alias' => $this->name != $this->realName ? $this->name : null,
                 'type' => $this->type,
                 'length' => $this->length,
                 'precision' => $this->precision,
@@ -9088,6 +9093,61 @@ namespace Tqdev\PhpCrudApi\Middleware {
     }
 }
 
+// file: src/Tqdev/PhpCrudApi/Middleware/TextSearchMiddleware.php
+namespace Tqdev\PhpCrudApi\Middleware {
+
+    use Psr\Http\Message\ResponseInterface;
+    use Psr\Http\Message\ServerRequestInterface;
+    use Psr\Http\Server\RequestHandlerInterface;
+    use Tqdev\PhpCrudApi\Column\ReflectionService;
+    use Tqdev\PhpCrudApi\Controller\Responder;
+    use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
+    use Tqdev\PhpCrudApi\Middleware\Router\Router;
+    use Tqdev\PhpCrudApi\RequestUtils;
+
+    class TextSearchMiddleware extends Middleware
+    {
+        private $reflection;
+
+        public function __construct(Router $router, Responder $responder, array $properties, ReflectionService $reflection)
+        {
+            parent::__construct($router, $responder, $properties);
+            $this->reflection = $reflection;
+        }
+
+        public function process(ServerRequestInterface $request, RequestHandlerInterface $next): ResponseInterface
+        {
+            $operation = RequestUtils::getOperation($request);
+            if ($operation == 'list') {
+                $tableName = RequestUtils::getPathSegment($request, 2);
+                $params = RequestUtils::getParams($request);
+                $parameterName = $this->getProperty('parameter', 'search');
+                if (isset($params[$parameterName])) {
+                    $search = $params[$parameterName][0];
+                    unset($params[$parameterName]);
+                    $table = $this->reflection->getTable($tableName);
+                    $i = 0;
+                    foreach ($table->getColumnNames() as $columnName) {
+                        $column = $table->getColumn($columnName);
+                        while (isset($params["filter$i"])) {
+                            $i++;
+                        }
+                        if ($i >= 10) {
+                            break;
+                        }
+                        if ($column->isText()) {
+                            $params["filter$i"] = "$columnName,cs,$search";
+                            $i++;
+                        }
+                    }
+                }
+                $request = RequestUtils::setParams($request, $params);
+            }
+            return $next->handle($request);
+        }
+    }
+}
+
 // file: src/Tqdev/PhpCrudApi/Middleware/ValidationMiddleware.php
 namespace Tqdev\PhpCrudApi\Middleware {
 
@@ -11533,6 +11593,7 @@ namespace Tqdev\PhpCrudApi {
     use Tqdev\PhpCrudApi\Middleware\Router\SimpleRouter;
     use Tqdev\PhpCrudApi\Middleware\SanitationMiddleware;
     use Tqdev\PhpCrudApi\Middleware\SslRedirectMiddleware;
+    use Tqdev\PhpCrudApi\Middleware\TextSearchMiddleware;
     use Tqdev\PhpCrudApi\Middleware\ValidationMiddleware;
     use Tqdev\PhpCrudApi\Middleware\XmlMiddleware;
     use Tqdev\PhpCrudApi\Middleware\XsrfMiddleware;
@@ -11618,6 +11679,9 @@ namespace Tqdev\PhpCrudApi {
                         break;
                     case 'customization':
                         new CustomizationMiddleware($router, $responder, $properties, $reflection);
+                        break;
+                    case 'textSearch':
+                        new TextSearchMiddleware($router, $responder, $properties, $reflection);
                         break;
                     case 'xml':
                         new XmlMiddleware($router, $responder, $properties, $reflection);

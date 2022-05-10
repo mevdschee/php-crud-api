@@ -35,6 +35,7 @@ use Tqdev\PhpCrudApi\Middleware\ReconnectMiddleware;
 use Tqdev\PhpCrudApi\Middleware\Router\SimpleRouter;
 use Tqdev\PhpCrudApi\Middleware\SanitationMiddleware;
 use Tqdev\PhpCrudApi\Middleware\SslRedirectMiddleware;
+use Tqdev\PhpCrudApi\Middleware\TextSearchMiddleware;
 use Tqdev\PhpCrudApi\Middleware\ValidationMiddleware;
 use Tqdev\PhpCrudApi\Middleware\XmlMiddleware;
 use Tqdev\PhpCrudApi\Middleware\XsrfMiddleware;
@@ -120,6 +121,9 @@ class Api implements RequestHandlerInterface
                     break;
                 case 'customization':
                     new CustomizationMiddleware($router, $responder, $properties, $reflection);
+                    break;
+                case 'textSearch':
+                    new TextSearchMiddleware($router, $responder, $properties, $reflection);
                     break;
                 case 'xml':
                     new XmlMiddleware($router, $responder, $properties, $reflection);

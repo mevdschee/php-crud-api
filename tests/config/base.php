@@ -8,7 +8,7 @@ $settings = [
     'password' => 'incorrect_password',
     'mapping' => 'abc_posts.abc_id=posts.id,abc_posts.abc_user_id=posts.user_id,abc_posts.abc_category_id=posts.category_id,abc_posts.abc_content=posts.content',
     'controllers' => 'records,columns,cache,openapi,geojson,status',
-    'middlewares' => 'sslRedirect,xml,cors,json,reconnect,apiKeyAuth,apiKeyDbAuth,dbAuth,jwtAuth,basicAuth,authorization,sanitation,validation,ipAddress,multiTenancy,pageLimits,joinLimits,customization',
+    'middlewares' => 'sslRedirect,xml,cors,json,reconnect,apiKeyAuth,apiKeyDbAuth,dbAuth,jwtAuth,basicAuth,authorization,sanitation,validation,ipAddress,multiTenancy,pageLimits,joinLimits,textSearch,customization',
     'apiKeyAuth.mode' => 'optional',
     'apiKeyAuth.keys' => '123456789abc',
     'apiKeyDbAuth.mode' => 'optional',
@@ -57,6 +57,7 @@ $settings = [
     'joinLimits.depth' => 2,
     'joinLimits.tables' => 4,
     'joinLimits.records' => 10,
+    'textSearch.parameter' => 'q',
     'customization.beforeHandler' => function ($operation, $tableName, $request, $environment) {
         $environment->start = 0.003/*microtime(true)*/;
     },

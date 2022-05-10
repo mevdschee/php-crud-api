@@ -664,6 +664,7 @@ You can enable the following middleware using the "middlewares" config parameter
 - "multiTenancy": Restricts tenants access in a multi-tenant scenario
 - "pageLimits": Restricts list operations to prevent database scraping
 - "joinLimits": Restricts join parameters to prevent database scraping
+- "textSearch": Search in all text fields with a simple paramater
 - "customization": Provides handlers for request and response customization
 - "json": Support read/write of JSON strings as JSON objects/arrays
 - "xml": Translates all input and output from JSON to XML
@@ -742,6 +743,7 @@ You can tune the middleware behavior using middleware specific configuration par
 - "joinLimits.depth": The maximum depth (length) that is allowed in a join path ("3")
 - "joinLimits.tables": The maximum number of tables that you are allowed to join ("10")
 - "joinLimits.records": The maximum number of records returned for a joined entity ("1000")
+- "textSearch.parameter": The name of the parameter used for the search term ("search")
 - "customization.beforeHandler": Handler to implement request customization ("")
 - "customization.afterHandler": Handler to implement response customization ("")
 - "json.controllers": Controllers to process JSON strings for ("records,geojson")

@@ -1,0 +1,8 @@
+===
+GET /records/posts?q=Grüßgott
+===
+200
+Content-Type: application/json; charset=utf-8
+Content-Length: 209
+
+{"records":[{"id":2,"user_id":2,"category_id":2,"content":"🦀€ Grüßgott, Вiтаю, dobrý deň, hyvää päivää, გამარჯობა, Γεια σας, góðan dag, здравствуйте"}]}
