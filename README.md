@@ -1139,6 +1139,28 @@ If you want to allow no more than 10 pages with a maximum of 25 records each, yo
 
 NB: The maximum number of records is also applied when there is no page number specified in the request.
 
+### Search all text fields
+
+You may use the "textSearch" middleware to simplify (wildcard) text searches when listing records. 
+It allows you to specify a "search" parameter using:
+
+    GET /records/posts?search=Hello
+
+It will return all records from "posts" that contain "Hello" in one of their text (typed) fields:
+
+    {
+        "records":[
+            {
+                "id": 1,
+                "title": "Hello world!",
+                "content": "Welcome to the first post.",
+                "created": "2018-03-05T20:12:56Z"
+            }
+        ]
+    }
+
+The example searches the fields "title" or "content" for the substring "Hello".
+
 ### Customization handlers
 
 You may use the "customization" middleware to modify request and response and implement any other functionality.
