@@ -14,7 +14,7 @@ class Config
         'command' => '',
         'tables' => 'all',
         'mapping' => '',
-        'middlewares' => 'cors,errors',
+        'middlewares' => 'cors',
         'controllers' => 'records,geojson,openapi,status',
         'customControllers' => '',
         'customOpenApiBuilders' => '',
