@@ -104,7 +104,7 @@ class GenericReflection
         $results = $this->query($sql, [$this->database]);
         $tables = $this->tables;
         $results = array_filter($results, function ($v) use ($tables) {
-            return !$tables || in_array($v['TABLE_NAME'], $tables);
+            return $tables == ['all'] || in_array($v['TABLE_NAME'], $tables);
         });
         foreach ($results as &$result) {
             $result['TABLE_REAL_NAME'] = $result['TABLE_NAME'];
@@ -133,7 +133,7 @@ class GenericReflection
 
     public function getTableColumns(string $tableName, string $type): array
     {
-        $tableRealName = $this->mapper->getTableRealName($tableName);        
+        $tableRealName = $this->mapper->getTableRealName($tableName);
         $sql = $this->getTableColumnsSQL();
         $results = $this->query($sql, [$tableRealName, $this->database]);
         foreach ($results as &$result) {
@@ -182,7 +182,7 @@ class GenericReflection
 
     public function getTablePrimaryKeys(string $tableName): array
     {
-        $tableRealName = $this->mapper->getTableRealName($tableName);        
+        $tableRealName = $this->mapper->getTableRealName($tableName);
         $sql = $this->getTablePrimaryKeysSQL();
         $results = $this->query($sql, [$tableRealName, $this->database]);
         $primaryKeys = [];
@@ -194,7 +194,7 @@ class GenericReflection
 
     public function getTableForeignKeys(string $tableName): array
     {
-        $tableRealName = $this->mapper->getTableRealName($tableName);        
+        $tableRealName = $this->mapper->getTableRealName($tableName);
         $sql = $this->getTableForeignKeysSQL();
         $results = $this->query($sql, [$tableRealName, $this->database]);
         $foreignKeys = [];

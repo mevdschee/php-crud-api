@@ -12,7 +12,7 @@ class Config
         'password' => '',
         'database' => '',
         'command' => '',
-        'tables' => '',
+        'tables' => 'all',
         'mapping' => '',
         'middlewares' => 'cors,errors',
         'controllers' => 'records,geojson,openapi,status',
