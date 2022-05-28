@@ -60,6 +60,15 @@ class ReconnectMiddleware extends Middleware
         return '';
     }
 
+    private function getCommand(): string
+    {
+        $commandHandler = $this->getProperty('commandHandler', '');
+        if ($commandHandler) {
+            return call_user_func($commandHandler);
+        }
+        return '';
+    }
+
     private function getTables(): array
     {
         $tablesHandler = $this->getProperty('tablesHandler', '');
@@ -102,12 +111,13 @@ class ReconnectMiddleware extends Middleware
         $address = $this->getAddress();
         $port = $this->getPort();
         $database = $this->getDatabase();
+        $command = $this->getCommand();
         $tables = $this->getTables();
         $mapping = $this->getMapping();
         $username = $this->getUsername();
         $password = $this->getPassword();
-        if ($driver || $address || $port || $database || $tables || $mapping || $username || $password) {
-            $this->db->reconstruct($driver, $address, $port, $database, $tables, $mapping, $username, $password);
+        if ($driver || $address || $port || $database || $command || $tables || $mapping || $username || $password) {
+            $this->db->reconstruct($driver, $address, $port, $database, $command, $tables, $mapping, $username, $password);
         }
         return $next->handle($request);
     }

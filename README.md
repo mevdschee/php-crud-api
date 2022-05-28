@@ -57,6 +57,7 @@ These are all the configuration options and their default value between brackets
 - "username": Username of the user connecting to the database (no default)
 - "password": Password of the user connecting to the database (no default)
 - "database": Database the connecting is made to (no default)
+- "command": Extra SQL to initialize the database connection (none)
 - "tables": Comma separated list of tables to publish (defaults to 'all')
 - "mapping": Comma separated list of table/column mappings (no mappping)
 - "middlewares": List of middlewares to load (`cors`)
@@ -663,6 +664,7 @@ You can enable the following middleware using the "middlewares" config parameter
 - "multiTenancy": Restricts tenants access in a multi-tenant scenario
 - "pageLimits": Restricts list operations to prevent database scraping
 - "joinLimits": Restricts join parameters to prevent database scraping
+- "textSearch": Search in all text fields with a simple paramater
 - "customization": Provides handlers for request and response customization
 - "json": Support read/write of JSON strings as JSON objects/arrays
 - "xml": Translates all input and output from JSON to XML
@@ -741,6 +743,7 @@ You can tune the middleware behavior using middleware specific configuration par
 - "joinLimits.depth": The maximum depth (length) that is allowed in a join path ("3")
 - "joinLimits.tables": The maximum number of tables that you are allowed to join ("10")
 - "joinLimits.records": The maximum number of records returned for a joined entity ("1000")
+- "textSearch.parameter": The name of the parameter used for the search term ("search")
 - "customization.beforeHandler": Handler to implement request customization ("")
 - "customization.afterHandler": Handler to implement response customization ("")
 - "json.controllers": Controllers to process JSON strings for ("records,geojson")
@@ -1135,6 +1138,28 @@ If you want to allow no more than 10 pages with a maximum of 25 records each, yo
     'pageLimits.records' => 25,
 
 NB: The maximum number of records is also applied when there is no page number specified in the request.
+
+### Search all text fields
+
+You may use the "textSearch" middleware to simplify (wildcard) text searches when listing records. 
+It allows you to specify a "search" parameter using:
+
+    GET /records/posts?search=Hello
+
+It will return all records from "posts" that contain "Hello" in one of their text (typed) fields:
+
+    {
+        "records":[
+            {
+                "id": 1,
+                "title": "Hello world!",
+                "content": "Welcome to the first post.",
+                "created": "2018-03-05T20:12:56Z"
+            }
+        ]
+    }
+
+The example searches the fields "title" or "content" for the substring "Hello".
 
 ### Customization handlers
 

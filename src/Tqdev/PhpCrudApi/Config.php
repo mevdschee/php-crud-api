@@ -11,6 +11,7 @@ class Config
         'username' => '',
         'password' => '',
         'database' => '',
+        'command' => '',
         'tables' => '',
         'mapping' => '',
         'middlewares' => 'cors,errors',
@@ -140,6 +141,12 @@ class Config
     {
         return $this->values['database'];
     }
+
+    public function getCommand(): string
+    {
+        return $this->values['command'];
+    }
+
 
     public function getTables(): array
     {

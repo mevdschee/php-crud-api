@@ -3850,6 +3850,11 @@ namespace Tqdev\PhpCrudApi\Column\Reflection {
             return in_array($this->type, ['integer', 'bigint', 'smallint', 'tinyint']);
         }
 
+        public function isText(): bool
+        {
+            return in_array($this->type, ['varchar', 'clob']);
+        }
+
         public function setPk($value) /*: void*/
         {
             $this->pk = $value;
@@ -3874,7 +3879,7 @@ namespace Tqdev\PhpCrudApi\Column\Reflection {
         {
             $json = [
                 'name' => $this->realName,
-                'alias' => $this->name!=$this->realName?$this->name:null,
+                'alias' => $this->name != $this->realName ? $this->name : null,
                 'type' => $this->type,
                 'length' => $this->length,
                 'precision' => $this->precision,
@@ -5555,6 +5560,7 @@ namespace Tqdev\PhpCrudApi\Database {
         private $address;
         private $port;
         private $database;
+        private $command;
         private $tables;
         private $mapping;
         private $username;
@@ -5585,22 +5591,30 @@ namespace Tqdev\PhpCrudApi\Database {
         {
             switch ($this->driver) {
                 case 'mysql':
-                    return [
+                    $commands = [
                         'SET SESSION sql_warnings=1;',
                         'SET NAMES utf8mb4;',
                         'SET SESSION sql_mode = "ANSI,TRADITIONAL";',
                     ];
+                    break;
                 case 'pgsql':
-                    return [
+                    $commands = [
                         "SET NAMES 'UTF8';",
                     ];
+                    break;
                 case 'sqlsrv':
-                    return [];
+                    $commands = [];
+                    break;
                 case 'sqlite':
-                    return [
+                    $commands = [
                         'PRAGMA foreign_keys = on;',
                     ];
+                    break;
             }
+            if ($this->command != '') {
+                $commands[] = $this->command;
+            }
+            return $commands;
         }
 
         private function getOptions(): array
@@ -5647,12 +5661,13 @@ namespace Tqdev\PhpCrudApi\Database {
             return $result;
         }
 
-        public function __construct(string $driver, string $address, int $port, string $database, array $tables, array $mapping, string $username, string $password)
+        public function __construct(string $driver, string $address, int $port, string $database, string $command, array $tables, array $mapping, string $username, string $password)
         {
             $this->driver = $driver;
             $this->address = $address;
             $this->port = $port;
             $this->database = $database;
+            $this->command = $command;
             $this->tables = $tables;
             $this->mapping = $mapping;
             $this->username = $username;
@@ -5660,7 +5675,7 @@ namespace Tqdev\PhpCrudApi\Database {
             $this->initPdo();
         }
 
-        public function reconstruct(string $driver, string $address, int $port, string $database, array $tables, array $mapping, string $username, string $password): bool
+        public function reconstruct(string $driver, string $address, int $port, string $database, string $command, array $tables, array $mapping, string $username, string $password): bool
         {
             if ($driver) {
                 $this->driver = $driver;
@@ -5673,6 +5688,9 @@ namespace Tqdev\PhpCrudApi\Database {
             }
             if ($database) {
                 $this->database = $database;
+            }
+            if ($command) {
+                $this->command = $command;
             }
             if ($tables) {
                 $this->tables = $tables;
@@ -8845,6 +8863,15 @@ namespace Tqdev\PhpCrudApi\Middleware {
             return '';
         }
 
+        private function getCommand(): string
+        {
+            $commandHandler = $this->getProperty('commandHandler', '');
+            if ($commandHandler) {
+                return call_user_func($commandHandler);
+            }
+            return '';
+        }
+
         private function getTables(): array
         {
             $tablesHandler = $this->getProperty('tablesHandler', '');
@@ -8887,12 +8914,13 @@ namespace Tqdev\PhpCrudApi\Middleware {
             $address = $this->getAddress();
             $port = $this->getPort();
             $database = $this->getDatabase();
+            $command = $this->getCommand();
             $tables = $this->getTables();
             $mapping = $this->getMapping();
             $username = $this->getUsername();
             $password = $this->getPassword();
-            if ($driver || $address || $port || $database || $tables || $mapping || $username || $password) {
-                $this->db->reconstruct($driver, $address, $port, $database, $tables, $mapping, $username, $password);
+            if ($driver || $address || $port || $database || $command || $tables || $mapping || $username || $password) {
+                $this->db->reconstruct($driver, $address, $port, $database, $command, $tables, $mapping, $username, $password);
             }
             return $next->handle($request);
         }
@@ -9075,6 +9103,61 @@ namespace Tqdev\PhpCrudApi\Middleware {
                 $response = $next->handle($request);
             }
             return $response;
+        }
+    }
+}
+
+// file: src/Tqdev/PhpCrudApi/Middleware/TextSearchMiddleware.php
+namespace Tqdev\PhpCrudApi\Middleware {
+
+    use Psr\Http\Message\ResponseInterface;
+    use Psr\Http\Message\ServerRequestInterface;
+    use Psr\Http\Server\RequestHandlerInterface;
+    use Tqdev\PhpCrudApi\Column\ReflectionService;
+    use Tqdev\PhpCrudApi\Controller\Responder;
+    use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
+    use Tqdev\PhpCrudApi\Middleware\Router\Router;
+    use Tqdev\PhpCrudApi\RequestUtils;
+
+    class TextSearchMiddleware extends Middleware
+    {
+        private $reflection;
+
+        public function __construct(Router $router, Responder $responder, array $properties, ReflectionService $reflection)
+        {
+            parent::__construct($router, $responder, $properties);
+            $this->reflection = $reflection;
+        }
+
+        public function process(ServerRequestInterface $request, RequestHandlerInterface $next): ResponseInterface
+        {
+            $operation = RequestUtils::getOperation($request);
+            if ($operation == 'list') {
+                $tableName = RequestUtils::getPathSegment($request, 2);
+                $params = RequestUtils::getParams($request);
+                $parameterName = $this->getProperty('parameter', 'search');
+                if (isset($params[$parameterName])) {
+                    $search = $params[$parameterName][0];
+                    unset($params[$parameterName]);
+                    $table = $this->reflection->getTable($tableName);
+                    $i = 0;
+                    foreach ($table->getColumnNames() as $columnName) {
+                        $column = $table->getColumn($columnName);
+                        while (isset($params["filter$i"])) {
+                            $i++;
+                        }
+                        if ($i >= 10) {
+                            break;
+                        }
+                        if ($column->isText()) {
+                            $params["filter$i"] = "$columnName,cs,$search";
+                            $i++;
+                        }
+                    }
+                }
+                $request = RequestUtils::setParams($request, $params);
+            }
+            return $next->handle($request);
         }
     }
 }
@@ -11526,6 +11609,7 @@ namespace Tqdev\PhpCrudApi {
     use Tqdev\PhpCrudApi\Middleware\Router\SimpleRouter;
     use Tqdev\PhpCrudApi\Middleware\SanitationMiddleware;
     use Tqdev\PhpCrudApi\Middleware\SslRedirectMiddleware;
+    use Tqdev\PhpCrudApi\Middleware\TextSearchMiddleware;
     use Tqdev\PhpCrudApi\Middleware\ValidationMiddleware;
     use Tqdev\PhpCrudApi\Middleware\XmlMiddleware;
     use Tqdev\PhpCrudApi\Middleware\XsrfMiddleware;
@@ -11545,6 +11629,7 @@ namespace Tqdev\PhpCrudApi {
                 $config->getAddress(),
                 $config->getPort(),
                 $config->getDatabase(),
+                $config->getCommand(),
                 $config->getTables(),
                 $config->getMapping(),
                 $config->getUsername(),
@@ -11610,6 +11695,9 @@ namespace Tqdev\PhpCrudApi {
                         break;
                     case 'customization':
                         new CustomizationMiddleware($router, $responder, $config, $middleware, $reflection);
+                        break;
+                    case 'textSearch':
+                        new TextSearchMiddleware($router, $responder, $properties, $reflection);
                         break;
                     case 'xml':
                         new XmlMiddleware($router, $responder, $config, $middleware, $reflection);
@@ -11730,6 +11818,7 @@ namespace Tqdev\PhpCrudApi {
             'username' => '',
             'password' => '',
             'database' => '',
+            'command' => '',
             'tables' => '',
             'mapping' => '',
             'middlewares' => 'cors,errors',
@@ -11858,6 +11947,11 @@ namespace Tqdev\PhpCrudApi {
         public function getDatabase(): string
         {
             return $this->values['database'];
+        }
+
+        public function getCommand(): string
+        {
+            return $this->values['command'];
         }
 
         public function getTables(): array

@@ -13,6 +13,7 @@ class GenericDB
     private $address;
     private $port;
     private $database;
+    private $command;
     private $tables;
     private $mapping;
     private $username;
@@ -43,22 +44,30 @@ class GenericDB
     {
         switch ($this->driver) {
             case 'mysql':
-                return [
+                $commands = [
                     'SET SESSION sql_warnings=1;',
                     'SET NAMES utf8mb4;',
                     'SET SESSION sql_mode = "ANSI,TRADITIONAL";',
                 ];
+                break;
             case 'pgsql':
-                return [
+                $commands = [
                     "SET NAMES 'UTF8';",
                 ];
+                break;
             case 'sqlsrv':
-                return [];
+                $commands = [];
+                break;
             case 'sqlite':
-                return [
+                $commands = [
                     'PRAGMA foreign_keys = on;',
                 ];
+                break;
         }
+        if ($this->command != '') {
+            $commands[] = $this->command;
+        }
+        return $commands;
     }
 
     private function getOptions(): array
@@ -105,12 +114,13 @@ class GenericDB
         return $result;
     }
 
-    public function __construct(string $driver, string $address, int $port, string $database, array $tables, array $mapping, string $username, string $password)
+    public function __construct(string $driver, string $address, int $port, string $database, string $command, array $tables, array $mapping, string $username, string $password)
     {
         $this->driver = $driver;
         $this->address = $address;
         $this->port = $port;
         $this->database = $database;
+        $this->command = $command;
         $this->tables = $tables;
         $this->mapping = $mapping;
         $this->username = $username;
@@ -118,7 +128,7 @@ class GenericDB
         $this->initPdo();
     }
 
-    public function reconstruct(string $driver, string $address, int $port, string $database, array $tables, array $mapping, string $username, string $password): bool
+    public function reconstruct(string $driver, string $address, int $port, string $database, string $command, array $tables, array $mapping, string $username, string $password): bool
     {
         if ($driver) {
             $this->driver = $driver;
@@ -131,6 +141,9 @@ class GenericDB
         }
         if ($database) {
             $this->database = $database;
+        }
+        if ($command) {
+            $this->command = $command;
         }
         if ($tables) {
             $this->tables = $tables;
