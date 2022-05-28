@@ -111,10 +111,10 @@ function getDatabase(Config $config)
 
 function getCommand(Config $config)
 {
-    if (!isset($config->getMiddlewares()['reconnect']['commandHandler'])) {
+    if (!is_callable($config->getProperty('reconnect.commandHandler'))) {
         return $config->getCommand();
     }
-    return $config->getMiddlewares()['reconnect']['commandHandler']();
+    return $config->getProperty('reconnect.commandHandler')();
 }
 
 function getTables(Config $config)
