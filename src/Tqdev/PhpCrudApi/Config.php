@@ -71,60 +71,44 @@ class Config
         ];
     }
 
-    private function applyEnvironmentVariables(array $values, string $prefix = 'PHP_CRUD_API'): array
+    private function getEnvironmentVariableName(string $key): string
     {
-        $result = [];
-        foreach ($values as $key => $value) {
-            $suffix = strtoupper(preg_replace('/(?<!^)[A-Z]/', '_$0', str_replace('.', '_', $key)));
-            $newPrefix = $prefix . "_" . $suffix;
-            if (is_array($value)) {
-                $newPrefix = str_replace('PHP_CRUD_API_MIDDLEWARES_','PHP_CRUD_API_',$newPrefix);
-                $result[$key] = $this->applyEnvironmentVariables($value, $newPrefix);
-            } else {
-                $result[$key] = getenv($newPrefix, true) ?: $value;
-            }
-        }
-        return $result;
-    }
-    
-    public function __construct(array $values)
-    {
-        $driver = $this->getDefaultDriver($values);
-        $defaults = $this->getDriverDefaults($driver);
-        $newValues = array_merge($this->values, $defaults, $values);
-        $newValues['middlewares'] = getenv('PHP_CRUD_API_MIDDLEWARES', true) ?: $newValues['middlewares'];
-        $newValues = $this->parseMiddlewares($newValues);
-        $diff = array_diff_key($newValues, $this->values);
-        if (!empty($diff)) {
-            $key = array_keys($diff)[0];
-            throw new \Exception("Config has invalid value '$key'");
-        }
-        $newValues = $this->applyEnvironmentVariables($newValues);
-        $this->values = $newValues;
+        $prefix = "PHP_CRUD_API_";
+        $suffix = strtoupper(preg_replace('/(?<!^)[A-Z]/', '_$0', str_replace('.', '_', $key)));
+        return $prefix . $suffix;
     }
 
-    private function parseMiddlewares(array $values): array
+    public function getProperty(string $key, $default = '')
     {
-        $newValues = array();
-        $properties = array();
-        $middlewares = array_map('trim', explode(',', $values['middlewares']));
-        foreach ($middlewares as $middleware) {
-            $properties[$middleware] = [];
+        if (strpos($key, 'Handler')) {
+            return $this->values[$key] ?? $default;
         }
+        $variableName = $this->getEnvironmentVariableName($key);
+        return getenv($variableName, true) ?: ($this->values[$key] ?? $default);
+    }
+
+    public function __construct(array $values)
+    {
+        $defaults = array_merge($this->values, $this->getDriverDefaults($this->getDefaultDriver($values)));
+        foreach ($defaults as $key => $default) {
+            $this->values[$key] = $values[$key] ?? $default;
+            $this->values[$key] = $this->getProperty($key);
+        }
+        $this->values['middlewares'] = array_map('trim', explode(',', $this->values['middlewares']));
         foreach ($values as $key => $value) {
             if (strpos($key, '.') === false) {
-                $newValues[$key] = $value;
+                if (!isset($defaults[$key])) {
+                    throw new \Exception("Config has invalid key '$key'");
+                }
             } else {
-                list($middleware, $key2) = explode('.', $key, 2);
-                if (isset($properties[$middleware])) {
-                    $properties[$middleware][$key2] = $value;
+                $middleware = substr($key, 0, strpos($key, '.'));
+                if (!in_array($middleware, $this->values['middlewares'])) {
+                    throw new \Exception("Config has invalid middleware key '$key'");
                 } else {
-                    throw new \Exception("Config has invalid value '$key'");
+                    $this->values[$key] = $value;
                 }
             }
         }
-        $newValues['middlewares'] = array_reverse($properties, true);
-        return $newValues;
     }
 
     public function getDriver(): string
@@ -164,8 +148,10 @@ class Config
 
     public function getMapping(): array
     {
-        $mapping = array_map(function($v){ return explode('=', $v); }, array_filter(array_map('trim', explode(',', $this->values['mapping']))));
-        return array_combine(array_column($mapping,0),array_column($mapping,1));
+        $mapping = array_map(function ($v) {
+            return explode('=', $v);
+        }, array_filter(array_map('trim', explode(',', $this->values['mapping']))));
+        return array_combine(array_column($mapping, 0), array_column($mapping, 1));
     }
 
     public function getMiddlewares(): array

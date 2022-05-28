@@ -7272,6 +7272,7 @@ namespace Tqdev\PhpCrudApi\GeoJson {
 namespace Tqdev\PhpCrudApi\Middleware\Base {
 
     use Psr\Http\Server\MiddlewareInterface;
+    use Tqdev\PhpCrudApi\Config;
     use Tqdev\PhpCrudApi\Controller\Responder;
     use Tqdev\PhpCrudApi\Middleware\Router\Router;
 
@@ -7279,13 +7280,15 @@ namespace Tqdev\PhpCrudApi\Middleware\Base {
     {
         protected $next;
         protected $responder;
-        private $properties;
+        private $middleware;
+        private $config;
 
-        public function __construct(Router $router, Responder $responder, array $properties)
+        public function __construct(Router $router, Responder $responder, Config $config, string $middleware)
         {
             $router->load($this);
             $this->responder = $responder;
-            $this->properties = $properties;
+            $this->middleware = $middleware;
+            $this->config = $config;
         }
 
         protected function getArrayProperty(string $key, string $default): array
@@ -7310,7 +7313,7 @@ namespace Tqdev\PhpCrudApi\Middleware\Base {
 
         protected function getProperty(string $key, $default)
         {
-            return isset($this->properties[$key]) ? $this->properties[$key] : $default;
+            return $this->config->getProperty($this->middleware . '.' . $key, $default);
         }
     }
 }
@@ -7485,7 +7488,7 @@ namespace Tqdev\PhpCrudApi\Middleware\Router {
             $request = $this->removeBasePath($request);
 
             if (count($this->middlewares)) {
-                $handler = array_pop($this->middlewares);
+                $handler = array_shift($this->middlewares);
                 return $handler->process($request, $this);
             }
 
@@ -7573,6 +7576,7 @@ namespace Tqdev\PhpCrudApi\Middleware {
     use Psr\Http\Message\ServerRequestInterface;
     use Psr\Http\Server\RequestHandlerInterface;
     use Tqdev\PhpCrudApi\Column\ReflectionService;
+    use Tqdev\PhpCrudApi\Config;
     use Tqdev\PhpCrudApi\Controller\Responder;
     use Tqdev\PhpCrudApi\Database\GenericDB;
     use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
@@ -7588,9 +7592,9 @@ namespace Tqdev\PhpCrudApi\Middleware {
         private $db;
         private $ordering;
 
-        public function __construct(Router $router, Responder $responder, array $properties, ReflectionService $reflection, GenericDB $db)
+        public function __construct(Router $router, Responder $responder, Config $config, string $middleware, ReflectionService $reflection, GenericDB $db)
         {
-            parent::__construct($router, $responder, $properties);
+            parent::__construct($router, $responder, $config, $middleware);
             $this->reflection = $reflection;
             $this->db = $db;
             $this->ordering = new OrderingInfo();
@@ -7633,6 +7637,7 @@ namespace Tqdev\PhpCrudApi\Middleware {
     use Psr\Http\Message\ServerRequestInterface;
     use Psr\Http\Server\RequestHandlerInterface;
     use Tqdev\PhpCrudApi\Column\ReflectionService;
+    use Tqdev\PhpCrudApi\Config;
     use Tqdev\PhpCrudApi\Controller\Responder;
     use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
     use Tqdev\PhpCrudApi\Middleware\Communication\VariableStore;
@@ -7645,9 +7650,9 @@ namespace Tqdev\PhpCrudApi\Middleware {
     {
         private $reflection;
 
-        public function __construct(Router $router, Responder $responder, array $properties, ReflectionService $reflection)
+        public function __construct(Router $router, Responder $responder, Config $config, string $middleware, ReflectionService $reflection)
         {
-            parent::__construct($router, $responder, $properties);
+            parent::__construct($router, $responder, $config, $middleware);
             $this->reflection = $reflection;
         }
 
@@ -7856,6 +7861,7 @@ namespace Tqdev\PhpCrudApi\Middleware {
     use Psr\Http\Message\ResponseInterface;
     use Psr\Http\Message\ServerRequestInterface;
     use Psr\Http\Server\RequestHandlerInterface;
+    use Tqdev\PhpCrudApi\Config;
     use Tqdev\PhpCrudApi\Controller\Responder;
     use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
     use Tqdev\PhpCrudApi\Middleware\Router\Router;
@@ -7867,17 +7873,17 @@ namespace Tqdev\PhpCrudApi\Middleware {
     {
         private $debug;
 
-        public function __construct(Router $router, Responder $responder, array $properties, bool $debug)
+        public function __construct(Router $router, Responder $responder, Config $config, string $middleware)
         {
-            parent::__construct($router, $responder, $properties);
-            $this->debug = $debug;
+            parent::__construct($router, $responder, $config, $middleware);
+            $this->debug = $config->getDebug();
         }
 
         private function isOriginAllowed(string $origin, string $allowedOrigins): bool
         {
             $found = false;
             foreach (explode(',', $allowedOrigins) as $allowedOrigin) {
-                $hostname = preg_quote(strtolower(trim($allowedOrigin)),'/');
+                $hostname = preg_quote(strtolower(trim($allowedOrigin)), '/');
                 $regex = '/^' . str_replace('\*', '.*', $hostname) . '$/';
                 if (preg_match($regex, $origin)) {
                     $found = true;
@@ -7952,6 +7958,7 @@ namespace Tqdev\PhpCrudApi\Middleware {
     use Psr\Http\Message\ServerRequestInterface;
     use Psr\Http\Server\RequestHandlerInterface;
     use Tqdev\PhpCrudApi\Column\ReflectionService;
+    use Tqdev\PhpCrudApi\Config;
     use Tqdev\PhpCrudApi\Controller\Responder;
     use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
     use Tqdev\PhpCrudApi\Middleware\Router\Router;
@@ -7961,9 +7968,9 @@ namespace Tqdev\PhpCrudApi\Middleware {
     {
         private $reflection;
 
-        public function __construct(Router $router, Responder $responder, array $properties, ReflectionService $reflection)
+        public function __construct(Router $router, Responder $responder, Config $config, string $middleware, ReflectionService $reflection)
         {
-            parent::__construct($router, $responder, $properties);
+            parent::__construct($router, $responder, $config, $middleware);
             $this->reflection = $reflection;
         }
 
@@ -7995,6 +8002,7 @@ namespace Tqdev\PhpCrudApi\Middleware {
     use Psr\Http\Message\ServerRequestInterface;
     use Psr\Http\Server\RequestHandlerInterface;
     use Tqdev\PhpCrudApi\Column\ReflectionService;
+    use Tqdev\PhpCrudApi\Config;
     use Tqdev\PhpCrudApi\Controller\Responder;
     use Tqdev\PhpCrudApi\Database\GenericDB;
     use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
@@ -8010,9 +8018,9 @@ namespace Tqdev\PhpCrudApi\Middleware {
         private $db;
         private $ordering;
 
-        public function __construct(Router $router, Responder $responder, array $properties, ReflectionService $reflection, GenericDB $db)
+        public function __construct(Router $router, Responder $responder, Config $config, string $middleware, ReflectionService $reflection, GenericDB $db)
         {
-            parent::__construct($router, $responder, $properties);
+            parent::__construct($router, $responder, $config, $middleware);
             $this->reflection = $reflection;
             $this->db = $db;
             $this->ordering = new OrderingInfo();
@@ -8102,7 +8110,7 @@ namespace Tqdev\PhpCrudApi\Middleware {
                         return $this->responder->error(ErrorCode::PASSWORD_TOO_SHORT, $passwordLength);
                     }
                     $userColumns = $columnNames;
-                    if(!in_array($pkName, $columnNames)){
+                    if (!in_array($pkName, $columnNames)) {
                         array_push($userColumns, $pkName);
                     }
                     $users = $this->db->selectAll($table, $userColumns, $condition, $columnOrdering, 0, 1);
@@ -8114,7 +8122,7 @@ namespace Tqdev\PhpCrudApi\Middleware {
                             $data = [$passwordColumnName => password_hash($newPassword, PASSWORD_DEFAULT)];
                             $this->db->updateSingle($table, $data, $user[$pkName]);
                             unset($user[$passwordColumnName]);
-                            if(!in_array($pkName, $columnNames)){
+                            if (!in_array($pkName, $columnNames)) {
                                 unset($user[$pkName]);
                             }
                             return $this->responder->success($user);
@@ -8222,6 +8230,7 @@ namespace Tqdev\PhpCrudApi\Middleware {
     use Psr\Http\Server\RequestHandlerInterface;
     use Tqdev\PhpCrudApi\Column\ReflectionService;
     use Tqdev\PhpCrudApi\Column\Reflection\ReflectedTable;
+    use Tqdev\PhpCrudApi\Config;
     use Tqdev\PhpCrudApi\Controller\Responder;
     use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
     use Tqdev\PhpCrudApi\Middleware\Router\Router;
@@ -8231,9 +8240,9 @@ namespace Tqdev\PhpCrudApi\Middleware {
     {
         private $reflection;
 
-        public function __construct(Router $router, Responder $responder, array $properties, ReflectionService $reflection)
+        public function __construct(Router $router, Responder $responder, Config $config, string $middleware, ReflectionService $reflection)
         {
-            parent::__construct($router, $responder, $properties);
+            parent::__construct($router, $responder, $config, $middleware);
             $this->reflection = $reflection;
         }
 
@@ -8302,6 +8311,7 @@ namespace Tqdev\PhpCrudApi\Middleware {
     use Psr\Http\Message\ServerRequestInterface;
     use Psr\Http\Server\RequestHandlerInterface;
     use Tqdev\PhpCrudApi\Column\ReflectionService;
+    use Tqdev\PhpCrudApi\Config;
     use Tqdev\PhpCrudApi\Controller\Responder;
     use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
     use Tqdev\PhpCrudApi\Middleware\Communication\VariableStore;
@@ -8312,9 +8322,9 @@ namespace Tqdev\PhpCrudApi\Middleware {
     {
         private $reflection;
 
-        public function __construct(Router $router, Responder $responder, array $properties, ReflectionService $reflection)
+        public function __construct(Router $router, Responder $responder, Config $config, string $middleware, ReflectionService $reflection)
         {
-            parent::__construct($router, $responder, $properties);
+            parent::__construct($router, $responder, $config, $middleware);
             $this->reflection = $reflection;
         }
 
@@ -8628,6 +8638,7 @@ namespace Tqdev\PhpCrudApi\Middleware {
     use Psr\Http\Message\ServerRequestInterface;
     use Psr\Http\Server\RequestHandlerInterface;
     use Tqdev\PhpCrudApi\Column\ReflectionService;
+    use Tqdev\PhpCrudApi\Config;
     use Tqdev\PhpCrudApi\Controller\Responder;
     use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
     use Tqdev\PhpCrudApi\Middleware\Communication\VariableStore;
@@ -8641,9 +8652,9 @@ namespace Tqdev\PhpCrudApi\Middleware {
     {
         private $reflection;
 
-        public function __construct(Router $router, Responder $responder, array $properties, ReflectionService $reflection)
+        public function __construct(Router $router, Responder $responder, Config $config, string $middleware, ReflectionService $reflection)
         {
-            parent::__construct($router, $responder, $properties);
+            parent::__construct($router, $responder, $config, $middleware);
             $this->reflection = $reflection;
         }
 
@@ -8727,6 +8738,7 @@ namespace Tqdev\PhpCrudApi\Middleware {
     use Psr\Http\Message\ServerRequestInterface;
     use Psr\Http\Server\RequestHandlerInterface;
     use Tqdev\PhpCrudApi\Column\ReflectionService;
+    use Tqdev\PhpCrudApi\Config;
     use Tqdev\PhpCrudApi\Controller\Responder;
     use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
     use Tqdev\PhpCrudApi\Middleware\Router\Router;
@@ -8737,9 +8749,9 @@ namespace Tqdev\PhpCrudApi\Middleware {
     {
         private $reflection;
 
-        public function __construct(Router $router, Responder $responder, array $properties, ReflectionService $reflection)
+        public function __construct(Router $router, Responder $responder, Config $config, string $middleware, ReflectionService $reflection)
         {
-            parent::__construct($router, $responder, $properties);
+            parent::__construct($router, $responder, $config, $middleware);
             $this->reflection = $reflection;
         }
 
@@ -8779,6 +8791,7 @@ namespace Tqdev\PhpCrudApi\Middleware {
     use Psr\Http\Message\ServerRequestInterface;
     use Psr\Http\Server\RequestHandlerInterface;
     use Tqdev\PhpCrudApi\Column\ReflectionService;
+    use Tqdev\PhpCrudApi\Config;
     use Tqdev\PhpCrudApi\Controller\Responder;
     use Tqdev\PhpCrudApi\Database\GenericDB;
     use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
@@ -8789,9 +8802,9 @@ namespace Tqdev\PhpCrudApi\Middleware {
         private $reflection;
         private $db;
 
-        public function __construct(Router $router, Responder $responder, array $properties, ReflectionService $reflection, GenericDB $db)
+        public function __construct(Router $router, Responder $responder, Config $config, string $middleware, ReflectionService $reflection, GenericDB $db)
         {
-            parent::__construct($router, $responder, $properties);
+            parent::__construct($router, $responder, $config, $middleware);
             $this->reflection = $reflection;
             $this->db = $db;
         }
@@ -8895,6 +8908,7 @@ namespace Tqdev\PhpCrudApi\Middleware {
     use Tqdev\PhpCrudApi\Column\Reflection\ReflectedTable;
     use Tqdev\PhpCrudApi\Column\Reflection\ReflectedColumn;
     use Tqdev\PhpCrudApi\Column\ReflectionService;
+    use Tqdev\PhpCrudApi\Config;
     use Tqdev\PhpCrudApi\Controller\Responder;
     use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
     use Tqdev\PhpCrudApi\Middleware\Router\Router;
@@ -8904,9 +8918,9 @@ namespace Tqdev\PhpCrudApi\Middleware {
     {
         private $reflection;
 
-        public function __construct(Router $router, Responder $responder, array $properties, ReflectionService $reflection)
+        public function __construct(Router $router, Responder $responder, Config $config, string $middleware, ReflectionService $reflection)
         {
-            parent::__construct($router, $responder, $properties);
+            parent::__construct($router, $responder, $config, $middleware);
             $this->reflection = $reflection;
         }
 
@@ -9074,6 +9088,7 @@ namespace Tqdev\PhpCrudApi\Middleware {
     use Tqdev\PhpCrudApi\Column\ReflectionService;
     use Tqdev\PhpCrudApi\Column\Reflection\ReflectedTable;
     use Tqdev\PhpCrudApi\Column\Reflection\ReflectedColumn;
+    use Tqdev\PhpCrudApi\Config;
     use Tqdev\PhpCrudApi\Controller\Responder;
     use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
     use Tqdev\PhpCrudApi\Middleware\Router\Router;
@@ -9084,9 +9099,9 @@ namespace Tqdev\PhpCrudApi\Middleware {
     {
     	private $reflection;
 
-    	public function __construct(Router $router, Responder $responder, array $properties, ReflectionService $reflection)
+    	public function __construct(Router $router, Responder $responder, Config $config, string $middleware, ReflectionService $reflection)
     	{
-    		parent::__construct($router, $responder, $properties);
+    		parent::__construct($router, $responder, $config, $middleware);
     		$this->reflection = $reflection;
     	}
 
@@ -9290,6 +9305,7 @@ namespace Tqdev\PhpCrudApi\Middleware {
     use Psr\Http\Message\ServerRequestInterface;
     use Psr\Http\Server\RequestHandlerInterface;
     use Tqdev\PhpCrudApi\Column\ReflectionService;
+    use Tqdev\PhpCrudApi\Config;
     use Tqdev\PhpCrudApi\Controller\Responder;
     use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
     use Tqdev\PhpCrudApi\Middleware\Router\Router;
@@ -9299,9 +9315,9 @@ namespace Tqdev\PhpCrudApi\Middleware {
     {
         private $reflection;
 
-        public function __construct(Router $router, Responder $responder, array $properties, ReflectionService $reflection)
+        public function __construct(Router $router, Responder $responder, Config $config, string $middleware, ReflectionService $reflection)
         {
-            parent::__construct($router, $responder, $properties);
+            parent::__construct($router, $responder, $config, $middleware);
             $this->reflection = $reflection;
         }
 
@@ -11539,69 +11555,69 @@ namespace Tqdev\PhpCrudApi {
             $reflection = new ReflectionService($db, $cache, $config->getCacheTime());
             $responder = new JsonResponder($config->getJsonOptions(), $config->getDebug());
             $router = new SimpleRouter($config->getBasePath(), $responder, $cache, $config->getCacheTime());
-            foreach ($config->getMiddlewares() as $middleware => $properties) {
+            foreach ($config->getMiddlewares() as $middleware) {
                 switch ($middleware) {
                     case 'sslRedirect':
-                        new SslRedirectMiddleware($router, $responder, $properties);
+                        new SslRedirectMiddleware($router, $responder, $config, $middleware);
                         break;
                     case 'cors':
-                        new CorsMiddleware($router, $responder, $properties, $config->getDebug());
+                        new CorsMiddleware($router, $responder, $config, $middleware);
                         break;
                     case 'firewall':
-                        new FirewallMiddleware($router, $responder, $properties);
+                        new FirewallMiddleware($router, $responder, $config, $middleware);
                         break;
                     case 'apiKeyAuth':
-                        new ApiKeyAuthMiddleware($router, $responder, $properties);
+                        new ApiKeyAuthMiddleware($router, $responder, $config, $middleware);
                         break;
                     case 'apiKeyDbAuth':
-                        new ApiKeyDbAuthMiddleware($router, $responder, $properties, $reflection, $db);
+                        new ApiKeyDbAuthMiddleware($router, $responder, $config, $middleware, $reflection, $db);
                         break;
                     case 'basicAuth':
-                        new BasicAuthMiddleware($router, $responder, $properties);
+                        new BasicAuthMiddleware($router, $responder, $config, $middleware);
                         break;
                     case 'jwtAuth':
-                        new JwtAuthMiddleware($router, $responder, $properties);
+                        new JwtAuthMiddleware($router, $responder, $config, $middleware);
                         break;
                     case 'dbAuth':
-                        new DbAuthMiddleware($router, $responder, $properties, $reflection, $db);
+                        new DbAuthMiddleware($router, $responder, $config, $middleware, $reflection, $db);
                         break;
                     case 'reconnect':
-                        new ReconnectMiddleware($router, $responder, $properties, $reflection, $db);
+                        new ReconnectMiddleware($router, $responder, $config, $middleware, $reflection, $db);
                         break;
                     case 'validation':
-                        new ValidationMiddleware($router, $responder, $properties, $reflection);
+                        new ValidationMiddleware($router, $responder, $config, $middleware, $reflection);
                         break;
                     case 'ipAddress':
-                        new IpAddressMiddleware($router, $responder, $properties, $reflection);
+                        new IpAddressMiddleware($router, $responder, $config, $middleware, $reflection);
                         break;
                     case 'sanitation':
-                        new SanitationMiddleware($router, $responder, $properties, $reflection);
+                        new SanitationMiddleware($router, $responder, $config, $middleware, $reflection);
                         break;
                     case 'multiTenancy':
-                        new MultiTenancyMiddleware($router, $responder, $properties, $reflection);
+                        new MultiTenancyMiddleware($router, $responder, $config, $middleware, $reflection);
                         break;
                     case 'authorization':
-                        new AuthorizationMiddleware($router, $responder, $properties, $reflection);
+                        new AuthorizationMiddleware($router, $responder, $config, $middleware, $reflection);
                         break;
                     case 'xsrf':
-                        new XsrfMiddleware($router, $responder, $properties);
+                        new XsrfMiddleware($router, $responder, $config, $middleware);
                         break;
                     case 'pageLimits':
-                        new PageLimitsMiddleware($router, $responder, $properties, $reflection);
+                        new PageLimitsMiddleware($router, $responder, $config, $middleware, $reflection);
                         break;
                     case 'joinLimits':
-                        new JoinLimitsMiddleware($router, $responder, $properties, $reflection);
+                        new JoinLimitsMiddleware($router, $responder, $config, $middleware, $reflection);
                         break;
                     case 'customization':
-                        new CustomizationMiddleware($router, $responder, $properties, $reflection);
+                        new CustomizationMiddleware($router, $responder, $config, $middleware, $reflection);
                         break;
                     case 'xml':
-                        new XmlMiddleware($router, $responder, $properties, $reflection);
+                        new XmlMiddleware($router, $responder, $config, $middleware, $reflection);
                         break;
                     case 'json':
-                        new JsonMiddleware($router, $responder, $properties);
+                        new JsonMiddleware($router, $responder, $config, $middleware);
                         break;
-                    }
+                }
             }
             foreach ($config->getControllers() as $controller) {
                 switch ($controller) {
@@ -11627,7 +11643,7 @@ namespace Tqdev\PhpCrudApi {
                         break;
                     case 'status':
                         new StatusController($router, $responder, $cache, $db);
-                        break;                    
+                        break;
                 }
             }
             foreach ($config->getCustomControllers() as $className) {
@@ -11774,60 +11790,44 @@ namespace Tqdev\PhpCrudApi {
             ];
         }
 
-        private function applyEnvironmentVariables(array $values, string $prefix = 'PHP_CRUD_API'): array
+        private function getEnvironmentVariableName(string $key): string
         {
-            $result = [];
-            foreach ($values as $key => $value) {
-                $suffix = strtoupper(preg_replace('/(?<!^)[A-Z]/', '_$0', str_replace('.', '_', $key)));
-                $newPrefix = $prefix . "_" . $suffix;
-                if (is_array($value)) {
-                    $newPrefix = str_replace('PHP_CRUD_API_MIDDLEWARES_','PHP_CRUD_API_',$newPrefix);
-                    $result[$key] = $this->applyEnvironmentVariables($value, $newPrefix);
-                } else {
-                    $result[$key] = getenv($newPrefix, true) ?: $value;
-                }
-            }
-            return $result;
-        }
-        
-        public function __construct(array $values)
-        {
-            $driver = $this->getDefaultDriver($values);
-            $defaults = $this->getDriverDefaults($driver);
-            $newValues = array_merge($this->values, $defaults, $values);
-            $newValues['middlewares'] = getenv('PHP_CRUD_API_MIDDLEWARES', true) ?: $newValues['middlewares'];
-            $newValues = $this->parseMiddlewares($newValues);
-            $diff = array_diff_key($newValues, $this->values);
-            if (!empty($diff)) {
-                $key = array_keys($diff)[0];
-                throw new \Exception("Config has invalid value '$key'");
-            }
-            $newValues = $this->applyEnvironmentVariables($newValues);
-            $this->values = $newValues;
+            $prefix = "PHP_CRUD_API_";
+            $suffix = strtoupper(preg_replace('/(?<!^)[A-Z]/', '_$0', str_replace('.', '_', $key)));
+            return $prefix . $suffix;
         }
 
-        private function parseMiddlewares(array $values): array
+        public function getProperty(string $key, $default = '')
         {
-            $newValues = array();
-            $properties = array();
-            $middlewares = array_map('trim', explode(',', $values['middlewares']));
-            foreach ($middlewares as $middleware) {
-                $properties[$middleware] = [];
+            if (strpos($key, 'Handler')) {
+                return $this->values[$key] ?? $default;
             }
+            $variableName = $this->getEnvironmentVariableName($key);
+            return getenv($variableName, true) ?: ($this->values[$key] ?? $default);
+        }
+
+        public function __construct(array $values)
+        {
+            $defaults = array_merge($this->values, $this->getDriverDefaults($this->getDefaultDriver($values)));
+            foreach ($defaults as $key => $default) {
+                $this->values[$key] = $values[$key] ?? $default;
+                $this->values[$key] = $this->getProperty($key);
+            }
+            $this->values['middlewares'] = array_map('trim', explode(',', $this->values['middlewares']));
             foreach ($values as $key => $value) {
                 if (strpos($key, '.') === false) {
-                    $newValues[$key] = $value;
+                    if (!isset($defaults[$key])) {
+                        throw new \Exception("Config has invalid key '$key'");
+                    }
                 } else {
-                    list($middleware, $key2) = explode('.', $key, 2);
-                    if (isset($properties[$middleware])) {
-                        $properties[$middleware][$key2] = $value;
+                    $middleware = substr($key, 0, strpos($key, '.'));
+                    if (!in_array($middleware, $this->values['middlewares'])) {
+                        throw new \Exception("Config has invalid middleware key '$key'");
                     } else {
-                        throw new \Exception("Config has invalid value '$key'");
+                        $this->values[$key] = $value;
                     }
                 }
             }
-            $newValues['middlewares'] = array_reverse($properties, true);
-            return $newValues;
         }
 
         public function getDriver(): string
@@ -11867,8 +11867,10 @@ namespace Tqdev\PhpCrudApi {
 
         public function getMapping(): array
         {
-            $mapping = array_map(function($v){ return explode('=', $v); }, array_filter(array_map('trim', explode(',', $this->values['mapping']))));
-            return array_combine(array_column($mapping,0),array_column($mapping,1));
+            $mapping = array_map(function ($v) {
+                return explode('=', $v);
+            }, array_filter(array_map('trim', explode(',', $this->values['mapping']))));
+            return array_combine(array_column($mapping, 0), array_column($mapping, 1));
         }
 
         public function getMiddlewares(): array

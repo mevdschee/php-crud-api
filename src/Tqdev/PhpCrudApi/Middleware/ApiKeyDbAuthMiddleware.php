@@ -6,6 +6,7 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Tqdev\PhpCrudApi\Column\ReflectionService;
+use Tqdev\PhpCrudApi\Config;
 use Tqdev\PhpCrudApi\Controller\Responder;
 use Tqdev\PhpCrudApi\Database\GenericDB;
 use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
@@ -21,9 +22,9 @@ class ApiKeyDbAuthMiddleware extends Middleware
     private $db;
     private $ordering;
 
-    public function __construct(Router $router, Responder $responder, array $properties, ReflectionService $reflection, GenericDB $db)
+    public function __construct(Router $router, Responder $responder, Config $config, string $middleware, ReflectionService $reflection, GenericDB $db)
     {
-        parent::__construct($router, $responder, $properties);
+        parent::__construct($router, $responder, $config, $middleware);
         $this->reflection = $reflection;
         $this->db = $db;
         $this->ordering = new OrderingInfo();

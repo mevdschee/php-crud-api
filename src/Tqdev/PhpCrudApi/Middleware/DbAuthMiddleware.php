@@ -6,6 +6,7 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Tqdev\PhpCrudApi\Column\ReflectionService;
+use Tqdev\PhpCrudApi\Config;
 use Tqdev\PhpCrudApi\Controller\Responder;
 use Tqdev\PhpCrudApi\Database\GenericDB;
 use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
@@ -21,9 +22,9 @@ class DbAuthMiddleware extends Middleware
     private $db;
     private $ordering;
 
-    public function __construct(Router $router, Responder $responder, array $properties, ReflectionService $reflection, GenericDB $db)
+    public function __construct(Router $router, Responder $responder, Config $config, string $middleware, ReflectionService $reflection, GenericDB $db)
     {
-        parent::__construct($router, $responder, $properties);
+        parent::__construct($router, $responder, $config, $middleware);
         $this->reflection = $reflection;
         $this->db = $db;
         $this->ordering = new OrderingInfo();
@@ -113,7 +114,7 @@ class DbAuthMiddleware extends Middleware
                     return $this->responder->error(ErrorCode::PASSWORD_TOO_SHORT, $passwordLength);
                 }
                 $userColumns = $columnNames;
-                if(!in_array($pkName, $columnNames)){
+                if (!in_array($pkName, $columnNames)) {
                     array_push($userColumns, $pkName);
                 }
                 $users = $this->db->selectAll($table, $userColumns, $condition, $columnOrdering, 0, 1);
@@ -125,7 +126,7 @@ class DbAuthMiddleware extends Middleware
                         $data = [$passwordColumnName => password_hash($newPassword, PASSWORD_DEFAULT)];
                         $this->db->updateSingle($table, $data, $user[$pkName]);
                         unset($user[$passwordColumnName]);
-                        if(!in_array($pkName, $columnNames)){
+                        if (!in_array($pkName, $columnNames)) {
                             unset($user[$pkName]);
                         }
                         return $this->responder->success($user);

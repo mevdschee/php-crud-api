@@ -3,6 +3,7 @@
 namespace Tqdev\PhpCrudApi\Middleware\Base;
 
 use Psr\Http\Server\MiddlewareInterface;
+use Tqdev\PhpCrudApi\Config;
 use Tqdev\PhpCrudApi\Controller\Responder;
 use Tqdev\PhpCrudApi\Middleware\Router\Router;
 
@@ -10,13 +11,15 @@ abstract class Middleware implements MiddlewareInterface
 {
     protected $next;
     protected $responder;
-    private $properties;
+    private $middleware;
+    private $config;
 
-    public function __construct(Router $router, Responder $responder, array $properties)
+    public function __construct(Router $router, Responder $responder, Config $config, string $middleware)
     {
         $router->load($this);
         $this->responder = $responder;
-        $this->properties = $properties;
+        $this->middleware = $middleware;
+        $this->config = $config;
     }
 
     protected function getArrayProperty(string $key, string $default): array
@@ -41,6 +44,6 @@ abstract class Middleware implements MiddlewareInterface
 
     protected function getProperty(string $key, $default)
     {
-        return isset($this->properties[$key]) ? $this->properties[$key] : $default;
+        return $this->config->getProperty($this->middleware . '.' . $key, $default);
     }
 }

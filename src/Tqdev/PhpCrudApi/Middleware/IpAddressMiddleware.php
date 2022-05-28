@@ -7,6 +7,7 @@ use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Tqdev\PhpCrudApi\Column\ReflectionService;
 use Tqdev\PhpCrudApi\Column\Reflection\ReflectedTable;
+use Tqdev\PhpCrudApi\Config;
 use Tqdev\PhpCrudApi\Controller\Responder;
 use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
 use Tqdev\PhpCrudApi\Middleware\Router\Router;
@@ -16,9 +17,9 @@ class IpAddressMiddleware extends Middleware
 {
     private $reflection;
 
-    public function __construct(Router $router, Responder $responder, array $properties, ReflectionService $reflection)
+    public function __construct(Router $router, Responder $responder, Config $config, string $middleware, ReflectionService $reflection)
     {
-        parent::__construct($router, $responder, $properties);
+        parent::__construct($router, $responder, $config, $middleware);
         $this->reflection = $reflection;
     }
 

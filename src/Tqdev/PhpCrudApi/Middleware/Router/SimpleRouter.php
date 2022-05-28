@@ -129,7 +129,7 @@ class SimpleRouter implements Router
         $request = $this->removeBasePath($request);
 
         if (count($this->middlewares)) {
-            $handler = array_pop($this->middlewares);
+            $handler = array_shift($this->middlewares);
             return $handler->process($request, $this);
         }
 

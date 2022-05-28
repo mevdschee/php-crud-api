@@ -64,69 +64,69 @@ class Api implements RequestHandlerInterface
         $reflection = new ReflectionService($db, $cache, $config->getCacheTime());
         $responder = new JsonResponder($config->getJsonOptions(), $config->getDebug());
         $router = new SimpleRouter($config->getBasePath(), $responder, $cache, $config->getCacheTime());
-        foreach ($config->getMiddlewares() as $middleware => $properties) {
+        foreach ($config->getMiddlewares() as $middleware) {
             switch ($middleware) {
                 case 'sslRedirect':
-                    new SslRedirectMiddleware($router, $responder, $properties);
+                    new SslRedirectMiddleware($router, $responder, $config, $middleware);
                     break;
                 case 'cors':
-                    new CorsMiddleware($router, $responder, $properties, $config->getDebug());
+                    new CorsMiddleware($router, $responder, $config, $middleware);
                     break;
                 case 'firewall':
-                    new FirewallMiddleware($router, $responder, $properties);
+                    new FirewallMiddleware($router, $responder, $config, $middleware);
                     break;
                 case 'apiKeyAuth':
-                    new ApiKeyAuthMiddleware($router, $responder, $properties);
+                    new ApiKeyAuthMiddleware($router, $responder, $config, $middleware);
                     break;
                 case 'apiKeyDbAuth':
-                    new ApiKeyDbAuthMiddleware($router, $responder, $properties, $reflection, $db);
+                    new ApiKeyDbAuthMiddleware($router, $responder, $config, $middleware, $reflection, $db);
                     break;
                 case 'basicAuth':
-                    new BasicAuthMiddleware($router, $responder, $properties);
+                    new BasicAuthMiddleware($router, $responder, $config, $middleware);
                     break;
                 case 'jwtAuth':
-                    new JwtAuthMiddleware($router, $responder, $properties);
+                    new JwtAuthMiddleware($router, $responder, $config, $middleware);
                     break;
                 case 'dbAuth':
-                    new DbAuthMiddleware($router, $responder, $properties, $reflection, $db);
+                    new DbAuthMiddleware($router, $responder, $config, $middleware, $reflection, $db);
                     break;
                 case 'reconnect':
-                    new ReconnectMiddleware($router, $responder, $properties, $reflection, $db);
+                    new ReconnectMiddleware($router, $responder, $config, $middleware, $reflection, $db);
                     break;
                 case 'validation':
-                    new ValidationMiddleware($router, $responder, $properties, $reflection);
+                    new ValidationMiddleware($router, $responder, $config, $middleware, $reflection);
                     break;
                 case 'ipAddress':
-                    new IpAddressMiddleware($router, $responder, $properties, $reflection);
+                    new IpAddressMiddleware($router, $responder, $config, $middleware, $reflection);
                     break;
                 case 'sanitation':
-                    new SanitationMiddleware($router, $responder, $properties, $reflection);
+                    new SanitationMiddleware($router, $responder, $config, $middleware, $reflection);
                     break;
                 case 'multiTenancy':
-                    new MultiTenancyMiddleware($router, $responder, $properties, $reflection);
+                    new MultiTenancyMiddleware($router, $responder, $config, $middleware, $reflection);
                     break;
                 case 'authorization':
-                    new AuthorizationMiddleware($router, $responder, $properties, $reflection);
+                    new AuthorizationMiddleware($router, $responder, $config, $middleware, $reflection);
                     break;
                 case 'xsrf':
-                    new XsrfMiddleware($router, $responder, $properties);
+                    new XsrfMiddleware($router, $responder, $config, $middleware);
                     break;
                 case 'pageLimits':
-                    new PageLimitsMiddleware($router, $responder, $properties, $reflection);
+                    new PageLimitsMiddleware($router, $responder, $config, $middleware, $reflection);
                     break;
                 case 'joinLimits':
-                    new JoinLimitsMiddleware($router, $responder, $properties, $reflection);
+                    new JoinLimitsMiddleware($router, $responder, $config, $middleware, $reflection);
                     break;
                 case 'customization':
-                    new CustomizationMiddleware($router, $responder, $properties, $reflection);
+                    new CustomizationMiddleware($router, $responder, $config, $middleware, $reflection);
                     break;
                 case 'xml':
-                    new XmlMiddleware($router, $responder, $properties, $reflection);
+                    new XmlMiddleware($router, $responder, $config, $middleware, $reflection);
                     break;
                 case 'json':
-                    new JsonMiddleware($router, $responder, $properties);
+                    new JsonMiddleware($router, $responder, $config, $middleware);
                     break;
-                }
+            }
         }
         foreach ($config->getControllers() as $controller) {
             switch ($controller) {
@@ -152,7 +152,7 @@ class Api implements RequestHandlerInterface
                     break;
                 case 'status':
                     new StatusController($router, $responder, $cache, $db);
-                    break;                    
+                    break;
             }
         }
         foreach ($config->getCustomControllers() as $className) {

@@ -5,6 +5,7 @@ namespace Tqdev\PhpCrudApi\Middleware;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
+use Tqdev\PhpCrudApi\Config;
 use Tqdev\PhpCrudApi\Controller\Responder;
 use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
 use Tqdev\PhpCrudApi\Middleware\Router\Router;
@@ -16,17 +17,17 @@ class CorsMiddleware extends Middleware
 {
     private $debug;
 
-    public function __construct(Router $router, Responder $responder, array $properties, bool $debug)
+    public function __construct(Router $router, Responder $responder, Config $config, string $middleware)
     {
-        parent::__construct($router, $responder, $properties);
-        $this->debug = $debug;
+        parent::__construct($router, $responder, $config, $middleware);
+        $this->debug = $config->getDebug();
     }
 
     private function isOriginAllowed(string $origin, string $allowedOrigins): bool
     {
         $found = false;
         foreach (explode(',', $allowedOrigins) as $allowedOrigin) {
-            $hostname = preg_quote(strtolower(trim($allowedOrigin)),'/');
+            $hostname = preg_quote(strtolower(trim($allowedOrigin)), '/');
             $regex = '/^' . str_replace('\*', '.*', $hostname) . '$/';
             if (preg_match($regex, $origin)) {
                 $found = true;

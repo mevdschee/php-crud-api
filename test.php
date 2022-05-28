@@ -103,42 +103,42 @@ function runTest(Config $config, string $file, string $category): array
 
 function getDatabase(Config $config)
 {
-    if (!isset($config->getMiddlewares()['reconnect']['databaseHandler'])) {
+    if (!is_callable($config->getProperty('reconnect.databaseHandler'))) {
         return $config->getDatabase();
     }
-    return $config->getMiddlewares()['reconnect']['databaseHandler']();
+    return $config->getProperty('reconnect.databaseHandler')();
 }
 
 function getTables(Config $config)
 {
-    if (!isset($config->getMiddlewares()['reconnect']['tablesHandler'])) {
+    if (!is_callable($config->getProperty('reconnect.tablesHandler'))) {
         return $config->getTables();
     }
-    return $config->getMiddlewares()['reconnect']['tablesHandler']();
+    return $config->getProperty('reconnect.tablesHandler')();
 }
 
 function getMapping(Config $config)
 {
-    if (!isset($config->getMiddlewares()['reconnect']['mappingHandler'])) {
+    if (!is_callable($config->getProperty('reconnect.mappingHandler'))) {
         return $config->getMapping();
     }
-    return $config->getMiddlewares()['reconnect']['mappingHandler']();
+    return $config->getProperty('reconnect.mappingHandler')();
 }
 
 function getUsername(Config $config)
 {
-    if (!isset($config->getMiddlewares()['reconnect']['usernameHandler'])) {
+    if (!is_callable($config->getProperty('reconnect.usernameHandler'))) {
         return $config->getUsername();
     }
-    return $config->getMiddlewares()['reconnect']['usernameHandler']();
+    return $config->getProperty('reconnect.usernameHandler')();
 }
 
 function getPassword(Config $config)
 {
-    if (!isset($config->getMiddlewares()['reconnect']['passwordHandler'])) {
+    if (!is_callable($config->getProperty('reconnect.passwordHandler'))) {
         return $config->getPassword();
     }
-    return $config->getMiddlewares()['reconnect']['passwordHandler']();
+    return $config->getProperty('reconnect.passwordHandler')();
 }
 
 function loadFixture(string $dir, Config $config)
