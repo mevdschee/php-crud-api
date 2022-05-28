@@ -9114,6 +9114,7 @@ namespace Tqdev\PhpCrudApi\Middleware {
     use Psr\Http\Message\ServerRequestInterface;
     use Psr\Http\Server\RequestHandlerInterface;
     use Tqdev\PhpCrudApi\Column\ReflectionService;
+    use Tqdev\PhpCrudApi\Config;
     use Tqdev\PhpCrudApi\Controller\Responder;
     use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
     use Tqdev\PhpCrudApi\Middleware\Router\Router;
@@ -9123,9 +9124,9 @@ namespace Tqdev\PhpCrudApi\Middleware {
     {
         private $reflection;
 
-        public function __construct(Router $router, Responder $responder, array $properties, ReflectionService $reflection)
+        public function __construct(Router $router, Responder $responder, Config $config, string $middleware, ReflectionService $reflection)
         {
-            parent::__construct($router, $responder, $properties);
+            parent::__construct($router, $responder, $config, $middleware);
             $this->reflection = $reflection;
         }
 
@@ -11697,7 +11698,7 @@ namespace Tqdev\PhpCrudApi {
                         new CustomizationMiddleware($router, $responder, $config, $middleware, $reflection);
                         break;
                     case 'textSearch':
-                        new TextSearchMiddleware($router, $responder, $properties, $reflection);
+                        new TextSearchMiddleware($router, $responder, $config, $middleware, $reflection);
                         break;
                     case 'xml':
                         new XmlMiddleware($router, $responder, $config, $middleware, $reflection);

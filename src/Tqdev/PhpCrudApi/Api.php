@@ -123,7 +123,7 @@ class Api implements RequestHandlerInterface
                     new CustomizationMiddleware($router, $responder, $config, $middleware, $reflection);
                     break;
                 case 'textSearch':
-                    new TextSearchMiddleware($router, $responder, $properties, $reflection);
+                    new TextSearchMiddleware($router, $responder, $config, $middleware, $reflection);
                     break;
                 case 'xml':
                     new XmlMiddleware($router, $responder, $config, $middleware, $reflection);
