@@ -1180,7 +1180,7 @@ You can change the way the JSON is encoded by setting the configuration paramete
 
     'jsonOptions' => JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES,
 
-The above example will set JSON options to 128+256+64 = 448, as per the table of options below:
+The above example will set JSON options to 128+256+64 = 448, as per the list of options below:
 
     JSON_HEX_TAG (1)
         All < and > are converted to \u003C and \u003E. 
