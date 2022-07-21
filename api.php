@@ -7920,7 +7920,7 @@ namespace Tqdev\PhpCrudApi\Middleware {
                 $response = $this->responder->error(ErrorCode::ORIGIN_FORBIDDEN, $origin);
             } elseif ($method == 'OPTIONS') {
                 $response = ResponseFactory::fromStatus(ResponseFactory::OK);
-                $allowHeaders = $this->getProperty('allowHeaders', 'Content-Type, X-XSRF-TOKEN, X-Authorization');
+                $allowHeaders = $this->getProperty('allowHeaders', 'Content-Type, X-XSRF-TOKEN, X-Authorization, X-API-Key');
                 if ($this->debug) {
                     $allowHeaders = implode(', ', array_filter([$allowHeaders, 'X-Exception-Name, X-Exception-Message, X-Exception-File']));
                 }
