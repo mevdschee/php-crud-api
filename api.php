@@ -5037,10 +5037,12 @@ namespace Tqdev\PhpCrudApi\Database {
     class ColumnConverter
     {
         private $driver;
+        private $geometrySrid;
 
-        public function __construct(string $driver)
+        public function __construct(string $driver, int $geometrySrid)
         {
             $this->driver = $driver;
+            $this->geometrySrid = $geometrySrid;
         }
 
         public function convertColumnValue(ReflectedColumn $column): string
@@ -5066,12 +5068,13 @@ namespace Tqdev\PhpCrudApi\Database {
                 }
             }
             if ($column->isGeometry()) {
+                $srid = $this->geometrySrid;
                 switch ($this->driver) {
                     case 'mysql':
                     case 'pgsql':
-                        return "ST_GeomFromText(?)";
+                        return "ST_GeomFromText(?,$srid)";
                     case 'sqlsrv':
-                        return "geometry::STGeomFromText(?,0)";
+                        return "geometry::STGeomFromText(?,$srid)";
                 }
             }
             return '?';
@@ -5114,10 +5117,10 @@ namespace Tqdev\PhpCrudApi\Database {
         private $driver;
         private $converter;
 
-        public function __construct(string $driver)
+        public function __construct(string $driver, int $geometrySrid)
         {
             $this->driver = $driver;
-            $this->converter = new ColumnConverter($driver);
+            $this->converter = new ColumnConverter($driver, $geometrySrid);
         }
 
         public function getOffsetLimit(int $offset, int $limit): string
@@ -5238,10 +5241,12 @@ namespace Tqdev\PhpCrudApi\Database {
     class ConditionsBuilder
     {
         private $driver;
+        private $geometrySrid;
 
-        public function __construct(string $driver)
+        public function __construct(string $driver, int $geometrySrid)
         {
             $this->driver = $driver;
+            $this->geometrySrid = $geometrySrid;
         }
 
         private function getConditionSql(Condition $condition, array &$arguments): string
@@ -5402,14 +5407,15 @@ namespace Tqdev\PhpCrudApi\Database {
 
         private function getSpatialFunctionCall(string $functionName, string $column, bool $hasArgument): string
         {
+            $srid = $this->geometrySrid;
             switch ($this->driver) {
                 case 'mysql':
                 case 'pgsql':
-                    $argument = $hasArgument ? 'ST_GeomFromText(?)' : '';
+                    $argument = $hasArgument ? "ST_GeomFromText(?,$srid)" : '';
                     return "$functionName($column, $argument)=TRUE";
                 case 'sqlsrv':
                     $functionName = str_replace('ST_', 'ST', $functionName);
-                    $argument = $hasArgument ? 'geometry::STGeomFromText(?,0)' : '';
+                    $argument = $hasArgument ? "geometry::STGeomFromText(?,$srid)" : '';
                     return "$column.$functionName($argument)=1";
                 case 'sqlite':
                     $argument = $hasArgument ? '?' : '0';
@@ -5572,6 +5578,7 @@ namespace Tqdev\PhpCrudApi\Database {
         private $conditions;
         private $columns;
         private $converter;
+        private $geometrySrid;
 
         private function getDsn(): string
         {
@@ -5655,13 +5662,13 @@ namespace Tqdev\PhpCrudApi\Database {
             $this->mapper = new RealNameMapper($this->mapping);
             $this->reflection = new GenericReflection($this->pdo, $this->driver, $this->database, $this->tables, $this->mapper);
             $this->definition = new GenericDefinition($this->pdo, $this->driver, $this->database, $this->tables, $this->mapper);
-            $this->conditions = new ConditionsBuilder($this->driver);
-            $this->columns = new ColumnsBuilder($this->driver);
+            $this->conditions = new ConditionsBuilder($this->driver, $this->geometrySrid);
+            $this->columns = new ColumnsBuilder($this->driver, $this->geometrySrid);
             $this->converter = new DataConverter($this->driver);
             return $result;
         }
 
-        public function __construct(string $driver, string $address, int $port, string $database, string $command, array $tables, array $mapping, string $username, string $password)
+        public function __construct(string $driver, string $address, int $port, string $database, string $command, array $tables, array $mapping, string $username, string $password, int $geometrySrid)
         {
             $this->driver = $driver;
             $this->address = $address;
@@ -5672,10 +5679,11 @@ namespace Tqdev\PhpCrudApi\Database {
             $this->mapping = $mapping;
             $this->username = $username;
             $this->password = $password;
+            $this->geometrySrid = $geometrySrid;
             $this->initPdo();
         }
 
-        public function reconstruct(string $driver, string $address, int $port, string $database, string $command, array $tables, array $mapping, string $username, string $password): bool
+        public function reconstruct(string $driver, string $address, int $port, string $database, string $command, array $tables, array $mapping, string $username, string $password, int $geometrySrid): bool
         {
             if ($driver) {
                 $this->driver = $driver;
@@ -5703,6 +5711,9 @@ namespace Tqdev\PhpCrudApi\Database {
             }
             if ($password) {
                 $this->password = $password;
+            }
+            if ($geometrySrid) {
+                $this->geometrySrid = $geometrySrid;
             }
             return $this->initPdo();
         }
@@ -8817,13 +8828,13 @@ namespace Tqdev\PhpCrudApi\Middleware {
 
     class ReconnectMiddleware extends Middleware
     {
-        private $reflection;
+        private $config;
         private $db;
 
         public function __construct(Router $router, Responder $responder, Config $config, string $middleware, ReflectionService $reflection, GenericDB $db)
         {
             parent::__construct($router, $responder, $config, $middleware);
-            $this->reflection = $reflection;
+            $this->config = $config;
             $this->db = $db;
         }
 
@@ -8833,7 +8844,7 @@ namespace Tqdev\PhpCrudApi\Middleware {
             if ($driverHandler) {
                 return call_user_func($driverHandler);
             }
-            return '';
+            return $this->config->getDriver();
         }
 
         private function getAddress(): string
@@ -8842,7 +8853,7 @@ namespace Tqdev\PhpCrudApi\Middleware {
             if ($addressHandler) {
                 return call_user_func($addressHandler);
             }
-            return '';
+            return $this->config->getAddress();
         }
 
         private function getPort(): int
@@ -8851,7 +8862,7 @@ namespace Tqdev\PhpCrudApi\Middleware {
             if ($portHandler) {
                 return call_user_func($portHandler);
             }
-            return 0;
+            return $this->config->getPort();
         }
 
         private function getDatabase(): string
@@ -8860,7 +8871,7 @@ namespace Tqdev\PhpCrudApi\Middleware {
             if ($databaseHandler) {
                 return call_user_func($databaseHandler);
             }
-            return '';
+            return $this->config->getDatabase();
         }
 
         private function getCommand(): string
@@ -8869,7 +8880,7 @@ namespace Tqdev\PhpCrudApi\Middleware {
             if ($commandHandler) {
                 return call_user_func($commandHandler);
             }
-            return '';
+            return $this->config->getCommand();
         }
 
         private function getTables(): array
@@ -8878,7 +8889,7 @@ namespace Tqdev\PhpCrudApi\Middleware {
             if ($tablesHandler) {
                 return call_user_func($tablesHandler);
             }
-            return [];
+            return $this->config->getTables();
         }
 
         private function getMapping(): array
@@ -8887,7 +8898,7 @@ namespace Tqdev\PhpCrudApi\Middleware {
             if ($mappingHandler) {
                 return call_user_func($mappingHandler);
             }
-            return [];
+            return $this->config->getMapping();
         }
 
         private function getUsername(): string
@@ -8896,7 +8907,7 @@ namespace Tqdev\PhpCrudApi\Middleware {
             if ($usernameHandler) {
                 return call_user_func($usernameHandler);
             }
-            return '';
+            return $this->config->getUsername();
         }
 
         private function getPassword(): string
@@ -8905,7 +8916,16 @@ namespace Tqdev\PhpCrudApi\Middleware {
             if ($passwordHandler) {
                 return call_user_func($passwordHandler);
             }
-            return '';
+            return $this->config->getPassword();
+        }
+
+        private function getGeometrySrid(): int
+        {
+            $geometrySridHandler = $this->getProperty('geometrySridHandler', '');
+            if ($geometrySridHandler) {
+                return call_user_func($geometrySridHandler);
+            }
+            return $this->config->getGeometrySrid();
         }
 
         public function process(ServerRequestInterface $request, RequestHandlerInterface $next): ResponseInterface
@@ -8919,9 +8939,8 @@ namespace Tqdev\PhpCrudApi\Middleware {
             $mapping = $this->getMapping();
             $username = $this->getUsername();
             $password = $this->getPassword();
-            if ($driver || $address || $port || $database || $command || $tables || $mapping || $username || $password) {
-                $this->db->reconstruct($driver, $address, $port, $database, $command, $tables, $mapping, $username, $password);
-            }
+            $geometrySrid = $this->getGeometrySrid();
+            $this->db->reconstruct($driver, $address, $port, $database, $command, $tables, $mapping, $username, $password, $geometrySrid);
             return $next->handle($request);
         }
     }
@@ -11634,7 +11653,8 @@ namespace Tqdev\PhpCrudApi {
                 $config->getTables(),
                 $config->getMapping(),
                 $config->getUsername(),
-                $config->getPassword()
+                $config->getPassword(),
+                $config->getGeometrySrid()
             );
             $prefix = sprintf('phpcrudapi-%s-', substr(md5(__FILE__), 0, 8));
             $cache = CacheFactory::create($config->getCacheType(), $prefix, $config->getCachePath());
@@ -11833,6 +11853,7 @@ namespace Tqdev\PhpCrudApi {
             'debug' => false,
             'basePath' => '',
             'openApiBase' => '{"info":{"title":"PHP-CRUD-API","version":"1.0.0"}}',
+            'geometrySrid' => 4326,
         ];
 
         private function getDefaultDriver(array $values): string
@@ -12021,6 +12042,11 @@ namespace Tqdev\PhpCrudApi {
         public function getOpenApiBase(): array
         {
             return json_decode($this->values['openApiBase'], true);
+        }
+
+        public function getGeometrySrid(): int
+        {
+            return $this->values['geometrySrid'];
         }
     }
 }

@@ -14,10 +14,12 @@ use Tqdev\PhpCrudApi\Record\Condition\SpatialCondition;
 class ConditionsBuilder
 {
     private $driver;
+    private $geometrySrid;
 
-    public function __construct(string $driver)
+    public function __construct(string $driver, int $geometrySrid)
     {
         $this->driver = $driver;
+        $this->geometrySrid = $geometrySrid;
     }
 
     private function getConditionSql(Condition $condition, array &$arguments): string
@@ -178,14 +180,15 @@ class ConditionsBuilder
 
     private function getSpatialFunctionCall(string $functionName, string $column, bool $hasArgument): string
     {
+        $srid = $this->geometrySrid;
         switch ($this->driver) {
             case 'mysql':
             case 'pgsql':
-                $argument = $hasArgument ? 'ST_GeomFromText(?)' : '';
+                $argument = $hasArgument ? "ST_GeomFromText(?,$srid)" : '';
                 return "$functionName($column, $argument)=TRUE";
             case 'sqlsrv':
                 $functionName = str_replace('ST_', 'ST', $functionName);
-                $argument = $hasArgument ? 'geometry::STGeomFromText(?,0)' : '';
+                $argument = $hasArgument ? "geometry::STGeomFromText(?,$srid)" : '';
                 return "$column.$functionName($argument)=1";
             case 'sqlite':
                 $argument = $hasArgument ? '?' : '0';

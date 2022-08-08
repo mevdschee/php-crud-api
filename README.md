@@ -60,6 +60,7 @@ These are all the configuration options and their default value between brackets
 - "command": Extra SQL to initialize the database connection (none)
 - "tables": Comma separated list of tables to publish (defaults to 'all')
 - "mapping": Comma separated list of table/column mappings (no mappping)
+- "geometrySrid": SRID assumed when converting from WKT to geometry (`4326`)
 - "middlewares": List of middlewares to load (`cors`)
 - "controllers": List of controllers to load (`records,geojson,openapi,status`)
 - "customControllers": List of user custom controllers to load (no default)
@@ -605,6 +606,7 @@ For spatial support there is an extra set of filters that can be applied on geom
   - "siv": spatial is valid (geometry is valid)
 
 These filters are based on OGC standards and so is the WKT specification in which the geometry columns are represented.
+Note that the SRID that is assumed when converting from WKT to geometry is specified by the config variable `geometrySrid` and defaults to 4326 (WGS 84).
 
 #### GeoJSON
 
