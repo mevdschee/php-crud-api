@@ -10,15 +10,15 @@ ALTER TABLE [barcodes] DROP	CONSTRAINT [barcodes_product_id_fkey]
 END
 GO
 
-IF (OBJECT_ID('posts_user_id_fkey', 'F') IS NOT NULL)
+IF (OBJECT_ID('abc_posts_user_id_fkey', 'F') IS NOT NULL)
 BEGIN
-ALTER TABLE [abc_posts] DROP	CONSTRAINT [abc_posts_user_id_fkey]
+ALTER TABLE [abc_posts] DROP CONSTRAINT [abc_posts_user_id_fkey]
 END
 GO
 
-IF (OBJECT_ID('posts_category_id_fkey', 'F') IS NOT NULL)
+IF (OBJECT_ID('abc_posts_category_id_fkey', 'F') IS NOT NULL)
 BEGIN
-ALTER TABLE [abc_posts] DROP	CONSTRAINT [abc_posts_category_id_fkey]
+ALTER TABLE [abc_posts] DROP CONSTRAINT [abc_posts_category_id_fkey]
 END
 GO
 
@@ -88,7 +88,7 @@ DROP TABLE [tags]
 END
 GO
 
-IF (OBJECT_ID('posts', 'U') IS NOT NULL)
+IF (OBJECT_ID('abc_posts', 'U') IS NOT NULL)
 BEGIN
 DROP TABLE [abc_posts]
 END
