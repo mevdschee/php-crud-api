@@ -9635,7 +9635,7 @@ namespace Tqdev\PhpCrudApi\OpenApi {
         {
             $uri = $request->getUri();
             $path = $uri->getPath();
-            $uri = $uri->withPath(trim(substr($path, 0, strpos($path, '/openapi')), '/'));
+            $uri = $uri->withPath($_SERVER['SCRIPT_NAME'].trim(substr($path, 0, strpos($path, '/openapi')), '/'));
             return $uri->__toString();
         }
 
