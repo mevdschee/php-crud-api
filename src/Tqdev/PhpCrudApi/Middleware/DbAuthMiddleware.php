@@ -59,6 +59,7 @@ class DbAuthMiddleware extends Middleware
             $passwordLength = $this->getProperty('passwordLength', '12');
             $pkName = $table->getPk()->getName();
             $registerUser = $this->getProperty('registerUser', '');
+            $loginAfterRegistration = $this->getProperty('loginAfterRegistration', '');
             $condition = new ColumnCondition($usernameColumn, 'eq', $username);
             $returnedColumns = $this->getProperty('returnedColumns', '');
             if (!$returnedColumns) {
