@@ -705,6 +705,7 @@ You can tune the middleware behavior using middleware specific configuration par
 - "dbAuth.passwordFormField": The name of the form field that holds the password ("password")
 - "dbAuth.newPasswordFormField": The name of the form field that holds the new password ("newPassword")
 - "dbAuth.registerUser": JSON user data (or "1") in case you want the /register endpoint enabled ("")
+- "dbAuth.loginAfterRegistration": 1 or zero if registered users should be logged in after registration ("")
 - "dbAuth.passwordLength": Minimum length that the password must have ("12")
 - "dbAuth.sessionName": The name of the PHP session that is started ("")
 - "jwtAuth.mode": Set to "optional" if you want to allow anonymous access ("required")

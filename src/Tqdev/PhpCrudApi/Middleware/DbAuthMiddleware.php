@@ -87,8 +87,17 @@ class DbAuthMiddleware extends Middleware
                 $this->db->createSingle($table, $data);
                 $users = $this->db->selectAll($table, $columnNames, $condition, $columnOrdering, 0, 1);
                 foreach ($users as $user) {
-                    unset($user[$passwordColumnName]);
-                    return $this->responder->success($user);
+                    if($loginAfterRegistration){
+                        if (!headers_sent()) {
+                            session_regenerate_id(true);
+                        }
+                        unset($user[$passwordColumnName]);
+                        $_SESSION['user'] = $user;
+                        return $this->responder->success($user);
+                    } else {
+                        unset($user[$passwordColumnName]);
+                        return $this->responder->success($user);
+                    }
                 }
                 return $this->responder->error(ErrorCode::AUTHENTICATION_FAILED, $username);
             }
