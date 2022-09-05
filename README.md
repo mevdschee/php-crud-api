@@ -60,6 +60,7 @@ These are all the configuration options and their default value between brackets
 - "command": Extra SQL to initialize the database connection (none)
 - "tables": Comma separated list of tables to publish (defaults to 'all')
 - "mapping": Comma separated list of table/column mappings (no mappping)
+- "geometrySrid": SRID assumed when converting from WKT to geometry (`4326`)
 - "middlewares": List of middlewares to load (`cors`)
 - "controllers": List of controllers to load (`records,geojson,openapi,status`)
 - "customControllers": List of user custom controllers to load (no default)
@@ -134,6 +135,7 @@ Related projects:
   - [PHP-CRUD-ADMIN](https://github.com/mevdschee/php-crud-admin): Single file PHP script that adds a database admin interface to a PHP-CRUD-API project.
   - [PHP-SP-API](https://github.com/mevdschee/php-sp-api): Single file PHP script that adds a REST API to a SQL database.
   - [VUE-CRUD-UI](https://github.com/nlware/vue-crud-ui): Single file Vue.js script that adds a UI to a PHP-CRUD-API project.
+  - [ra-data-treeql](https://github.com/nkappler/ra-data-treeql): NPM package that provides a [Data Provider](https://marmelab.com/react-admin/DataProviderIntroduction.html) for [React Admin](https://marmelab.com/react-admin/).
   
 There are also ports of this script in:
 
@@ -604,6 +606,7 @@ For spatial support there is an extra set of filters that can be applied on geom
   - "siv": spatial is valid (geometry is valid)
 
 These filters are based on OGC standards and so is the WKT specification in which the geometry columns are represented.
+Note that the SRID that is assumed when converting from WKT to geometry is specified by the config variable `geometrySrid` and defaults to 4326 (WGS 84).
 
 #### GeoJSON
 

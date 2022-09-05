@@ -163,7 +163,8 @@ function loadFixture(string $dir, Config $config)
         getTables($config),
         getMapping($config),
         getUsername($config),
-        getPassword($config)
+        getPassword($config),
+        $config->getGeometrySrid()
     );
     $pdo = $db->pdo();
     $file = preg_replace('/--.*$/m', '', $file);

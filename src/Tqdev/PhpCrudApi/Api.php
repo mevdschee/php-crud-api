@@ -59,7 +59,8 @@ class Api implements RequestHandlerInterface
             $config->getTables(),
             $config->getMapping(),
             $config->getUsername(),
-            $config->getPassword()
+            $config->getPassword(),
+            $config->getGeometrySrid()
         );
         $prefix = sprintf('phpcrudapi-%s-', substr(md5(__FILE__), 0, 8));
         $cache = CacheFactory::create($config->getCacheType(), $prefix, $config->getCachePath());

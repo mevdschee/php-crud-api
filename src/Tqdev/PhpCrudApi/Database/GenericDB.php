@@ -25,6 +25,7 @@ class GenericDB
     private $conditions;
     private $columns;
     private $converter;
+    private $geometrySrid;
 
     private function getDsn(): string
     {
@@ -108,13 +109,13 @@ class GenericDB
         $this->mapper = new RealNameMapper($this->mapping);
         $this->reflection = new GenericReflection($this->pdo, $this->driver, $this->database, $this->tables, $this->mapper);
         $this->definition = new GenericDefinition($this->pdo, $this->driver, $this->database, $this->tables, $this->mapper);
-        $this->conditions = new ConditionsBuilder($this->driver);
-        $this->columns = new ColumnsBuilder($this->driver);
+        $this->conditions = new ConditionsBuilder($this->driver, $this->geometrySrid);
+        $this->columns = new ColumnsBuilder($this->driver, $this->geometrySrid);
         $this->converter = new DataConverter($this->driver);
         return $result;
     }
 
-    public function __construct(string $driver, string $address, int $port, string $database, string $command, array $tables, array $mapping, string $username, string $password)
+    public function __construct(string $driver, string $address, int $port, string $database, string $command, array $tables, array $mapping, string $username, string $password, int $geometrySrid)
     {
         $this->driver = $driver;
         $this->address = $address;
@@ -125,10 +126,11 @@ class GenericDB
         $this->mapping = $mapping;
         $this->username = $username;
         $this->password = $password;
+        $this->geometrySrid = $geometrySrid;
         $this->initPdo();
     }
 
-    public function reconstruct(string $driver, string $address, int $port, string $database, string $command, array $tables, array $mapping, string $username, string $password): bool
+    public function reconstruct(string $driver, string $address, int $port, string $database, string $command, array $tables, array $mapping, string $username, string $password, int $geometrySrid): bool
     {
         if ($driver) {
             $this->driver = $driver;
@@ -156,6 +158,9 @@ class GenericDB
         }
         if ($password) {
             $this->password = $password;
+        }
+        if ($geometrySrid) {
+            $this->geometrySrid = $geometrySrid;
         }
         return $this->initPdo();
     }
