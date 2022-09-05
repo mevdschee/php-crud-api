@@ -6430,7 +6430,7 @@ namespace Tqdev\PhpCrudApi\Database {
                 case 'sqlsrv':
                     return [];
                 case 'sqlite':
-                    return [];
+                    return ['sqlite_sequence'];
             }
         }
 
