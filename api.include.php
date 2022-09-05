@@ -1488,8 +1488,10 @@ namespace Nyholm\Psr7\Factory {
     /**
      * @author Tobias Nyholm <tobias.nyholm@gmail.com>
      * @author Martijn van der Ven <martijn@vanderven.se>
+     *
+     * @final This class should never be extended. See https://github.com/Nyholm/psr7/blob/master/doc/final.md
      */
-    final class Psr17Factory implements RequestFactoryInterface, ResponseFactoryInterface, ServerRequestFactoryInterface, StreamFactoryInterface, UploadedFileFactoryInterface, UriFactoryInterface
+    class Psr17Factory implements RequestFactoryInterface, ResponseFactoryInterface, ServerRequestFactoryInterface, StreamFactoryInterface, UploadedFileFactoryInterface, UriFactoryInterface
     {
         public function createRequest(string $method, $uri): RequestInterface
         {
@@ -1513,13 +1515,16 @@ namespace Nyholm\Psr7\Factory {
 
         public function createStreamFromFile(string $filename, string $mode = 'r'): StreamInterface
         {
-            $resource = @\fopen($filename, $mode);
-            if (false === $resource) {
-                if ('' === $mode || false === \in_array($mode[0], ['r', 'w', 'a', 'x', 'c'])) {
-                    throw new \InvalidArgumentException('The mode ' . $mode . ' is invalid.');
+            if ('' === $filename) {
+                throw new \RuntimeException('Path cannot be empty');
+            }
+
+            if (false === $resource = @\fopen($filename, $mode)) {
+                if ('' === $mode || false === \in_array($mode[0], ['r', 'w', 'a', 'x', 'c'], true)) {
+                    throw new \InvalidArgumentException(\sprintf('The mode "%s" is invalid.', $mode));
                 }
 
-                throw new \RuntimeException('The file ' . $filename . ' cannot be opened.');
+                throw new \RuntimeException(\sprintf('The file "%s" cannot be opened: %s', $filename, \error_get_last()['message'] ?? ''));
             }
 
             return Stream::create($resource);
@@ -1603,12 +1608,12 @@ namespace Nyholm\Psr7 {
 
         public function hasHeader($header): bool
         {
-            return isset($this->headerNames[\strtolower($header)]);
+            return isset($this->headerNames[\strtr($header, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')]);
         }
 
         public function getHeader($header): array
         {
-            $header = \strtolower($header);
+            $header = \strtr($header, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz');
             if (!isset($this->headerNames[$header])) {
                 return [];
             }
@@ -1626,7 +1631,7 @@ namespace Nyholm\Psr7 {
         public function withHeader($header, $value): self
         {
             $value = $this->validateAndTrimHeader($header, $value);
-            $normalized = \strtolower($header);
+            $normalized = \strtr($header, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz');
 
             $new = clone $this;
             if (isset($new->headerNames[$normalized])) {
@@ -1652,7 +1657,7 @@ namespace Nyholm\Psr7 {
 
         public function withoutHeader($header): self
         {
-            $normalized = \strtolower($header);
+            $normalized = \strtr($header, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz');
             if (!isset($this->headerNames[$normalized])) {
                 return $this;
             }
@@ -1688,8 +1693,13 @@ namespace Nyholm\Psr7 {
         private function setHeaders(array $headers) /*:void*/
         {
             foreach ($headers as $header => $value) {
+                if (\is_int($header)) {
+                    // If a header name was set to a numeric string, PHP will cast the key to an int.
+                    // We must cast it back to a string in order to comply with validation.
+                    $header = (string) $header;
+                }
                 $value = $this->validateAndTrimHeader($header, $value);
-                $normalized = \strtolower($header);
+                $normalized = \strtr($header, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz');
                 if (isset($this->headerNames[$normalized])) {
                     $header = $this->headerNames[$normalized];
                     $this->headers[$header] = \array_merge($this->headers[$header], $value);
@@ -1760,8 +1770,10 @@ namespace Nyholm\Psr7 {
     /**
      * @author Tobias Nyholm <tobias.nyholm@gmail.com>
      * @author Martijn van der Ven <martijn@vanderven.se>
+     *
+     * @final This class should never be extended. See https://github.com/Nyholm/psr7/blob/master/doc/final.md
      */
-    final class Request implements RequestInterface
+    class Request implements RequestInterface
     {
         use MessageTrait;
         use RequestTrait;
@@ -1917,8 +1929,10 @@ namespace Nyholm\Psr7 {
      * @author Michael Dowling and contributors to guzzlehttp/psr7
      * @author Tobias Nyholm <tobias.nyholm@gmail.com>
      * @author Martijn van der Ven <martijn@vanderven.se>
+     *
+     * @final This class should never be extended. See https://github.com/Nyholm/psr7/blob/master/doc/final.md
      */
-    final class Response implements ResponseInterface
+    class Response implements ResponseInterface
     {
         use MessageTrait;
 
@@ -1980,7 +1994,7 @@ namespace Nyholm\Psr7 {
 
             $code = (int) $code;
             if ($code < 100 || $code > 599) {
-                throw new \InvalidArgumentException('Status code has to be an integer between 100 and 599');
+                throw new \InvalidArgumentException(\sprintf('Status code has to be an integer between 100 and 599. A status code of %d was given', $code));
             }
 
             $new = clone $this;
@@ -2004,8 +2018,10 @@ namespace Nyholm\Psr7 {
      * @author Michael Dowling and contributors to guzzlehttp/psr7
      * @author Tobias Nyholm <tobias.nyholm@gmail.com>
      * @author Martijn van der Ven <martijn@vanderven.se>
+     *
+     * @final This class should never be extended. See https://github.com/Nyholm/psr7/blob/master/doc/final.md
      */
-    final class ServerRequest implements ServerRequestInterface
+    class ServerRequest implements ServerRequestInterface
     {
         use MessageTrait;
         use RequestTrait;
@@ -2125,6 +2141,9 @@ namespace Nyholm\Psr7 {
             return $this->attributes;
         }
 
+        /**
+         * @return mixed
+         */
         public function getAttribute($attribute, $default = null)
         {
             if (false === \array_key_exists($attribute, $this->attributes)) {
@@ -2160,13 +2179,17 @@ namespace Nyholm\Psr7 {
 namespace Nyholm\Psr7 {
 
     use Psr\Http\Message\StreamInterface;
+    use Symfony\Component\Debug\ErrorHandler as SymfonyLegacyErrorHandler;
+    use Symfony\Component\ErrorHandler\ErrorHandler as SymfonyErrorHandler;
 
     /**
      * @author Michael Dowling and contributors to guzzlehttp/psr7
      * @author Tobias Nyholm <tobias.nyholm@gmail.com>
      * @author Martijn van der Ven <martijn@vanderven.se>
+     *
+     * @final This class should never be extended. See https://github.com/Nyholm/psr7/blob/master/doc/final.md
      */
-    final class Stream implements StreamInterface
+    class Stream implements StreamInterface
     {
         /** @var resource|null A resource reference */
         private $stream;
@@ -2180,7 +2203,7 @@ namespace Nyholm\Psr7 {
         /** @var bool */
         private $writable;
 
-        /** @var array|mixed|void|null */
+        /** @var array|mixed|void|bool|null */
         private $uri;
 
         /** @var int|null */
@@ -2211,8 +2234,6 @@ namespace Nyholm\Psr7 {
          *
          * @param string|resource|StreamInterface $body
          *
-         * @return StreamInterface
-         *
          * @throws \InvalidArgumentException
          */
         public static function create($body = ''): StreamInterface
@@ -2234,7 +2255,6 @@ namespace Nyholm\Psr7 {
                 $new->seekable = $meta['seekable'] && 0 === \fseek($new->stream, 0, \SEEK_CUR);
                 $new->readable = isset(self::READ_WRITE_HASH['read'][$meta['mode']]);
                 $new->writable = isset(self::READ_WRITE_HASH['write'][$meta['mode']]);
-                $new->uri = $new->getMetadata('uri');
 
                 return $new;
             }
@@ -2250,7 +2270,10 @@ namespace Nyholm\Psr7 {
             $this->close();
         }
 
-        public function __toString(): string
+        /**
+         * @return string
+         */
+        public function __toString()
         {
             try {
                 if ($this->isSeekable()) {
@@ -2258,7 +2281,20 @@ namespace Nyholm\Psr7 {
                 }
 
                 return $this->getContents();
-            } catch (\Exception $e) {
+            } catch (\Throwable $e) {
+                if (\PHP_VERSION_ID >= 70400) {
+                    throw $e;
+                }
+
+                if (\is_array($errorHandler = \set_error_handler('var_dump'))) {
+                    $errorHandler = $errorHandler[0] ?? null;
+                }
+                \restore_error_handler();
+
+                if ($e instanceof \Error || $errorHandler instanceof SymfonyErrorHandler || $errorHandler instanceof SymfonyLegacyErrorHandler) {
+                    return \trigger_error((string) $e, \E_USER_ERROR);
+                }
+
                 return '';
             }
         }
@@ -2287,6 +2323,15 @@ namespace Nyholm\Psr7 {
             return $result;
         }
 
+        private function getUri()
+        {
+            if (false !== $this->uri) {
+                $this->uri = $this->getMetadata('uri') ?? false;
+            }
+
+            return $this->uri;
+        }
+
         public function getSize() /*:?int*/
         {
             if (null !== $this->size) {
@@ -2298,8 +2343,8 @@ namespace Nyholm\Psr7 {
             }
 
             // Clear the stat cache if the stream has a URI
-            if ($this->uri) {
-                \clearstatcache(true, $this->uri);
+            if ($uri = $this->getUri()) {
+                \clearstatcache(true, $uri);
             }
 
             $stats = \fstat($this->stream);
@@ -2314,8 +2359,12 @@ namespace Nyholm\Psr7 {
 
         public function tell(): int
         {
-            if (false === $result = \ftell($this->stream)) {
-                throw new \RuntimeException('Unable to determine stream position');
+            if (!isset($this->stream)) {
+                throw new \RuntimeException('Stream is detached');
+            }
+
+            if (false === $result = @\ftell($this->stream)) {
+                throw new \RuntimeException('Unable to determine stream position: ' . (\error_get_last()['message'] ?? ''));
             }
 
             return $result;
@@ -2323,7 +2372,7 @@ namespace Nyholm\Psr7 {
 
         public function eof(): bool
         {
-            return !$this->stream || \feof($this->stream);
+            return !isset($this->stream) || \feof($this->stream);
         }
 
         public function isSeekable(): bool
@@ -2333,12 +2382,16 @@ namespace Nyholm\Psr7 {
 
         public function seek($offset, $whence = \SEEK_SET) /*:void*/
         {
+            if (!isset($this->stream)) {
+                throw new \RuntimeException('Stream is detached');
+            }
+
             if (!$this->seekable) {
                 throw new \RuntimeException('Stream is not seekable');
             }
 
             if (-1 === \fseek($this->stream, $offset, $whence)) {
-                throw new \RuntimeException('Unable to seek to stream position ' . $offset . ' with whence ' . \var_export($whence, true));
+                throw new \RuntimeException('Unable to seek to stream position "' . $offset . '" with whence ' . \var_export($whence, true));
             }
         }
 
@@ -2354,6 +2407,10 @@ namespace Nyholm\Psr7 {
 
         public function write($string): int
         {
+            if (!isset($this->stream)) {
+                throw new \RuntimeException('Stream is detached');
+            }
+
             if (!$this->writable) {
                 throw new \RuntimeException('Cannot write to a non-writable stream');
             }
@@ -2361,8 +2418,8 @@ namespace Nyholm\Psr7 {
             // We can't know the size after writing anything
             $this->size = null;
 
-            if (false === $result = \fwrite($this->stream, $string)) {
-                throw new \RuntimeException('Unable to write to stream');
+            if (false === $result = @\fwrite($this->stream, $string)) {
+                throw new \RuntimeException('Unable to write to stream: ' . (\error_get_last()['message'] ?? ''));
             }
 
             return $result;
@@ -2375,26 +2432,37 @@ namespace Nyholm\Psr7 {
 
         public function read($length): string
         {
+            if (!isset($this->stream)) {
+                throw new \RuntimeException('Stream is detached');
+            }
+
             if (!$this->readable) {
                 throw new \RuntimeException('Cannot read from non-readable stream');
             }
 
-            return \fread($this->stream, $length);
+            if (false === $result = @\fread($this->stream, $length)) {
+                throw new \RuntimeException('Unable to read from stream: ' . (\error_get_last()['message'] ?? ''));
+            }
+
+            return $result;
         }
 
         public function getContents(): string
         {
             if (!isset($this->stream)) {
-                throw new \RuntimeException('Unable to read stream contents');
+                throw new \RuntimeException('Stream is detached');
             }
 
-            if (false === $contents = \stream_get_contents($this->stream)) {
-                throw new \RuntimeException('Unable to read stream contents');
+            if (false === $contents = @\stream_get_contents($this->stream)) {
+                throw new \RuntimeException('Unable to read stream contents: ' . (\error_get_last()['message'] ?? ''));
             }
 
             return $contents;
         }
 
+        /**
+         * @return mixed
+         */
         public function getMetadata($key = null)
         {
             if (!isset($this->stream)) {
@@ -2421,8 +2489,10 @@ namespace Nyholm\Psr7 {
      * @author Michael Dowling and contributors to guzzlehttp/psr7
      * @author Tobias Nyholm <tobias.nyholm@gmail.com>
      * @author Martijn van der Ven <martijn@vanderven.se>
+     *
+     * @final This class should never be extended. See https://github.com/Nyholm/psr7/blob/master/doc/final.md
      */
-    final class UploadedFile implements UploadedFileInterface
+    class UploadedFile implements UploadedFileInterface
     {
         /** @var array */
         /*private*/ const ERRORS = [
@@ -2489,7 +2559,7 @@ namespace Nyholm\Psr7 {
 
             if (\UPLOAD_ERR_OK === $this->error) {
                 // Depending on the value set file or stream variable.
-                if (\is_string($streamOrFile)) {
+                if (\is_string($streamOrFile) && '' !== $streamOrFile) {
                     $this->file = $streamOrFile;
                 } elseif (\is_resource($streamOrFile)) {
                     $this->stream = Stream::create($streamOrFile);
@@ -2523,7 +2593,9 @@ namespace Nyholm\Psr7 {
                 return $this->stream;
             }
 
-            $resource = \fopen($this->file, 'r');
+            if (false === $resource = @\fopen($this->file, 'r')) {
+                throw new \RuntimeException(\sprintf('The file "%s" cannot be opened: %s', $this->file, \error_get_last()['message'] ?? ''));
+            }
 
             return Stream::create($resource);
         }
@@ -2537,15 +2609,23 @@ namespace Nyholm\Psr7 {
             }
 
             if (null !== $this->file) {
-                $this->moved = 'cli' === \PHP_SAPI ? \rename($this->file, $targetPath) : \move_uploaded_file($this->file, $targetPath);
+                $this->moved = 'cli' === \PHP_SAPI ? @\rename($this->file, $targetPath) : @\move_uploaded_file($this->file, $targetPath);
+
+                if (false === $this->moved) {
+                    throw new \RuntimeException(\sprintf('Uploaded file could not be moved to "%s": %s', $targetPath, \error_get_last()['message'] ?? ''));
+                }
             } else {
                 $stream = $this->getStream();
                 if ($stream->isSeekable()) {
                     $stream->rewind();
                 }
 
-                // Copy the contents of a stream into another stream until end-of-file.
-                $dest = Stream::create(\fopen($targetPath, 'w'));
+                if (false === $resource = @\fopen($targetPath, 'w')) {
+                    throw new \RuntimeException(\sprintf('The file "%s" cannot be opened: %s', $targetPath, \error_get_last()['message'] ?? ''));
+                }
+
+                $dest = Stream::create($resource);
+
                 while (!$stream->eof()) {
                     if (!$dest->write($stream->read(1048576))) {
                         break;
@@ -2553,10 +2633,6 @@ namespace Nyholm\Psr7 {
                 }
 
                 $this->moved = true;
-            }
-
-            if (false === $this->moved) {
-                throw new \RuntimeException(\sprintf('Uploaded file could not be moved to %s', $targetPath));
             }
         }
 
@@ -2595,8 +2671,10 @@ namespace Nyholm\Psr7 {
      * @author Matthew Weier O'Phinney
      * @author Tobias Nyholm <tobias.nyholm@gmail.com>
      * @author Martijn van der Ven <martijn@vanderven.se>
+     *
+     * @final This class should never be extended. See https://github.com/Nyholm/psr7/blob/master/doc/final.md
      */
-    final class Uri implements UriInterface
+    class Uri implements UriInterface
     {
         /*private*/ const SCHEMES = ['http' => 80, 'https' => 443];
 
@@ -2629,13 +2707,13 @@ namespace Nyholm\Psr7 {
         {
             if ('' !== $uri) {
                 if (false === $parts = \parse_url($uri)) {
-                    throw new \InvalidArgumentException("Unable to parse URI: $uri");
+                    throw new \InvalidArgumentException(\sprintf('Unable to parse URI: "%s"', $uri));
                 }
 
                 // Apply parse_url parts to a URI.
-                $this->scheme = isset($parts['scheme']) ? \strtolower($parts['scheme']) : '';
+                $this->scheme = isset($parts['scheme']) ? \strtr($parts['scheme'], 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz') : '';
                 $this->userInfo = $parts['user'] ?? '';
-                $this->host = isset($parts['host']) ? \strtolower($parts['host']) : '';
+                $this->host = isset($parts['host']) ? \strtr($parts['host'], 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz') : '';
                 $this->port = isset($parts['port']) ? $this->filterPort($parts['port']) : null;
                 $this->path = isset($parts['path']) ? $this->filterPath($parts['path']) : '';
                 $this->query = isset($parts['query']) ? $this->filterQueryAndFragment($parts['query']) : '';
@@ -2710,7 +2788,7 @@ namespace Nyholm\Psr7 {
                 throw new \InvalidArgumentException('Scheme must be a string');
             }
 
-            if ($this->scheme === $scheme = \strtolower($scheme)) {
+            if ($this->scheme === $scheme = \strtr($scheme, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')) {
                 return $this;
             }
 
@@ -2744,7 +2822,7 @@ namespace Nyholm\Psr7 {
                 throw new \InvalidArgumentException('Host must be a string');
             }
 
-            if ($this->host === $host = \strtolower($host)) {
+            if ($this->host === $host = \strtr($host, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')) {
                 return $this;
             }
 
@@ -2941,13 +3019,30 @@ namespace Nyholm\Psr7Server {
 
             $headers = \function_exists('getallheaders') ? getallheaders() : static::getHeadersFromServer($_SERVER);
 
-            return $this->fromArrays($server, $headers, $_COOKIE, $_GET, $_POST, $_FILES, \fopen('php://input', 'r') ?: null);
+            $post = null;
+            if ('POST' === $this->getMethodFromEnv($server)) {
+                foreach ($headers as $headerName => $headerValue) {
+                    if (true === \is_int($headerName) || 'content-type' !== \strtolower($headerName)) {
+                        continue;
+                    }
+                    if (\in_array(
+                        \strtolower(\trim(\explode(';', $headerValue, 2)[0])),
+                        ['application/x-www-form-urlencoded', 'multipart/form-data']
+                    )) {
+                        $post = $_POST;
+
+                        break;
+                    }
+                }
+            }
+
+            return $this->fromArrays($server, $headers, $_COOKIE, $_GET, $post, $_FILES, \fopen('php://input', 'r') ?: null);
         }
 
         /**
          * {@inheritdoc}
          */
-        public function fromArrays(array $server, array $headers = [], array $cookie = [], array $get = [], array $post = [], array $files = [], $body = null): ServerRequestInterface
+        public function fromArrays(array $server, array $headers = [], array $cookie = [], array $get = [], /*?array*/ $post = null, array $files = [], $body = null): ServerRequestInterface
         {
             $method = $this->getMethodFromEnv($server);
             $uri = $this->getUriFromEnvWithHTTP($server);
@@ -2955,6 +3050,11 @@ namespace Nyholm\Psr7Server {
 
             $serverRequest = $this->serverRequestFactory->createServerRequest($method, $uri, $server);
             foreach ($headers as $name => $value) {
+                // Because PHP automatically casts array keys set with numeric strings to integers, we have to make sure
+                // that numeric headers will not be sent along as integers, as withAddedHeader can only accept strings.
+                if (\is_int($name)) {
+                    $name = (string) $name;
+                }
                 $serverRequest = $serverRequest->withAddedHeader($name, $value);
             }
 
@@ -2981,7 +3081,7 @@ namespace Nyholm\Psr7Server {
         }
 
         /**
-         * Implementation from Zend\Diactoros\marshalHeadersFromSapi().
+         * Implementation from Laminas\Diactoros\marshalHeadersFromSapi().
          */
         public static function getHeadersFromServer(array $server): array
         {
@@ -3080,10 +3180,14 @@ namespace Nyholm\Psr7Server {
                 return $this->normalizeNestedFileSpec($value);
             }
 
-            try {
-                $stream = $this->streamFactory->createStreamFromFile($value['tmp_name']);
-            } catch (\RuntimeException $e) {
+            if (UPLOAD_ERR_OK !== $value['error']) {
                 $stream = $this->streamFactory->createStream();
+            } else {
+                try {
+                    $stream = $this->streamFactory->createStreamFromFile($value['tmp_name']);
+                } catch (\RuntimeException $e) {
+                    $stream = $this->streamFactory->createStream();
+                }
             }
 
             return $this->uploadedFileFactory->createUploadedFile(
@@ -3100,8 +3204,6 @@ namespace Nyholm\Psr7Server {
          *
          * Loops through all nested files and returns a normalized array of
          * UploadedFileInterface instances.
-         *
-         * @param array $files
          *
          * @return UploadedFileInterface[]
          */
@@ -3199,7 +3301,7 @@ namespace Nyholm\Psr7Server {
          * @param array                                $headers typically the output of getallheaders() or similar structure
          * @param array                                $cookie  typically $_COOKIE or similar structure
          * @param array                                $get     typically $_GET or similar structure
-         * @param array                                $post    typically $_POST or similar structure
+         * @param array|null                           $post    typically $_POST or similar structure, represents parsed request body
          * @param array                                $files   typically $_FILES or similar structure
          * @param StreamInterface|resource|string|null $body    Typically stdIn
          *
@@ -3209,8 +3311,7 @@ namespace Nyholm\Psr7Server {
             array $server,
             array $headers = [],
             array $cookie = [],
-            array $get = [],
-            array $post = [],
+            array $get = [], /*?array*/ $post = null,
             array $files = [],
             $body = null
         ): ServerRequestInterface;
@@ -3219,8 +3320,6 @@ namespace Nyholm\Psr7Server {
          * Get parsed headers from ($_SERVER) array.
          *
          * @param array $server typically $_SERVER or similar structure
-         *
-         * @return array
          */
         public static function getHeadersFromServer(array $server): array;
     }
@@ -6244,7 +6343,7 @@ namespace Tqdev\PhpCrudApi\Database {
                 case 'sqlsrv':
                     return [];
                 case 'sqlite':
-                    return [];
+                    return ['sqlite_sequence'];
             }
         }
 
