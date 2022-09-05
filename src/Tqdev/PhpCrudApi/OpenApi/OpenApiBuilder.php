@@ -37,7 +37,7 @@ class OpenApiBuilder
     {
         $this->openapi->set("openapi", "3.0.0");
         if (!$this->openapi->has("servers")) {
-            $this->openapi->set("servers|0|url", $this->getServerUrl($request));
+            $this->openapi->set("servers||url", $this->getServerUrl($request));
         }
         if ($this->records) {
             $this->records->build();

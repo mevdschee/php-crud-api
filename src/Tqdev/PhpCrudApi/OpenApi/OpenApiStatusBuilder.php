@@ -23,8 +23,8 @@ class OpenApiStatusBuilder
         $this->setPaths();
         $this->setComponentSchema();
         $this->setComponentResponse();
-        foreach (array_keys($this->operations) as $index => $type) {
-            $this->setTag($index, $type);
+        foreach (array_keys($this->operations) as $type) {
+            $this->setTag($type);
         }
     }
 
@@ -33,7 +33,7 @@ class OpenApiStatusBuilder
         foreach ($this->operations as $type => $operationPair) {
             foreach ($operationPair as $operation => $method) {
                 $path = "/$type/$operation";
-                $this->openapi->set("paths|$path|$method|tags|0", "$type");
+                $this->openapi->set("paths|$path|$method|tags|", "$type");
                 $this->openapi->set("paths|$path|$method|operationId", "$operation" . "_" . "$type");
                 $this->openapi->set("paths|$path|$method|description", "Request API '$operation' status");
                 $this->openapi->set("paths|$path|$method|responses|200|\$ref", "#/components/responses/$operation-$type");
@@ -71,9 +71,8 @@ class OpenApiStatusBuilder
         }
     }
 
-    private function setTag(int $index, string $type) /*: void*/
+    private function setTag(string $type) /*: void*/
     {
-        $this->openapi->set("tags|$index|name", "$type");
-        $this->openapi->set("tags|$index|description", "$type operations");
+        $this->openapi->set("tags|", [ 'name' => $type, 'description' => "$type operations"]);
     }
 }

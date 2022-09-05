@@ -13,10 +13,13 @@ class OpenApiDefinition implements \JsonSerializable
 
     public function set(string $path, $value) /*: void*/
     {
-        $parts = explode('|', trim($path, '|'));
+        $parts = explode('|', $path);
         $current = &$this->root;
         while (count($parts) > 0) {
             $part = array_shift($parts);
+            if ($part === '') {
+                $part = count($current);
+            } 
             if (!isset($current[$part])) {
                 $current[$part] = [];
             }

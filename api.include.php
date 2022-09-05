@@ -9643,7 +9643,7 @@ namespace Tqdev\PhpCrudApi\OpenApi {
         {
             $this->openapi->set("openapi", "3.0.0");
             if (!$this->openapi->has("servers")) {
-                $this->openapi->set("servers|0|url", $this->getServerUrl($request));
+                $this->openapi->set("servers||url", $this->getServerUrl($request));
             }
             if ($this->records) {
                 $this->records->build();
@@ -9702,8 +9702,8 @@ namespace Tqdev\PhpCrudApi\OpenApi {
             $this->setComponentResponse();
             $this->setComponentRequestBody();
             $this->setComponentParameters();
-            foreach (array_keys($this->operations) as $index => $type) {
-                $this->setTag($index, $type);
+            foreach (array_keys($this->operations) as $type) {
+                $this->setTag($type);
             }
         }
 
@@ -9729,13 +9729,13 @@ namespace Tqdev\PhpCrudApi\OpenApi {
                     if (strpos($path, '{column}')) {
                         $parameters[] = 'column';
                     }
-                    foreach ($parameters as $p => $parameter) {
-                        $this->openapi->set("paths|$path|$method|parameters|$p|\$ref", "#/components/parameters/$parameter");
+                    foreach ($parameters as $parameter) {
+                        $this->openapi->set("paths|$path|$method|parameters||\$ref", "#/components/parameters/$parameter");
                     }
                     if (in_array($operation, ['create', 'update'])) {
                         $this->openapi->set("paths|$path|$method|requestBody|\$ref", "#/components/requestBodies/$operation-$type");
                     }
-                    $this->openapi->set("paths|$path|$method|tags|0", "$type");
+                    $this->openapi->set("paths|$path|$method|tags|", "$type");
                     $this->openapi->set("paths|$path|$method|operationId", "$operation" . "_" . "$type");
                     if ("$operation-$type" == 'update-table') {
                         $this->openapi->set("paths|$path|$method|description", "rename table");
@@ -9843,10 +9843,9 @@ namespace Tqdev\PhpCrudApi\OpenApi {
             $this->openapi->set("components|parameters|column|required", true);
         }
 
-        private function setTag(int $index, string $type) /*: void*/
+        private function setTag(string $type) /*: void*/
         {
-            $this->openapi->set("tags|$index|name", "$type");
-            $this->openapi->set("tags|$index|description", "$type operations");
+            $this->openapi->set("tags|", ['name' => $type, 'description' => "$type operations"]);
         }
     }
 }
@@ -9865,10 +9864,13 @@ namespace Tqdev\PhpCrudApi\OpenApi {
 
         public function set(string $path, $value) /*: void*/
         {
-            $parts = explode('|', trim($path, '|'));
+            $parts = explode('|', $path);
             $current = &$this->root;
             while (count($parts) > 0) {
                 $part = array_shift($parts);
+                if ($part === '') {
+                    $part = count($current);
+                } 
                 if (!isset($current[$part])) {
                     $current[$part] = [];
                 }
@@ -9989,8 +9991,8 @@ namespace Tqdev\PhpCrudApi\OpenApi {
                 $this->setComponentRequestBody($tableName);
             }
             $this->setComponentParameters();
-            foreach ($tableNames as $index => $tableName) {
-                $this->setTag($index, $tableName);
+            foreach ($tableNames as $tableName) {
+                $this->setTag($tableName);
             }
         }
 
@@ -10043,13 +10045,13 @@ namespace Tqdev\PhpCrudApi\OpenApi {
                         $parameters = ['pk'];
                     }
                 }
-                foreach ($parameters as $p => $parameter) {
-                    $this->openapi->set("paths|$path|$method|parameters|$p|\$ref", "#/components/parameters/$parameter");
+                foreach ($parameters as $parameter) {
+                    $this->openapi->set("paths|$path|$method|parameters||\$ref", "#/components/parameters/$parameter");
                 }
                 if (in_array($operation, ['create', 'update', 'increment'])) {
                     $this->openapi->set("paths|$path|$method|requestBody|\$ref", "#/components/requestBodies/$operation-$normalizedTableName");
                 }
-                $this->openapi->set("paths|$path|$method|tags|0", "$tableName");
+                $this->openapi->set("paths|$path|$method|tags|", "$tableName");
                 $this->openapi->set("paths|$path|$method|operationId", "$operation" . "_" . "$normalizedTableName");
                 $this->openapi->set("paths|$path|$method|description", "$operation $tableName");
                 switch ($operation) {
@@ -10275,10 +10277,9 @@ namespace Tqdev\PhpCrudApi\OpenApi {
             $this->openapi->set("components|parameters|join|required", false);
         }
 
-        private function setTag(int $index, string $tableName) /*: void*/
+        private function setTag(string $tableName) /*: void*/
         {
-            $this->openapi->set("tags|$index|name", "$tableName");
-            $this->openapi->set("tags|$index|description", "$tableName operations");
+            $this->openapi->set("tags|", ['name' => $tableName, 'description' => "$tableName operations"]);
         }
     }
 }
@@ -10331,8 +10332,8 @@ namespace Tqdev\PhpCrudApi\OpenApi {
             $this->setPaths();
             $this->setComponentSchema();
             $this->setComponentResponse();
-            foreach (array_keys($this->operations) as $index => $type) {
-                $this->setTag($index, $type);
+            foreach (array_keys($this->operations) as $type) {
+                $this->setTag($type);
             }
         }
 
@@ -10341,7 +10342,7 @@ namespace Tqdev\PhpCrudApi\OpenApi {
             foreach ($this->operations as $type => $operationPair) {
                 foreach ($operationPair as $operation => $method) {
                     $path = "/$type/$operation";
-                    $this->openapi->set("paths|$path|$method|tags|0", "$type");
+                    $this->openapi->set("paths|$path|$method|tags|", "$type");
                     $this->openapi->set("paths|$path|$method|operationId", "$operation" . "_" . "$type");
                     $this->openapi->set("paths|$path|$method|description", "Request API '$operation' status");
                     $this->openapi->set("paths|$path|$method|responses|200|\$ref", "#/components/responses/$operation-$type");
@@ -10379,10 +10380,9 @@ namespace Tqdev\PhpCrudApi\OpenApi {
             }
         }
 
-        private function setTag(int $index, string $type) /*: void*/
+        private function setTag(string $type) /*: void*/
         {
-            $this->openapi->set("tags|$index|name", "$type");
-            $this->openapi->set("tags|$index|description", "$type operations");
+            $this->openapi->set("tags|", [ 'name' => $type, 'description' => "$type operations"]);
         }
     }
 }
