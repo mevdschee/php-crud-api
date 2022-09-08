@@ -698,6 +698,7 @@ You can tune the middleware behavior using middleware specific configuration par
 - "apiKeyDbAuth.apiKeyColumn": The users table column that holds the API key ("api_key")
 - "dbAuth.mode": Set to "optional" if you want to allow anonymous access ("required")
 - "dbAuth.usersTable": The table that is used to store the users in ("users")
+- "dbAuth.loginTable": The table or view that is used to retrieve the users info for login 
 - "dbAuth.usernameColumn": The users table column that holds usernames ("username")
 - "dbAuth.passwordColumn": The users table column that holds passwords ("password")
 - "dbAuth.returnedColumns": The columns returned on successful login, empty means 'all' ("")
@@ -825,6 +826,13 @@ users can freely add, modify or delete any account! The minimal configuration is
     },
 
 Note that this middleware uses session cookies and stores the logged in state on the server.
+
+**Login using views with joined table**
+
+For login operations, it is possible to use a view as the usersTable. Such view can return a filtered result from the users table, e.g., *where active = true* or it may also return a result multiple tables thru a table join. At a minimum, the view should include the ***username*** and ***password***.
+
+However, views with joined tables are not insertable ([see issue 907](https://github.com/mevdschee/php-crud-api/issues/907) ). As a workaround, use the property ***loginTable*** to set a different reference table for login. The **usersTable** will still be set to the normal, insertable users table. 
+
 
 #### Basic authentication
 
