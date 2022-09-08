@@ -5,7 +5,7 @@ echo "================================================"
 
 echo -n "[1/4] Starting MySQL 8.0 ........ "
 # make sure mysql can create socket and lock
-mkdir /var/run/mysqld && chmod 777 /var/run/mysqld
+mkdir -p /var/run/mysqld && chmod 777 /var/run/mysqld
 # run mysql server
 nohup mysqld > /root/mysql.log 2>&1 &
 # wait for mysql to become available
