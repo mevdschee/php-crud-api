@@ -698,7 +698,7 @@ You can tune the middleware behavior using middleware specific configuration par
 - "apiKeyDbAuth.apiKeyColumn": The users table column that holds the API key ("api_key")
 - "dbAuth.mode": Set to "optional" if you want to allow anonymous access ("required")
 - "dbAuth.usersTable": The table that is used to store the users in ("users")
-- "dbAuth.loginTable": The table or view that is used to retrieve the users info for login 
+- "dbAuth.loginTable": The table or view that is used to retrieve the users info for login ("users")
 - "dbAuth.usernameColumn": The users table column that holds usernames ("username")
 - "dbAuth.passwordColumn": The users table column that holds passwords ("password")
 - "dbAuth.returnedColumns": The columns returned on successful login, empty means 'all' ("")
