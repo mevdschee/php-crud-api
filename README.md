@@ -902,10 +902,10 @@ Add a web application to this project and grab the code snippet for later use.
 Then you have to configure the `jwtAuth.secrets` configuration in your `api.php` file. 
 This can be done as follows:
 
-a. Log a user in to your Firebase-based app, get an authentication token for that user
-b. Go to [https://jwt.io/](https://jwt.io/) and paste the token in the decoding field
-c. Read the decoded header information from the token, it will give you the correct `kid`
-d. Grab the public key via this [URL](https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com), which corresponds to your `kid` from previous step
+a. Log a user in to your Firebase-based app, get an authentication token for that user  
+b. Go to [https://jwt.io/](https://jwt.io/) and paste the token in the decoding field  
+c. Read the decoded header information from the token, it will give you the correct `kid`  
+d. Grab the public key via this [URL](https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com), which corresponds to your `kid` from previous step  
 e. Now, just fill `jwtAuth.secrets` with your public key in the `api.php`
 
 Here is an example of what it should look like in the configuration:
@@ -965,7 +965,7 @@ and define a 'authorization.tableHandler' function that returns 'false' for thes
     },
 
 The above example will restrict access to the table 'license_keys' for all operations.
-
+ 
     'authorization.columnHandler' => function ($operation, $tableName, $columnName) {
         return !($tableName == 'users' && $columnName == 'password');
     },
