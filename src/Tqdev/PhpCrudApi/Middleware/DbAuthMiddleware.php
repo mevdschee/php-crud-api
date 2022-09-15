@@ -59,6 +59,15 @@ class DbAuthMiddleware extends Middleware
             $usernameColumnName = $this->getProperty('usernameColumn', 'username');
             $usernameColumn = $table->getColumn($usernameColumnName);
             $passwordColumnName = $this->getProperty('passwordColumn', 'password');
+            $usernamePattern = $this->getProperty('usernamePattern','/^[A-Za-z0-9]+$/'); // specify regex pattern for username, defaults to alphanumeric characters
+            $usernameMinLength = (int)$this->getProperty('usernameMinLength',5);
+            $usernameMaxLength = (int)$this->getProperty('usernameMaxLength',30);
+            if($usernameMinLength > $usernameMaxLength){
+                //obviously, $usernameMinLength should be less than $usernameMaxLength, but we'll still check in case of mis-config then we'll swap the 2 values
+                $lesser = $usernameMaxLength;
+                $usernameMaxLength = $usernameMinLength;
+                $usernameMinLength = $lesser;
+            }
             $passwordLength = $this->getProperty('passwordLength', '12');
             $pkName = $table->getPk()->getName();
             $registerUser = $this->getProperty('registerUser', '');
@@ -79,14 +88,36 @@ class DbAuthMiddleware extends Middleware
                 if (strlen($password) < $passwordLength) {
                     return $this->responder->error(ErrorCode::PASSWORD_TOO_SHORT, $passwordLength);
                 }
+                if(strlen($username) < $usernameMinLength){
+                    return $this->responder->error(ErrorCode::INPUT_VALIDATION_FAILED, $username . " [ Username length must be at least ". $usernameMinLength ." characters.]");
+                }
+                if(strlen($username) > $usernameMaxLength){
+                    return $this->responder->error(ErrorCode::INPUT_VALIDATION_FAILED, $username . " [ Username length must not exceed ". $usernameMaxLength ." characters.]");
+                }
+                if(!preg_match($usernamePattern, $username)){
+                   return $this->responder->error(ErrorCode::INPUT_VALIDATION_FAILED, $username . " [ Username contains disallowed characters.]");
+                }                
                 $users = $this->db->selectAll($table, $columnNames, $condition, $columnOrdering, 0, 1);
                 if (!empty($users)) {
                     return $this->responder->error(ErrorCode::USER_ALREADY_EXIST, $username);
                 }
                 $data = json_decode($registerUser, true);
-                $data = is_array($data) ? $data : [];
-                $data[$usernameColumnName] = $username;
-                $data[$passwordColumnName] = password_hash($password, PASSWORD_DEFAULT);
+                $data = is_array($data) ? $data : (array)$body; 
+                // get the original posted data
+                $userTableColumns = $table->getColumnNames();
+                foreach($data as $key=>$value){
+                      if(in_array($key,$userTableColumns)){ 
+                          // process only posted data if the key exists as users table column
+                          if($key === $usernameColumnName){
+                              $data[$usernameColumnName] = $username; //process the username and password as usual
+                          }else if($key === $passwordColumnName){
+                              $data[$passwordColumnName] = password_hash($password, PASSWORD_DEFAULT);
+                          }else{
+				    		$data[$key] = filter_var($value, FILTER_VALIDATE_EMAIL) ? $value : filter_var($value,FILTER_SANITIZE_ENCODED);
+                              //sanitize all other inputs, except for valid or properly formatted email address
+                          }
+                      }
+                 }
                 $this->db->createSingle($table, $data);
                 $users = $this->db->selectAll($table, $columnNames, $condition, $columnOrdering, 0, 1);
                 foreach ($users as $user) {
