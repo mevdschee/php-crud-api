@@ -118,7 +118,21 @@ class DbAuthMiddleware extends Middleware
                           }
                       }
                  }
-                $this->db->createSingle($table, $data);
+                try{
+			$this->db->createSingle($table, $data);
+			/* Since we're processing additional data during registration, we need to check if these data were defined in db to be unique. 
+			 * For example, emailAddress are usually used just once in an application. We can query the database to check if the new emailAddress is not yet registered,
+			 * but, in some cases, we may more than 2 or 3 or more unique fields (not common, but possible), hence we would also need to 
+			 * query 2,3 or more times. 
+			 * As a TEMPORARY WORKAROUND, we'll just attempt to register the new user and wait for the db to throw a DUPLICATE KEY EXCEPTION.
+			 */
+		}catch(\PDOException error){
+			if($error->getCode() ==="23000"){
+				return $this->responder->error(ErrorCode::DUPLICATE_KEY_EXCEPTION,'',$error->getMessage());
+			}else{
+				return $this->responder->error(ErrorCode::INPUT_VALIDATION_FAILED,$$error->getMessage());
+			}
+		}
                 $users = $this->db->selectAll($table, $columnNames, $condition, $columnOrdering, 0, 1);
                 foreach ($users as $user) {
                     unset($user[$passwordColumnName]);
