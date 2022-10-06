@@ -24,7 +24,7 @@ class SimpleRouter implements Router
 
     public function __construct(string $basePath, Responder $responder, Cache $cache, int $ttl)
     {
-        $this->basePath = rtrim($basePath, '/');
+        $this->basePath = rtrim($basePath, '/') ?: rtrim($this->detectBasePath(), '/');;
         $this->responder = $responder;
         $this->cache = $cache;
         $this->ttl = $ttl;
@@ -34,18 +34,18 @@ class SimpleRouter implements Router
         $this->middlewares = array();
     }
 
-    private function detectBasePath(ServerRequestInterface $request): string
+    private function detectBasePath(): string
     {
-        $serverParams = $request->getServerParams();
-        if (isset($serverParams['REQUEST_URI'])) {
-            $fullPath = urldecode(explode('?', $serverParams['REQUEST_URI'])[0]);
-            if (isset($serverParams['PATH_INFO'])) {
-                $path = $serverParams['PATH_INFO'];
+        if (isset($_SERVER['REQUEST_URI'])) {
+            $fullPath = urldecode(explode('?', $_SERVER['REQUEST_URI'])[0]);
+            if (isset($_SERVER['PATH_INFO'])) {
+                $path = $_SERVER['PATH_INFO'];
                 if (substr($fullPath, -1 * strlen($path)) == $path) {
                     return substr($fullPath, 0, -1 * strlen($path));
                 }
             }
-            if ('/' . basename(__FILE__) == $fullPath) {
+            $path = '/' . basename(__FILE__);
+            if (substr($fullPath, -1 * strlen($path)) == $path) {
                 return $fullPath;
             }
         }
@@ -86,9 +86,6 @@ class SimpleRouter implements Router
 
     public function route(ServerRequestInterface $request): ResponseInterface
     {
-        if (!$this->basePath) {
-            $this->basePath = rtrim($this->detectBasePath($request), '/');
-        }
         if ($this->registration) {
             $data = gzcompress(json_encode($this->routes, JSON_UNESCAPED_UNICODE));
             $this->cache->set('PathTree', $data, $this->ttl);
