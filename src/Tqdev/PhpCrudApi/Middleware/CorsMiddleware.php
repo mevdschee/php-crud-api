@@ -5,7 +5,7 @@ namespace Tqdev\PhpCrudApi\Middleware;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
-use Tqdev\PhpCrudApi\Config;
+use Tqdev\PhpCrudApi\Config\Config;
 use Tqdev\PhpCrudApi\Controller\Responder;
 use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
 use Tqdev\PhpCrudApi\Middleware\Router\Router;

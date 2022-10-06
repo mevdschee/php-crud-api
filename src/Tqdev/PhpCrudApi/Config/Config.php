@@ -1,8 +1,10 @@
 <?php
 
-namespace Tqdev\PhpCrudApi;
+namespace Tqdev\PhpCrudApi\Config;
 
-class Config
+use Tqdev\PhpCrudApi\Config\Base\ConfigInterface;
+
+class Config implements ConfigInterface
 {
     private $values = [
         'driver' => null,

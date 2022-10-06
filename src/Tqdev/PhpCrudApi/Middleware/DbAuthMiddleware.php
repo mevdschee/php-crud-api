@@ -6,7 +6,7 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Tqdev\PhpCrudApi\Column\ReflectionService;
-use Tqdev\PhpCrudApi\Config;
+use Tqdev\PhpCrudApi\Config\Config;
 use Tqdev\PhpCrudApi\Controller\Responder;
 use Tqdev\PhpCrudApi\Database\GenericDB;
 use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
@@ -51,7 +51,7 @@ class DbAuthMiddleware extends Middleware
             $username = isset($body->$usernameFormFieldName) ? $body->$usernameFormFieldName : '';
             $password = isset($body->$passwordFormFieldName) ? $body->$passwordFormFieldName : '';
             $newPassword = isset($body->$newPasswordFormFieldName) ? $body->$newPasswordFormFieldName : '';
-            if($path ==='login')
+            if ($path === 'login')
                 $tableName = $this->getProperty('loginTable', 'users');    //add separate property for login as this could be a view joining users table to other table such as roles, details etc. At a minimum, the view output should include the $usernameColumn and $passwordColumn
             else
                 $tableName = $this->getProperty('usersTable', 'users');

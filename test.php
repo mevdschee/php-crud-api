@@ -1,7 +1,7 @@
 <?php
 
 use Tqdev\PhpCrudApi\Api;
-use Tqdev\PhpCrudApi\Config;
+use Tqdev\PhpCrudApi\Config\Config;
 use Tqdev\PhpCrudApi\Database\GenericDB;
 use Tqdev\PhpCrudApi\RequestFactory;
 use Tqdev\PhpCrudApi\ResponseUtils;

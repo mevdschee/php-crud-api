@@ -7,7 +7,7 @@ use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Tqdev\PhpCrudApi\Column\ReflectionService;
 use Tqdev\PhpCrudApi\Column\Reflection\ReflectedTable;
-use Tqdev\PhpCrudApi\Config;
+use Tqdev\PhpCrudApi\Config\Config;
 use Tqdev\PhpCrudApi\Controller\Responder;
 use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
 use Tqdev\PhpCrudApi\Middleware\Router\Router;

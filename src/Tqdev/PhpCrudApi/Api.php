@@ -8,6 +8,7 @@ use Psr\Http\Server\RequestHandlerInterface;
 use Tqdev\PhpCrudApi\Cache\CacheFactory;
 use Tqdev\PhpCrudApi\Column\DefinitionService;
 use Tqdev\PhpCrudApi\Column\ReflectionService;
+use Tqdev\PhpCrudApi\Config\Config;
 use Tqdev\PhpCrudApi\Controller\CacheController;
 use Tqdev\PhpCrudApi\Controller\ColumnController;
 use Tqdev\PhpCrudApi\Controller\GeoJsonController;

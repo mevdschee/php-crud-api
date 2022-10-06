@@ -4423,6 +4423,241 @@ namespace Tqdev\PhpCrudApi\Column {
     }
 }
 
+// file: src/Tqdev/PhpCrudApi/Config/Base/ConfigInterface.php
+namespace Tqdev\PhpCrudApi\Config\Base {
+
+    interface ConfigInterface
+    {
+        public function getMiddlewares();
+    }
+}
+
+// file: src/Tqdev/PhpCrudApi/Config/Config.php
+namespace Tqdev\PhpCrudApi\Config {
+
+    use Tqdev\PhpCrudApi\Config\Base\ConfigInterface;
+
+    class Config implements ConfigInterface
+    {
+        private $values = [
+            'driver' => null,
+            'address' => null,
+            'port' => null,
+            'username' => '',
+            'password' => '',
+            'database' => '',
+            'command' => '',
+            'tables' => 'all',
+            'mapping' => '',
+            'middlewares' => 'cors',
+            'controllers' => 'records,geojson,openapi,status',
+            'customControllers' => '',
+            'customOpenApiBuilders' => '',
+            'cacheType' => 'TempFile',
+            'cachePath' => '',
+            'cacheTime' => 10,
+            'jsonOptions' => JSON_UNESCAPED_UNICODE,
+            'debug' => false,
+            'basePath' => '',
+            'openApiBase' => '{"info":{"title":"PHP-CRUD-API","version":"1.0.0"}}',
+            'geometrySrid' => 4326,
+        ];
+
+        private function getDefaultDriver(array $values): string
+        {
+            if (isset($values['driver'])) {
+                return $values['driver'];
+            }
+            return 'mysql';
+        }
+
+        private function getDefaultPort(string $driver): int
+        {
+            switch ($driver) {
+                case 'mysql':
+                    return 3306;
+                case 'pgsql':
+                    return 5432;
+                case 'sqlsrv':
+                    return 1433;
+                case 'sqlite':
+                    return 0;
+            }
+        }
+
+        private function getDefaultAddress(string $driver): string
+        {
+            switch ($driver) {
+                case 'mysql':
+                    return 'localhost';
+                case 'pgsql':
+                    return 'localhost';
+                case 'sqlsrv':
+                    return 'localhost';
+                case 'sqlite':
+                    return 'data.db';
+            }
+        }
+
+        private function getDriverDefaults(string $driver): array
+        {
+            return [
+                'driver' => $driver,
+                'address' => $this->getDefaultAddress($driver),
+                'port' => $this->getDefaultPort($driver),
+            ];
+        }
+
+        private function getEnvironmentVariableName(string $key): string
+        {
+            $prefix = "PHP_CRUD_API_";
+            $suffix = strtoupper(preg_replace('/(?<!^)[A-Z]/', '_$0', str_replace('.', '_', $key)));
+            return $prefix . $suffix;
+        }
+
+        public function getProperty(string $key, $default = '')
+        {
+            if (strpos($key, 'Handler')) {
+                return $this->values[$key] ?? $default;
+            }
+            $variableName = $this->getEnvironmentVariableName($key);
+            return getenv($variableName, true) ?: ($this->values[$key] ?? $default);
+        }
+
+        public function __construct(array $values)
+        {
+            $defaults = array_merge($this->values, $this->getDriverDefaults($this->getDefaultDriver($values)));
+            foreach ($defaults as $key => $default) {
+                $this->values[$key] = $values[$key] ?? $default;
+                $this->values[$key] = $this->getProperty($key);
+            }
+            $this->values['middlewares'] = array_map('trim', explode(',', $this->values['middlewares']));
+            foreach ($values as $key => $value) {
+                if (strpos($key, '.') === false) {
+                    if (!isset($defaults[$key])) {
+                        throw new \Exception("Config has invalid key '$key'");
+                    }
+                } else {
+                    $middleware = substr($key, 0, strpos($key, '.'));
+                    if (!in_array($middleware, $this->values['middlewares'])) {
+                        throw new \Exception("Config has invalid middleware key '$key'");
+                    } else {
+                        $this->values[$key] = $value;
+                    }
+                }
+            }
+        }
+
+        public function getDriver(): string
+        {
+            return $this->values['driver'];
+        }
+
+        public function getAddress(): string
+        {
+            return $this->values['address'];
+        }
+
+        public function getPort(): int
+        {
+            return $this->values['port'];
+        }
+
+        public function getUsername(): string
+        {
+            return $this->values['username'];
+        }
+
+        public function getPassword(): string
+        {
+            return $this->values['password'];
+        }
+
+        public function getDatabase(): string
+        {
+            return $this->values['database'];
+        }
+
+        public function getCommand(): string
+        {
+            return $this->values['command'];
+        }
+
+        public function getTables(): array
+        {
+            return array_filter(array_map('trim', explode(',', $this->values['tables'])));
+        }
+
+        public function getMapping(): array
+        {
+            $mapping = array_map(function ($v) {
+                return explode('=', $v);
+            }, array_filter(array_map('trim', explode(',', $this->values['mapping']))));
+            return array_combine(array_column($mapping, 0), array_column($mapping, 1));
+        }
+
+        public function getMiddlewares(): array
+        {
+            return $this->values['middlewares'];
+        }
+
+        public function getControllers(): array
+        {
+            return array_filter(array_map('trim', explode(',', $this->values['controllers'])));
+        }
+
+        public function getCustomControllers(): array
+        {
+            return array_filter(array_map('trim', explode(',', $this->values['customControllers'])));
+        }
+
+        public function getCustomOpenApiBuilders(): array
+        {
+            return array_filter(array_map('trim', explode(',', $this->values['customOpenApiBuilders'])));
+        }
+
+        public function getCacheType(): string
+        {
+            return $this->values['cacheType'];
+        }
+
+        public function getCachePath(): string
+        {
+            return $this->values['cachePath'];
+        }
+
+        public function getCacheTime(): int
+        {
+            return $this->values['cacheTime'];
+        }
+
+        public function getJsonOptions(): int
+        {
+            return $this->values['jsonOptions'];
+        }
+
+        public function getDebug(): bool
+        {
+            return $this->values['debug'];
+        }
+
+        public function getBasePath(): string
+        {
+            return $this->values['basePath'];
+        }
+
+        public function getOpenApiBase(): array
+        {
+            return json_decode($this->values['openApiBase'], true);
+        }
+
+        public function getGeometrySrid(): int
+        {
+            return $this->values['geometrySrid'];
+        }
+    }
+}
+
 // file: src/Tqdev/PhpCrudApi/Controller/CacheController.php
 namespace Tqdev\PhpCrudApi\Controller {
 
@@ -7301,9 +7536,9 @@ namespace Tqdev\PhpCrudApi\GeoJson {
 namespace Tqdev\PhpCrudApi\Middleware\Base {
 
     use Psr\Http\Server\MiddlewareInterface;
-    use Tqdev\PhpCrudApi\Config;
     use Tqdev\PhpCrudApi\Controller\Responder;
     use Tqdev\PhpCrudApi\Middleware\Router\Router;
+    use Tqdev\PhpCrudApi\Config\Base\ConfigInterface;
 
     abstract class Middleware implements MiddlewareInterface
     {
@@ -7312,7 +7547,7 @@ namespace Tqdev\PhpCrudApi\Middleware\Base {
         private $middleware;
         private $config;
 
-        public function __construct(Router $router, Responder $responder, Config $config, string $middleware)
+        public function __construct(Router $router, Responder $responder, ConfigInterface $config, string $middleware)
         {
             $router->load($this);
             $this->responder = $responder;
@@ -7605,7 +7840,7 @@ namespace Tqdev\PhpCrudApi\Middleware {
     use Psr\Http\Message\ServerRequestInterface;
     use Psr\Http\Server\RequestHandlerInterface;
     use Tqdev\PhpCrudApi\Column\ReflectionService;
-    use Tqdev\PhpCrudApi\Config;
+    use Tqdev\PhpCrudApi\Config\Config;
     use Tqdev\PhpCrudApi\Controller\Responder;
     use Tqdev\PhpCrudApi\Database\GenericDB;
     use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
@@ -7666,7 +7901,7 @@ namespace Tqdev\PhpCrudApi\Middleware {
     use Psr\Http\Message\ServerRequestInterface;
     use Psr\Http\Server\RequestHandlerInterface;
     use Tqdev\PhpCrudApi\Column\ReflectionService;
-    use Tqdev\PhpCrudApi\Config;
+    use Tqdev\PhpCrudApi\Config\Config;
     use Tqdev\PhpCrudApi\Controller\Responder;
     use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
     use Tqdev\PhpCrudApi\Middleware\Communication\VariableStore;
@@ -7890,7 +8125,7 @@ namespace Tqdev\PhpCrudApi\Middleware {
     use Psr\Http\Message\ResponseInterface;
     use Psr\Http\Message\ServerRequestInterface;
     use Psr\Http\Server\RequestHandlerInterface;
-    use Tqdev\PhpCrudApi\Config;
+    use Tqdev\PhpCrudApi\Config\Config;
     use Tqdev\PhpCrudApi\Controller\Responder;
     use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
     use Tqdev\PhpCrudApi\Middleware\Router\Router;
@@ -7987,7 +8222,7 @@ namespace Tqdev\PhpCrudApi\Middleware {
     use Psr\Http\Message\ServerRequestInterface;
     use Psr\Http\Server\RequestHandlerInterface;
     use Tqdev\PhpCrudApi\Column\ReflectionService;
-    use Tqdev\PhpCrudApi\Config;
+    use Tqdev\PhpCrudApi\Config\Config;
     use Tqdev\PhpCrudApi\Controller\Responder;
     use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
     use Tqdev\PhpCrudApi\Middleware\Router\Router;
@@ -8031,7 +8266,7 @@ namespace Tqdev\PhpCrudApi\Middleware {
     use Psr\Http\Message\ServerRequestInterface;
     use Psr\Http\Server\RequestHandlerInterface;
     use Tqdev\PhpCrudApi\Column\ReflectionService;
-    use Tqdev\PhpCrudApi\Config;
+    use Tqdev\PhpCrudApi\Config\Config;
     use Tqdev\PhpCrudApi\Controller\Responder;
     use Tqdev\PhpCrudApi\Database\GenericDB;
     use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
@@ -8076,7 +8311,7 @@ namespace Tqdev\PhpCrudApi\Middleware {
                 $username = isset($body->$usernameFormFieldName) ? $body->$usernameFormFieldName : '';
                 $password = isset($body->$passwordFormFieldName) ? $body->$passwordFormFieldName : '';
                 $newPassword = isset($body->$newPasswordFormFieldName) ? $body->$newPasswordFormFieldName : '';
-                if($path ==='login')
+                if ($path === 'login')
                     $tableName = $this->getProperty('loginTable', 'users');    //add separate property for login as this could be a view joining users table to other table such as roles, details etc. At a minimum, the view output should include the $usernameColumn and $passwordColumn
                 else
                     $tableName = $this->getProperty('usersTable', 'users');
@@ -8262,7 +8497,7 @@ namespace Tqdev\PhpCrudApi\Middleware {
     use Psr\Http\Server\RequestHandlerInterface;
     use Tqdev\PhpCrudApi\Column\ReflectionService;
     use Tqdev\PhpCrudApi\Column\Reflection\ReflectedTable;
-    use Tqdev\PhpCrudApi\Config;
+    use Tqdev\PhpCrudApi\Config\Config;
     use Tqdev\PhpCrudApi\Controller\Responder;
     use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
     use Tqdev\PhpCrudApi\Middleware\Router\Router;
@@ -8343,7 +8578,7 @@ namespace Tqdev\PhpCrudApi\Middleware {
     use Psr\Http\Message\ServerRequestInterface;
     use Psr\Http\Server\RequestHandlerInterface;
     use Tqdev\PhpCrudApi\Column\ReflectionService;
-    use Tqdev\PhpCrudApi\Config;
+    use Tqdev\PhpCrudApi\Config\Config;
     use Tqdev\PhpCrudApi\Controller\Responder;
     use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
     use Tqdev\PhpCrudApi\Middleware\Communication\VariableStore;
@@ -8670,7 +8905,7 @@ namespace Tqdev\PhpCrudApi\Middleware {
     use Psr\Http\Message\ServerRequestInterface;
     use Psr\Http\Server\RequestHandlerInterface;
     use Tqdev\PhpCrudApi\Column\ReflectionService;
-    use Tqdev\PhpCrudApi\Config;
+    use Tqdev\PhpCrudApi\Config\Config;
     use Tqdev\PhpCrudApi\Controller\Responder;
     use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
     use Tqdev\PhpCrudApi\Middleware\Communication\VariableStore;
@@ -8770,7 +9005,7 @@ namespace Tqdev\PhpCrudApi\Middleware {
     use Psr\Http\Message\ServerRequestInterface;
     use Psr\Http\Server\RequestHandlerInterface;
     use Tqdev\PhpCrudApi\Column\ReflectionService;
-    use Tqdev\PhpCrudApi\Config;
+    use Tqdev\PhpCrudApi\Config\Config;
     use Tqdev\PhpCrudApi\Controller\Responder;
     use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
     use Tqdev\PhpCrudApi\Middleware\Router\Router;
@@ -8823,7 +9058,7 @@ namespace Tqdev\PhpCrudApi\Middleware {
     use Psr\Http\Message\ServerRequestInterface;
     use Psr\Http\Server\RequestHandlerInterface;
     use Tqdev\PhpCrudApi\Column\ReflectionService;
-    use Tqdev\PhpCrudApi\Config;
+    use Tqdev\PhpCrudApi\Config\Config;
     use Tqdev\PhpCrudApi\Controller\Responder;
     use Tqdev\PhpCrudApi\Database\GenericDB;
     use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
@@ -8958,7 +9193,7 @@ namespace Tqdev\PhpCrudApi\Middleware {
     use Tqdev\PhpCrudApi\Column\Reflection\ReflectedTable;
     use Tqdev\PhpCrudApi\Column\Reflection\ReflectedColumn;
     use Tqdev\PhpCrudApi\Column\ReflectionService;
-    use Tqdev\PhpCrudApi\Config;
+    use Tqdev\PhpCrudApi\Config\Config;
     use Tqdev\PhpCrudApi\Controller\Responder;
     use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
     use Tqdev\PhpCrudApi\Middleware\Router\Router;
@@ -9136,7 +9371,7 @@ namespace Tqdev\PhpCrudApi\Middleware {
     use Psr\Http\Message\ServerRequestInterface;
     use Psr\Http\Server\RequestHandlerInterface;
     use Tqdev\PhpCrudApi\Column\ReflectionService;
-    use Tqdev\PhpCrudApi\Config;
+    use Tqdev\PhpCrudApi\Config\Config;
     use Tqdev\PhpCrudApi\Controller\Responder;
     use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
     use Tqdev\PhpCrudApi\Middleware\Router\Router;
@@ -9194,7 +9429,7 @@ namespace Tqdev\PhpCrudApi\Middleware {
     use Tqdev\PhpCrudApi\Column\ReflectionService;
     use Tqdev\PhpCrudApi\Column\Reflection\ReflectedTable;
     use Tqdev\PhpCrudApi\Column\Reflection\ReflectedColumn;
-    use Tqdev\PhpCrudApi\Config;
+    use Tqdev\PhpCrudApi\Config\Config;
     use Tqdev\PhpCrudApi\Controller\Responder;
     use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
     use Tqdev\PhpCrudApi\Middleware\Router\Router;
@@ -9411,7 +9646,7 @@ namespace Tqdev\PhpCrudApi\Middleware {
     use Psr\Http\Message\ServerRequestInterface;
     use Psr\Http\Server\RequestHandlerInterface;
     use Tqdev\PhpCrudApi\Column\ReflectionService;
-    use Tqdev\PhpCrudApi\Config;
+    use Tqdev\PhpCrudApi\Config\Config;
     use Tqdev\PhpCrudApi\Controller\Responder;
     use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
     use Tqdev\PhpCrudApi\Middleware\Router\Router;
@@ -11606,6 +11841,7 @@ namespace Tqdev\PhpCrudApi {
     use Tqdev\PhpCrudApi\Cache\CacheFactory;
     use Tqdev\PhpCrudApi\Column\DefinitionService;
     use Tqdev\PhpCrudApi\Column\ReflectionService;
+    use Tqdev\PhpCrudApi\Config\Config;
     use Tqdev\PhpCrudApi\Controller\CacheController;
     use Tqdev\PhpCrudApi\Controller\ColumnController;
     use Tqdev\PhpCrudApi\Controller\GeoJsonController;
@@ -11827,230 +12063,6 @@ namespace Tqdev\PhpCrudApi {
         public function handle(ServerRequestInterface $request): ResponseInterface
         {
             return $this->router->route($this->addParsedBody($request));
-        }
-    }
-}
-
-// file: src/Tqdev/PhpCrudApi/Config.php
-namespace Tqdev\PhpCrudApi {
-
-    class Config
-    {
-        private $values = [
-            'driver' => null,
-            'address' => null,
-            'port' => null,
-            'username' => '',
-            'password' => '',
-            'database' => '',
-            'command' => '',
-            'tables' => 'all',
-            'mapping' => '',
-            'middlewares' => 'cors',
-            'controllers' => 'records,geojson,openapi,status',
-            'customControllers' => '',
-            'customOpenApiBuilders' => '',
-            'cacheType' => 'TempFile',
-            'cachePath' => '',
-            'cacheTime' => 10,
-            'jsonOptions' => JSON_UNESCAPED_UNICODE,
-            'debug' => false,
-            'basePath' => '',
-            'openApiBase' => '{"info":{"title":"PHP-CRUD-API","version":"1.0.0"}}',
-            'geometrySrid' => 4326,
-        ];
-
-        private function getDefaultDriver(array $values): string
-        {
-            if (isset($values['driver'])) {
-                return $values['driver'];
-            }
-            return 'mysql';
-        }
-
-        private function getDefaultPort(string $driver): int
-        {
-            switch ($driver) {
-                case 'mysql':
-                    return 3306;
-                case 'pgsql':
-                    return 5432;
-                case 'sqlsrv':
-                    return 1433;
-                case 'sqlite':
-                    return 0;
-            }
-        }
-
-        private function getDefaultAddress(string $driver): string
-        {
-            switch ($driver) {
-                case 'mysql':
-                    return 'localhost';
-                case 'pgsql':
-                    return 'localhost';
-                case 'sqlsrv':
-                    return 'localhost';
-                case 'sqlite':
-                    return 'data.db';
-            }
-        }
-
-        private function getDriverDefaults(string $driver): array
-        {
-            return [
-                'driver' => $driver,
-                'address' => $this->getDefaultAddress($driver),
-                'port' => $this->getDefaultPort($driver),
-            ];
-        }
-
-        private function getEnvironmentVariableName(string $key): string
-        {
-            $prefix = "PHP_CRUD_API_";
-            $suffix = strtoupper(preg_replace('/(?<!^)[A-Z]/', '_$0', str_replace('.', '_', $key)));
-            return $prefix . $suffix;
-        }
-
-        public function getProperty(string $key, $default = '')
-        {
-            if (strpos($key, 'Handler')) {
-                return $this->values[$key] ?? $default;
-            }
-            $variableName = $this->getEnvironmentVariableName($key);
-            return getenv($variableName, true) ?: ($this->values[$key] ?? $default);
-        }
-
-        public function __construct(array $values)
-        {
-            $defaults = array_merge($this->values, $this->getDriverDefaults($this->getDefaultDriver($values)));
-            foreach ($defaults as $key => $default) {
-                $this->values[$key] = $values[$key] ?? $default;
-                $this->values[$key] = $this->getProperty($key);
-            }
-            $this->values['middlewares'] = array_map('trim', explode(',', $this->values['middlewares']));
-            foreach ($values as $key => $value) {
-                if (strpos($key, '.') === false) {
-                    if (!isset($defaults[$key])) {
-                        throw new \Exception("Config has invalid key '$key'");
-                    }
-                } else {
-                    $middleware = substr($key, 0, strpos($key, '.'));
-                    if (!in_array($middleware, $this->values['middlewares'])) {
-                        throw new \Exception("Config has invalid middleware key '$key'");
-                    } else {
-                        $this->values[$key] = $value;
-                    }
-                }
-            }
-        }
-
-        public function getDriver(): string
-        {
-            return $this->values['driver'];
-        }
-
-        public function getAddress(): string
-        {
-            return $this->values['address'];
-        }
-
-        public function getPort(): int
-        {
-            return $this->values['port'];
-        }
-
-        public function getUsername(): string
-        {
-            return $this->values['username'];
-        }
-
-        public function getPassword(): string
-        {
-            return $this->values['password'];
-        }
-
-        public function getDatabase(): string
-        {
-            return $this->values['database'];
-        }
-
-        public function getCommand(): string
-        {
-            return $this->values['command'];
-        }
-
-        public function getTables(): array
-        {
-            return array_filter(array_map('trim', explode(',', $this->values['tables'])));
-        }
-
-        public function getMapping(): array
-        {
-            $mapping = array_map(function ($v) {
-                return explode('=', $v);
-            }, array_filter(array_map('trim', explode(',', $this->values['mapping']))));
-            return array_combine(array_column($mapping, 0), array_column($mapping, 1));
-        }
-
-        public function getMiddlewares(): array
-        {
-            return $this->values['middlewares'];
-        }
-
-        public function getControllers(): array
-        {
-            return array_filter(array_map('trim', explode(',', $this->values['controllers'])));
-        }
-
-        public function getCustomControllers(): array
-        {
-            return array_filter(array_map('trim', explode(',', $this->values['customControllers'])));
-        }
-
-        public function getCustomOpenApiBuilders(): array
-        {
-            return array_filter(array_map('trim', explode(',', $this->values['customOpenApiBuilders'])));
-        }
-
-        public function getCacheType(): string
-        {
-            return $this->values['cacheType'];
-        }
-
-        public function getCachePath(): string
-        {
-            return $this->values['cachePath'];
-        }
-
-        public function getCacheTime(): int
-        {
-            return $this->values['cacheTime'];
-        }
-
-        public function getJsonOptions(): int
-        {
-            return $this->values['jsonOptions'];
-        }
-
-        public function getDebug(): bool
-        {
-            return $this->values['debug'];
-        }
-
-        public function getBasePath(): string
-        {
-            return $this->values['basePath'];
-        }
-
-        public function getOpenApiBase(): array
-        {
-            return json_decode($this->values['openApiBase'], true);
-        }
-
-        public function getGeometrySrid(): int
-        {
-            return $this->values['geometrySrid'];
         }
     }
 }
@@ -12338,7 +12350,7 @@ namespace Tqdev\PhpCrudApi {
 namespace Tqdev\PhpCrudApi {
 
     use Tqdev\PhpCrudApi\Api;
-    use Tqdev\PhpCrudApi\Config;
+    use Tqdev\PhpCrudApi\Config\Config;
     use Tqdev\PhpCrudApi\RequestFactory;
     use Tqdev\PhpCrudApi\ResponseUtils;
 
