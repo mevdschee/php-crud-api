@@ -829,7 +829,7 @@ Note that this middleware uses session cookies and stores the logged in state on
 
 **Login using views with joined table**
 
-For login operations, it is possible to use a view as the usersTable. Such view can return a filtered result from the users table, e.g., *where active = true* or it may also return a result multiple tables thru a table join. At a minimum, the view should include the ***username*** and ***password***.
+For login operations, it is possible to use a view as the usersTable. Such view can return a filtered result from the users table, e.g., *where active = true* or it may also return a result multiple tables thru a table join. At a minimum, the view should include the ***username*** and ***password*** and a field named ***id***.
 
 However, views with joined tables are not insertable ([see issue 907](https://github.com/mevdschee/php-crud-api/issues/907) ). As a workaround, use the property ***loginTable*** to set a different reference table for login. The **usersTable** will still be set to the normal, insertable users table. 
 
