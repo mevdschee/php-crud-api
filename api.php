@@ -6101,6 +6101,9 @@ namespace Tqdev\PhpCrudApi\Database {
                 return array();
             }
             $selectColumns = $this->columns->getSelect($table, $columnNames);
+            if ($selectColumns == '') {
+                $selectColumns = "*";
+            }
             $tableName = $table->getName();
             $tableRealName = $table->getRealName();
             $condition = $this->addMiddlewareConditions($tableName, $condition);
