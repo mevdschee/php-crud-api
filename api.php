@@ -8320,6 +8320,7 @@ namespace Tqdev\PhpCrudApi\Middleware {
                 $passwordLength = $this->getProperty('passwordLength', '12');
                 $pkName = $table->getPk()->getName();
                 $registerUser = $this->getProperty('registerUser', '');
+                $loginAfterRegistration = $this->getProperty('loginAfterRegistration', '');
                 $condition = new ColumnCondition($usernameColumn, 'eq', $username);
                 $returnedColumns = $this->getProperty('returnedColumns', '');
                 if (!$returnedColumns) {
@@ -8333,6 +8334,9 @@ namespace Tqdev\PhpCrudApi\Middleware {
                 if ($path == 'register') {
                     if (!$registerUser) {
                         return $this->responder->error(ErrorCode::AUTHENTICATION_FAILED, $username);
+                    }
+                    if(strlen(trim($username)) == 0){
+                        return $this->responder->error(ErrorCode::USERNAME_EMPTY, $username);
                     }
                     if (strlen($password) < $passwordLength) {
                         return $this->responder->error(ErrorCode::PASSWORD_TOO_SHORT, $passwordLength);
@@ -8348,8 +8352,17 @@ namespace Tqdev\PhpCrudApi\Middleware {
                     $this->db->createSingle($table, $data);
                     $users = $this->db->selectAll($table, $columnNames, $condition, $columnOrdering, 0, 1);
                     foreach ($users as $user) {
-                        unset($user[$passwordColumnName]);
-                        return $this->responder->success($user);
+                        if($loginAfterRegistration){
+                            if (!headers_sent()) {
+                                session_regenerate_id(true);
+                            }
+                            unset($user[$passwordColumnName]);
+                            $_SESSION['user'] = $user;
+                            return $this->responder->success($user);
+                        } else {
+                            unset($user[$passwordColumnName]);
+                            return $this->responder->success($user);
+                        }
                     }
                     return $this->responder->error(ErrorCode::AUTHENTICATION_FAILED, $username);
                 }
@@ -11070,6 +11083,7 @@ namespace Tqdev\PhpCrudApi\Record {
         const PAGINATION_FORBIDDEN = 1019;
         const USER_ALREADY_EXIST = 1020;
         const PASSWORD_TOO_SHORT = 1021;
+        const USERNAME_EMPTY = 1022;
 
         private $values = [
             0000 => ["Success", ResponseFactory::OK],
@@ -11095,6 +11109,7 @@ namespace Tqdev\PhpCrudApi\Record {
             1019 => ["Pagination forbidden", ResponseFactory::FORBIDDEN],
             1020 => ["User '%s' already exists", ResponseFactory::CONFLICT],
             1021 => ["Password too short (<%d characters)", ResponseFactory::UNPROCESSABLE_ENTITY],
+            1022 => ["Username is empty or only whitespaces", ResponseFactory::UNPROCESSABLE_ENTITY],
             9999 => ["%s", ResponseFactory::INTERNAL_SERVER_ERROR],
         ];
 
