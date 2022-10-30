@@ -1392,6 +1392,9 @@ The following errors may be reported:
 | 1017  | 403 Forbidden             | Bad or missing XSRF token 
 | 1018  | 403 Forbidden             | Only AJAX requests allowed 
 | 1019  | 403 Forbidden             | Pagination Forbidden 
+| 1020  | 409 Conflict              | User already exists
+| 1021  | 422 Unprocessable entity  | Password too short
+| 1022  | 422 Unprocessable entity  | Username is empty;
 | 9999  | 500 Internal server error | Unknown error 
 
 The following JSON structure is used:
