@@ -77,6 +77,9 @@ class DbAuthMiddleware extends Middleware
                 if (!$registerUser) {
                     return $this->responder->error(ErrorCode::AUTHENTICATION_FAILED, $username);
                 }
+                if(strlen(trim($username)) == 0){
+                    return $this->responder->error(ErrorCode::USERNAME_EMPTY, $username);
+                }
                 if (strlen($password) < $passwordLength) {
                     return $this->responder->error(ErrorCode::PASSWORD_TOO_SHORT, $passwordLength);
                 }
