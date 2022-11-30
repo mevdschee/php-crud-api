@@ -8084,6 +8084,15 @@ namespace Tqdev\PhpCrudApi\Middleware {
                     if ($sessionName) {
                         session_name($sessionName);
                     }
+                    if (!ini_get('session.cookie_samesite')) {
+                        ini_set('session.cookie_samesite', 'Lax');
+                    }
+                    if (!ini_get('session.cookie_httponly')) {
+                        ini_set('session.cookie_httponly', 1);
+                    }
+                    if (!ini_get('session.cookie_secure') && isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != 'off') {
+                        ini_set('session.cookie_secure', 1);
+                    }
                     session_start();
                 }
             }
@@ -8296,6 +8305,15 @@ namespace Tqdev\PhpCrudApi\Middleware {
                     if ($sessionName) {
                         session_name($sessionName);
                     }
+                    if (!ini_get('session.cookie_samesite')) {
+                        ini_set('session.cookie_samesite', 'Lax');
+                    }
+                    if (!ini_get('session.cookie_httponly')) {
+                        ini_set('session.cookie_httponly', 1);
+                    }
+                    if (!ini_get('session.cookie_secure') && isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != 'off') {
+                        ini_set('session.cookie_secure', 1);
+                    }
                     session_start();
                 }
             }
@@ -8335,7 +8353,7 @@ namespace Tqdev\PhpCrudApi\Middleware {
                     if (!$registerUser) {
                         return $this->responder->error(ErrorCode::AUTHENTICATION_FAILED, $username);
                     }
-                    if(strlen(trim($username)) == 0){
+                    if (strlen(trim($username)) == 0) {
                         return $this->responder->error(ErrorCode::USERNAME_EMPTY, $username);
                     }
                     if (strlen($password) < $passwordLength) {
@@ -8352,7 +8370,7 @@ namespace Tqdev\PhpCrudApi\Middleware {
                     $this->db->createSingle($table, $data);
                     $users = $this->db->selectAll($table, $columnNames, $condition, $columnOrdering, 0, 1);
                     foreach ($users as $user) {
-                        if($loginAfterRegistration){
+                        if ($loginAfterRegistration) {
                             if (!headers_sent()) {
                                 session_regenerate_id(true);
                             }
@@ -8883,6 +8901,15 @@ namespace Tqdev\PhpCrudApi\Middleware {
                     $sessionName = $this->getProperty('sessionName', '');
                     if ($sessionName) {
                         session_name($sessionName);
+                    }
+                    if (!ini_get('session.cookie_samesite')) {
+                        ini_set('session.cookie_samesite', 'Lax');
+                    }
+                    if (!ini_get('session.cookie_httponly')) {
+                        ini_set('session.cookie_httponly', 1);
+                    }
+                    if (!ini_get('session.cookie_secure') && isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != 'off') {
+                        ini_set('session.cookie_secure', 1);
                     }
                     session_start();
                 }
