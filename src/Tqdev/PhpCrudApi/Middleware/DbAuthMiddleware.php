@@ -38,6 +38,15 @@ class DbAuthMiddleware extends Middleware
                 if ($sessionName) {
                     session_name($sessionName);
                 }
+                if (!ini_get('session.cookie_samesite')) {
+                    ini_set('session.cookie_samesite', 'Lax');
+                }
+                if (!ini_get('session.cookie_httponly')) {
+                    ini_set('session.cookie_httponly', 1);
+                }
+                if (!ini_get('session.cookie_secure') && isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != 'off') {
+                    ini_set('session.cookie_secure', 1);
+                }
                 session_start();
             }
         }
@@ -77,7 +86,7 @@ class DbAuthMiddleware extends Middleware
                 if (!$registerUser) {
                     return $this->responder->error(ErrorCode::AUTHENTICATION_FAILED, $username);
                 }
-                if(strlen(trim($username)) == 0){
+                if (strlen(trim($username)) == 0) {
                     return $this->responder->error(ErrorCode::USERNAME_EMPTY, $username);
                 }
                 if (strlen($password) < $passwordLength) {
@@ -94,7 +103,7 @@ class DbAuthMiddleware extends Middleware
                 $this->db->createSingle($table, $data);
                 $users = $this->db->selectAll($table, $columnNames, $condition, $columnOrdering, 0, 1);
                 foreach ($users as $user) {
-                    if($loginAfterRegistration){
+                    if ($loginAfterRegistration) {
                         if (!headers_sent()) {
                             session_regenerate_id(true);
                         }
