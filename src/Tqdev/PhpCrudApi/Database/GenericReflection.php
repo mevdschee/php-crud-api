@@ -33,7 +33,7 @@ class GenericReflection
             case 'sqlsrv':
                 return [];
             case 'sqlite':
-                return [];
+                return ['sqlite_sequence'];
         }
     }
 

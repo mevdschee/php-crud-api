@@ -89,8 +89,8 @@ class OpenApiRecordsBuilder
             $this->setComponentRequestBody($tableName);
         }
         $this->setComponentParameters();
-        foreach ($tableNames as $index => $tableName) {
-            $this->setTag($index, $tableName);
+        foreach ($tableNames as $tableName) {
+            $this->setTag($tableName);
         }
     }
 
@@ -143,13 +143,13 @@ class OpenApiRecordsBuilder
                     $parameters = ['pk'];
                 }
             }
-            foreach ($parameters as $p => $parameter) {
-                $this->openapi->set("paths|$path|$method|parameters|$p|\$ref", "#/components/parameters/$parameter");
+            foreach ($parameters as $parameter) {
+                $this->openapi->set("paths|$path|$method|parameters||\$ref", "#/components/parameters/$parameter");
             }
             if (in_array($operation, ['create', 'update', 'increment'])) {
                 $this->openapi->set("paths|$path|$method|requestBody|\$ref", "#/components/requestBodies/$operation-$normalizedTableName");
             }
-            $this->openapi->set("paths|$path|$method|tags|0", "$tableName");
+            $this->openapi->set("paths|$path|$method|tags|", "$tableName");
             $this->openapi->set("paths|$path|$method|operationId", "$operation" . "_" . "$normalizedTableName");
             $this->openapi->set("paths|$path|$method|description", "$operation $tableName");
             switch ($operation) {
@@ -375,9 +375,8 @@ class OpenApiRecordsBuilder
         $this->openapi->set("components|parameters|join|required", false);
     }
 
-    private function setTag(int $index, string $tableName) /*: void*/
+    private function setTag(string $tableName) /*: void*/
     {
-        $this->openapi->set("tags|$index|name", "$tableName");
-        $this->openapi->set("tags|$index|description", "$tableName operations");
+        $this->openapi->set("tags|", ['name' => $tableName, 'description' => "$tableName operations"]);
     }
 }

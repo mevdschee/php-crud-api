@@ -39,8 +39,8 @@ class OpenApiColumnsBuilder
         $this->setComponentResponse();
         $this->setComponentRequestBody();
         $this->setComponentParameters();
-        foreach (array_keys($this->operations) as $index => $type) {
-            $this->setTag($index, $type);
+        foreach (array_keys($this->operations) as $type) {
+            $this->setTag($type);
         }
     }
 
@@ -66,13 +66,13 @@ class OpenApiColumnsBuilder
                 if (strpos($path, '{column}')) {
                     $parameters[] = 'column';
                 }
-                foreach ($parameters as $p => $parameter) {
-                    $this->openapi->set("paths|$path|$method|parameters|$p|\$ref", "#/components/parameters/$parameter");
+                foreach ($parameters as $parameter) {
+                    $this->openapi->set("paths|$path|$method|parameters||\$ref", "#/components/parameters/$parameter");
                 }
                 if (in_array($operation, ['create', 'update'])) {
                     $this->openapi->set("paths|$path|$method|requestBody|\$ref", "#/components/requestBodies/$operation-$type");
                 }
-                $this->openapi->set("paths|$path|$method|tags|0", "$type");
+                $this->openapi->set("paths|$path|$method|tags|", "$type");
                 $this->openapi->set("paths|$path|$method|operationId", "$operation" . "_" . "$type");
                 if ("$operation-$type" == 'update-table') {
                     $this->openapi->set("paths|$path|$method|description", "rename table");
@@ -180,9 +180,8 @@ class OpenApiColumnsBuilder
         $this->openapi->set("components|parameters|column|required", true);
     }
 
-    private function setTag(int $index, string $type) /*: void*/
+    private function setTag(string $type) /*: void*/
     {
-        $this->openapi->set("tags|$index|name", "$type");
-        $this->openapi->set("tags|$index|description", "$type operations");
+        $this->openapi->set("tags|", ['name' => $type, 'description' => "$type operations"]);
     }
 }

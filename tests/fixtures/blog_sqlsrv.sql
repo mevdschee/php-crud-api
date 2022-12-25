@@ -10,15 +10,15 @@ ALTER TABLE [barcodes] DROP	CONSTRAINT [barcodes_product_id_fkey]
 END
 GO
 
-IF (OBJECT_ID('posts_user_id_fkey', 'F') IS NOT NULL)
+IF (OBJECT_ID('abc_posts_user_id_fkey', 'F') IS NOT NULL)
 BEGIN
-ALTER TABLE [abc_posts] DROP	CONSTRAINT [abc_posts_user_id_fkey]
+ALTER TABLE [abc_posts] DROP CONSTRAINT [abc_posts_user_id_fkey]
 END
 GO
 
-IF (OBJECT_ID('posts_category_id_fkey', 'F') IS NOT NULL)
+IF (OBJECT_ID('abc_posts_category_id_fkey', 'F') IS NOT NULL)
 BEGIN
-ALTER TABLE [abc_posts] DROP	CONSTRAINT [abc_posts_category_id_fkey]
+ALTER TABLE [abc_posts] DROP CONSTRAINT [abc_posts_category_id_fkey]
 END
 GO
 
@@ -88,7 +88,7 @@ DROP TABLE [tags]
 END
 GO
 
-IF (OBJECT_ID('posts', 'U') IS NOT NULL)
+IF (OBJECT_ID('abc_posts', 'U') IS NOT NULL)
 BEGIN
 DROP TABLE [abc_posts]
 END
@@ -342,27 +342,27 @@ GO
 INSERT [users] ([username], [password], [api_key], [location]) VALUES (N'user2', N'$2y$10$cg7/nswxVZ0cmVIsMB/pVOh1OfcHScBJGq7Xu4KF9dFEQgRZ8HWe.', NULL, NULL)
 GO
 
-INSERT [countries] ([name], [shape]) VALUES (N'Left', N'POLYGON ((30 10, 40 40, 20 40, 10 20, 30 10))')
+INSERT [countries] ([name], [shape]) VALUES (N'Left', geometry::STGeomFromText('POLYGON ((30 10, 40 40, 20 40, 10 20, 30 10))', 4326))
 GO
-INSERT [countries] ([name], [shape]) VALUES (N'Right', N'POLYGON ((70 10, 80 40, 60 40, 50 20, 70 10))')
+INSERT [countries] ([name], [shape]) VALUES (N'Right', geometry::STGeomFromText('POLYGON ((70 10, 80 40, 60 40, 50 20, 70 10))', 4326))
 GO
-INSERT [countries] ([name], [shape]) VALUES (N'Point', N'POINT (30 10)')
+INSERT [countries] ([name], [shape]) VALUES (N'Point', geometry::STGeomFromText('POINT (30 10)', 4326))
 GO
-INSERT [countries] ([name], [shape]) VALUES (N'Line', N'LINESTRING (30 10, 10 30, 40 40)')
+INSERT [countries] ([name], [shape]) VALUES (N'Line', geometry::STGeomFromText('LINESTRING (30 10, 10 30, 40 40)', 4326))
 GO
-INSERT [countries] ([name], [shape]) VALUES (N'Poly1', N'POLYGON ((30 10, 40 40, 20 40, 10 20, 30 10))')
+INSERT [countries] ([name], [shape]) VALUES (N'Poly1', geometry::STGeomFromText('POLYGON ((30 10, 40 40, 20 40, 10 20, 30 10))', 4326))
 GO
-INSERT [countries] ([name], [shape]) VALUES (N'Poly2', N'POLYGON ((35 10, 45 45, 15 40, 10 20, 35 10),(20 30, 35 35, 30 20, 20 30))')
+INSERT [countries] ([name], [shape]) VALUES (N'Poly2', geometry::STGeomFromText('POLYGON ((35 10, 45 45, 15 40, 10 20, 35 10),(20 30, 35 35, 30 20, 20 30))', 4326))
 GO
-INSERT [countries] ([name], [shape]) VALUES (N'Mpoint', N'MULTIPOINT (10 40, 40 30, 20 20, 30 10)')
+INSERT [countries] ([name], [shape]) VALUES (N'Mpoint', geometry::STGeomFromText('MULTIPOINT (10 40, 40 30, 20 20, 30 10)', 4326))
 GO
-INSERT [countries] ([name], [shape]) VALUES (N'Mline', N'MULTILINESTRING ((10 10, 20 20, 10 40),(40 40, 30 30, 40 20, 30 10))')
+INSERT [countries] ([name], [shape]) VALUES (N'Mline', geometry::STGeomFromText('MULTILINESTRING ((10 10, 20 20, 10 40),(40 40, 30 30, 40 20, 30 10))', 4326))
 GO
-INSERT [countries] ([name], [shape]) VALUES (N'Mpoly1', N'MULTIPOLYGON (((30 20, 45 40, 10 40, 30 20)),((15 5, 40 10, 10 20, 5 10, 15 5)))')
+INSERT [countries] ([name], [shape]) VALUES (N'Mpoly1', geometry::STGeomFromText('MULTIPOLYGON (((30 20, 45 40, 10 40, 30 20)),((15 5, 40 10, 10 20, 5 10, 15 5)))', 4326))
 GO
-INSERT [countries] ([name], [shape]) VALUES (N'Mpoly2', N'MULTIPOLYGON (((40 40, 20 45, 45 30, 40 40)),((20 35, 10 30, 10 10, 30 5, 45 20, 20 35),(30 20, 20 15, 20 25, 30 20)))')
+INSERT [countries] ([name], [shape]) VALUES (N'Mpoly2', geometry::STGeomFromText('MULTIPOLYGON (((40 40, 20 45, 45 30, 40 40)),((20 35, 10 30, 10 10, 30 5, 45 20, 20 35),(30 20, 20 15, 20 25, 30 20)))', 4326))
 GO
-INSERT [countries] ([name], [shape]) VALUES (N'Gcoll', N'GEOMETRYCOLLECTION(POINT(4 6),LINESTRING(4 6,7 10))')
+INSERT [countries] ([name], [shape]) VALUES (N'Gcoll', geometry::STGeomFromText('GEOMETRYCOLLECTION(POINT(4 6),LINESTRING(4 6,7 10))', 4326))
 GO
 
 INSERT [events] ([name], [datetime], [visitors]) VALUES (N'Launch', N'2016-01-01 13:01:01', 0)

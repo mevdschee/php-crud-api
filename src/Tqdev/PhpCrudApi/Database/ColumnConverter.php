@@ -7,10 +7,12 @@ use Tqdev\PhpCrudApi\Column\Reflection\ReflectedColumn;
 class ColumnConverter
 {
     private $driver;
+    private $geometrySrid;
 
-    public function __construct(string $driver)
+    public function __construct(string $driver, int $geometrySrid)
     {
         $this->driver = $driver;
+        $this->geometrySrid = $geometrySrid;
     }
 
     public function convertColumnValue(ReflectedColumn $column): string
@@ -36,12 +38,13 @@ class ColumnConverter
             }
         }
         if ($column->isGeometry()) {
+            $srid = $this->geometrySrid;
             switch ($this->driver) {
                 case 'mysql':
                 case 'pgsql':
-                    return "ST_GeomFromText(?)";
+                    return "ST_GeomFromText(?,$srid)";
                 case 'sqlsrv':
-                    return "geometry::STGeomFromText(?,0)";
+                    return "geometry::STGeomFromText(?,$srid)";
             }
         }
         return '?';

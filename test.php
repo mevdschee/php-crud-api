@@ -1,7 +1,7 @@
 <?php
 
 use Tqdev\PhpCrudApi\Api;
-use Tqdev\PhpCrudApi\Config;
+use Tqdev\PhpCrudApi\Config\Config;
 use Tqdev\PhpCrudApi\Database\GenericDB;
 use Tqdev\PhpCrudApi\RequestFactory;
 use Tqdev\PhpCrudApi\ResponseUtils;
@@ -163,7 +163,8 @@ function loadFixture(string $dir, Config $config)
         getTables($config),
         getMapping($config),
         getUsername($config),
-        getPassword($config)
+        getPassword($config),
+        $config->getGeometrySrid()
     );
     $pdo = $db->pdo();
     $file = preg_replace('/--.*$/m', '', $file);

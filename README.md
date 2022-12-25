@@ -60,6 +60,7 @@ These are all the configuration options and their default value between brackets
 - "command": Extra SQL to initialize the database connection (none)
 - "tables": Comma separated list of tables to publish (defaults to 'all')
 - "mapping": Comma separated list of table/column mappings (no mappping)
+- "geometrySrid": SRID assumed when converting from WKT to geometry (`4326`)
 - "middlewares": List of middlewares to load (`cors`)
 - "controllers": List of controllers to load (`records,geojson,openapi,status`)
 - "customControllers": List of user custom controllers to load (no default)
@@ -134,6 +135,7 @@ Related projects:
   - [PHP-CRUD-ADMIN](https://github.com/mevdschee/php-crud-admin): Single file PHP script that adds a database admin interface to a PHP-CRUD-API project.
   - [PHP-SP-API](https://github.com/mevdschee/php-sp-api): Single file PHP script that adds a REST API to a SQL database.
   - [VUE-CRUD-UI](https://github.com/nlware/vue-crud-ui): Single file Vue.js script that adds a UI to a PHP-CRUD-API project.
+  - [ra-data-treeql](https://github.com/nkappler/ra-data-treeql): NPM package that provides a [Data Provider](https://marmelab.com/react-admin/DataProviderIntroduction.html) for [React Admin](https://marmelab.com/react-admin/).
   
 There are also ports of this script in:
 
@@ -283,7 +285,7 @@ On list operations you may apply filters and joins.
 ### Filters
 
 Filters provide search functionality, on list calls, using the "filter" parameter. You need to specify the column
-name, a comma, the match type, another commma and the value you want to filter on. These are supported match types:
+name, a comma, the match type, another comma and the value you want to filter on. These are supported match types:
 
   - "cs": contain string (string contains value)
   - "sw": start with (string starts with value)
@@ -570,7 +572,7 @@ This adjusts the titles of the posts. And the return values are the number of ro
     [1,1]
 
 Which means that there were two update operations and each of them had set one row. Batch operations use database
-transactions, so they either all succeed or all fail (successful ones get roled back). If they fail the body will
+transactions, so they either all succeed or all fail (successful ones get rolled back). If they fail the body will
 contain the list of error documents. In the following response the first operation succeeded and the second operation
 of the batch failed due to an integrity violation:
 
@@ -604,6 +606,7 @@ For spatial support there is an extra set of filters that can be applied on geom
   - "siv": spatial is valid (geometry is valid)
 
 These filters are based on OGC standards and so is the WKT specification in which the geometry columns are represented.
+Note that the SRID that is assumed when converting from WKT to geometry is specified by the config variable `geometrySrid` and defaults to 4326 (WGS 84).
 
 #### GeoJSON
 
@@ -664,7 +667,7 @@ You can enable the following middleware using the "middlewares" config parameter
 - "multiTenancy": Restricts tenants access in a multi-tenant scenario
 - "pageLimits": Restricts list operations to prevent database scraping
 - "joinLimits": Restricts join parameters to prevent database scraping
-- "textSearch": Search in all text fields with a simple paramater
+- "textSearch": Search in all text fields with a simple parameter
 - "customization": Provides handlers for request and response customization
 - "json": Support read/write of JSON strings as JSON objects/arrays
 - "xml": Translates all input and output from JSON to XML
@@ -695,6 +698,7 @@ You can tune the middleware behavior using middleware specific configuration par
 - "apiKeyDbAuth.apiKeyColumn": The users table column that holds the API key ("api_key")
 - "dbAuth.mode": Set to "optional" if you want to allow anonymous access ("required")
 - "dbAuth.usersTable": The table that is used to store the users in ("users")
+- "dbAuth.loginTable": The table or view that is used to retrieve the users info for login ("users")
 - "dbAuth.usernameColumn": The users table column that holds usernames ("username")
 - "dbAuth.passwordColumn": The users table column that holds passwords ("password")
 - "dbAuth.returnedColumns": The columns returned on successful login, empty means 'all' ("")
@@ -702,6 +706,7 @@ You can tune the middleware behavior using middleware specific configuration par
 - "dbAuth.passwordFormField": The name of the form field that holds the password ("password")
 - "dbAuth.newPasswordFormField": The name of the form field that holds the new password ("newPassword")
 - "dbAuth.registerUser": JSON user data (or "1") in case you want the /register endpoint enabled ("")
+- "dbAuth.loginAfterRegistration": 1 or zero if registered users should be logged in after registration ("")
 - "dbAuth.passwordLength": Minimum length that the password must have ("12")
 - "dbAuth.sessionName": The name of the PHP session that is started ("")
 - "jwtAuth.mode": Set to "optional" if you want to allow anonymous access ("required")
@@ -758,7 +763,7 @@ In the sections below you find more information on the built-in middleware.
 ### Authentication
 
 Currently there are five types of authentication supported. They all store the authenticated user in the `$_SESSION` super global.
-This variable can be used in the authorization handlers to decide wether or not sombeody should have read or write access to certain tables, columns or records.
+This variable can be used in the authorization handlers to decide wether or not somebody should have read or write access to certain tables, columns or records.
 The following overview shows the kinds of authentication middleware that you can enable.
 
 | Name       | Middleware   | Authenticated via      | Users are stored in | Session variable        |
@@ -775,7 +780,7 @@ Below you find more information on each of the authentication types.
 
 API key authentication works by sending an API key in a request header.
 The header name defaults to "X-API-Key" and can be configured using the 'apiKeyAuth.header' configuration parameter.
-Valid API keys must be configured using the 'apiKeyAuth.keys' configuration parameter (comma seperated list).
+Valid API keys must be configured using the 'apiKeyAuth.keys' configuration parameter (comma separated list).
 
     X-API-Key: 02c042aa-c3c2-4d11-9dae-1a6e230ea95e
 
@@ -822,6 +827,13 @@ users can freely add, modify or delete any account! The minimal configuration is
     },
 
 Note that this middleware uses session cookies and stores the logged in state on the server.
+
+**Login using views with joined table**
+
+For login operations, it is possible to use a view as the usersTable. Such view can return a filtered result from the users table, e.g., *where active = true* or it may also return a result multiple tables thru a table join. At a minimum, the view should include the ***username*** and ***password*** and a field named ***id***.
+
+However, views with joined tables are not insertable ([see issue 907](https://github.com/mevdschee/php-crud-api/issues/907) ). As a workaround, use the property ***loginTable*** to set a different reference table for login. The **usersTable** will still be set to the normal, insertable users table. 
+
 
 #### Basic authentication
 
@@ -1380,6 +1392,9 @@ The following errors may be reported:
 | 1017  | 403 Forbidden             | Bad or missing XSRF token 
 | 1018  | 403 Forbidden             | Only AJAX requests allowed 
 | 1019  | 403 Forbidden             | Pagination Forbidden 
+| 1020  | 409 Conflict              | User already exists
+| 1021  | 422 Unprocessable entity  | Password too short
+| 1022  | 422 Unprocessable entity  | Username is empty
 | 9999  | 500 Internal server error | Unknown error 
 
 The following JSON structure is used:

@@ -3,9 +3,9 @@
 namespace Tqdev\PhpCrudApi\Middleware\Base;
 
 use Psr\Http\Server\MiddlewareInterface;
-use Tqdev\PhpCrudApi\Config;
 use Tqdev\PhpCrudApi\Controller\Responder;
 use Tqdev\PhpCrudApi\Middleware\Router\Router;
+use Tqdev\PhpCrudApi\Config\Base\ConfigInterface;
 
 abstract class Middleware implements MiddlewareInterface
 {
@@ -14,7 +14,7 @@ abstract class Middleware implements MiddlewareInterface
     private $middleware;
     private $config;
 
-    public function __construct(Router $router, Responder $responder, Config $config, string $middleware)
+    public function __construct(Router $router, Responder $responder, ConfigInterface $config, string $middleware)
     {
         $router->load($this);
         $this->responder = $responder;
