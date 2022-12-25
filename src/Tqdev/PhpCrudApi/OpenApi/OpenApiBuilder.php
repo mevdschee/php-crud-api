@@ -11,6 +11,7 @@ class OpenApiBuilder
     private $openapi;
     private $records;
     private $columns;
+    private $status;
     private $builders;
 
     public function __construct(ReflectionService $reflection, array $base, array $controllers, array $builders)
