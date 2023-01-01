@@ -134,9 +134,9 @@ Related projects:
   - [PHP-CRUD-UI](https://github.com/mevdschee/php-crud-ui): Single file PHP script that adds a UI to a PHP-CRUD-API project.
   - [PHP-CRUD-ADMIN](https://github.com/mevdschee/php-crud-admin): Single file PHP script that adds a database admin interface to a PHP-CRUD-API project.
   - [PHP-SP-API](https://github.com/mevdschee/php-sp-api): Single file PHP script that adds a REST API to a SQL database.
-  - [VUE-CRUD-UI](https://github.com/nlware/vue-crud-ui): Single file Vue.js script that adds a UI to a PHP-CRUD-API project.
   - [ra-data-treeql](https://github.com/nkappler/ra-data-treeql): NPM package that provides a [Data Provider](https://marmelab.com/react-admin/DataProviderIntroduction.html) for [React Admin](https://marmelab.com/react-admin/).
   - [scriptPilot/vueuse](https://github.com/scriptPilot/vueuse/): Vue Composables in addition to VueUse.org (that support PHP-CRUD-API).
+  - [VUE-CRUD-UI](https://github.com/nlware/vue-crud-ui): Single file Vue.js script that adds a UI to a PHP-CRUD-API project.
   
 There are also ports of this script in:
 
