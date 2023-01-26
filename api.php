@@ -1515,18 +1515,16 @@ namespace Nyholm\Psr7\Factory {
 
         public function createStreamFromFile(string $filename, string $mode = 'r'): StreamInterface
         {
-            try {
-                $resource = @\fopen($filename, $mode);
-            } catch (\Throwable $e) {
-                throw new \RuntimeException(\sprintf('The file "%s" cannot be opened.', $filename));
+            if ('' === $filename) {
+                throw new \RuntimeException('Path cannot be empty');
             }
 
-            if (false === $resource) {
+            if (false === $resource = @\fopen($filename, $mode)) {
                 if ('' === $mode || false === \in_array($mode[0], ['r', 'w', 'a', 'x', 'c'], true)) {
                     throw new \InvalidArgumentException(\sprintf('The mode "%s" is invalid.', $mode));
                 }
 
-                throw new \RuntimeException(\sprintf('The file "%s" cannot be opened.', $filename));
+                throw new \RuntimeException(\sprintf('The file "%s" cannot be opened: %s', $filename, \error_get_last()['message'] ?? ''));
             }
 
             return Stream::create($resource);
@@ -2087,6 +2085,9 @@ namespace Nyholm\Psr7 {
             return $this->uploadedFiles;
         }
 
+        /**
+         * @return static
+         */
         public function withUploadedFiles(array $uploadedFiles)
         {
             $new = clone $this;
@@ -2100,6 +2101,9 @@ namespace Nyholm\Psr7 {
             return $this->cookieParams;
         }
 
+        /**
+         * @return static
+         */
         public function withCookieParams(array $cookies)
         {
             $new = clone $this;
@@ -2113,6 +2117,9 @@ namespace Nyholm\Psr7 {
             return $this->queryParams;
         }
 
+        /**
+         * @return static
+         */
         public function withQueryParams(array $query)
         {
             $new = clone $this;
@@ -2121,11 +2128,17 @@ namespace Nyholm\Psr7 {
             return $new;
         }
 
+        /**
+         * @return array|object|null
+         */
         public function getParsedBody()
         {
             return $this->parsedBody;
         }
 
+        /**
+         * @return static
+         */
         public function withParsedBody($data)
         {
             if (!\is_array($data) && !\is_object($data) && null !== $data) {
@@ -2143,6 +2156,9 @@ namespace Nyholm\Psr7 {
             return $this->attributes;
         }
 
+        /**
+         * @return mixed
+         */
         public function getAttribute($attribute, $default = null)
         {
             if (false === \array_key_exists($attribute, $this->attributes)) {
@@ -2358,8 +2374,12 @@ namespace Nyholm\Psr7 {
 
         public function tell(): int
         {
-            if (false === $result = \ftell($this->stream)) {
-                throw new \RuntimeException('Unable to determine stream position');
+            if (!isset($this->stream)) {
+                throw new \RuntimeException('Stream is detached');
+            }
+
+            if (false === $result = @\ftell($this->stream)) {
+                throw new \RuntimeException('Unable to determine stream position: ' . (\error_get_last()['message'] ?? ''));
             }
 
             return $result;
@@ -2367,7 +2387,7 @@ namespace Nyholm\Psr7 {
 
         public function eof(): bool
         {
-            return !$this->stream || \feof($this->stream);
+            return !isset($this->stream) || \feof($this->stream);
         }
 
         public function isSeekable(): bool
@@ -2377,6 +2397,10 @@ namespace Nyholm\Psr7 {
 
         public function seek($offset, $whence = \SEEK_SET) /*:void*/
         {
+            if (!isset($this->stream)) {
+                throw new \RuntimeException('Stream is detached');
+            }
+
             if (!$this->seekable) {
                 throw new \RuntimeException('Stream is not seekable');
             }
@@ -2398,6 +2422,10 @@ namespace Nyholm\Psr7 {
 
         public function write($string): int
         {
+            if (!isset($this->stream)) {
+                throw new \RuntimeException('Stream is detached');
+            }
+
             if (!$this->writable) {
                 throw new \RuntimeException('Cannot write to a non-writable stream');
             }
@@ -2405,8 +2433,8 @@ namespace Nyholm\Psr7 {
             // We can't know the size after writing anything
             $this->size = null;
 
-            if (false === $result = \fwrite($this->stream, $string)) {
-                throw new \RuntimeException('Unable to write to stream');
+            if (false === $result = @\fwrite($this->stream, $string)) {
+                throw new \RuntimeException('Unable to write to stream: ' . (\error_get_last()['message'] ?? ''));
             }
 
             return $result;
@@ -2419,12 +2447,16 @@ namespace Nyholm\Psr7 {
 
         public function read($length): string
         {
+            if (!isset($this->stream)) {
+                throw new \RuntimeException('Stream is detached');
+            }
+
             if (!$this->readable) {
                 throw new \RuntimeException('Cannot read from non-readable stream');
             }
 
-            if (false === $result = \fread($this->stream, $length)) {
-                throw new \RuntimeException('Unable to read from stream');
+            if (false === $result = @\fread($this->stream, $length)) {
+                throw new \RuntimeException('Unable to read from stream: ' . (\error_get_last()['message'] ?? ''));
             }
 
             return $result;
@@ -2433,16 +2465,19 @@ namespace Nyholm\Psr7 {
         public function getContents(): string
         {
             if (!isset($this->stream)) {
-                throw new \RuntimeException('Unable to read stream contents');
+                throw new \RuntimeException('Stream is detached');
             }
 
-            if (false === $contents = \stream_get_contents($this->stream)) {
-                throw new \RuntimeException('Unable to read stream contents');
+            if (false === $contents = @\stream_get_contents($this->stream)) {
+                throw new \RuntimeException('Unable to read stream contents: ' . (\error_get_last()['message'] ?? ''));
             }
 
             return $contents;
         }
 
+        /**
+         * @return mixed
+         */
         public function getMetadata($key = null)
         {
             if (!isset($this->stream)) {
@@ -2539,7 +2574,7 @@ namespace Nyholm\Psr7 {
 
             if (\UPLOAD_ERR_OK === $this->error) {
                 // Depending on the value set file or stream variable.
-                if (\is_string($streamOrFile)) {
+                if (\is_string($streamOrFile) && '' !== $streamOrFile) {
                     $this->file = $streamOrFile;
                 } elseif (\is_resource($streamOrFile)) {
                     $this->stream = Stream::create($streamOrFile);
@@ -2573,11 +2608,11 @@ namespace Nyholm\Psr7 {
                 return $this->stream;
             }
 
-            try {
-                return Stream::create(\fopen($this->file, 'r'));
-            } catch (\Throwable $e) {
-                throw new \RuntimeException(\sprintf('The file "%s" cannot be opened.', $this->file));
+            if (false === $resource = @\fopen($this->file, 'r')) {
+                throw new \RuntimeException(\sprintf('The file "%s" cannot be opened: %s', $this->file, \error_get_last()['message'] ?? ''));
             }
+
+            return Stream::create($resource);
         }
 
         public function moveTo($targetPath) /*:void*/
@@ -2589,19 +2624,22 @@ namespace Nyholm\Psr7 {
             }
 
             if (null !== $this->file) {
-                $this->moved = 'cli' === \PHP_SAPI ? \rename($this->file, $targetPath) : \move_uploaded_file($this->file, $targetPath);
+                $this->moved = 'cli' === \PHP_SAPI ? @\rename($this->file, $targetPath) : @\move_uploaded_file($this->file, $targetPath);
+
+                if (false === $this->moved) {
+                    throw new \RuntimeException(\sprintf('Uploaded file could not be moved to "%s": %s', $targetPath, \error_get_last()['message'] ?? ''));
+                }
             } else {
                 $stream = $this->getStream();
                 if ($stream->isSeekable()) {
                     $stream->rewind();
                 }
 
-                try {
-                    // Copy the contents of a stream into another stream until end-of-file.
-                    $dest = Stream::create(\fopen($targetPath, 'w'));
-                } catch (\Throwable $e) {
-                    throw new \RuntimeException(\sprintf('The file "%s" cannot be opened.', $targetPath));
+                if (false === $resource = @\fopen($targetPath, 'w')) {
+                    throw new \RuntimeException(\sprintf('The file "%s" cannot be opened: %s', $targetPath, \error_get_last()['message'] ?? ''));
                 }
+
+                $dest = Stream::create($resource);
 
                 while (!$stream->eof()) {
                     if (!$dest->write($stream->read(1048576))) {
@@ -2610,10 +2648,6 @@ namespace Nyholm\Psr7 {
                 }
 
                 $this->moved = true;
-            }
-
-            if (false === $this->moved) {
-                throw new \RuntimeException(\sprintf('Uploaded file could not be moved to "%s"', $targetPath));
             }
         }
 
