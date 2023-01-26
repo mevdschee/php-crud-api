@@ -7974,7 +7974,7 @@ namespace Tqdev\PhpCrudApi\Middleware {
                 $query = call_user_func($recordHandler, $operation, $tableName);
                 $filters = new FilterInfo();
                 $table = $this->reflection->getTable($tableName);
-                $query = str_replace('][]=', ']=', str_replace('=', '[]=', $query));
+                $query = str_replace('][]=', ']=', str_replace('=', '[]=', $query ?: ''));
                 parse_str($query, $params);
                 $condition = $filters->getCombinedConditions($table, $params);
                 VariableStore::set("authorization.conditions.$tableName", $condition);
