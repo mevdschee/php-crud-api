@@ -8342,10 +8342,13 @@ namespace Tqdev\PhpCrudApi\Middleware {
                 $username = isset($body->$usernameFormFieldName) ? $body->$usernameFormFieldName : '';
                 $password = isset($body->$passwordFormFieldName) ? $body->$passwordFormFieldName : '';
                 $newPassword = isset($body->$newPasswordFormFieldName) ? $body->$newPasswordFormFieldName : '';
-                if ($path === 'login')
-                    $tableName = $this->getProperty('loginTable', 'users');    //add separate property for login as this could be a view joining users table to other table such as roles, details etc. At a minimum, the view output should include the $usernameColumn and $passwordColumn
-                else
+                //add separate property for login as this could be a view joining users table to other table 
+                //such as roles, details etc. At a minimum, the view output should include the $usernameColumn and $passwordColumn
+                if ($path === 'login') {
+                    $tableName = $this->getProperty('loginTable', $this->getProperty('usersTable', 'users'));
+                } else {
                     $tableName = $this->getProperty('usersTable', 'users');
+                }
                 $table = $this->reflection->getTable($tableName);
                 $usernameColumnName = $this->getProperty('usernameColumn', 'username');
                 $usernameColumn = $table->getColumn($usernameColumnName);
