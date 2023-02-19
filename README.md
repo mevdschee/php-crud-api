@@ -18,7 +18,7 @@ NB: This is the [TreeQL](https://treeql.org) reference implementation in PHP.
 
 Download the "`api.php`" file from the latest release:
 
-https://github.com/mevdschee/php-crud-api/releases/latest or  
+https://github.com/mevdschee/php-crud-api/releases/latest or direct from:  
 https://raw.githubusercontent.com/mevdschee/php-crud-api/main/api.php
 
 This is a single file application! Upload "`api.php`" somewhere and enjoy!
