@@ -16,6 +16,10 @@ NB: This is the [TreeQL](https://treeql.org) reference implementation in PHP.
 
 ## Installation
 
+Download the "`api.php`" file from the latest release:
+
+https://github.com/mevdschee/php-crud-api/releases/latest
+
 This is a single file application! Upload "`api.php`" somewhere and enjoy!
 
 For local development you may run PHP's built-in web server:
