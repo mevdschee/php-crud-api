@@ -26,7 +26,8 @@ esac
 # Constuct new tag
 newTag=v${version[0]}.${version[1]}.${version[2]}
 # Build all files
-php install.php
+php update.php
 php build.php
+git commit -am "update dependencies" && git push
 # Build all files
 gh release create $newTag api.php api.include.php
