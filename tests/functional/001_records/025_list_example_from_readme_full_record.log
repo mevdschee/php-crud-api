@@ -6,3 +6,11 @@ Content-Type: application/json; charset=utf-8
 Content-Length: 75
 
 {"records":[{"id":1,"user_id":1,"category_id":1,"content":"blog started"}]}
+===
+GET /records/posts?filter=id%2Ceq%2C1
+===
+200
+Content-Type: application/json; charset=utf-8
+Content-Length: 75
+
+{"records":[{"id":1,"user_id":1,"category_id":1,"content":"blog started"}]}

@@ -1,0 +1,12 @@
+/docker/ export-ignore
+/examples/ export-ignore
+/extras/ export-ignore
+/src/index.php export-ignore
+/tests/ export-ignore
+/.gitattributes export-ignore
+/.gitignore export-ignore
+/.htaccess export-ignore
+/*.php export-ignore
+/*.sh export-ignore
+/docker-compose.yml export-ignore
+/Dockerfile export-ignore

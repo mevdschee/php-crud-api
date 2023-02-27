@@ -6,7 +6,7 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Tqdev\PhpCrudApi\Column\ReflectionService;
-use Tqdev\PhpCrudApi\Config;
+use Tqdev\PhpCrudApi\Config\Config;
 use Tqdev\PhpCrudApi\Controller\Responder;
 use Tqdev\PhpCrudApi\Database\GenericDB;
 use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
@@ -38,6 +38,15 @@ class DbAuthMiddleware extends Middleware
                 if ($sessionName) {
                     session_name($sessionName);
                 }
+                if (!ini_get('session.cookie_samesite')) {
+                    ini_set('session.cookie_samesite', 'Lax');
+                }
+                if (!ini_get('session.cookie_httponly')) {
+                    ini_set('session.cookie_httponly', 1);
+                }
+                if (!ini_get('session.cookie_secure') && isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != 'off') {
+                    ini_set('session.cookie_secure', 1);
+                }
                 session_start();
             }
         }
@@ -51,10 +60,13 @@ class DbAuthMiddleware extends Middleware
             $username = isset($body->$usernameFormFieldName) ? $body->$usernameFormFieldName : '';
             $password = isset($body->$passwordFormFieldName) ? $body->$passwordFormFieldName : '';
             $newPassword = isset($body->$newPasswordFormFieldName) ? $body->$newPasswordFormFieldName : '';
-            if($path ==='login')
-                $tableName = $this->getProperty('loginTable', 'users');    //add separate property for login as this could be a view joining users table to other table such as roles, details etc. At a minimum, the view output should include the $usernameColumn and $passwordColumn
-            else
+            //add separate property for login as this could be a view joining users table to other table 
+            //such as roles, details etc. At a minimum, the view output should include the $usernameColumn and $passwordColumn
+            if ($path === 'login') {
+                $tableName = $this->getProperty('loginTable', $this->getProperty('usersTable', 'users'));
+            } else {
                 $tableName = $this->getProperty('usersTable', 'users');
+            }
             $table = $this->reflection->getTable($tableName);
             $usernameColumnName = $this->getProperty('usernameColumn', 'username');
             $usernameColumn = $table->getColumn($usernameColumnName);
@@ -71,6 +83,7 @@ class DbAuthMiddleware extends Middleware
             $passwordLength = $this->getProperty('passwordLength', '12');
             $pkName = $table->getPk()->getName();
             $registerUser = $this->getProperty('registerUser', '');
+            $loginAfterRegistration = $this->getProperty('loginAfterRegistration', '');
             $condition = new ColumnCondition($usernameColumn, 'eq', $username);
             $returnedColumns = $this->getProperty('returnedColumns', '');
             if (!$returnedColumns) {
@@ -84,6 +97,9 @@ class DbAuthMiddleware extends Middleware
             if ($path == 'register') {
                 if (!$registerUser) {
                     return $this->responder->error(ErrorCode::AUTHENTICATION_FAILED, $username);
+                }
+                if (strlen(trim($username)) == 0) {
+                    return $this->responder->error(ErrorCode::USERNAME_EMPTY, $username);
                 }
                 if (strlen($password) < $passwordLength) {
                     return $this->responder->error(ErrorCode::PASSWORD_TOO_SHORT, $passwordLength);
@@ -135,8 +151,17 @@ class DbAuthMiddleware extends Middleware
 		}
                 $users = $this->db->selectAll($table, $columnNames, $condition, $columnOrdering, 0, 1);
                 foreach ($users as $user) {
-                    unset($user[$passwordColumnName]);
-                    return $this->responder->success($user);
+                    if ($loginAfterRegistration) {
+                        if (!headers_sent()) {
+                            session_regenerate_id(true);
+                        }
+                        unset($user[$passwordColumnName]);
+                        $_SESSION['user'] = $user;
+                        return $this->responder->success($user);
+                    } else {
+                        unset($user[$passwordColumnName]);
+                        return $this->responder->success($user);
+                    }
                 }
                 return $this->responder->error(ErrorCode::AUTHENTICATION_FAILED, $username);
             }

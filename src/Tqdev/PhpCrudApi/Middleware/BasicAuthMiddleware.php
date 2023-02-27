@@ -86,6 +86,15 @@ class BasicAuthMiddleware extends Middleware
                 if ($sessionName) {
                     session_name($sessionName);
                 }
+                if (!ini_get('session.cookie_samesite')) {
+                    ini_set('session.cookie_samesite', 'Lax');
+                }
+                if (!ini_get('session.cookie_httponly')) {
+                    ini_set('session.cookie_httponly', 1);
+                }
+                if (!ini_get('session.cookie_secure') && isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != 'off') {
+                    ini_set('session.cookie_secure', 1);
+                }
                 session_start();
             }
         }
