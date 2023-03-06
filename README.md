@@ -708,6 +708,7 @@ You can tune the middleware behavior using middleware specific configuration par
 - "dbAuth.usernameColumn": The users table column that holds usernames ("username")
 - "dbAuth.passwordColumn": The users table column that holds passwords ("password")
 - "dbAuth.returnedColumns": The columns returned on successful login, empty means 'all' ("")
+- "dbAuth.refreshSession": Number of minutes before a session is refreshed via api.php/me endpoint, (0)
 - "dbAuth.usernameFormField": The name of the form field that holds the username ("username")
 - "dbAuth.usernamePattern": Specify regex pattern for username. Defaults to alpha-numeric charactes ("/^[A-Za-z0-9]+$/")
 - "dbAuth.usernameMaxLength": Specify maximum length of username (30)

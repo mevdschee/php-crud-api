@@ -156,6 +156,7 @@ class DbAuthMiddleware extends Middleware
                             session_regenerate_id(true);
                         }
                         unset($user[$passwordColumnName]);
+                        $_SESSION['updatedAt'] = time();
                         $_SESSION['user'] = $user;
                         return $this->responder->success($user);
                     } else {
@@ -173,6 +174,7 @@ class DbAuthMiddleware extends Middleware
                             session_regenerate_id(true);
                         }
                         unset($user[$passwordColumnName]);
+                        $_SESSION['updatedAt'] = time();
                         $_SESSION['user'] = $user;
                         return $this->responder->success($user);
                     }
@@ -221,6 +223,25 @@ class DbAuthMiddleware extends Middleware
         }
         if ($method == 'GET' && $path == 'me') {
             if (isset($_SESSION['user'])) {
+                $updateAfter = $this->getProperty('refreshSession',0) * 60;//update session after x minutes
+                if($updateAfter > 0 &&( time() >($_SESSION['user']['updatedAt'] + $updateAfter))){
+                    $tableName = $this->getProperty('loginTable','users');
+                    $table = $this->reflection->getTable($tableName);
+                    $pkName = $table->getPk()->getName();
+                    $passwordColumnName = $this->getProperty('passwordColumn','');
+                    $returnedColumns = $this->getProperty('returnedColumns','');
+                    if(!$returnedColumns){
+                        $columnNames = $table->getColumnNames();
+                    }else{
+                        $columnNames = array_map)('trim',explode(',',$returnedColumns));
+                        $columnNames[] = $passwordColumnName;
+                        $columnNames  = array_values(array_unique($columnNames));
+                    }
+                    $user = $this->db->selectSingle($table,$columnNames,$_SESSION['user'][$pkName]);
+                    unset($user[$passwordColumnName]);
+                    $user['updatedAt'] = time();
+                    $_SESSION['user'] = $user;
+                }
                 return $this->responder->success($_SESSION['user']);
             }
             return $this->responder->error(ErrorCode::AUTHENTICATION_REQUIRED, '');
