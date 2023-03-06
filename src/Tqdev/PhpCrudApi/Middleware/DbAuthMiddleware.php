@@ -233,7 +233,7 @@ class DbAuthMiddleware extends Middleware
                     if(!$returnedColumns){
                         $columnNames = $table->getColumnNames();
                     }else{
-                        $columnNames = array_map)('trim',explode(',',$returnedColumns));
+                        $columnNames = array_map('trim',explode(',',$returnedColumns));
                         $columnNames[] = $passwordColumnName;
                         $columnNames  = array_values(array_unique($columnNames));
                     }
