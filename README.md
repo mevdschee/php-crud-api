@@ -134,6 +134,7 @@ The following features are supported:
 
 Related projects:
 
+  - [PHP-CRUD-API filter generator](https://thipages.github.io/jca-filter/#): A JavaScript library creating PHP-CRUD-API filters from expressions.
   - [JS-CRUD-API](https://github.com/thipages/js-crud-api): A JavaScript client library for the API of PHP-CRUD-API
   - [PHP-API-AUTH](https://github.com/mevdschee/php-api-auth): Single file PHP script that is an authentication provider for PHP-CRUD-API
   - [PHP-CRUD-UI](https://github.com/mevdschee/php-crud-ui): Single file PHP script that adds a UI to a PHP-CRUD-API project.
