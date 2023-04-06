@@ -71,9 +71,9 @@ class DbAuthMiddleware extends Middleware
             $usernameColumnName = $this->getProperty('usernameColumn', 'username');
             $usernameColumn = $table->getColumn($usernameColumnName);
             $passwordColumnName = $this->getProperty('passwordColumn', 'password');
-            $usernamePattern = $this->getProperty('usernamePattern','/^[A-Za-z0-9]+$/'); // specify regex pattern for username, defaults to alphanumeric characters
+            $usernamePattern = $this->getProperty('usernamePattern','/^\p{L}+$/u'); // specify regex pattern for username, defaults to printable chars only,no punctation or numbers,unicode mode
             $usernameMinLength = (int)$this->getProperty('usernameMinLength',5);
-            $usernameMaxLength = (int)$this->getProperty('usernameMaxLength',30);
+            $usernameMaxLength = (int)$this->getProperty('usernameMaxLength',255);
             if($usernameMinLength > $usernameMaxLength){
                 //obviously, $usernameMinLength should be less than $usernameMaxLength, but we'll still check in case of mis-config then we'll swap the 2 values
                 $lesser = $usernameMaxLength;
@@ -129,8 +129,7 @@ class DbAuthMiddleware extends Middleware
                           }else if($key === $passwordColumnName){
                               $data[$passwordColumnName] = password_hash($password, PASSWORD_DEFAULT);
                           }else{
-				    		$data[$key] = filter_var($value, FILTER_VALIDATE_EMAIL) ? $value : filter_var($value,FILTER_SANITIZE_ENCODED);
-                              //sanitize all other inputs, except for valid or properly formatted email address
+				$data[$key] = htmlspecialchars($value);	
                           }
                       }
                  }
@@ -142,11 +141,11 @@ class DbAuthMiddleware extends Middleware
 			 * query 2,3 or more times. 
 			 * As a TEMPORARY WORKAROUND, we'll just attempt to register the new user and wait for the db to throw a DUPLICATE KEY EXCEPTION.
 			 */
-		}catch(\PDOException error){
+		}catch(\PDOException $error){
 			if($error->getCode() ==="23000"){
 				return $this->responder->error(ErrorCode::DUPLICATE_KEY_EXCEPTION,'',$error->getMessage());
 			}else{
-				return $this->responder->error(ErrorCode::INPUT_VALIDATION_FAILED,$$error->getMessage());
+				return $this->responder->error(ErrorCode::INPUT_VALIDATION_FAILED,$error->getMessage());
 			}
 		}
                 $users = $this->db->selectAll($table, $columnNames, $condition, $columnOrdering, 0, 1);
