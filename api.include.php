@@ -1,5 +1,4 @@
 <?php
-
 /**
  * PHP-CRUD-API v2              License: MIT
  * Maurits van der Schee: maurits@vdschee.nl
@@ -1046,7 +1045,7 @@ namespace Psr\Http\Message {
          *     the second or subsequent call to the method.
          */
         public function moveTo($targetPath);
-
+        
         /**
          * Retrieve the file size.
          *
@@ -1057,7 +1056,7 @@ namespace Psr\Http\Message {
          * @return int|null The file size in bytes or null if unknown.
          */
         public function getSize();
-
+        
         /**
          * Retrieve the error associated with the uploaded file.
          *
@@ -1073,7 +1072,7 @@ namespace Psr\Http\Message {
          * @return int One of PHP's UPLOAD_ERR_XXX constants.
          */
         public function getError();
-
+        
         /**
          * Retrieve the filename sent by the client.
          *
@@ -1088,7 +1087,7 @@ namespace Psr\Http\Message {
          *     was provided.
          */
         public function getClientFilename();
-
+        
         /**
          * Retrieve the media type sent by the client.
          *
@@ -2692,14 +2691,11 @@ namespace Nyholm\Psr7 {
      */
     class Uri implements UriInterface
     {
-        /*private*/
-        const SCHEMES = ['http' => 80, 'https' => 443];
+        /*private*/ const SCHEMES = ['http' => 80, 'https' => 443];
 
-        /*private*/
-        const CHAR_UNRESERVED = 'a-zA-Z0-9_\-\.~';
+        /*private*/ const CHAR_UNRESERVED = 'a-zA-Z0-9_\-\.~';
 
-        /*private*/
-        const CHAR_SUB_DELIMS = '!\$&\'\(\)\*\+,;=';
+        /*private*/ const CHAR_SUB_DELIMS = '!\$&\'\(\)\*\+,;=';
 
         /** @var string Uri scheme. */
         private $scheme = '';
@@ -3126,7 +3122,7 @@ namespace Nyholm\Psr7Server {
                 }
 
                 if ($value && 0 === \strpos($key, 'CONTENT_')) {
-                    $name = 'content-' . \strtolower(\substr($key, 8));
+                    $name = 'content-'.\strtolower(\substr($key, 8));
                     $headers[$name] = $value;
 
                     continue;
@@ -3330,8 +3326,7 @@ namespace Nyholm\Psr7Server {
             array $server,
             array $headers = [],
             array $cookie = [],
-            array $get = [], /*?array*/
-            $post = null,
+            array $get = [], /*?array*/ $post = null,
             array $files = [],
             $body = null
         ): ServerRequestInterface;
@@ -3370,12 +3365,12 @@ namespace Tqdev\PhpCrudApi\Cache\Base {
         {
             return true;
         }
-
+        
         public function ping(): int
         {
             $start = microtime(true);
             $this->get('__ping__');
-            return intval((microtime(true) - $start) * 1000000);
+            return intval((microtime(true)-$start)*1000000);
         }
     }
 }
@@ -4093,7 +4088,7 @@ namespace Tqdev\PhpCrudApi\Column\Reflection {
 
         public static function fromJson( /* object */$json): ReflectedTable
         {
-            $name = $json->alias ?? $json->name;
+            $name = $json->alias??$json->name;
             $realName = $json->name;
             $type = isset($json->type) ? $json->type : 'table';
             $columns = [];
@@ -4169,7 +4164,7 @@ namespace Tqdev\PhpCrudApi\Column\Reflection {
         {
             $json = [
                 'name' => $this->realName,
-                'alias' => $this->name != $this->realName ? $this->name : null,
+                'alias' => $this->name!=$this->realName?$this->name:null,
                 'type' => $this->type,
                 'columns' => array_values($this->columns),
             ];
@@ -5003,6 +4998,7 @@ namespace Tqdev\PhpCrudApi\Controller {
             }
             return $response;
         }
+
     }
 }
 
@@ -5245,6 +5241,7 @@ namespace Tqdev\PhpCrudApi\Controller {
         public function multi($results): ResponseInterface;
 
         public function exception($exception): ResponseInterface;
+
     }
 }
 
@@ -5279,6 +5276,7 @@ namespace Tqdev\PhpCrudApi\Controller {
             ];
             return $this->responder->success($result);
         }
+
     }
 }
 
@@ -7025,8 +7023,8 @@ namespace Tqdev\PhpCrudApi\Database {
             $this->reverseTableMapping = [];
             $this->columnMapping = [];
             $this->reverseColumnMapping = [];
-            foreach ($mapping as $name => $realName) {
-                if (strpos($name, '.') && strpos($realName, '.')) {
+            foreach ($mapping as $name=>$realName) {
+                if (strpos($name,'.') && strpos($realName,'.')) {
                     list($tableName, $columnName) = explode('.', $name, 2);
                     list($tableRealName, $columnRealName) = explode('.', $realName, 2);
                     $this->tableMapping[$tableName] = $tableRealName;
@@ -7046,7 +7044,7 @@ namespace Tqdev\PhpCrudApi\Database {
             }
         }
 
-        public function getColumnRealName(string $tableName, string $columnName): string
+        public function getColumnRealName(string $tableName,string $columnName): string
         {
             return $this->reverseColumnMapping[$tableName][$columnName] ?? $columnName;
         }
@@ -7056,7 +7054,7 @@ namespace Tqdev\PhpCrudApi\Database {
             return $this->reverseTableMapping[$tableName] ?? $tableName;
         }
 
-        public function getColumnName(string $tableRealName, string $columnRealName): string
+        public function getColumnName(string $tableRealName,string $columnRealName): string
         {
             return $this->columnMapping[$tableRealName][$columnRealName] ?? $columnRealName;
         }
@@ -8693,11 +8691,11 @@ namespace Tqdev\PhpCrudApi\Middleware {
         private function convertJsonRequestValue($value) /*: object */
         {
             if (is_array($value) || is_object($value)) {
-                $value = json_encode($value, JSON_UNESCAPED_UNICODE);
+                $value = json_encode($value,JSON_UNESCAPED_UNICODE);
             }
             return $value;
         }
-
+        
         private function convertJsonRequest($object, array $columnNames) /*: object */
         {
             if (is_array($object)) {
@@ -8720,7 +8718,7 @@ namespace Tqdev\PhpCrudApi\Middleware {
 
         private function convertJsonResponseValue(string $value) /*: object */
         {
-            if (strlen($value) > 0 && in_array($value[0], ['[', '{'])) {
+            if (strlen($value) > 0 && in_array($value[0],['[','{'])) {
                 $parsed = json_decode($value);
                 if (json_last_error() == JSON_ERROR_NONE) {
                     $value = $parsed;
@@ -8754,15 +8752,15 @@ namespace Tqdev\PhpCrudApi\Middleware {
             $tableName = RequestUtils::getPathSegment($request, 2);
 
             $controllerPaths = $this->getArrayProperty('controllers', 'records,geojson');
-            $tableNames = $this->getArrayProperty('tables', 'all');
-            $columnNames = $this->getArrayProperty('columns', 'all');
-            if (
-                (in_array('all', $controllerPaths) || in_array($controllerPath, $controllerPaths)) &&
-                (in_array('all', $tableNames) || in_array($tableName, $tableNames))
-            ) {
+    		$tableNames = $this->getArrayProperty('tables', 'all');
+    		$columnNames = $this->getArrayProperty('columns', 'all');
+    		if (
+    			(in_array('all', $controllerPaths) || in_array($controllerPath, $controllerPaths)) &&
+    			(in_array('all', $tableNames) || in_array($tableName, $tableNames))
+    		) {
                 if (in_array($operation, ['create', 'update'])) {
                     $records = $request->getParsedBody();
-                    $records = $this->convertJsonRequest($records, $columnNames);
+                    $records = $this->convertJsonRequest($records,$columnNames);
                     $request = $request->withParsedBody($records);
                 }
                 $response = $next->handle($request);
@@ -9496,204 +9494,204 @@ namespace Tqdev\PhpCrudApi\Middleware {
 
     class ValidationMiddleware extends Middleware
     {
-        private $reflection;
+    	private $reflection;
 
-        public function __construct(Router $router, Responder $responder, Config $config, string $middleware, ReflectionService $reflection)
-        {
-            parent::__construct($router, $responder, $config, $middleware);
-            $this->reflection = $reflection;
-        }
+    	public function __construct(Router $router, Responder $responder, Config $config, string $middleware, ReflectionService $reflection)
+    	{
+    		parent::__construct($router, $responder, $config, $middleware);
+    		$this->reflection = $reflection;
+    	}
 
-        private function callHandler($handler, $record, string $operation, ReflectedTable $table) /*: ResponseInterface?*/
-        {
-            $context = (array) $record;
-            $details = array();
-            $tableName = $table->getName();
-            foreach ($context as $columnName => $value) {
-                if ($table->hasColumn($columnName)) {
-                    $column = $table->getColumn($columnName);
-                    $valid = call_user_func($handler, $operation, $tableName, $column->serialize(), $value, $context);
-                    if ($valid === true || $valid === '') {
-                        $valid = $this->validateType($table, $column, $value);
-                    }
-                    if ($valid !== true && $valid !== '') {
-                        $details[$columnName] = $valid;
-                    }
-                }
-            }
-            if (count($details) > 0) {
-                return $this->responder->error(ErrorCode::INPUT_VALIDATION_FAILED, $tableName, $details);
-            }
-            return null;
-        }
+    	private function callHandler($handler, $record, string $operation, ReflectedTable $table) /*: ResponseInterface?*/
+    	{
+    		$context = (array) $record;
+    		$details = array();
+    		$tableName = $table->getName();
+    		foreach ($context as $columnName => $value) {
+    			if ($table->hasColumn($columnName)) {
+    				$column = $table->getColumn($columnName);
+    				$valid = call_user_func($handler, $operation, $tableName, $column->serialize(), $value, $context);
+    				if ($valid === true || $valid === '') {
+    					$valid = $this->validateType($table, $column, $value);
+    				}
+    				if ($valid !== true && $valid !== '') {
+    					$details[$columnName] = $valid;
+    				}
+    			}
+    		}
+    		if (count($details) > 0) {
+    			return $this->responder->error(ErrorCode::INPUT_VALIDATION_FAILED, $tableName, $details);
+    		}
+    		return null;
+    	}
 
-        private function validateType(ReflectedTable $table, ReflectedColumn $column, $value)
-        {
-            $tables = $this->getArrayProperty('tables', 'all');
-            $types = $this->getArrayProperty('types', 'all');
-            if (
-                (in_array('all', $tables) || in_array($table->getName(), $tables)) &&
-                (in_array('all', $types) || in_array($column->getType(), $types))
-            ) {
-                if (is_null($value)) {
-                    return ($column->getNullable() ? true : "cannot be null");
-                }
-                if (is_string($value)) {
-                    // check for whitespace
-                    switch ($column->getType()) {
-                        case 'varchar':
-                        case 'clob':
-                            break;
-                        default:
-                            if (strlen(trim($value)) != strlen($value)) {
-                                return 'illegal whitespace';
-                            }
-                            break;
-                    }
-                    // try to parse
-                    switch ($column->getType()) {
-                        case 'integer':
-                        case 'bigint':
-                            if (
-                                filter_var($value, FILTER_SANITIZE_NUMBER_INT) !== $value ||
-                                filter_var($value, FILTER_VALIDATE_INT) === false
-                            ) {
-                                return 'invalid integer';
-                            }
-                            break;
-                        case 'decimal':
-                            if (strpos($value, '.') !== false) {
-                                list($whole, $decimals) = explode('.', ltrim($value, '-'), 2);
-                            } else {
-                                list($whole, $decimals) = array(ltrim($value, '-'), '');
-                            }
-                            if (strlen($whole) > 0 && !ctype_digit($whole)) {
-                                return 'invalid decimal';
-                            }
-                            if (strlen($decimals) > 0 && !ctype_digit($decimals)) {
-                                return 'invalid decimal';
-                            }
-                            if (strlen($whole) > $column->getPrecision() - $column->getScale()) {
-                                return 'decimal too large';
-                            }
-                            if (strlen($decimals) > $column->getScale()) {
-                                return 'decimal too precise';
-                            }
-                            break;
-                        case 'float':
-                        case 'double':
-                            if (
-                                filter_var($value, FILTER_SANITIZE_NUMBER_FLOAT) !== $value ||
-                                filter_var($value, FILTER_VALIDATE_FLOAT) === false
-                            ) {
-                                return 'invalid float';
-                            }
-                            break;
-                        case 'boolean':
-                            if (!in_array(strtolower($value), array('true', 'false'))) {
-                                return 'invalid boolean';
-                            }
-                            break;
-                        case 'date':
-                            if (date_create_from_format('Y-m-d', $value) === false) {
-                                return 'invalid date';
-                            }
-                            break;
-                        case 'time':
-                            if (date_create_from_format('H:i:s', $value) === false) {
-                                return 'invalid time';
-                            }
-                            break;
-                        case 'timestamp':
-                            if (date_create_from_format('Y-m-d H:i:s', $value) === false) {
-                                return 'invalid timestamp';
-                            }
-                            break;
-                        case 'clob':
-                        case 'varchar':
-                            if ($column->hasLength() && mb_strlen($value, 'UTF-8') > $column->getLength()) {
-                                return 'string too long';
-                            }
-                            break;
-                        case 'blob':
-                        case 'varbinary':
-                            if (base64_decode($value, true) === false) {
-                                return 'invalid base64';
-                            }
-                            if ($column->hasLength() && strlen(base64_decode($value)) > $column->getLength()) {
-                                return 'string too long';
-                            }
-                            break;
-                        case 'geometry':
-                            // no checks yet
-                            break;
-                    }
-                } else { // check non-string types
-                    switch ($column->getType()) {
-                        case 'integer':
-                        case 'bigint':
-                            if (!is_int($value)) {
-                                return 'invalid integer';
-                            }
-                            break;
-                        case 'float':
-                        case 'double':
-                            if (!is_float($value) && !is_int($value)) {
-                                return 'invalid float';
-                            }
-                            break;
-                        case 'boolean':
-                            if (!is_bool($value) && ($value !== 0) && ($value !== 1)) {
-                                return 'invalid boolean';
-                            }
-                            break;
-                        default:
-                            return 'invalid ' . $column->getType();
-                    }
-                }
-                // extra checks
-                switch ($column->getType()) {
-                    case 'integer': // 4 byte signed
-                        $value = filter_var($value, FILTER_VALIDATE_INT);
-                        if ($value > 2147483647 || $value < -2147483648) {
-                            return 'invalid integer';
-                        }
-                        break;
-                }
-            }
-            return (true);
-        }
+    	private function validateType(ReflectedTable $table, ReflectedColumn $column, $value)
+    	{
+    		$tables = $this->getArrayProperty('tables', 'all');
+    		$types = $this->getArrayProperty('types', 'all');
+    		if (
+    			(in_array('all', $tables) || in_array($table->getName(), $tables)) &&
+    			(in_array('all', $types) || in_array($column->getType(), $types))
+    		) {
+    			if (is_null($value)) {
+    				return ($column->getNullable() ? true : "cannot be null");
+    			}
+    			if (is_string($value)) {
+    				// check for whitespace
+    				switch ($column->getType()) {
+    					case 'varchar':
+    					case 'clob':
+    						break;
+    					default:
+    						if (strlen(trim($value)) != strlen($value)) {
+    							return 'illegal whitespace';
+    						}
+    						break;
+    				}
+    				// try to parse
+    				switch ($column->getType()) {
+    					case 'integer':
+    					case 'bigint':
+    						if (
+    							filter_var($value, FILTER_SANITIZE_NUMBER_INT) !== $value ||
+    							filter_var($value, FILTER_VALIDATE_INT) === false
+    						) {
+    							return 'invalid integer';
+    						}
+    						break;
+    					case 'decimal':
+    						if (strpos($value, '.') !== false) {
+    							list($whole, $decimals) = explode('.', ltrim($value, '-'), 2);
+    						} else {
+    							list($whole, $decimals) = array(ltrim($value, '-'), '');
+    						}
+    						if (strlen($whole) > 0 && !ctype_digit($whole)) {
+    							return 'invalid decimal';
+    						}
+    						if (strlen($decimals) > 0 && !ctype_digit($decimals)) {
+    							return 'invalid decimal';
+    						}
+    						if (strlen($whole) > $column->getPrecision() - $column->getScale()) {
+    							return 'decimal too large';
+    						}
+    						if (strlen($decimals) > $column->getScale()) {
+    							return 'decimal too precise';
+    						}
+    						break;
+    					case 'float':
+    					case 'double':
+    						if (
+    							filter_var($value, FILTER_SANITIZE_NUMBER_FLOAT) !== $value ||
+    							filter_var($value, FILTER_VALIDATE_FLOAT) === false
+    						) {
+    							return 'invalid float';
+    						}
+    						break;
+    					case 'boolean':
+    						if (!in_array(strtolower($value), array('true', 'false'))) {
+    							return 'invalid boolean';
+    						}
+    						break;
+    					case 'date':
+    						if (date_create_from_format('Y-m-d', $value) === false) {
+    							return 'invalid date';
+    						}
+    						break;
+    					case 'time':
+    						if (date_create_from_format('H:i:s', $value) === false) {
+    							return 'invalid time';
+    						}
+    						break;
+    					case 'timestamp':
+    						if (date_create_from_format('Y-m-d H:i:s', $value) === false) {
+    							return 'invalid timestamp';
+    						}
+    						break;
+    					case 'clob':
+    					case 'varchar':
+    						if ($column->hasLength() && mb_strlen($value, 'UTF-8') > $column->getLength()) {
+    							return 'string too long';
+    						}
+    						break;
+    					case 'blob':
+    					case 'varbinary':
+    						if (base64_decode($value, true) === false) {
+    							return 'invalid base64';
+    						}
+    						if ($column->hasLength() && strlen(base64_decode($value)) > $column->getLength()) {
+    							return 'string too long';
+    						}
+    						break;
+    					case 'geometry':
+    						// no checks yet
+    						break;
+    				}
+    			} else { // check non-string types
+    				switch ($column->getType()) {
+    					case 'integer':
+    					case 'bigint':
+    						if (!is_int($value)) {
+    							return 'invalid integer';
+    						}
+    						break;
+    					case 'float':
+    					case 'double':
+    						if (!is_float($value) && !is_int($value)) {
+    							return 'invalid float';
+    						}
+    						break;
+    					case 'boolean':
+    						if (!is_bool($value) && ($value !== 0) && ($value !== 1)) {
+    							return 'invalid boolean';
+    						}
+    						break;
+    					default:
+    						return 'invalid ' . $column->getType();
+    				}
+    			}
+    			// extra checks
+    			switch ($column->getType()) {
+    				case 'integer': // 4 byte signed
+    					$value = filter_var($value, FILTER_VALIDATE_INT);
+    					if ($value > 2147483647 || $value < -2147483648) {
+    						return 'invalid integer';
+    					}
+    					break;
+    			}
+    		}
+    		return (true);
+    	}
 
-        public function process(ServerRequestInterface $request, RequestHandlerInterface $next): ResponseInterface
-        {
-            $operation = RequestUtils::getOperation($request);
-            if (in_array($operation, ['create', 'update', 'increment'])) {
-                $tableName = RequestUtils::getPathSegment($request, 2);
-                if ($this->reflection->hasTable($tableName)) {
-                    $record = $request->getParsedBody();
-                    if ($record !== null) {
-                        $handler = $this->getProperty('handler', '');
-                        if ($handler !== '') {
-                            $table = $this->reflection->getTable($tableName);
-                            if (is_array($record)) {
-                                foreach ($record as $r) {
-                                    $response = $this->callHandler($handler, $r, $operation, $table);
-                                    if ($response !== null) {
-                                        return $response;
-                                    }
-                                }
-                            } else {
-                                $response = $this->callHandler($handler, $record, $operation, $table);
-                                if ($response !== null) {
-                                    return $response;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            return $next->handle($request);
-        }
+    	public function process(ServerRequestInterface $request, RequestHandlerInterface $next): ResponseInterface
+    	{
+    		$operation = RequestUtils::getOperation($request);
+    		if (in_array($operation, ['create', 'update', 'increment'])) {
+    			$tableName = RequestUtils::getPathSegment($request, 2);
+    			if ($this->reflection->hasTable($tableName)) {
+    				$record = $request->getParsedBody();
+    				if ($record !== null) {
+    					$handler = $this->getProperty('handler', '');
+    					if ($handler !== '') {
+    						$table = $this->reflection->getTable($tableName);
+    						if (is_array($record)) {
+    							foreach ($record as $r) {
+    								$response = $this->callHandler($handler, $r, $operation, $table);
+    								if ($response !== null) {
+    									return $response;
+    								}
+    							}
+    						} else {
+    							$response = $this->callHandler($handler, $record, $operation, $table);
+    							if ($response !== null) {
+    								return $response;
+    							}
+    						}
+    					}
+    				}
+    			}
+    		}
+    		return $next->handle($request);
+    	}
     }
 }
 
@@ -10167,7 +10165,7 @@ namespace Tqdev\PhpCrudApi\OpenApi {
                 $part = array_shift($parts);
                 if ($part === '') {
                     $part = count($current);
-                }
+                } 
                 if (!isset($current[$part])) {
                     $current[$part] = [];
                 }
@@ -10643,6 +10641,7 @@ namespace Tqdev\PhpCrudApi\OpenApi {
                     $this->openapi->set("paths|$path|$method|operationId", "$operation" . "_" . "$type");
                     $this->openapi->set("paths|$path|$method|description", "Request API '$operation' status");
                     $this->openapi->set("paths|$path|$method|responses|200|\$ref", "#/components/responses/$operation-$type");
+
                 }
             }
         }
@@ -10678,7 +10677,7 @@ namespace Tqdev\PhpCrudApi\OpenApi {
 
         private function setTag(string $type) /*: void*/
         {
-            $this->openapi->set("tags|", ['name' => $type, 'description' => "$type operations"]);
+            $this->openapi->set("tags|", [ 'name' => $type, 'description' => "$type operations"]);
         }
     }
 }
@@ -10954,9 +10953,7 @@ namespace Tqdev\PhpCrudApi\Record\Document {
         #[\ReturnTypeWillChange]
         public function jsonSerialize()
         {
-            return array_filter($this->serialize(), function ($v) {
-                return $v !== null;
-            });
+            return array_filter($this->serialize(), function ($v) {return $v !== null;});
         }
 
         public static function fromException(\Throwable $exception, bool $debug)
