@@ -39,7 +39,7 @@ CREATE EXTENSION IF NOT EXISTS postgis;
 EOF
 echo "done"
 
-echo -n "[3/4] Starting SQLServer 2022 ... "
+echo -n "[3/4] Starting SQLServer 2019 ... "
 echo "skipped"
 
 echo -n "[4/4] Cloning PHP-CRUD-API v2 ... "
