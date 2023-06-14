@@ -21,7 +21,7 @@ FLUSH PRIVILEGES;
 EOF
 echo "done"
 
-echo -n "[2/4] Starting PostgreSQL 11 .. "
+echo -n "[2/4] Starting PostgreSQL 11 .... "
 echo "skipped"
 
 echo -n "[3/4] Starting SQLServer 2017 ... "
