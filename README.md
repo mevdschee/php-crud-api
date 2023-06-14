@@ -1479,12 +1479,14 @@ The `customControllers` config supports a comma separated list of custom control
 
 I am testing mainly on Ubuntu and I have the following test setups:
 
-  - (Docker) Ubuntu 18.04 with PHP 7.2, MySQL 5.7, PostgreSQL 10.4 (PostGIS 2.4) and SQLite 3.22
   - (Docker) Debian 10 with PHP 7.3, MariaDB 10.3, PostgreSQL 11.4 (PostGIS 2.5) and SQLite 3.27
-  - (Docker) Ubuntu 20.04 with PHP 7.4, MySQL 8.0, PostgreSQL 12.15 (PostGIS 3.0) and SQL Server 2019 and SQLite 3.31 
   - (Docker) Debian 11 with PHP 7.4, MariaDB 10.5, PostgreSQL 13.4 (PostGIS 3.1) and SQLite 3.34
-  - (Docker) Ubuntu 22.04 with PHP 8.1, MySQL 8.0, PostgreSQL 14.2 (PostGIS 3.2) and SQLite 3.37 
   - (Docker) Debian 12 with PHP 8.2, MariaDB 10.11, PostgreSQL 15.3 (PostGIS 3.3) and SQLite 3.40
+  - (Docker) RockyLinux 8 with PHP 7.2, MariaDB 10.3 and SQLite 3.26
+  - (Docker) RockyLinux 9 with PHP 8.0, MariaDB 10.5 and SQLite 3.34
+  - (Docker) Ubuntu 18.04 with PHP 7.2, MySQL 5.7, PostgreSQL 10.4 (PostGIS 2.4) and SQLite 3.22
+  - (Docker) Ubuntu 20.04 with PHP 7.4, MySQL 8.0, PostgreSQL 12.15 (PostGIS 3.0) and SQLite 3.31 and SQL Server 2019
+  - (Docker) Ubuntu 22.04 with PHP 8.1, MySQL 8.0, PostgreSQL 14.2 (PostGIS 3.2) and SQLite 3.37 
 
 This covers not all environments (yet), so please notify me of failing tests and report your environment. 
 I will try to cover most relevant setups in the "docker" folder of the project.
