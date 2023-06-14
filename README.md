@@ -1581,7 +1581,7 @@ To run the docker tests run "build_all.sh" and "run_all.sh" from the docker dire
     RockyLinux 8 (PHP 7.2)
     ================================================
     [1/4] Starting MariaDB 10.3 ..... done
-    [2/4] Starting PostgreSQL 11 .. skipped
+    [2/4] Starting PostgreSQL 11 .... skipped
     [3/4] Starting SQLServer 2017 ... skipped
     [4/4] Cloning PHP-CRUD-API v2 ... skipped
     ------------------------------------------------
@@ -1593,7 +1593,7 @@ To run the docker tests run "build_all.sh" and "run_all.sh" from the docker dire
     RockyLinux 9 (PHP 8.0)
     ================================================
     [1/4] Starting MariaDB 10.5 ..... done
-    [2/4] Starting PostgreSQL 12.10 .. skipped
+    [2/4] Starting PostgreSQL 12 .... skipped
     [3/4] Starting SQLServer 2017 ... skipped
     [4/4] Cloning PHP-CRUD-API v2 ... skipped
     ------------------------------------------------
