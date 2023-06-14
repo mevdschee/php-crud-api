@@ -31,7 +31,7 @@ done
 # create database and user on postgres
 su - -c "psql -U postgres >/dev/null" postgres << 'EOF'
 CREATE USER "php-crud-api" WITH PASSWORD 'php-crud-api';
-CREATE DATABASE "php-crud-api";
+CREATE DATABASE "php-crud-api" WITH OWNER = "php-crud-api";
 GRANT ALL PRIVILEGES ON DATABASE "php-crud-api" to "php-crud-api";
 \c "php-crud-api";
 CREATE EXTENSION IF NOT EXISTS postgis;
@@ -39,7 +39,7 @@ CREATE EXTENSION IF NOT EXISTS postgis;
 EOF
 echo "done"
 
-echo -n "[3/4] Starting SQLServer 2019 ... "
+echo -n "[3/4] Starting SQLServer 2022 ... "
 echo "skipped"
 
 echo -n "[4/4] Cloning PHP-CRUD-API v2 ... "
