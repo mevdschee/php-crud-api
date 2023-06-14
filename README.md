@@ -168,7 +168,7 @@ You can compile all files into a single "`api.php`" file using:
 
     php build.php
 
-NB: The install script will patch the dependencies in the vendor directory for PHP 7.0 compatibility.
+The install script will no longer patch the dependencies in the vendor directory for PHP 7.0 compatibility.
 
 ### Development
 
