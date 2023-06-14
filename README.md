@@ -8,10 +8,10 @@ NB: This is the [TreeQL](https://treeql.org) reference implementation in PHP.
 
 ## Requirements
 
-  - PHP 7.0 or higher with PDO drivers enabled for one of these database systems:
-    - MySQL 5.6 / MariaDB 10.0 or higher for spatial features in MySQL
-    - PostgreSQL 9.1 or higher with PostGIS 2.0 or higher for spatial features
-    - SQL Server 2012 or higher (2017 for Linux support)
+  - PHP 7.2 or higher with PDO drivers enabled for one of these database systems:
+    - MySQL 5.7 / MariaDB 10.0 or higher for spatial features in MySQL
+    - PostgreSQL 9.5 or higher with PostGIS 2.2 or higher for spatial features
+    - SQL Server 2017 or higher (2019 also has Linux support)
     - SQLite 3.16 or higher (spatial features NOT supported)
 
 ## Installation
@@ -1479,7 +1479,6 @@ The `customControllers` config supports a comma separated list of custom control
 
 I am testing mainly on Ubuntu and I have the following test setups:
 
-  - (Docker) Ubuntu 16.04 with PHP 7.0, MariaDB 10.0, PostgreSQL 9.5 (PostGIS 2.2) and SQL Server 2017
   - (Docker) Ubuntu 18.04 with PHP 7.2, MySQL 5.7, PostgreSQL 10.4 (PostGIS 2.4) and SQLite 3.22
   - (Docker) Debian 10 with PHP 7.3, MariaDB 10.3, PostgreSQL 11.4 (PostGIS 2.5) and SQLite 3.27
   - (Docker) Ubuntu 20.04 with PHP 7.4, MySQL 8.0, PostgreSQL 12.15 (PostGIS 3.0) and SQL Server 2019 and SQLite 3.31 
