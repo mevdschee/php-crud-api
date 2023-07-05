@@ -100,7 +100,6 @@ class TypeConverter
             'path' => 'geometry',
             'point' => 'geometry',
             'polygon' => 'geometry',
-            'polygon' => 'geometry',
             'real' => 'float',
             'serial' => 'integer',
             'text' => 'clob',
