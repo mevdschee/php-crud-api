@@ -3306,7 +3306,7 @@ namespace Nyholm\Psr7Server {
         /**
          * {@inheritdoc}
          */
-        public function fromArrays(array $server, array $headers = [], array $cookie = [], array $get = [], ?array $post = null, array $files = [], $body = null): ServerRequestInterface
+        public function fromArrays(array $server, array $headers = [], array $cookie = [], array $get = [], /*?array*/ $post = null, array $files = [], $body = null): ServerRequestInterface
         {
             $method = $this->getMethodFromEnv($server);
             $uri = $this->getUriFromEnvWithHTTP($server);
@@ -3575,8 +3575,7 @@ namespace Nyholm\Psr7Server {
             array $server,
             array $headers = [],
             array $cookie = [],
-            array $get = [],
-            ?array $post = null,
+            array $get = [], /*?array*/ $post = null,
             array $files = [],
             $body = null
         ): ServerRequestInterface;
@@ -9949,6 +9948,73 @@ namespace Tqdev\PhpCrudApi\Middleware {
     }
 }
 
+// file: src/Tqdev/PhpCrudApi/Middleware/WpAuthMiddleware.php
+namespace Tqdev\PhpCrudApi\Middleware {
+
+    use Psr\Http\Message\ResponseInterface;
+    use Psr\Http\Message\ServerRequestInterface;
+    use Psr\Http\Server\RequestHandlerInterface;
+    use Tqdev\PhpCrudApi\Config\Config;
+    use Tqdev\PhpCrudApi\Controller\Responder;
+    use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
+    use Tqdev\PhpCrudApi\Middleware\Router\Router;
+    use Tqdev\PhpCrudApi\Record\ErrorCode;
+    use Tqdev\PhpCrudApi\RequestUtils;
+
+    class WpAuthMiddleware extends Middleware
+    {
+        public function __construct(Router $router, Responder $responder, Config $config, string $middleware)
+        {
+            parent::__construct($router, $responder, $config, $middleware);
+        }
+
+        public function process(ServerRequestInterface $request, RequestHandlerInterface $next): ResponseInterface
+        {
+            define('WP_USE_THEMES', false); // Don't load theme support functionality
+            $wpDirectory = $this->getProperty('wpDirectory', '.');
+            require_once("$wpDirectory/wp-load.php");
+            $path = RequestUtils::getPathSegment($request, 1);
+            $method = $request->getMethod();
+            if ($method == 'POST' && $path == 'login') {
+                $body = $request->getParsedBody();
+                $usernameFormFieldName = $this->getProperty('usernameFormField', 'username');
+                $passwordFormFieldName = $this->getProperty('passwordFormField', 'password');
+                $username = isset($body->$usernameFormFieldName) ? $body->$usernameFormFieldName : '';
+                $password = isset($body->$passwordFormFieldName) ? $body->$passwordFormFieldName : '';
+                $user = wp_signon([
+                    'user_login'    => $username,
+                    'user_password' => $password,
+                    'remember'      => false,
+                ]);
+                if ($user->ID) {
+                    return $this->responder->success($user);
+                }
+                return $this->responder->error(ErrorCode::AUTHENTICATION_FAILED, $username);
+            }
+            if ($method == 'POST' && $path == 'logout') {
+                if (is_user_logged_in()) {
+                    wp_logout();
+                    return $this->responder->success($user);
+                }
+                return $this->responder->error(ErrorCode::AUTHENTICATION_REQUIRED, '');
+            }
+            if ($method == 'GET' && $path == 'me') {
+                if (is_user_logged_in()) {
+                    return $this->responder->success(wp_get_current_user());
+                }
+                return $this->responder->error(ErrorCode::AUTHENTICATION_REQUIRED, '');
+            }
+            if (!is_user_logged_in()) {
+                $authenticationMode = $this->getProperty('mode', 'required');
+                if ($authenticationMode == 'required') {
+                    return $this->responder->error(ErrorCode::AUTHENTICATION_REQUIRED, '');
+                }
+            }
+            return $next->handle($request);
+        }
+    }
+}
+
 // file: src/Tqdev/PhpCrudApi/Middleware/XmlMiddleware.php
 namespace Tqdev\PhpCrudApi\Middleware {
 
@@ -12184,6 +12250,7 @@ namespace Tqdev\PhpCrudApi {
     use Tqdev\PhpCrudApi\Middleware\SslRedirectMiddleware;
     use Tqdev\PhpCrudApi\Middleware\TextSearchMiddleware;
     use Tqdev\PhpCrudApi\Middleware\ValidationMiddleware;
+    use Tqdev\PhpCrudApi\Middleware\WpAuthMiddleware;
     use Tqdev\PhpCrudApi\Middleware\XmlMiddleware;
     use Tqdev\PhpCrudApi\Middleware\XsrfMiddleware;
     use Tqdev\PhpCrudApi\OpenApi\OpenApiService;
@@ -12239,6 +12306,9 @@ namespace Tqdev\PhpCrudApi {
                         break;
                     case 'dbAuth':
                         new DbAuthMiddleware($router, $responder, $config, $middleware, $reflection, $db);
+                        break;
+                    case 'wpAuth':
+                        new WpAuthMiddleware($router, $responder, $config, $middleware);
                         break;
                     case 'reconnect':
                         new ReconnectMiddleware($router, $responder, $config, $middleware, $reflection, $db);
