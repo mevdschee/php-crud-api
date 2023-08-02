@@ -38,6 +38,7 @@ use Tqdev\PhpCrudApi\Middleware\SanitationMiddleware;
 use Tqdev\PhpCrudApi\Middleware\SslRedirectMiddleware;
 use Tqdev\PhpCrudApi\Middleware\TextSearchMiddleware;
 use Tqdev\PhpCrudApi\Middleware\ValidationMiddleware;
+use Tqdev\PhpCrudApi\Middleware\WpAuthMiddleware;
 use Tqdev\PhpCrudApi\Middleware\XmlMiddleware;
 use Tqdev\PhpCrudApi\Middleware\XsrfMiddleware;
 use Tqdev\PhpCrudApi\OpenApi\OpenApiService;
@@ -93,6 +94,9 @@ class Api implements RequestHandlerInterface
                     break;
                 case 'dbAuth':
                     new DbAuthMiddleware($router, $responder, $config, $middleware, $reflection, $db);
+                    break;
+                case 'wpAuth':
+                    new WpAuthMiddleware($router, $responder, $config, $middleware);
                     break;
                 case 'reconnect':
                     new ReconnectMiddleware($router, $responder, $config, $middleware, $reflection, $db);
