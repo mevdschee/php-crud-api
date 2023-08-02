@@ -69,7 +69,7 @@ class DataConverter
     {
         switch ($conversion) {
             case 'boolean':
-                return $value ? 1 : 0;
+                return filter_var($value, FILTER_VALIDATE_BOOLEAN) ? 1 : 0;
             case 'base64url_to_base64':
                 return str_pad(strtr($value, '-_', '+/'), ceil(strlen($value) / 4) * 4, '=', STR_PAD_RIGHT);
         }
