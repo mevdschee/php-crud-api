@@ -858,6 +858,7 @@ The Wordpress authentication middleware defines three routes:
 
 A user can be logged in by sending it's username and password to the login endpoint (in JSON format).
 The user can be logged out by sending a POST request with an empty body to the logout endpoint.
+You need to specify the Wordpress installation directory using the "wpAuth.wpDirectory" configuration parameter.
 The middleware calls "wp-load.php" this allows you to use Wordpress functions in the authorization middleware, like:
 
 - wp_get_current_user()
