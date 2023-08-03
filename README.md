@@ -858,15 +858,14 @@ The Wordpress authentication middleware defines three routes:
 
 A user can be logged in by sending it's username and password to the login endpoint (in JSON format).
 The user can be logged out by sending a POST request with an empty body to the logout endpoint.
-In the authorization middleware you can use functions:
+The middleware calls "wp-load.php" this allows you to use Wordpress functions in the authorization middleware, like:
 
 - wp_get_current_user()
 - is_user_logged_in()
 - is_super_admin()
 - user_can(wp_get_current_user(),'edit_posts');
 
-Play with it and let me know how you like it.. :-)
-
+Note that the `$_SESSION` variable is not used by this middleware.
 
 #### Basic authentication
 
