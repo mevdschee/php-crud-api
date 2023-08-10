@@ -9988,7 +9988,7 @@ namespace Tqdev\PhpCrudApi\Middleware {
                     'remember'      => false,
                 ]);
                 if ($user->ID) {
-                    unset($user['user_pass']);
+                    unset($user->data->user_pass);
                     return $this->responder->success($user);
                 }
                 return $this->responder->error(ErrorCode::AUTHENTICATION_FAILED, $username);
@@ -9997,7 +9997,7 @@ namespace Tqdev\PhpCrudApi\Middleware {
                 if (is_user_logged_in()) {
                     wp_logout();
                     $user = wp_get_current_user();
-                    unset($user['user_pass']);
+                    unset($user->data->user_pass);
                     return $this->responder->success($user);
                 }
                 return $this->responder->error(ErrorCode::AUTHENTICATION_REQUIRED, '');
@@ -10005,7 +10005,7 @@ namespace Tqdev\PhpCrudApi\Middleware {
             if ($method == 'GET' && $path == 'me') {
                 if (is_user_logged_in()) {
                     $user = wp_get_current_user();
-                    unset($user['user_pass']);
+                    unset($user->data->user_pass);
                     return $this->responder->success($user);
                 }
                 return $this->responder->error(ErrorCode::AUTHENTICATION_REQUIRED, '');
