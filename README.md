@@ -664,6 +664,7 @@ You can enable the following middleware using the "middlewares" config parameter
 - "apiKeyAuth": Support for "API Key Authentication"
 - "apiKeyDbAuth": Support for "API Key Database Authentication"
 - "dbAuth": Support for "Database Authentication"
+- "wpAuth": Support for "Wordpress Authentication"
 - "jwtAuth": Support for "JWT Authentication"
 - "basicAuth": Support for "Basic Authentication"
 - "reconnect": Reconnect to the database with different parameters
@@ -716,6 +717,10 @@ You can tune the middleware behavior using middleware specific configuration par
 - "dbAuth.loginAfterRegistration": 1 or zero if registered users should be logged in after registration ("")
 - "dbAuth.passwordLength": Minimum length that the password must have ("12")
 - "dbAuth.sessionName": The name of the PHP session that is started ("")
+- "wpAuth.mode": Set to "optional" if you want to allow anonymous access ("required")
+- "wpAuth.wpDirectory": The folder/path where the Wordpress install can be found (".")
+- "wpAuth.usernameFormField": The name of the form field that holds the username ("username")
+- "wpAuth.passwordFormField": The name of the form field that holds the password ("password")
 - "jwtAuth.mode": Set to "optional" if you want to allow anonymous access ("required")
 - "jwtAuth.header": Name of the header containing the JWT token ("X-Authorization")
 - "jwtAuth.leeway": The acceptable number of seconds of clock skew ("5")
@@ -841,6 +846,27 @@ For login operations, it is possible to use a view as the usersTable. Such view 
 
 However, views with joined tables are not insertable ([see issue 907](https://github.com/mevdschee/php-crud-api/issues/907) ). As a workaround, use the property ***loginTable*** to set a different reference table for login. The **usersTable** will still be set to the normal, insertable users table. 
 
+#### Wordpress authentication
+
+The Wordpress authentication middleware defines three routes:
+
+    method path       - parameters                      - description
+    ---------------------------------------------------------------------------------------------------
+    GET    /me        -                                 - returns the user that is currently logged in
+    POST   /login     - username, password              - logs a user in by username and password
+    POST   /logout    -                                 - logs out the currently logged in user
+
+A user can be logged in by sending it's username and password to the login endpoint (in JSON format).
+The user can be logged out by sending a POST request with an empty body to the logout endpoint.
+You need to specify the Wordpress installation directory using the "wpAuth.wpDirectory" configuration parameter.
+The middleware calls "wp-load.php" this allows you to use Wordpress functions in the authorization middleware, like:
+
+- wp_get_current_user()
+- is_user_logged_in()
+- is_super_admin()
+- user_can(wp_get_current_user(),'edit_posts');
+
+Note that the `$_SESSION` variable is not used by this middleware.
 
 #### Basic authentication
 

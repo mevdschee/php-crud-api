@@ -3306,7 +3306,7 @@ namespace Nyholm\Psr7Server {
         /**
          * {@inheritdoc}
          */
-        public function fromArrays(array $server, array $headers = [], array $cookie = [], array $get = [], /*?array*/ $post = null, array $files = [], $body = null): ServerRequestInterface
+        public function fromArrays(array $server, array $headers = [], array $cookie = [], array $get = [], ?array $post = null, array $files = [], $body = null): ServerRequestInterface
         {
             $method = $this->getMethodFromEnv($server);
             $uri = $this->getUriFromEnvWithHTTP($server);
@@ -3575,7 +3575,8 @@ namespace Nyholm\Psr7Server {
             array $server,
             array $headers = [],
             array $cookie = [],
-            array $get = [], /*?array*/ $post = null,
+            array $get = [],
+            ?array $post = null,
             array $files = [],
             $body = null
         ): ServerRequestInterface;
@@ -9987,6 +9988,7 @@ namespace Tqdev\PhpCrudApi\Middleware {
                     'remember'      => false,
                 ]);
                 if ($user->ID) {
+                    unset($user->data->user_pass);
                     return $this->responder->success($user);
                 }
                 return $this->responder->error(ErrorCode::AUTHENTICATION_FAILED, $username);
@@ -9994,13 +9996,17 @@ namespace Tqdev\PhpCrudApi\Middleware {
             if ($method == 'POST' && $path == 'logout') {
                 if (is_user_logged_in()) {
                     wp_logout();
+                    $user = wp_get_current_user();
+                    unset($user->data->user_pass);
                     return $this->responder->success($user);
                 }
                 return $this->responder->error(ErrorCode::AUTHENTICATION_REQUIRED, '');
             }
             if ($method == 'GET' && $path == 'me') {
                 if (is_user_logged_in()) {
-                    return $this->responder->success(wp_get_current_user());
+                    $user = wp_get_current_user();
+                    unset($user->data->user_pass);
+                    return $this->responder->success($user);
                 }
                 return $this->responder->error(ErrorCode::AUTHENTICATION_REQUIRED, '');
             }

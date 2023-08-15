@@ -38,6 +38,7 @@ class WpAuthMiddleware extends Middleware
                 'remember'      => false,
             ]);
             if ($user->ID) {
+                unset($user->data->user_pass);
                 return $this->responder->success($user);
             }
             return $this->responder->error(ErrorCode::AUTHENTICATION_FAILED, $username);
@@ -45,13 +46,17 @@ class WpAuthMiddleware extends Middleware
         if ($method == 'POST' && $path == 'logout') {
             if (is_user_logged_in()) {
                 wp_logout();
+                $user = wp_get_current_user();
+                unset($user->data->user_pass);
                 return $this->responder->success($user);
             }
             return $this->responder->error(ErrorCode::AUTHENTICATION_REQUIRED, '');
         }
         if ($method == 'GET' && $path == 'me') {
             if (is_user_logged_in()) {
-                return $this->responder->success(wp_get_current_user());
+                $user = wp_get_current_user();
+                unset($user->data->user_pass);
+                return $this->responder->success($user);
             }
             return $this->responder->error(ErrorCode::AUTHENTICATION_REQUIRED, '');
         }
