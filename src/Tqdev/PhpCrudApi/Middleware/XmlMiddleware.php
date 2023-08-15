@@ -2,6 +2,7 @@
 
 namespace Tqdev\PhpCrudApi\Middleware;
 
+use Exception;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
@@ -52,6 +53,7 @@ class XmlMiddleware extends Middleware
                 }
             } else {
                 foreach ($a as $k => $v) {
+                    $k = preg_replace('/[^a-z0-9\-\_\.]/', '', $k);
                     if ($k == '__type' && $t($a) == 'object') {
                         $c->setAttribute('__type', $v);
                     } else {
