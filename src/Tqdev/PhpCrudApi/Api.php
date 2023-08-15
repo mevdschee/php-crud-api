@@ -42,9 +42,7 @@ use Tqdev\PhpCrudApi\Middleware\WpAuthMiddleware;
 use Tqdev\PhpCrudApi\Middleware\XmlMiddleware;
 use Tqdev\PhpCrudApi\Middleware\XsrfMiddleware;
 use Tqdev\PhpCrudApi\OpenApi\OpenApiService;
-use Tqdev\PhpCrudApi\Record\ErrorCode;
 use Tqdev\PhpCrudApi\Record\RecordService;
-use Tqdev\PhpCrudApi\ResponseUtils;
 
 class Api implements RequestHandlerInterface
 {
@@ -132,7 +130,7 @@ class Api implements RequestHandlerInterface
                     new TextSearchMiddleware($router, $responder, $config, $middleware, $reflection);
                     break;
                 case 'xml':
-                    new XmlMiddleware($router, $responder, $config, $middleware, $reflection);
+                    new XmlMiddleware($router, $responder, $config, $middleware);
                     break;
                 case 'json':
                     new JsonMiddleware($router, $responder, $config, $middleware);

@@ -2,7 +2,6 @@
 
 namespace Tqdev\PhpCrudApi\Middleware;
 
-use Exception;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
@@ -15,12 +14,9 @@ use Tqdev\PhpCrudApi\ResponseFactory;
 
 class XmlMiddleware extends Middleware
 {
-    private $reflection;
-
-    public function __construct(Router $router, Responder $responder, Config $config, string $middleware, ReflectionService $reflection)
+    public function __construct(Router $router, Responder $responder, Config $config, string $middleware)
     {
         parent::__construct($router, $responder, $config, $middleware);
-        $this->reflection = $reflection;
     }
 
     private function json2xml($json, $types = 'null,boolean,number,string,object,array')
