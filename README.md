@@ -1718,4 +1718,8 @@ Test the script (running in the container) by opening the following URL:
 
     http://localhost:8080/records/posts/1
 
+### Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=mevdschee/php-crud-api&type=Date)](https://star-history.com/#mevdschee/php-crud-api&Date)
+
 Enjoy!
