@@ -134,6 +134,7 @@ The following features are supported:
 
 Related projects:
 
+  - [PHP-CRUD-API Quick Start](https://github.com/nik2208/php-crud-api-quick-start): A customizable, ready to go, docker compose file featuring PHP-CRUD-API.
   - [PHP-CRUD-API filter generator](https://thipages.github.io/jca-filter/#): A JavaScript library creating PHP-CRUD-API filters from expressions.
   - [JS-CRUD-API](https://github.com/thipages/js-crud-api): A JavaScript client library for the API of PHP-CRUD-API
   - [PHP-API-AUTH](https://github.com/mevdschee/php-api-auth): Single file PHP script that is an authentication provider for PHP-CRUD-API
