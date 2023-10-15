@@ -901,9 +901,6 @@ This example sends the signed claims:
       "exp": 1538207635
     }
 
-It is important to set `jwtAuth.audiences` to avoid tokens from other projects on the same 
-authentication provider to work on your project.
-
 NB: The JWT implementation only supports the RSA and HMAC based algorithms.
 
 ##### Configure and test JWT authentication with Auth0
