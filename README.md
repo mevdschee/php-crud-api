@@ -901,8 +901,8 @@ This example sends the signed claims:
       "exp": 1538207635
     }
 
-It is important to set `jwtAuth.audiences` and `jwtAuth.issuers` to avoid tokens from other 
-projects on the same authentication provider to work on your project.
+It is important to set `jwtAuth.audiences` to avoid tokens from other projects on the same 
+authentication provider to work on your project.
 
 NB: The JWT implementation only supports the RSA and HMAC based algorithms.
 
@@ -948,12 +948,15 @@ c. Read the decoded header information from the token, it will give you the corr
 d. Grab the public key via this [URL](https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com), which corresponds to your `kid` from previous step
 e. Now, just fill `jwtAuth.secrets` with your public key in the `api.php`
 
+Also configure the `jwtAuth.audiences` (fill in the Firebase project ID).
+
 Here is an example of what it should look like in the configuration:
 
 ```
 ...,
 'middlewares' => 'cors, jwtAuth, authorization',
         'jwtAuth.secrets' => "ce5ced6e40dcd1eff407048867b1ed1e706686a0:-----BEGIN CERTIFICATE-----\nMIIDHDCCAgSgAwIBAgIIExun9bJSK1wwDQYJKoZIhvcNAQEFBQAwMTEvMC0GA1UE\nAxMmc2VjdXJldG9rZW4uc3lzdGVtLmdzZXJ2aWNlYWNjb3VudC5jb20wHhcNMTkx\nMjIyMjEyMTA3WhcNMjAwMTA4MDkzNjA3WjAxMS8wLQYDVQQDEyZzZWN1cmV0b2tl\nbi5zeXN0ZW0uZ3NlcnZpY2VhY2NvdW50LmNvbTCCASIwDQYJKoZIhvcNAQEBBQAD\nggEPADCCAQoCggEBAKsvVDUwXeYQtySNvyI1/tZAk0sj7Zx4/1+YLUomwlK6vmEd\nyl2IXOYOj3VR7FBA24A9//nnrp+mV8YOYEOdaWX7PQo0PIPFPqdA0r7CqBUWHPfQ\n1WVHVRQY3G0c7upM97UfMes9xOrMqyvecMRk1e5S6eT12Zh2og7yiVs8gP83M1EB\nGqseUaltaadjyT35w5B0Ny0/7NdLYiv2G6Z0S821SxvSo1/wfmilnBBKYYluP0PA\n9NPznWFP6uXnX7gKxyJT9//cYVxTO6+b1TT13Yvrpm1a4EuCOhLrZH6ErHQTccAM\nhAx8mdNtbROsp0dlPKrSfqO82uFz45RXZYmSeP0CAwEAAaM4MDYwDAYDVR0TAQH/\nBAIwADAOBgNVHQ8BAf8EBAMCB4AwFgYDVR0lAQH/BAwwCgYIKwYBBQUHAwIwDQYJ\nKoZIhvcNAQEFBQADggEBACNsJ5m00gdTvD6j6ahURsGrNZ0VJ0YREVQ5U2Jtubr8\nn2fuhMxkB8147ISzfi6wZR+yNwPGjlr8JkAHAC0i+Nam9SqRyfZLqsm+tHdgFT8h\npa+R/FoGrrLzxJNRiv0Trip8hZjgz3PClz6KxBQzqL+rfGV2MbwTXuBoEvLU1mYA\no3/UboJT7cNGjZ8nHXeoKMsec1/H55lUdconbTm5iMU1sTDf+3StGYzTwC+H6yc2\nY3zIq3/cQUCrETkALrqzyCnLjRrLYZu36ITOaKUbtmZhwrP99i2f+H4Ab2i8jeMu\nk61HD29mROYjl95Mko2BxL+76To7+pmn73U9auT+xfA=\n-----END CERTIFICATE-----\n",
+        'jwtAuth.audiences' => 'your-project-id',
         'cors.allowedOrigins' => '*',
         'cors.allowHeaders' => 'X-Authorization'
 ```
@@ -963,6 +966,7 @@ Notes:
  - Do not include spaces before or after the ':'
  - Use double quotation marks (") around the string text
  - The string must contain the linefeeds (\n)
+ - `jwtAuth.audiences` should contain your Firebase projectId
 
 To test your integration, you can copy the [firebase/vanilla.html](examples/clients/firebase/vanilla.html)
 file and the [firebase/vanilla-success.html](examples/clients/firebase/vanilla-success.html) file,
