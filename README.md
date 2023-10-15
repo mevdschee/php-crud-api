@@ -901,6 +901,9 @@ This example sends the signed claims:
       "exp": 1538207635
     }
 
+It is important to set `jwtAuth.audiences` and `jwtAuth.issuers` to avoid tokens from other 
+projects on the same authentication provider to work on your project.
+
 NB: The JWT implementation only supports the RSA and HMAC based algorithms.
 
 ##### Configure and test JWT authentication with Auth0
@@ -923,7 +926,9 @@ file. Be sure to fill these three variables:
  - `clientId` with your Client ID
  - `audience` with the API URL you created in Auth0
 
-⚠️ If you don't fill the audience parameter, it will not work because you won't get a valid JWT.
+Note that if you don't fill the audience parameter, it will not work because you won't get a valid JWT.
+Also note that you should fill `jwtAuth.audiences` to ensure the tokens are validated to be generated
+for your application.
 
 You can also change the `url` variable, used to test the API with authentication.
 
