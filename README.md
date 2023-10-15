@@ -927,8 +927,8 @@ file. Be sure to fill these three variables:
  - `audience` with the API URL you created in Auth0
 
 Note that if you don't fill the audience parameter, it will not work because you won't get a valid JWT.
-Also note that you should fill `jwtAuth.audiences` to ensure the tokens are validated to be generated
-for your application.
+Also note that you should fill `jwtAuth.audiences` (with the value of the `audience`) to ensure the
+tokens are validated to be generated for your application.
 
 You can also change the `url` variable, used to test the API with authentication.
 
