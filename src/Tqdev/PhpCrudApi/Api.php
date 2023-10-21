@@ -38,12 +38,11 @@ use Tqdev\PhpCrudApi\Middleware\SanitationMiddleware;
 use Tqdev\PhpCrudApi\Middleware\SslRedirectMiddleware;
 use Tqdev\PhpCrudApi\Middleware\TextSearchMiddleware;
 use Tqdev\PhpCrudApi\Middleware\ValidationMiddleware;
+use Tqdev\PhpCrudApi\Middleware\WpAuthMiddleware;
 use Tqdev\PhpCrudApi\Middleware\XmlMiddleware;
 use Tqdev\PhpCrudApi\Middleware\XsrfMiddleware;
 use Tqdev\PhpCrudApi\OpenApi\OpenApiService;
-use Tqdev\PhpCrudApi\Record\ErrorCode;
 use Tqdev\PhpCrudApi\Record\RecordService;
-use Tqdev\PhpCrudApi\ResponseUtils;
 
 class Api implements RequestHandlerInterface
 {
@@ -94,6 +93,9 @@ class Api implements RequestHandlerInterface
                 case 'dbAuth':
                     new DbAuthMiddleware($router, $responder, $config, $middleware, $reflection, $db);
                     break;
+                case 'wpAuth':
+                    new WpAuthMiddleware($router, $responder, $config, $middleware);
+                    break;
                 case 'reconnect':
                     new ReconnectMiddleware($router, $responder, $config, $middleware, $reflection, $db);
                     break;
@@ -128,7 +130,7 @@ class Api implements RequestHandlerInterface
                     new TextSearchMiddleware($router, $responder, $config, $middleware, $reflection);
                     break;
                 case 'xml':
-                    new XmlMiddleware($router, $responder, $config, $middleware, $reflection);
+                    new XmlMiddleware($router, $responder, $config, $middleware);
                     break;
                 case 'json':
                     new JsonMiddleware($router, $responder, $config, $middleware);

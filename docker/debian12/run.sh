@@ -1,13 +1,13 @@
 #!/bin/bash
 echo "================================================"
-echo " Debian 9 (PHP 7.0)"
+echo " Debian 12 (PHP 8.2)"
 echo "================================================"
 
-echo -n "[1/4] Starting MariaDB 10.1 ..... "
+echo -n "[1/4] Starting MariaDB 10.11 .... "
 # make sure mysql can create socket and lock
 mkdir /var/run/mysqld && chmod 777 /var/run/mysqld
 # run mysql server
-nohup mysqld > /root/mysql.log 2>&1 &
+nohup mysqld --user=root > /root/mysql.log 2>&1 &
 # wait for mysql to become available
 while ! mysqladmin ping -hlocalhost >/dev/null 2>&1; do
     sleep 1
@@ -21,9 +21,9 @@ FLUSH PRIVILEGES;
 EOF
 echo "done"
 
-echo -n "[2/4] Starting PostgreSQL 9.6 ... "
+echo -n "[2/4] Starting PostgreSQL 15.3 .. "
 # run postgres server
-nohup su - -c "/usr/lib/postgresql/9.6/bin/postgres -D /etc/postgresql/9.6/main" postgres > /root/postgres.log 2>&1 &
+nohup su - -c "/usr/lib/postgresql/15/bin/postgres -D /etc/postgresql/15/main" postgres > /root/postgres.log 2>&1 &
 # wait for postgres to become available
 until su - -c "psql -U postgres -c '\q'" postgres >/dev/null 2>&1; do
    sleep 1;
@@ -31,7 +31,7 @@ done
 # create database and user on postgres
 su - -c "psql -U postgres >/dev/null" postgres << 'EOF'
 CREATE USER "php-crud-api" WITH PASSWORD 'php-crud-api';
-CREATE DATABASE "php-crud-api";
+CREATE DATABASE "php-crud-api" WITH OWNER = "php-crud-api";
 GRANT ALL PRIVILEGES ON DATABASE "php-crud-api" to "php-crud-api";
 \c "php-crud-api";
 CREATE EXTENSION IF NOT EXISTS postgis;
@@ -39,7 +39,7 @@ CREATE EXTENSION IF NOT EXISTS postgis;
 EOF
 echo "done"
 
-echo -n "[3/4] Starting SQLServer 2017 ... "
+echo -n "[3/4] Starting SQLServer 2019 ... "
 echo "skipped"
 
 echo -n "[4/4] Cloning PHP-CRUD-API v2 ... "

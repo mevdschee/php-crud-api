@@ -76,7 +76,7 @@ EOF;
     }
 }
 
-function run(string $base, array $dirs, string $filename, array $ignore)
+function run(string $base, array $dirs, string $filename, array $ignore, array $replaces)
 {
     $lines = [];
     $start = microtime(true);
@@ -88,6 +88,9 @@ function run(string $base, array $dirs, string $filename, array $ignore)
     }
     $data = implode("\n", $lines);
     $data = preg_replace('/\n({)?\s*\n\s*\n/', "\n$1\n", $data);
+    foreach ($replaces as $search => $replace) {
+        $data = str_replace($search, $replace, $data);
+    }
     file_put_contents('tmp_' . $filename, $data);
     ob_start();
     include 'tmp_' . $filename;
@@ -102,6 +105,11 @@ function run(string $base, array $dirs, string $filename, array $ignore)
 
 $ignore = [
     'vendor/nyholm/psr7/src/Factory/HttplugFactory.php',
+    'vendor/nyholm/psr7/.php-cs-fixer.dist.php',
+];
+
+$replaces = [
+    'use StreamTrait;' => 'function __toString() {}'
 ];
 
 $directories = ['vendor/nyholm', 'src'];
@@ -110,4 +118,4 @@ if (!extension_loaded('psr')) {
     array_unshift($directories, 'vendor/psr');
 }
 
-run(__DIR__, $directories, 'api.php', $ignore);
+run(__DIR__, $directories, 'api.php', $ignore, $replaces);

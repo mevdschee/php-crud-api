@@ -4,13 +4,13 @@ ARG DEBIAN_FRONTEND=noninteractive
 
 # install: php / mysql / postgres / sqlite / tools / mssql deps
 RUN apt-get update && apt-get -y install \
-php-cli php-xml php-mbstring \
-mysql-server mysql-client php-mysql \
-postgresql php-pgsql \
-postgresql-12-postgis-3 \
-sqlite3 php-sqlite3 \
-git wget \
-curl gnupg
+    php-cli php-xml php-mbstring \
+    mysql-server mysql-client php-mysql \
+    postgresql php-pgsql \
+    postgresql-12-postgis-3 \
+    sqlite3 php-sqlite3 \
+    git wget \
+    curl gnupg
 
 # adding custom MS repository
 RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add -
@@ -24,7 +24,8 @@ RUN ACCEPT_EULA=Y apt-get install -y msodbcsql17 mssql-tools
 
 # install pdo_sqlsrv
 RUN apt-get -y install php-pear build-essential unixodbc-dev php-dev
-RUN pecl install pdo_sqlsrv
+RUN pecl channel-update pecl.php.net
+RUN pecl install pdo_sqlsrv-5.10.1
 RUN echo extension=pdo_sqlsrv.so > /etc/php/7.4/mods-available/pdo_sqlsrv.ini
 RUN phpenmod pdo_sqlsrv
 

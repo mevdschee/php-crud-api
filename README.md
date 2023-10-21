@@ -8,10 +8,10 @@ NB: This is the [TreeQL](https://treeql.org) reference implementation in PHP.
 
 ## Requirements
 
-  - PHP 7.0 or higher with PDO drivers enabled for one of these database systems:
-    - MySQL 5.6 / MariaDB 10.0 or higher for spatial features in MySQL
-    - PostgreSQL 9.1 or higher with PostGIS 2.0 or higher for spatial features
-    - SQL Server 2012 or higher (2017 for Linux support)
+  - PHP 7.2 or higher with PDO drivers enabled for one of these database systems:
+    - MySQL 5.7 / MariaDB 10.0 or higher for spatial features in MySQL
+    - PostgreSQL 9.5 or higher with PostGIS 2.2 or higher for spatial features
+    - SQL Server 2017 or higher (2019 also has Linux support)
     - SQLite 3.16 or higher (spatial features NOT supported)
 
 ## Installation
@@ -134,6 +134,7 @@ The following features are supported:
 
 Related projects:
 
+  - [PHP-CRUD-API Quick Start](https://github.com/nik2208/php-crud-api-quick-start): A customizable, ready to go, docker compose file featuring PHP-CRUD-API.
   - [PHP-CRUD-API filter generator](https://thipages.github.io/jca-filter/#): A JavaScript library creating PHP-CRUD-API filters from expressions.
   - [JS-CRUD-API](https://github.com/thipages/js-crud-api): A JavaScript client library for the API of PHP-CRUD-API
   - [PHP-API-AUTH](https://github.com/mevdschee/php-api-auth): Single file PHP script that is an authentication provider for PHP-CRUD-API
@@ -168,7 +169,7 @@ You can compile all files into a single "`api.php`" file using:
 
     php build.php
 
-NB: The install script will patch the dependencies in the vendor directory for PHP 7.0 compatibility.
+Note that you don't use compilation when you integrate this project into another project or framework (use Composer instead).
 
 ### Development
 
@@ -664,6 +665,7 @@ You can enable the following middleware using the "middlewares" config parameter
 - "apiKeyAuth": Support for "API Key Authentication"
 - "apiKeyDbAuth": Support for "API Key Database Authentication"
 - "dbAuth": Support for "Database Authentication"
+- "wpAuth": Support for "Wordpress Authentication"
 - "jwtAuth": Support for "JWT Authentication"
 - "basicAuth": Support for "Basic Authentication"
 - "reconnect": Reconnect to the database with different parameters
@@ -720,6 +722,10 @@ You can tune the middleware behavior using middleware specific configuration par
 - "dbAuth.loginAfterRegistration": 1 or zero if registered users should be logged in after registration ("")
 - "dbAuth.passwordLength": Minimum length that the password must have ("12")
 - "dbAuth.sessionName": The name of the PHP session that is started ("")
+- "wpAuth.mode": Set to "optional" if you want to allow anonymous access ("required")
+- "wpAuth.wpDirectory": The folder/path where the Wordpress install can be found (".")
+- "wpAuth.usernameFormField": The name of the form field that holds the username ("username")
+- "wpAuth.passwordFormField": The name of the form field that holds the password ("password")
 - "jwtAuth.mode": Set to "optional" if you want to allow anonymous access ("required")
 - "jwtAuth.header": Name of the header containing the JWT token ("X-Authorization")
 - "jwtAuth.leeway": The acceptable number of seconds of clock skew ("5")
@@ -845,6 +851,27 @@ For login operations, it is possible to use a view as the usersTable. Such view 
 
 However, views with joined tables are not insertable ([see issue 907](https://github.com/mevdschee/php-crud-api/issues/907) ). As a workaround, use the property ***loginTable*** to set a different reference table for login. The **usersTable** will still be set to the normal, insertable users table. 
 
+#### Wordpress authentication
+
+The Wordpress authentication middleware defines three routes:
+
+    method path       - parameters                      - description
+    ---------------------------------------------------------------------------------------------------
+    GET    /me        -                                 - returns the user that is currently logged in
+    POST   /login     - username, password              - logs a user in by username and password
+    POST   /logout    -                                 - logs out the currently logged in user
+
+A user can be logged in by sending it's username and password to the login endpoint (in JSON format).
+The user can be logged out by sending a POST request with an empty body to the logout endpoint.
+You need to specify the Wordpress installation directory using the "wpAuth.wpDirectory" configuration parameter.
+The middleware calls "wp-load.php" this allows you to use Wordpress functions in the authorization middleware, like:
+
+- wp_get_current_user()
+- is_user_logged_in()
+- is_super_admin()
+- user_can(wp_get_current_user(),'edit_posts');
+
+Note that the `$_SESSION` variable is not used by this middleware.
 
 #### Basic authentication
 
@@ -900,7 +927,9 @@ file. Be sure to fill these three variables:
  - `clientId` with your Client ID
  - `audience` with the API URL you created in Auth0
 
-⚠️ If you don't fill the audience parameter, it will not work because you won't get a valid JWT.
+Note that if you don't fill the audience parameter, it will not work because you won't get a valid JWT.
+Also note that you should fill `jwtAuth.audiences` (with the value of the `audience`) to ensure the
+tokens are validated to be generated for your application.
 
 You can also change the `url` variable, used to test the API with authentication.
 
@@ -920,12 +949,15 @@ c. Read the decoded header information from the token, it will give you the corr
 d. Grab the public key via this [URL](https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com), which corresponds to your `kid` from previous step  
 e. Now, just fill `jwtAuth.secrets` with your public key in the `api.php`
 
+Also configure the `jwtAuth.audiences` (fill in the Firebase project ID).
+
 Here is an example of what it should look like in the configuration:
 
 ```
 ...,
 'middlewares' => 'cors, jwtAuth, authorization',
         'jwtAuth.secrets' => "ce5ced6e40dcd1eff407048867b1ed1e706686a0:-----BEGIN CERTIFICATE-----\nMIIDHDCCAgSgAwIBAgIIExun9bJSK1wwDQYJKoZIhvcNAQEFBQAwMTEvMC0GA1UE\nAxMmc2VjdXJldG9rZW4uc3lzdGVtLmdzZXJ2aWNlYWNjb3VudC5jb20wHhcNMTkx\nMjIyMjEyMTA3WhcNMjAwMTA4MDkzNjA3WjAxMS8wLQYDVQQDEyZzZWN1cmV0b2tl\nbi5zeXN0ZW0uZ3NlcnZpY2VhY2NvdW50LmNvbTCCASIwDQYJKoZIhvcNAQEBBQAD\nggEPADCCAQoCggEBAKsvVDUwXeYQtySNvyI1/tZAk0sj7Zx4/1+YLUomwlK6vmEd\nyl2IXOYOj3VR7FBA24A9//nnrp+mV8YOYEOdaWX7PQo0PIPFPqdA0r7CqBUWHPfQ\n1WVHVRQY3G0c7upM97UfMes9xOrMqyvecMRk1e5S6eT12Zh2og7yiVs8gP83M1EB\nGqseUaltaadjyT35w5B0Ny0/7NdLYiv2G6Z0S821SxvSo1/wfmilnBBKYYluP0PA\n9NPznWFP6uXnX7gKxyJT9//cYVxTO6+b1TT13Yvrpm1a4EuCOhLrZH6ErHQTccAM\nhAx8mdNtbROsp0dlPKrSfqO82uFz45RXZYmSeP0CAwEAAaM4MDYwDAYDVR0TAQH/\nBAIwADAOBgNVHQ8BAf8EBAMCB4AwFgYDVR0lAQH/BAwwCgYIKwYBBQUHAwIwDQYJ\nKoZIhvcNAQEFBQADggEBACNsJ5m00gdTvD6j6ahURsGrNZ0VJ0YREVQ5U2Jtubr8\nn2fuhMxkB8147ISzfi6wZR+yNwPGjlr8JkAHAC0i+Nam9SqRyfZLqsm+tHdgFT8h\npa+R/FoGrrLzxJNRiv0Trip8hZjgz3PClz6KxBQzqL+rfGV2MbwTXuBoEvLU1mYA\no3/UboJT7cNGjZ8nHXeoKMsec1/H55lUdconbTm5iMU1sTDf+3StGYzTwC+H6yc2\nY3zIq3/cQUCrETkALrqzyCnLjRrLYZu36ITOaKUbtmZhwrP99i2f+H4Ab2i8jeMu\nk61HD29mROYjl95Mko2BxL+76To7+pmn73U9auT+xfA=\n-----END CERTIFICATE-----\n",
+        'jwtAuth.audiences' => 'your-project-id',
         'cors.allowedOrigins' => '*',
         'cors.allowHeaders' => 'X-Authorization'
 ```
@@ -935,6 +967,7 @@ Notes:
  - Do not include spaces before or after the ':'
  - Use double quotation marks (") around the string text
  - The string must contain the linefeeds (\n)
+ - `jwtAuth.audiences` should contain your Firebase projectId
 
 To test your integration, you can copy the [firebase/vanilla.html](examples/clients/firebase/vanilla.html)
 file and the [firebase/vanilla-success.html](examples/clients/firebase/vanilla-success.html) file,
@@ -1483,13 +1516,13 @@ The `customControllers` config supports a comma separated list of custom control
 
 I am testing mainly on Ubuntu and I have the following test setups:
 
-  - (Docker) Ubuntu 16.04 with PHP 7.0, MariaDB 10.0, PostgreSQL 9.5 (PostGIS 2.2) and SQL Server 2017
-  - (Docker) Debian 9 with PHP 7.0, MariaDB 10.1, PostgreSQL 9.6 (PostGIS 2.3) and SQLite 3.16
-  - (Docker) Ubuntu 18.04 with PHP 7.2, MySQL 5.7, PostgreSQL 10.4 (PostGIS 2.4) and SQLite 3.22
   - (Docker) Debian 10 with PHP 7.3, MariaDB 10.3, PostgreSQL 11.4 (PostGIS 2.5) and SQLite 3.27
-  - (Docker) Ubuntu 20.04 with PHP 7.4, MySQL 8.0, PostgreSQL 12.2 (PostGIS 3.0) and SQL Server 2019 and SQLite 3.31 
-  - (Docker) CentOS 8 with PHP 8.1, MariaDB 10.7, PostgreSQL 12.10 (PostGIS 3.0) and SQLite 3.26
   - (Docker) Debian 11 with PHP 7.4, MariaDB 10.5, PostgreSQL 13.4 (PostGIS 3.1) and SQLite 3.34
+  - (Docker) Debian 12 with PHP 8.2, MariaDB 10.11, PostgreSQL 15.3 (PostGIS 3.3) and SQLite 3.40
+  - (Docker) RockyLinux 8 with PHP 7.2, MariaDB 10.3 and SQLite 3.26
+  - (Docker) RockyLinux 9 with PHP 8.0, MariaDB 10.5 and SQLite 3.34
+  - (Docker) Ubuntu 18.04 with PHP 7.2, MySQL 5.7, PostgreSQL 10.4 (PostGIS 2.4) and SQLite 3.22
+  - (Docker) Ubuntu 20.04 with PHP 7.4, MySQL 8.0, PostgreSQL 12.15 (PostGIS 3.0) and SQLite 3.31 and SQL Server 2019
   - (Docker) Ubuntu 22.04 with PHP 8.1, MySQL 8.0, PostgreSQL 14.2 (PostGIS 3.2) and SQLite 3.37 
 
 This covers not all environments (yet), so please notify me of failing tests and report your environment. 
@@ -1546,18 +1579,6 @@ Install docker using the following commands and then logout and login for the ch
 To run the docker tests run "build_all.sh" and "run_all.sh" from the docker directory. The output should be:
 
     ================================================
-    CentOS 8 (PHP 8.1)
-    ================================================
-    [1/4] Starting MariaDB 10.7 ..... done
-    [2/4] Starting PostgreSQL 12.10 .. done
-    [3/4] Starting SQLServer 2017 ... skipped
-    [4/4] Cloning PHP-CRUD-API v2 ... skipped
-    ------------------------------------------------
-    mysql: 119 tests ran in 1336 ms, 1 skipped, 0 failed
-    pgsql: 119 tests ran in 1316 ms, 1 skipped, 0 failed
-    sqlsrv: skipped, driver not loaded
-    sqlite: 119 tests ran in 958 ms, 13 skipped, 0 failed
-    ================================================
     Debian 10 (PHP 7.3)
     ================================================
     [1/4] Starting MariaDB 10.3 ..... done
@@ -1565,10 +1586,10 @@ To run the docker tests run "build_all.sh" and "run_all.sh" from the docker dire
     [3/4] Starting SQLServer 2017 ... skipped
     [4/4] Cloning PHP-CRUD-API v2 ... skipped
     ------------------------------------------------
-    mysql: 119 tests ran in 1276 ms, 1 skipped, 0 failed
-    pgsql: 119 tests ran in 1364 ms, 1 skipped, 0 failed
+    mysql: 120 tests ran in 779 ms, 1 skipped, 0 failed
+    pgsql: 120 tests ran in 769 ms, 1 skipped, 0 failed
     sqlsrv: skipped, driver not loaded
-    sqlite: 119 tests ran in 948 ms, 13 skipped, 0 failed
+    sqlite: 120 tests ran in 672 ms, 13 skipped, 0 failed
     ================================================
     Debian 11 (PHP 7.4)
     ================================================
@@ -1577,34 +1598,46 @@ To run the docker tests run "build_all.sh" and "run_all.sh" from the docker dire
     [3/4] Starting SQLServer 2017 ... skipped
     [4/4] Cloning PHP-CRUD-API v2 ... skipped
     ------------------------------------------------
-    mysql: 119 tests ran in 1255 ms, 1 skipped, 0 failed
-    pgsql: 119 tests ran in 1329 ms, 1 skipped, 0 failed
+    mysql: 120 tests ran in 820 ms, 1 skipped, 0 failed
+    pgsql: 120 tests ran in 780 ms, 1 skipped, 0 failed
     sqlsrv: skipped, driver not loaded
-    sqlite: 119 tests ran in 972 ms, 13 skipped, 0 failed
+    sqlite: 120 tests ran in 681 ms, 13 skipped, 0 failed
     ================================================
-    Debian 9 (PHP 7.0)
+    Debian 12 (PHP 8.2)
     ================================================
-    [1/4] Starting MariaDB 10.1 ..... done
-    [2/4] Starting PostgreSQL 9.6 ... done
+    [1/4] Starting MariaDB 10.11 .... done
+    [2/4] Starting PostgreSQL 15.3 .. done
+    [3/4] Starting SQLServer 2019 ... skipped
+    [4/4] Cloning PHP-CRUD-API v2 ... skipped
+    ------------------------------------------------
+    mysql: 120 tests ran in 880 ms, 1 skipped, 0 failed
+    pgsql: 120 tests ran in 796 ms, 1 skipped, 0 failed
+    sqlsrv: skipped, driver not loaded
+    sqlite: 120 tests ran in 681 ms, 13 skipped, 0 failed
+    ================================================
+    RockyLinux 8 (PHP 7.2)
+    ================================================
+    [1/4] Starting MariaDB 10.3 ..... done
+    [2/4] Starting PostgreSQL 11 .... skipped
     [3/4] Starting SQLServer 2017 ... skipped
     [4/4] Cloning PHP-CRUD-API v2 ... skipped
     ------------------------------------------------
-    mysql: 119 tests ran in 1475 ms, 1 skipped, 0 failed
-    pgsql: 119 tests ran in 1394 ms, 1 skipped, 0 failed
+    mysql: 120 tests ran in 835 ms, 1 skipped, 0 failed
+    pgsql: skipped, driver not loaded
     sqlsrv: skipped, driver not loaded
-    sqlite: 119 tests ran in 1065 ms, 13 skipped, 0 failed
+    sqlite: 120 tests ran in 684 ms, 13 skipped, 0 failed
     ================================================
-    Ubuntu 16.04 (PHP 7.0)
+    RockyLinux 9 (PHP 8.0)
     ================================================
-    [1/4] Starting MariaDB 10.0 ..... done
-    [2/4] Starting PostgreSQL 9.5 ... done
-    [3/4] Starting SQLServer 2017 ... done
+    [1/4] Starting MariaDB 10.5 ..... done
+    [2/4] Starting PostgreSQL 12 .... skipped
+    [3/4] Starting SQLServer 2017 ... skipped
     [4/4] Cloning PHP-CRUD-API v2 ... skipped
     ------------------------------------------------
-    mysql: 119 tests ran in 1434 ms, 1 skipped, 0 failed
-    pgsql: 119 tests ran in 1432 ms, 1 skipped, 0 failed
-    sqlsrv: 119 tests ran in 8634 ms, 1 skipped, 0 failed
-    sqlite: skipped, driver not loaded
+    mysql: 120 tests ran in 825 ms, 1 skipped, 0 failed
+    pgsql: skipped, driver not loaded
+    sqlsrv: skipped, driver not loaded
+    sqlite: 120 tests ran in 678 ms, 13 skipped, 0 failed
     ================================================
     Ubuntu 18.04 (PHP 7.2)
     ================================================
@@ -1613,10 +1646,10 @@ To run the docker tests run "build_all.sh" and "run_all.sh" from the docker dire
     [3/4] Starting SQLServer 2017 ... skipped
     [4/4] Cloning PHP-CRUD-API v2 ... skipped
     ------------------------------------------------
-    mysql: 119 tests ran in 1687 ms, 1 skipped, 0 failed
-    pgsql: 119 tests ran in 1393 ms, 1 skipped, 0 failed
+    mysql: 120 tests ran in 1102 ms, 1 skipped, 0 failed
+    pgsql: 120 tests ran in 812 ms, 1 skipped, 0 failed
     sqlsrv: skipped, driver not loaded
-    sqlite: 119 tests ran in 1158 ms, 13 skipped, 0 failed
+    sqlite: 120 tests ran in 710 ms, 13 skipped, 0 failed
     ================================================
     Ubuntu 20.04 (PHP 7.4)
     ================================================
@@ -1625,10 +1658,10 @@ To run the docker tests run "build_all.sh" and "run_all.sh" from the docker dire
     [3/4] Starting SQLServer 2019 ... done
     [4/4] Cloning PHP-CRUD-API v2 ... skipped
     ------------------------------------------------
-    mysql: 119 tests ran in 2096 ms, 1 skipped, 0 failed
-    pgsql: 119 tests ran in 1368 ms, 1 skipped, 0 failed
-    sqlsrv: 119 tests ran in 8410 ms, 1 skipped, 0 failed
-    sqlite: 119 tests ran in 1053 ms, 13 skipped, 0 failed
+    mysql: 120 tests ran in 1256 ms, 1 skipped, 0 failed
+    pgsql: 120 tests ran in 804 ms, 1 skipped, 0 failed
+    sqlsrv: 120 tests ran in 4058 ms, 1 skipped, 0 failed
+    sqlite: 120 tests ran in 680 ms, 13 skipped, 0 failed
     ================================================
     Ubuntu 22.04 (PHP 8.1)
     ================================================
@@ -1637,19 +1670,19 @@ To run the docker tests run "build_all.sh" and "run_all.sh" from the docker dire
     [3/4] Starting SQLServer 2019 ... skipped
     [4/4] Cloning PHP-CRUD-API v2 ... skipped
     ------------------------------------------------
-    mysql: 119 tests ran in 6882 ms, 1 skipped, 0 failed
-    pgsql: 119 tests ran in 2570 ms, 1 skipped, 0 failed
+    mysql: 120 tests ran in 1199 ms, 1 skipped, 0 failed
+    pgsql: 120 tests ran in 760 ms, 1 skipped, 0 failed
     sqlsrv: skipped, driver not loaded
-    sqlite: 119 tests ran in 2548 ms, 13 skipped, 0 failed
+    sqlite: 120 tests ran in 668 ms, 13 skipped, 0 failed
 
 The above test run (including starting up the databases) takes less than 5 minutes on my slow laptop.
 
     $ ./run.sh
-    1) centos8
-    2) debian10
-    3) debian11
-    4) debian9
-    5) ubuntu16
+    1) debian10
+    2) debian11
+    3) debian12
+    4) rockylinux8
+    5) rockylinux9
     6) ubuntu18
     7) ubuntu20
     8) ubuntu22
@@ -1662,10 +1695,10 @@ The above test run (including starting up the databases) takes less than 5 minut
     [3/4] Starting SQLServer 2017 ... skipped
     [4/4] Cloning PHP-CRUD-API v2 ... skipped
     ------------------------------------------------
-    mysql: 119 tests ran in 1687 ms, 1 skipped, 0 failed
-    pgsql: 119 tests ran in 1393 ms, 1 skipped, 0 failed
+    mysql: 120 tests ran in 1102 ms, 1 skipped, 0 failed
+    pgsql: 120 tests ran in 812 ms, 1 skipped, 0 failed
     sqlsrv: skipped, driver not loaded
-    sqlite: 119 tests ran in 1158 ms, 13 skipped, 0 failed
+    sqlite: 120 tests ran in 710 ms, 13 skipped, 0 failed
     root@b7ab9472e08f:/php-crud-api# 
 
 As you can see the "run.sh" script gives you access to a prompt in the chosen docker environment.
@@ -1695,5 +1728,9 @@ This will setup a database (MySQL) and a webserver (Apache) and runs the applica
 Test the script (running in the container) by opening the following URL:
 
     http://localhost:8080/records/posts/1
+
+### Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=mevdschee/php-crud-api&type=Date)](https://star-history.com/#mevdschee/php-crud-api&Date)
 
 Enjoy!
