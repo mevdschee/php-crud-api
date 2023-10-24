@@ -111,6 +111,7 @@ class DbAuthMiddleware extends Middleware
                             session_regenerate_id(true);
                         }
                         unset($user[$passwordColumnName]);
+                        $user['updatedAt'] = time();
                         $_SESSION['user'] = $user;
                         return $this->responder->success($user);
                     } else {
