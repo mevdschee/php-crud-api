@@ -36,6 +36,7 @@
     "ext-zlib": "*",
     "ext-json": "*",
     "ext-pdo": "*",
+    "ext-mbstring": "*",
     "psr/http-message": "*",
     "psr/http-factory": "*",
     "psr/http-server-handler": "*",
