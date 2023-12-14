@@ -722,7 +722,7 @@ You can tune the middleware behavior using middleware specific configuration par
 - "dbAuth.confirmEmail": zero or 1 if registered users should confirm email after registration ("")
 - "dbAuth.emailColumn": The users table column that holds email ("email")
 - "dbAuth.tokenColumn": The users table column that holds email confirmation token ("token")
-- "dbAuth.confirmedColumn": zero or 1 if registered user has confirmed his email address  ("confirmed")
+- "dbAuth.confirmedColumn": The users table column knowing if user has confirmed his email address  ("confirmed")
 - "wpAuth.mode": Set to "optional" if you want to allow anonymous access ("required")
 - "wpAuth.wpDirectory": The folder/path where the Wordpress install can be found (".")
 - "wpAuth.usernameFormField": The name of the form field that holds the username ("username")

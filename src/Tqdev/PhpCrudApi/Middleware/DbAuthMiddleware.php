@@ -3,7 +3,7 @@
 namespace Tqdev\PhpCrudApi\Middleware;
 
 use PHPMailer\PHPMailer\PHPMailer;
-use PHPMailer\PHPMailer\Exception;
+//use PHPMailer\PHPMailer\Exception;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
