@@ -42,7 +42,8 @@
     "psr/http-server-handler": "*",
     "psr/http-server-middleware": "*",
     "nyholm/psr7": "*",
-    "nyholm/psr7-server": "*"
+    "nyholm/psr7-server": "*",
+    "phpmailer/phpmailer": "^6.9.1"
   },
   "suggest": {
     "ext-memcache": "*",

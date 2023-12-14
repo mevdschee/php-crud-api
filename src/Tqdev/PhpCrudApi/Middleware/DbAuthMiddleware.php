@@ -2,6 +2,8 @@
 
 namespace Tqdev\PhpCrudApi\Middleware;
 
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
@@ -16,11 +18,45 @@ use Tqdev\PhpCrudApi\Record\ErrorCode;
 use Tqdev\PhpCrudApi\Record\OrderingInfo;
 use Tqdev\PhpCrudApi\RequestUtils;
 
+//require 'vendor/phpmailer/phpmailer/src/Exception.php';
+require 'vendor/phpmailer/phpmailer/src/PHPMailer.php';
+require 'vendor/phpmailer/phpmailer/src/SMTP.php';
+
 class DbAuthMiddleware extends Middleware
 {
     private $reflection;
     private $db;
     private $ordering;
+    
+    private function sendConfirmationEmail($to, $token, $smtpSettings) 
+    {
+        $mail = new PHPMailer(true);
+        try {
+            //Server settings
+            $mail->SMTPDebug = 0;
+            $mail->isSMTP();
+            $mail->Host = $smtpSettings['host'];
+            $mail->SMTPAuth = true;
+            $mail->Username = $smtpSettings['username'];
+            $mail->Password = $smtpSettings['password'];
+            $mail->SMTPSecure = $smtpSettings['secure'];
+            $mail->Port = $smtpSettings['port'];
+            //Recipients
+            $mail->setFrom($smtpSettings['from'], 'Mailer');
+            $mail->addAddress($to);
+            //Content
+            $mail->isHTML(true);
+            $mail->Subject = $smtpSettings['confirmSubject'];
+            $base_url="https://".$_SERVER['SERVER_NAME'].dirname($_SERVER["REQUEST_URI"].'?').'/';
+            $mail->Body = $smtpSettings['confirmTemplate'] . '<br><a href="' . $base_url . 'confirm/' . $token. '">Confirm</a>';
+            $mail->send();
+            return true;
+        } catch (Exception $e) {
+            //echo 'Message could not be sent.';
+            //echo 'Mailer Error: ' . $mail->ErrorInfo;
+            return false;
+        }
+    }
 
     public function __construct(Router $router, Responder $responder, Config $config, string $middleware, ReflectionService $reflection, GenericDB $db)
     {
@@ -29,6 +65,8 @@ class DbAuthMiddleware extends Middleware
         $this->db = $db;
         $this->ordering = new OrderingInfo();
     }
+    
+
 
     public function process(ServerRequestInterface $request, RequestHandlerInterface $next): ResponseInterface
     {
@@ -52,11 +90,13 @@ class DbAuthMiddleware extends Middleware
         }
         $path = RequestUtils::getPathSegment($request, 1);
         $method = $request->getMethod();
+        $confirmEmail = $this->getProperty('confirmEmail', '');
         if ($method == 'POST' && in_array($path, ['login', 'register', 'password'])) {
             $body = $request->getParsedBody();
             $usernameFormFieldName = $this->getProperty('usernameFormField', 'username');
             $passwordFormFieldName = $this->getProperty('passwordFormField', 'password');
             $newPasswordFormFieldName = $this->getProperty('newPasswordFormField', 'newPassword');
+            $emailFormFieldName = $this->getProperty('emailFormField', 'email');
             $username = isset($body->$usernameFormFieldName) ? $body->$usernameFormFieldName : '';
             $password = isset($body->$passwordFormFieldName) ? $body->$passwordFormFieldName : '';
             $newPassword = isset($body->$newPasswordFormFieldName) ? $body->$newPasswordFormFieldName : '';
@@ -75,6 +115,10 @@ class DbAuthMiddleware extends Middleware
             $pkName = $table->getPk()->getName();
             $registerUser = $this->getProperty('registerUser', '');
             $loginAfterRegistration = $this->getProperty('loginAfterRegistration', '');
+            $emailColumnName = $this->getProperty('emailColumn', 'email');
+            $tokenColumnName = $this->getProperty('tokenColumn', 'token');
+            $confirmedColumnName = $this->getProperty('confirmedColumn', 'confirmed');
+            $emailSettings = $this->getProperty('emailSettings', '');
             $condition = new ColumnCondition($usernameColumn, 'eq', $username);
             $returnedColumns = $this->getProperty('returnedColumns', '');
             if (!$returnedColumns) {
@@ -99,13 +143,26 @@ class DbAuthMiddleware extends Middleware
                 if (!empty($users)) {
                     return $this->responder->error(ErrorCode::USER_ALREADY_EXIST, $username);
                 }
+                $email = isset($body->$emailFormFieldName) ? $body->$emailFormFieldName : '';
                 $data = json_decode($registerUser, true);
                 $data = is_array($data) ? $data : [];
                 $data[$usernameColumnName] = $username;
                 $data[$passwordColumnName] = password_hash($password, PASSWORD_DEFAULT);
+                $data[$emailColumnName] = $email;
+                if ($confirmEmail) {
+                    $data[$confirmedColumnName] = 0;
+                    $data[$emailColumnName] = $email;
+                    $data[$tokenColumnName] = bin2hex(random_bytes(40));
+                    $emailSent = $this->sendConfirmationEmail($data[$emailColumnName], $data[$tokenColumnName], $emailSettings);
+                }
                 $this->db->createSingle($table, $data);
                 $users = $this->db->selectAll($table, $columnNames, $condition, $columnOrdering, 0, 1);
                 foreach ($users as $user) {
+                    if ($confirmEmail) {
+                        unset($user[$tokenColumnName]);
+                        unset($user[$passwordColumnName]);
+                        return $this->responder->success($user);
+                    }
                     if ($loginAfterRegistration) {
                         if (!headers_sent()) {
                             session_regenerate_id(true);
@@ -124,10 +181,16 @@ class DbAuthMiddleware extends Middleware
                 $users = $this->db->selectAll($table, $columnNames, $condition, $columnOrdering, 0, 1);
                 foreach ($users as $user) {
                     if (password_verify($password, $user[$passwordColumnName]) == 1) {
+                        if ($confirmEmail && !$user[$confirmedColumnName]) {
+                             return $this->responder->error(ErrorCode::EMAIL_NOT_CONFIRMED, $username);
+                        }
                         if (!headers_sent()) {
                             session_regenerate_id(true);
                         }
                         unset($user[$passwordColumnName]);
+                        if ($confirmEmail) {
+                                unset($user[$tokenColumnName]);
+                        }
                         $_SESSION['user'] = $user;
                         return $this->responder->success($user);
                     }
@@ -148,6 +211,9 @@ class DbAuthMiddleware extends Middleware
                 $users = $this->db->selectAll($table, $userColumns, $condition, $columnOrdering, 0, 1);
                 foreach ($users as $user) {
                     if (password_verify($password, $user[$passwordColumnName]) == 1) {
+                        if ($confirmEmail && !$user[$confirmedColumnName]) {
+                            return $this->responder->error(ErrorCode::EMAIL_NOT_CONFIRMED, $username);
+                        }
                         if (!headers_sent()) {
                             session_regenerate_id(true);
                         }
@@ -179,6 +245,29 @@ class DbAuthMiddleware extends Middleware
                 return $this->responder->success($_SESSION['user']);
             }
             return $this->responder->error(ErrorCode::AUTHENTICATION_REQUIRED, '');
+        }
+        if ($method == 'GET' && $path == 'confirm' && $confirmEmail) {
+            $tableName = $this->getProperty('usersTable', 'users');
+            $table = $this->reflection->getTable($tableName);
+            $pkName = $table->getPk()->getName();
+            $tokenColumnName = $this->getProperty('tokenColumn', 'token');
+            $confirmedColumnName = $this->getProperty('confirmedColumn', 'confirmed');
+            $userColumns = $table->getColumnNames();
+            if (!in_array($pkName, $userColumns)) {
+                array_push($userColumns, $pkName);
+            }                
+            $tokenColumn = $table->getColumn($tokenColumnName);
+            $confirmationToken = RequestUtils::getPathSegment($request, 2);
+            $tokenCondition = new ColumnCondition($tokenColumn, 'eq', $confirmationToken);
+            $columnOrdering = $this->ordering->getDefaultColumnOrdering($table);
+            $users = $this->db->selectAll($table, $userColumns, $tokenCondition, $columnOrdering, 0, 1);
+            foreach ($users as $user) {
+                $data = [$confirmedColumnName => 1];
+                $this->db->updateSingle($table, $data, $user[$pkName]);
+                unset($user[$tokenColumnName]);
+                unset($user[$passwordColumnName]);
+                return $this->responder->success($user);
+            }
         }
         if (!isset($_SESSION['user']) || !$_SESSION['user']) {
             $authenticationMode = $this->getProperty('mode', 'required');

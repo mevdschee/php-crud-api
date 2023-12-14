@@ -713,11 +713,16 @@ You can tune the middleware behavior using middleware specific configuration par
 - "dbAuth.returnedColumns": The columns returned on successful login, empty means 'all' ("")
 - "dbAuth.usernameFormField": The name of the form field that holds the username ("username")
 - "dbAuth.passwordFormField": The name of the form field that holds the password ("password")
+- "dbAuth.emailFormField": The name of the form field that holds the email ("email")
 - "dbAuth.newPasswordFormField": The name of the form field that holds the new password ("newPassword")
 - "dbAuth.registerUser": JSON user data (or "1") in case you want the /register endpoint enabled ("")
 - "dbAuth.loginAfterRegistration": 1 or zero if registered users should be logged in after registration ("")
 - "dbAuth.passwordLength": Minimum length that the password must have ("12")
 - "dbAuth.sessionName": The name of the PHP session that is started ("")
+- "dbAuth.confirmEmail": zero or 1 if registered users should confirm email after registration ("")
+- "dbAuth.emailColumn": The users table column that holds email ("email")
+- "dbAuth.tokenColumn": The users table column that holds email confirmation token ("token")
+- "dbAuth.confirmedColumn": zero or 1 if registered user has confirmed his email address  ("confirmed")
 - "wpAuth.mode": Set to "optional" if you want to allow anonymous access ("required")
 - "wpAuth.wpDirectory": The folder/path where the Wordpress install can be found (".")
 - "wpAuth.usernameFormField": The name of the form field that holds the username ("username")
@@ -820,6 +825,7 @@ The database authentication middleware defines five new routes:
     ---------------------------------------------------------------------------------------------------
     GET    /me        -                                 - returns the user that is currently logged in
     POST   /register  - username, password              - adds a user with given username and password
+    GET    /confirm   - token                           - enables the user if the token matches the one sent to the user's email address 
     POST   /login     - username, password              - logs a user in by username and password
     POST   /password  - username, password, newPassword - updates the password of the logged in user
     POST   /logout    -                                 - logs out the currently logged in user
@@ -830,6 +836,33 @@ The user can be logged out by sending a POST request with an empty body to the l
 The passwords are stored as hashes in the password column in the users table. You can register a new user
 using the register endpoint, but this functionality must be turned on using the "dbAuth.registerUser"
 configuration parameter.
+
+By enabling `dbAuth.confirmEmail` you can send a confirmation email to the user's address and wait
+for them to follow the link in order to enable the account. The library used to send the email is 
+phpmailer, the protocol used is SMTP and some extra configuration is needed.
+The database requires three more columns for the users table: email, confirmed, token.
+
+    $emailSettings = [
+    'host' => '',
+    'username' => '',
+    'password' => '',
+    'secure' => 'ssl',
+    'port' => 465,
+    'from' => '',
+    'confirmSubject' => 'Confirmation Email',
+    'confirmTemplate' => '<p>Dear User,<br>Congratulations!</p> <p>You have successfully registered.<br>In order to validate your email address, please click on the link below:</p><br>'
+    ];
+    
+    $config = new Config([
+    ...
+    'dbAuth.confirmEmail' => 1,
+    'dbAuth.emailSettings' => $emailSettings,
+    'dbAuth.confirmedColumn' => 'confirmed',
+    'dbAuth.emailColumn' => 'email',
+    'dbAuth.tokenColumn' => 'token',
+    ...
+    ]);
+
 
 It is IMPORTANT to restrict access to the users table using the 'authorization' middleware, otherwise all 
 users can freely add, modify or delete any account! The minimal configuration is shown below:
@@ -1435,6 +1468,7 @@ The following errors may be reported:
 | 1020  | 409 Conflict              | User already exists
 | 1021  | 422 Unprocessable entity  | Password too short
 | 1022  | 422 Unprocessable entity  | Username is empty
+| 1023  | 403 Forbidden             | Email not confirmed
 | 9999  | 500 Internal server error | Unknown error 
 
 The following JSON structure is used:
