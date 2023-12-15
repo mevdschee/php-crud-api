@@ -8794,6 +8794,7 @@ namespace Tqdev\PhpCrudApi\Middleware {
                 $pkName = $table->getPk()->getName();
                 $tokenColumnName = $this->getProperty('tokenColumn', 'token');
                 $confirmedColumnName = $this->getProperty('confirmedColumn', 'confirmed');
+                $passwordColumnName = $this->getProperty('passwordColumn', 'password');
                 $userColumns = $table->getColumnNames();
                 if (!in_array($pkName, $userColumns)) {
                     array_push($userColumns, $pkName);
@@ -8808,6 +8809,7 @@ namespace Tqdev\PhpCrudApi\Middleware {
                     $this->db->updateSingle($table, $data, $user[$pkName]);
                     unset($user[$tokenColumnName]);
                     unset($user[$passwordColumnName]);
+                    $user[$confirmedColumnName] = 1;
                     return $this->responder->success($user);
                 }
             }
