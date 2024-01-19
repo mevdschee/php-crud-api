@@ -44,7 +44,7 @@ class DbAuthMiddleware extends Middleware
         $method = $request->getMethod();
         if ($method == 'POST' && in_array($path, ['login', 'register', 'password'])) {
             $body = $request->getParsedBody();
-            $username = isset($body->username) ? $body->username : '';
+            $username = trim(isset($body->username) ? $body->username : '');
             $password = isset($body->password) ? $body->password : '';
             $newPassword = isset($body->newPassword) ? $body->newPassword : '';
             $tableName = $this->getProperty('usersTable', 'users');
