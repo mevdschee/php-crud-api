@@ -598,6 +598,31 @@ of the batch failed due to an integrity violation:
 
 The response status code will always be 424 (failed dependency) in case of any failure of one of the batch operations.
 
+To insert multiple records into this table the request can be written in URL format as:
+
+    POST /records/posts
+
+The body should contain an array of records to be inserted:
+
+    [
+            {
+                "title": "Hello world!",
+                "content": "Welcome to the first post.",
+                "created": "2018-03-05T20:12:56Z"
+            },
+            {
+                "title": "Black is the new red",
+                "content": "This is the second post.",
+                "created": "2018-03-06T21:34:01Z"
+            }
+    ]
+
+The return value is also an array containing the primary keys of the newly inserted records:
+
+    [1,2] 
+
+Note that batch operation for DELETE follows the same pattern as PUT, but without a body.
+
 ### Spatial support
 
 For spatial support there is an extra set of filters that can be applied on geometry columns and that starting with an "s":
