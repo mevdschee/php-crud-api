@@ -141,6 +141,7 @@ Related projects:
   - [PHP-CRUD-UI](https://github.com/mevdschee/php-crud-ui): Single file PHP script that adds a UI to a PHP-CRUD-API project.
   - [PHP-CRUD-ADMIN](https://github.com/mevdschee/php-crud-admin): Single file PHP script that adds a database admin interface to a PHP-CRUD-API project.
   - [PHP-SP-API](https://github.com/mevdschee/php-sp-api): Single file PHP script that adds a REST API to a SQL database.
+  - [dexie-mysql-sync](https://github.com/scriptPilot/dexie-mysql-sync): Synchronization between local IndexedDB and MySQL Database. 
   - [ra-data-treeql](https://github.com/nkappler/ra-data-treeql): NPM package that provides a [Data Provider](https://marmelab.com/react-admin/DataProviderIntroduction.html) for [React Admin](https://marmelab.com/react-admin/).
   - [scriptPilot/vueuse](https://github.com/scriptPilot/vueuse/): Vue [Composables](https://vuejs.org/guide/reusability/composables.html) in addition to [VueUse.org](https://vueuse.org/) (that support PHP-CRUD-API).
   - [scriptPilot/add-php-backend](https://github.com/scriptPilot/add-php-backend): Add MySQL, phpMyAdmin and PHP-CRUD-API to your dev environment. 
