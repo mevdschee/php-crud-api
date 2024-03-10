@@ -197,7 +197,7 @@ namespace Psr\Http\Message {
          *
          * @return string HTTP protocol version.
          */
-        public function getProtocolVersion();
+        public function getProtocolVersion(): string;
 
         /**
          * Return an instance with the specified HTTP protocol version.
@@ -212,7 +212,7 @@ namespace Psr\Http\Message {
          * @param string $version HTTP protocol version
          * @return static
          */
-        public function withProtocolVersion(string $version);
+        public function withProtocolVersion(string $version): MessageInterface;
 
         /**
          * Retrieves all message header values.
@@ -239,7 +239,7 @@ namespace Psr\Http\Message {
          *     key MUST be a header name, and each value MUST be an array of strings
          *     for that header.
          */
-        public function getHeaders();
+        public function getHeaders(): array;
 
         /**
          * Checks if a header exists by the given case-insensitive name.
@@ -249,7 +249,7 @@ namespace Psr\Http\Message {
          *     name using a case-insensitive string comparison. Returns false if
          *     no matching header name is found in the message.
          */
-        public function hasHeader(string $name);
+        public function hasHeader(string $name): bool;
 
         /**
          * Retrieves a message header value by the given case-insensitive name.
@@ -265,7 +265,7 @@ namespace Psr\Http\Message {
          *    header. If the header does not appear in the message, this method MUST
          *    return an empty array.
          */
-        public function getHeader(string $name);
+        public function getHeader(string $name): array;
 
         /**
          * Retrieves a comma-separated string of the values for a single header.
@@ -286,7 +286,7 @@ namespace Psr\Http\Message {
          *    concatenated together using a comma. If the header does not appear in
          *    the message, this method MUST return an empty string.
          */
-        public function getHeaderLine(string $name);
+        public function getHeaderLine(string $name): string;
 
         /**
          * Return an instance with the provided value replacing the specified header.
@@ -303,7 +303,7 @@ namespace Psr\Http\Message {
          * @return static
          * @throws \InvalidArgumentException for invalid header names or values.
          */
-        public function withHeader(string $name, $value);
+        public function withHeader(string $name, $value): MessageInterface;
 
         /**
          * Return an instance with the specified header appended with the given value.
@@ -321,7 +321,7 @@ namespace Psr\Http\Message {
          * @return static
          * @throws \InvalidArgumentException for invalid header names or values.
          */
-        public function withAddedHeader(string $name, $value);
+        public function withAddedHeader(string $name, $value): MessageInterface;
 
         /**
          * Return an instance without the specified header.
@@ -335,14 +335,14 @@ namespace Psr\Http\Message {
          * @param string $name Case-insensitive header field name to remove.
          * @return static
          */
-        public function withoutHeader(string $name);
+        public function withoutHeader(string $name): MessageInterface;
 
         /**
          * Gets the body of the message.
          *
          * @return StreamInterface Returns the body as a stream.
          */
-        public function getBody();
+        public function getBody(): StreamInterface;
 
         /**
          * Return an instance with the specified message body.
@@ -357,7 +357,7 @@ namespace Psr\Http\Message {
          * @return static
          * @throws \InvalidArgumentException When the body is not valid.
          */
-        public function withBody(StreamInterface $body);
+        public function withBody(StreamInterface $body): MessageInterface;
     }
 }
 
@@ -401,7 +401,7 @@ namespace Psr\Http\Message {
          *
          * @return string
          */
-        public function getRequestTarget();
+        public function getRequestTarget(): string;
 
         /**
          * Return an instance with the specific request-target.
@@ -420,14 +420,14 @@ namespace Psr\Http\Message {
          * @param string $requestTarget
          * @return static
          */
-        public function withRequestTarget(string $requestTarget);
+        public function withRequestTarget(string $requestTarget): RequestInterface;
 
         /**
          * Retrieves the HTTP method of the request.
          *
          * @return string Returns the request method.
          */
-        public function getMethod();
+        public function getMethod(): string;
 
         /**
          * Return an instance with the provided HTTP method.
@@ -444,7 +444,7 @@ namespace Psr\Http\Message {
          * @return static
          * @throws \InvalidArgumentException for invalid HTTP methods.
          */
-        public function withMethod(string $method);
+        public function withMethod(string $method): RequestInterface;
 
         /**
          * Retrieves the URI instance.
@@ -455,7 +455,7 @@ namespace Psr\Http\Message {
          * @return UriInterface Returns a UriInterface instance
          *     representing the URI of the request.
          */
-        public function getUri();
+        public function getUri(): UriInterface;
 
         /**
          * Returns an instance with the provided URI.
@@ -487,7 +487,7 @@ namespace Psr\Http\Message {
          * @param bool $preserveHost Preserve the original state of the Host header.
          * @return static
          */
-        public function withUri(UriInterface $uri, bool $preserveHost = false);
+        public function withUri(UriInterface $uri, bool $preserveHost = false): RequestInterface;
     }
 }
 
@@ -519,7 +519,7 @@ namespace Psr\Http\Message {
          *
          * @return int Status code.
          */
-        public function getStatusCode();
+        public function getStatusCode(): int;
 
         /**
          * Return an instance with the specified status code and, optionally, reason phrase.
@@ -541,7 +541,7 @@ namespace Psr\Http\Message {
          * @return static
          * @throws \InvalidArgumentException For invalid status code arguments.
          */
-        public function withStatus(int $code, string $reasonPhrase = '');
+        public function withStatus(int $code, string $reasonPhrase = ''): ResponseInterface;
 
         /**
          * Gets the response reason phrase associated with the status code.
@@ -556,7 +556,7 @@ namespace Psr\Http\Message {
          * @link http://www.iana.org/assignments/http-status-codes/http-status-codes.xhtml
          * @return string Reason phrase; must return an empty string if none present.
          */
-        public function getReasonPhrase();
+        public function getReasonPhrase(): string;
     }
 }
 
@@ -612,7 +612,7 @@ namespace Psr\Http\Message {
          *
          * @return array
          */
-        public function getServerParams();
+        public function getServerParams(): array;
 
         /**
          * Retrieve cookies.
@@ -624,7 +624,7 @@ namespace Psr\Http\Message {
          *
          * @return array
          */
-        public function getCookieParams();
+        public function getCookieParams(): array;
 
         /**
          * Return an instance with the specified cookies.
@@ -643,7 +643,7 @@ namespace Psr\Http\Message {
          * @param array $cookies Array of key/value pairs representing cookies.
          * @return static
          */
-        public function withCookieParams(array $cookies);
+        public function withCookieParams(array $cookies): ServerRequestInterface;
 
         /**
          * Retrieve query string arguments.
@@ -657,7 +657,7 @@ namespace Psr\Http\Message {
          *
          * @return array
          */
-        public function getQueryParams();
+        public function getQueryParams(): array;
 
         /**
          * Return an instance with the specified query string arguments.
@@ -681,7 +681,7 @@ namespace Psr\Http\Message {
          *     $_GET.
          * @return static
          */
-        public function withQueryParams(array $query);
+        public function withQueryParams(array $query): ServerRequestInterface;
 
         /**
          * Retrieve normalized file upload data.
@@ -695,7 +695,7 @@ namespace Psr\Http\Message {
          * @return array An array tree of UploadedFileInterface instances; an empty
          *     array MUST be returned if no data is present.
          */
-        public function getUploadedFiles();
+        public function getUploadedFiles(): array;
 
         /**
          * Create a new instance with the specified uploaded files.
@@ -708,7 +708,7 @@ namespace Psr\Http\Message {
          * @return static
          * @throws \InvalidArgumentException if an invalid structure is provided.
          */
-        public function withUploadedFiles(array $uploadedFiles);
+        public function withUploadedFiles(array $uploadedFiles): ServerRequestInterface;
 
         /**
          * Retrieve any parameters provided in the request body.
@@ -755,7 +755,7 @@ namespace Psr\Http\Message {
          * @throws \InvalidArgumentException if an unsupported argument type is
          *     provided.
          */
-        public function withParsedBody($data);
+        public function withParsedBody($data): ServerRequestInterface;
 
         /**
          * Retrieve attributes derived from the request.
@@ -768,7 +768,7 @@ namespace Psr\Http\Message {
          *
          * @return array Attributes derived from the request.
          */
-        public function getAttributes();
+        public function getAttributes(): array;
 
         /**
          * Retrieve a single derived request attribute.
@@ -802,7 +802,7 @@ namespace Psr\Http\Message {
          * @param mixed $value The value of the attribute.
          * @return static
          */
-        public function withAttribute(string $name, $value);
+        public function withAttribute(string $name, $value): ServerRequestInterface;
 
         /**
          * Return an instance that removes the specified derived request attribute.
@@ -818,7 +818,7 @@ namespace Psr\Http\Message {
          * @param string $name The attribute name.
          * @return static
          */
-        public function withoutAttribute(string $name);
+        public function withoutAttribute(string $name): ServerRequestInterface;
     }
 }
 
@@ -848,14 +848,14 @@ namespace Psr\Http\Message {
          * @see http://php.net/manual/en/language.oop5.magic.php#object.tostring
          * @return string
          */
-        public function __toString();
+        public function __toString(): string;
 
         /**
          * Closes the stream and any underlying resources.
          *
          * @return void
          */
-        public function close();
+        public function close(): void;
 
         /**
          * Separates any underlying resources from the stream.
@@ -871,7 +871,7 @@ namespace Psr\Http\Message {
          *
          * @return int|null Returns the size in bytes if known, or null if unknown.
          */
-        public function getSize();
+        public function getSize(): ?int;
 
         /**
          * Returns the current position of the file read/write pointer
@@ -879,21 +879,21 @@ namespace Psr\Http\Message {
          * @return int Position of the file pointer
          * @throws \RuntimeException on error.
          */
-        public function tell();
+        public function tell(): int;
 
         /**
          * Returns true if the stream is at the end of the stream.
          *
          * @return bool
          */
-        public function eof();
+        public function eof(): bool;
 
         /**
          * Returns whether or not the stream is seekable.
          *
          * @return bool
          */
-        public function isSeekable();
+        public function isSeekable(): bool;
 
         /**
          * Seek to a position in the stream.
@@ -907,7 +907,7 @@ namespace Psr\Http\Message {
          *     SEEK_END: Set position to end-of-stream plus offset.
          * @throws \RuntimeException on failure.
          */
-        public function seek(int $offset, int $whence = SEEK_SET);
+        public function seek(int $offset, int $whence = SEEK_SET): void;
 
         /**
          * Seek to the beginning of the stream.
@@ -919,14 +919,14 @@ namespace Psr\Http\Message {
          * @link http://www.php.net/manual/en/function.fseek.php
          * @throws \RuntimeException on failure.
          */
-        public function rewind();
+        public function rewind(): void;
 
         /**
          * Returns whether or not the stream is writable.
          *
          * @return bool
          */
-        public function isWritable();
+        public function isWritable(): bool;
 
         /**
          * Write data to the stream.
@@ -935,14 +935,14 @@ namespace Psr\Http\Message {
          * @return int Returns the number of bytes written to the stream.
          * @throws \RuntimeException on failure.
          */
-        public function write(string $string);
+        public function write(string $string): int;
 
         /**
          * Returns whether or not the stream is readable.
          *
          * @return bool
          */
-        public function isReadable();
+        public function isReadable(): bool;
 
         /**
          * Read data from the stream.
@@ -954,7 +954,7 @@ namespace Psr\Http\Message {
          *     if no bytes are available.
          * @throws \RuntimeException if an error occurs.
          */
-        public function read(int $length);
+        public function read(int $length): string;
 
         /**
          * Returns the remaining contents in a string
@@ -963,7 +963,7 @@ namespace Psr\Http\Message {
          * @throws \RuntimeException if unable to read or an error occurs while
          *     reading.
          */
-        public function getContents();
+        public function getContents(): string;
 
         /**
          * Get stream metadata as an associative array or retrieve a specific key.
@@ -1010,7 +1010,7 @@ namespace Psr\Http\Message {
          * @throws \RuntimeException in cases when no stream is available or can be
          *     created.
          */
-        public function getStream();
+        public function getStream(): StreamInterface;
 
         /**
          * Move the uploaded file to a new location.
@@ -1044,7 +1044,7 @@ namespace Psr\Http\Message {
          * @throws \RuntimeException on any error during the move operation, or on
          *     the second or subsequent call to the method.
          */
-        public function moveTo(string $targetPath);
+        public function moveTo(string $targetPath): void;
         
         /**
          * Retrieve the file size.
@@ -1055,7 +1055,7 @@ namespace Psr\Http\Message {
          *
          * @return int|null The file size in bytes or null if unknown.
          */
-        public function getSize();
+        public function getSize(): ?int;
         
         /**
          * Retrieve the error associated with the uploaded file.
@@ -1071,7 +1071,7 @@ namespace Psr\Http\Message {
          * @see http://php.net/manual/en/features.file-upload.errors.php
          * @return int One of PHP's UPLOAD_ERR_XXX constants.
          */
-        public function getError();
+        public function getError(): int;
         
         /**
          * Retrieve the filename sent by the client.
@@ -1086,7 +1086,7 @@ namespace Psr\Http\Message {
          * @return string|null The filename sent by the client or null if none
          *     was provided.
          */
-        public function getClientFilename();
+        public function getClientFilename(): ?string;
         
         /**
          * Retrieve the media type sent by the client.
@@ -1101,7 +1101,7 @@ namespace Psr\Http\Message {
          * @return string|null The media type sent by the client or null if none
          *     was provided.
          */
-        public function getClientMediaType();
+        public function getClientMediaType(): ?string;
     }
 }
 
@@ -1144,7 +1144,7 @@ namespace Psr\Http\Message {
          * @see https://tools.ietf.org/html/rfc3986#section-3.1
          * @return string The URI scheme.
          */
-        public function getScheme();
+        public function getScheme(): string;
 
         /**
          * Retrieve the authority component of the URI.
@@ -1164,7 +1164,7 @@ namespace Psr\Http\Message {
          * @see https://tools.ietf.org/html/rfc3986#section-3.2
          * @return string The URI authority, in "[user-info@]host[:port]" format.
          */
-        public function getAuthority();
+        public function getAuthority(): string;
 
         /**
          * Retrieve the user information component of the URI.
@@ -1181,7 +1181,7 @@ namespace Psr\Http\Message {
          *
          * @return string The URI user information, in "username[:password]" format.
          */
-        public function getUserInfo();
+        public function getUserInfo(): string;
 
         /**
          * Retrieve the host component of the URI.
@@ -1194,7 +1194,7 @@ namespace Psr\Http\Message {
          * @see http://tools.ietf.org/html/rfc3986#section-3.2.2
          * @return string The URI host.
          */
-        public function getHost();
+        public function getHost(): string;
 
         /**
          * Retrieve the port component of the URI.
@@ -1211,7 +1211,7 @@ namespace Psr\Http\Message {
          *
          * @return null|int The URI port.
          */
-        public function getPort();
+        public function getPort(): ?int;
 
         /**
          * Retrieve the path component of the URI.
@@ -1238,7 +1238,7 @@ namespace Psr\Http\Message {
          * @see https://tools.ietf.org/html/rfc3986#section-3.3
          * @return string The URI path.
          */
-        public function getPath();
+        public function getPath(): string;
 
         /**
          * Retrieve the query string of the URI.
@@ -1260,7 +1260,7 @@ namespace Psr\Http\Message {
          * @see https://tools.ietf.org/html/rfc3986#section-3.4
          * @return string The URI query string.
          */
-        public function getQuery();
+        public function getQuery(): string;
 
         /**
          * Retrieve the fragment component of the URI.
@@ -1278,7 +1278,7 @@ namespace Psr\Http\Message {
          * @see https://tools.ietf.org/html/rfc3986#section-3.5
          * @return string The URI fragment.
          */
-        public function getFragment();
+        public function getFragment(): string;
 
         /**
          * Return an instance with the specified scheme.
@@ -1295,7 +1295,7 @@ namespace Psr\Http\Message {
          * @return static A new instance with the specified scheme.
          * @throws \InvalidArgumentException for invalid or unsupported schemes.
          */
-        public function withScheme(string $scheme);
+        public function withScheme(string $scheme): UriInterface;
 
         /**
          * Return an instance with the specified user information.
@@ -1311,7 +1311,7 @@ namespace Psr\Http\Message {
          * @param null|string $password The password associated with $user.
          * @return static A new instance with the specified user information.
          */
-        public function withUserInfo(string $user, ?string $password = null);
+        public function withUserInfo(string $user, ?string $password = null): UriInterface;
 
         /**
          * Return an instance with the specified host.
@@ -1325,7 +1325,7 @@ namespace Psr\Http\Message {
          * @return static A new instance with the specified host.
          * @throws \InvalidArgumentException for invalid hostnames.
          */
-        public function withHost(string $host);
+        public function withHost(string $host): UriInterface;
 
         /**
          * Return an instance with the specified port.
@@ -1344,7 +1344,7 @@ namespace Psr\Http\Message {
          * @return static A new instance with the specified port.
          * @throws \InvalidArgumentException for invalid ports.
          */
-        public function withPort(?int $port);
+        public function withPort(?int $port): UriInterface;
 
         /**
          * Return an instance with the specified path.
@@ -1368,7 +1368,7 @@ namespace Psr\Http\Message {
          * @return static A new instance with the specified path.
          * @throws \InvalidArgumentException for invalid paths.
          */
-        public function withPath(string $path);
+        public function withPath(string $path): UriInterface;
 
         /**
          * Return an instance with the specified query string.
@@ -1385,7 +1385,7 @@ namespace Psr\Http\Message {
          * @return static A new instance with the specified query string.
          * @throws \InvalidArgumentException for invalid query strings.
          */
-        public function withQuery(string $query);
+        public function withQuery(string $query): UriInterface;
 
         /**
          * Return an instance with the specified URI fragment.
@@ -1401,7 +1401,7 @@ namespace Psr\Http\Message {
          * @param string $fragment The fragment to use with the new instance.
          * @return static A new instance with the specified fragment.
          */
-        public function withFragment(string $fragment);
+        public function withFragment(string $fragment): UriInterface;
 
         /**
          * Return the string representation as a URI reference.
@@ -1426,7 +1426,7 @@ namespace Psr\Http\Message {
          * @see http://tools.ietf.org/html/rfc3986#section-4.1
          * @return string
          */
-        public function __toString();
+        public function __toString(): string;
     }
 }
 
@@ -2513,11 +2513,19 @@ namespace Nyholm\Psr7 {
                 throw new \RuntimeException('Stream is detached');
             }
 
-            if (false === $contents = @\stream_get_contents($this->stream)) {
-                throw new \RuntimeException('Unable to read stream contents: ' . (\error_get_last()['message'] ?? ''));
-            }
+            $exception = null;
 
-            return $contents;
+            \set_error_handler(static function ($type, $message) use (&$exception) {
+                throw $exception = new \RuntimeException('Unable to read stream contents: ' . $message);
+            });
+
+            try {
+                return \stream_get_contents($this->stream);
+            } catch (\Throwable $e) {
+                throw $e === $exception ? $e : new \RuntimeException('Unable to read stream contents: ' . $e->getMessage(), 0, $e);
+            } finally {
+                \restore_error_handler();
+            }
         }
 
         /**
@@ -3306,7 +3314,7 @@ namespace Nyholm\Psr7Server {
         /**
          * {@inheritdoc}
          */
-        public function fromArrays(array $server, array $headers = [], array $cookie = [], array $get = [], /*?array*/ $post = null, array $files = [], $body = null): ServerRequestInterface
+        public function fromArrays(array $server, array $headers = [], array $cookie = [], array $get = [], ?array $post = null, array $files = [], $body = null): ServerRequestInterface
         {
             $method = $this->getMethodFromEnv($server);
             $uri = $this->getUriFromEnvWithHTTP($server);
@@ -3575,7 +3583,8 @@ namespace Nyholm\Psr7Server {
             array $server,
             array $headers = [],
             array $cookie = [],
-            array $get = [], /*?array*/ $post = null,
+            array $get = [],
+            ?array $post = null,
             array $files = [],
             $body = null
         ): ServerRequestInterface;
@@ -8537,6 +8546,9 @@ namespace Tqdev\PhpCrudApi\Middleware {
 // file: src/Tqdev/PhpCrudApi/Middleware/DbAuthMiddleware.php
 namespace Tqdev\PhpCrudApi\Middleware {
 
+    use PHPMailer\PHPMailer\PHPMailer;
+    use PHPMailer\PHPMailer\SMTP;
+    use PHPMailer\PHPMailer\Exception;
     use Psr\Http\Message\ResponseInterface;
     use Psr\Http\Message\ServerRequestInterface;
     use Psr\Http\Server\RequestHandlerInterface;
@@ -8551,11 +8563,45 @@ namespace Tqdev\PhpCrudApi\Middleware {
     use Tqdev\PhpCrudApi\Record\OrderingInfo;
     use Tqdev\PhpCrudApi\RequestUtils;
 
+    require 'vendor/phpmailer/phpmailer/src/Exception.php';
+    require 'vendor/phpmailer/phpmailer/src/PHPMailer.php';
+    require 'vendor/phpmailer/phpmailer/src/SMTP.php';
+
     class DbAuthMiddleware extends Middleware
     {
         private $reflection;
         private $db;
         private $ordering;
+        
+        private function sendConfirmationEmail($to, $token, $smtpSettings) 
+        {
+            $mail = new PHPMailer(true);
+            try {
+                //Server settings
+                $mail->SMTPDebug = 0;
+                $mail->isSMTP();
+                $mail->Host = $smtpSettings['host'];
+                $mail->SMTPAuth = true;
+                $mail->Username = $smtpSettings['username'];
+                $mail->Password = $smtpSettings['password'];
+                $mail->SMTPSecure = $smtpSettings['secure'];
+                $mail->Port = $smtpSettings['port'];
+                //Recipients
+                $mail->setFrom($smtpSettings['from'], 'Mailer');
+                $mail->addAddress($to);
+                //Content
+                $mail->isHTML(true);
+                $mail->Subject = $smtpSettings['confirmSubject'];
+                $base_url="https://".$_SERVER['SERVER_NAME'].dirname($_SERVER["REQUEST_URI"].'?').'/';
+                $mail->Body = $smtpSettings['confirmTemplate'] . '<br><a href="' . $base_url . 'confirm/' . $token. '">Confirm</a>';
+                $mail->send();
+                return true;
+            } catch (Exception $e) {
+                //echo 'Message could not be sent.';
+                //echo 'Mailer Error: ' . $mail->ErrorInfo;
+                return false;
+            }
+        }
 
         public function __construct(Router $router, Responder $responder, Config $config, string $middleware, ReflectionService $reflection, GenericDB $db)
         {
@@ -8587,11 +8633,13 @@ namespace Tqdev\PhpCrudApi\Middleware {
             }
             $path = RequestUtils::getPathSegment($request, 1);
             $method = $request->getMethod();
+            $confirmEmail = $this->getProperty('confirmEmail', '');
             if ($method == 'POST' && in_array($path, ['login', 'register', 'password'])) {
                 $body = $request->getParsedBody();
                 $usernameFormFieldName = $this->getProperty('usernameFormField', 'username');
                 $passwordFormFieldName = $this->getProperty('passwordFormField', 'password');
                 $newPasswordFormFieldName = $this->getProperty('newPasswordFormField', 'newPassword');
+                $emailFormFieldName = $this->getProperty('emailFormField', 'email');
                 $username = isset($body->$usernameFormFieldName) ? $body->$usernameFormFieldName : '';
                 $password = isset($body->$passwordFormFieldName) ? $body->$passwordFormFieldName : '';
                 $newPassword = isset($body->$newPasswordFormFieldName) ? $body->$newPasswordFormFieldName : '';
@@ -8610,6 +8658,10 @@ namespace Tqdev\PhpCrudApi\Middleware {
                 $pkName = $table->getPk()->getName();
                 $registerUser = $this->getProperty('registerUser', '');
                 $loginAfterRegistration = $this->getProperty('loginAfterRegistration', '');
+                $emailColumnName = $this->getProperty('emailColumn', 'email');
+                $tokenColumnName = $this->getProperty('tokenColumn', 'token');
+                $confirmedColumnName = $this->getProperty('confirmedColumn', 'confirmed');
+                $emailSettings = $this->getProperty('emailSettings', '');
                 $condition = new ColumnCondition($usernameColumn, 'eq', $username);
                 $returnedColumns = $this->getProperty('returnedColumns', '');
                 if (!$returnedColumns) {
@@ -8634,13 +8686,26 @@ namespace Tqdev\PhpCrudApi\Middleware {
                     if (!empty($users)) {
                         return $this->responder->error(ErrorCode::USER_ALREADY_EXIST, $username);
                     }
+                    $email = isset($body->$emailFormFieldName) ? $body->$emailFormFieldName : '';
                     $data = json_decode($registerUser, true);
                     $data = is_array($data) ? $data : [];
                     $data[$usernameColumnName] = $username;
                     $data[$passwordColumnName] = password_hash($password, PASSWORD_DEFAULT);
+                    $data[$emailColumnName] = $email;
+                    if ($confirmEmail) {
+                        $data[$confirmedColumnName] = 0;
+                        $data[$emailColumnName] = $email;
+                        $data[$tokenColumnName] = bin2hex(random_bytes(40));
+                        $emailSent = $this->sendConfirmationEmail($data[$emailColumnName], $data[$tokenColumnName], $emailSettings);
+                    }
                     $this->db->createSingle($table, $data);
                     $users = $this->db->selectAll($table, $columnNames, $condition, $columnOrdering, 0, 1);
                     foreach ($users as $user) {
+                        if ($confirmEmail) {
+                            unset($user[$tokenColumnName]);
+                            unset($user[$passwordColumnName]);
+                            return $this->responder->success($user);
+                        }
                         if ($loginAfterRegistration) {
                             if (!headers_sent()) {
                                 session_regenerate_id(true);
@@ -8659,10 +8724,16 @@ namespace Tqdev\PhpCrudApi\Middleware {
                     $users = $this->db->selectAll($table, $columnNames, $condition, $columnOrdering, 0, 1);
                     foreach ($users as $user) {
                         if (password_verify($password, $user[$passwordColumnName]) == 1) {
+                            if ($confirmEmail && !$user[$confirmedColumnName]) {
+                                 return $this->responder->error(ErrorCode::EMAIL_NOT_CONFIRMED, $username);
+                            }
                             if (!headers_sent()) {
                                 session_regenerate_id(true);
                             }
                             unset($user[$passwordColumnName]);
+                            if ($confirmEmail) {
+                                    unset($user[$tokenColumnName]);
+                            }
                             $_SESSION['user'] = $user;
                             return $this->responder->success($user);
                         }
@@ -8683,6 +8754,9 @@ namespace Tqdev\PhpCrudApi\Middleware {
                     $users = $this->db->selectAll($table, $userColumns, $condition, $columnOrdering, 0, 1);
                     foreach ($users as $user) {
                         if (password_verify($password, $user[$passwordColumnName]) == 1) {
+                            if ($confirmEmail && !$user[$confirmedColumnName]) {
+                                return $this->responder->error(ErrorCode::EMAIL_NOT_CONFIRMED, $username);
+                            }
                             if (!headers_sent()) {
                                 session_regenerate_id(true);
                             }
@@ -8714,6 +8788,31 @@ namespace Tqdev\PhpCrudApi\Middleware {
                     return $this->responder->success($_SESSION['user']);
                 }
                 return $this->responder->error(ErrorCode::AUTHENTICATION_REQUIRED, '');
+            }
+            if ($method == 'GET' && $path == 'confirm' && $confirmEmail) {
+                $tableName = $this->getProperty('usersTable', 'users');
+                $table = $this->reflection->getTable($tableName);
+                $pkName = $table->getPk()->getName();
+                $tokenColumnName = $this->getProperty('tokenColumn', 'token');
+                $confirmedColumnName = $this->getProperty('confirmedColumn', 'confirmed');
+                $passwordColumnName = $this->getProperty('passwordColumn', 'password');
+                $userColumns = $table->getColumnNames();
+                if (!in_array($pkName, $userColumns)) {
+                    array_push($userColumns, $pkName);
+                }                
+                $tokenColumn = $table->getColumn($tokenColumnName);
+                $confirmationToken = RequestUtils::getPathSegment($request, 2);
+                $tokenCondition = new ColumnCondition($tokenColumn, 'eq', $confirmationToken);
+                $columnOrdering = $this->ordering->getDefaultColumnOrdering($table);
+                $users = $this->db->selectAll($table, $userColumns, $tokenCondition, $columnOrdering, 0, 1);
+                foreach ($users as $user) {
+                    $data = [$confirmedColumnName => 1];
+                    $this->db->updateSingle($table, $data, $user[$pkName]);
+                    unset($user[$tokenColumnName]);
+                    unset($user[$passwordColumnName]);
+                    $user[$confirmedColumnName] = 1;
+                    return $this->responder->success($user);
+                }
             }
             if (!isset($_SESSION['user']) || !$_SESSION['user']) {
                 $authenticationMode = $this->getProperty('mode', 'required');
@@ -11453,6 +11552,7 @@ namespace Tqdev\PhpCrudApi\Record {
         const USER_ALREADY_EXIST = 1020;
         const PASSWORD_TOO_SHORT = 1021;
         const USERNAME_EMPTY = 1022;
+        const EMAIL_NOT_CONFIRMED = 1023;
 
         private $values = [
             0000 => ["Success", ResponseFactory::OK],
@@ -11479,6 +11579,7 @@ namespace Tqdev\PhpCrudApi\Record {
             1020 => ["User '%s' already exists", ResponseFactory::CONFLICT],
             1021 => ["Password too short (<%d characters)", ResponseFactory::UNPROCESSABLE_ENTITY],
             1022 => ["Username is empty or only whitespaces", ResponseFactory::UNPROCESSABLE_ENTITY],
+            1023 => ["Email not confirmed for '%s'", ResponseFactory::FORBIDDEN],
             9999 => ["%s", ResponseFactory::INTERNAL_SERVER_ERROR],
         ];
 
