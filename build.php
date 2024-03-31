@@ -109,7 +109,7 @@ $ignore = [
 ];
 
 $replaces = [
-    'use StreamTrait;' => 'function __toString() {}'
+    'use StreamTrait;' => 'function __toString():string { return ""; }'
 ];
 
 $directories = ['vendor/nyholm', 'src'];

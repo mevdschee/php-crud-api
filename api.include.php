@@ -2268,7 +2268,7 @@ namespace Nyholm\Psr7 {
      */
     class Stream implements StreamInterface
     {
-        function __toString() {}
+        function __toString():string { return ""; }
 
         /** @var resource|null A resource reference */
         private $stream;
