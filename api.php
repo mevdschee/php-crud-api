@@ -2268,7 +2268,7 @@ namespace Nyholm\Psr7 {
      */
     class Stream implements StreamInterface
     {
-        function __toString():string { return ""; }
+        function __toString():string { if ($this->isSeekable()) { $this->seek(0); } return $this->getContents(); }
 
         /** @var resource|null A resource reference */
         private $stream;

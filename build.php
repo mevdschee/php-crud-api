@@ -109,7 +109,7 @@ $ignore = [
 ];
 
 $replaces = [
-    'use StreamTrait;' => 'function __toString():string { return ""; }'
+    'use StreamTrait;' => 'function __toString():string { if ($this->isSeekable()) { $this->seek(0); } return $this->getContents(); }'
 ];
 
 $directories = ['vendor/nyholm', 'src'];
