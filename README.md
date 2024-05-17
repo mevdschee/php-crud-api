@@ -1562,7 +1562,26 @@ To run the functional tests locally you may run the following commands:
 This runs the functional tests from the "tests" directory. It uses the database dumps (fixtures) and
 database configuration (config) from the corresponding subdirectories.
 
-## Nginx config example
+## Pretty URL
+
+You may "rewrite" the URL to remove the "api.php" from the URL.
+
+### Apache config example
+
+Enable mod_rewrite and add the following to your ".htaccess" file:
+
+```
+RewriteEngine On
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^(.*)$ api.php/$1 [L,QSA]
+```
+
+The ".htaccess" file needs to go in the same folder as "api.php".
+
+### Nginx config example
+
+Use the following config to serve the API under Nginx and PHP-FPM:
 
 ```
 server {
