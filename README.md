@@ -745,6 +745,7 @@ You can tune the middleware behavior using middleware specific configuration par
 - "dbAuth.loginAfterRegistration": 1 or zero if registered users should be logged in after registration ("")
 - "dbAuth.passwordLength": Minimum length that the password must have ("12")
 - "dbAuth.sessionName": The name of the PHP session that is started ("")
+- "dbAuth.updateSessionData": Number of minutes after which the session data is updated when calling /me end-point (0)
 - "wpAuth.mode": Set to "optional" if you want to allow anonymous access ("required")
 - "wpAuth.wpDirectory": The folder/path where the Wordpress install can be found (".")
 - "wpAuth.usernameFormField": The name of the form field that holds the username ("username")
