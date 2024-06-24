@@ -1616,7 +1616,7 @@ server {
 
 Install docker using the following commands and then logout and login for the changes to take effect:
 
-    sudo apt install docker.io
+    sudo apt install docker.io docker-buildx
     sudo usermod -aG docker ${USER}
 
 To run the docker tests run "build_all.sh" and "run_all.sh" from the docker directory. The output should be:
