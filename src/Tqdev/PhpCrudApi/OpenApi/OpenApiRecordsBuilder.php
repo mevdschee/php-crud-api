@@ -133,7 +133,7 @@ class OpenApiRecordsBuilder
             if (in_array($operation, ['list', 'create'])) {
                 $path = sprintf('/records/%s', $tableName);
                 if ($operation == 'list') {
-                    $parameters = ['filter', 'include', 'exclude', 'order', 'size', 'page', 'join'];
+                    $parameters = ['filter', 'filter1', 'filter2', 'filter3', 'include', 'exclude', 'order', 'size', 'page', 'join'];
                 }
             } else {
                 $path = sprintf('/records/%s/{id}', $tableName);
@@ -335,6 +335,27 @@ class OpenApiRecordsBuilder
         $this->openapi->set("components|parameters|filter|schema|items|type", "string");
         $this->openapi->set("components|parameters|filter|description", "Filters to be applied. Each filter consists of a column, an operator and a value (comma separated). Example: id,eq,1");
         $this->openapi->set("components|parameters|filter|required", false);
+
+        $this->openapi->set("components|parameters|filter1|name", "filter1");
+        $this->openapi->set("components|parameters|filter1|in", "query");
+        $this->openapi->set("components|parameters|filter1|schema|type", "array");
+        $this->openapi->set("components|parameters|filter1|schema|items|type", "string");
+        $this->openapi->set("components|parameters|filter1|description", "Filters to be applied. Each filter consists of a column, an operator and a value (comma separated). Example: id,eq,1");
+        $this->openapi->set("components|parameters|filter1|required", false);
+
+        $this->openapi->set("components|parameters|filter2|name", "filter2");
+        $this->openapi->set("components|parameters|filter2|in", "query");
+        $this->openapi->set("components|parameters|filter2|schema|type", "array");
+        $this->openapi->set("components|parameters|filter2|schema|items|type", "string");
+        $this->openapi->set("components|parameters|filter2|description", "Filters to be applied. Each filter consists of a column, an operator and a value (comma separated). Example: id,eq,1");
+        $this->openapi->set("components|parameters|filter2|required", false);
+
+        $this->openapi->set("components|parameters|filter3|name", "filter3");
+        $this->openapi->set("components|parameters|filter3|in", "query");
+        $this->openapi->set("components|parameters|filter3|schema|type", "array");
+        $this->openapi->set("components|parameters|filter3|schema|items|type", "string");
+        $this->openapi->set("components|parameters|filter3|description", "Filters to be applied. Each filter consists of a column, an operator and a value (comma separated). Example: id,eq,1");
+        $this->openapi->set("components|parameters|filter3|required", false);
 
         $this->openapi->set("components|parameters|include|name", "include");
         $this->openapi->set("components|parameters|include|in", "query");
