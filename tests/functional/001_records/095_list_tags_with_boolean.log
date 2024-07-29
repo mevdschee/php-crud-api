@@ -1,0 +1,16 @@
+===
+GET /records/tags?filter=is_important,eq,0
+===
+200
+Content-Type: application/json; charset=utf-8
+Content-Length: 58
+
+{"records":[{"id":1,"name":"funny","is_important":false}]}
+===
+GET /records/tags?filter=is_important,eq,1
+===
+200
+Content-Type: application/json; charset=utf-8
+Content-Length: 61
+
+{"records":[{"id":2,"name":"important","is_important":true}]}
