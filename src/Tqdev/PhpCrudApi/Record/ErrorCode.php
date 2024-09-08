@@ -34,6 +34,7 @@ class ErrorCode
     const USER_ALREADY_EXIST = 1020;
     const PASSWORD_TOO_SHORT = 1021;
     const USERNAME_EMPTY = 1022;
+    const PRIMARY_KEY_NOT_FOUND = 1023;
 
     private $values = [
         0000 => ["Success", ResponseFactory::OK],
@@ -60,6 +61,7 @@ class ErrorCode
         1020 => ["User '%s' already exists", ResponseFactory::CONFLICT],
         1021 => ["Password too short (<%d characters)", ResponseFactory::UNPROCESSABLE_ENTITY],
         1022 => ["Username is empty or only whitespaces", ResponseFactory::UNPROCESSABLE_ENTITY],
+        1023 => ["Primary key for table '%s' not found", ResponseFactory::NOT_FOUND],
         9999 => ["%s", ResponseFactory::INTERNAL_SERVER_ERROR],
     ];
 

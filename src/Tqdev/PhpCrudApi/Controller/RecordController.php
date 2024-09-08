@@ -42,6 +42,9 @@ class RecordController
         if (!$this->service->hasTable($table)) {
             return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $table);
         }
+        if (!$this->service->hasPrimaryKey($table)) {
+            return $this->responder->error(ErrorCode::PRIMARY_KEY_NOT_FOUND, $table);
+        }
         $id = RequestUtils::getPathSegment($request, 3);
         $params = RequestUtils::getParams($request);
         if (strpos($id, ',') !== false) {
@@ -87,8 +90,11 @@ class RecordController
         if (!$this->service->hasTable($table)) {
             return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $table);
         }
+        if (!$this->service->hasPrimaryKey($table)) {
+            return $this->responder->error(ErrorCode::PRIMARY_KEY_NOT_FOUND, $table);
+        }
         if ($this->service->getType($table) != 'table') {
-            return $this->responder->error(ErrorCode::OPERATION_NOT_SUPPORTED, __FUNCTION__);
+            return $this->responder->error(ErrorCode::OPERATION_NOT_SUPPORTED, 'create');
         }
         $record = $request->getParsedBody();
         if ($record === null) {
@@ -112,8 +118,11 @@ class RecordController
         if (!$this->service->hasTable($table)) {
             return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $table);
         }
+        if (!$this->service->hasPrimaryKey($table)) {
+            return $this->responder->error(ErrorCode::PRIMARY_KEY_NOT_FOUND, $table);
+        }
         if ($this->service->getType($table) != 'table') {
-            return $this->responder->error(ErrorCode::OPERATION_NOT_SUPPORTED, __FUNCTION__);
+            return $this->responder->error(ErrorCode::OPERATION_NOT_SUPPORTED, 'update');
         }
         $id = RequestUtils::getPathSegment($request, 3);
         $params = RequestUtils::getParams($request);
@@ -145,8 +154,11 @@ class RecordController
         if (!$this->service->hasTable($table)) {
             return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $table);
         }
+        if (!$this->service->hasPrimaryKey($table)) {
+            return $this->responder->error(ErrorCode::PRIMARY_KEY_NOT_FOUND, $table);
+        }
         if ($this->service->getType($table) != 'table') {
-            return $this->responder->error(ErrorCode::OPERATION_NOT_SUPPORTED, __FUNCTION__);
+            return $this->responder->error(ErrorCode::OPERATION_NOT_SUPPORTED, 'delete');
         }
         $id = RequestUtils::getPathSegment($request, 3);
         $params = RequestUtils::getParams($request);
@@ -168,8 +180,11 @@ class RecordController
         if (!$this->service->hasTable($table)) {
             return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $table);
         }
+        if (!$this->service->hasPrimaryKey($table)) {
+            return $this->responder->error(ErrorCode::PRIMARY_KEY_NOT_FOUND, $table);
+        }
         if ($this->service->getType($table) != 'table') {
-            return $this->responder->error(ErrorCode::OPERATION_NOT_SUPPORTED, __FUNCTION__);
+            return $this->responder->error(ErrorCode::OPERATION_NOT_SUPPORTED, 'increment');
         }
         $id = RequestUtils::getPathSegment($request, 3);
         $record = $request->getParsedBody();

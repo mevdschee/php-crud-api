@@ -51,6 +51,11 @@ class RecordService
         return $this->reflection->hasTable($table);
     }
 
+    public function hasPrimaryKey(string $table): bool
+    {
+        return $this->reflection->getTable($table)->getPk()?true:false;
+    }
+
     public function getType(string $table): string
     {
         return $this->reflection->getType($table);
