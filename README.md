@@ -1594,7 +1594,7 @@ server {
     server_name server_domain_or_IP;
 
     location / {
-        try_files $uri $uri/ =404;
+        try_files $uri $uri/ /api.php?$args;  
     }
 
     location ~ [^/]\.php(/|$) {
