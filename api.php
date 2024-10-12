@@ -1535,7 +1535,7 @@ namespace Nyholm\Psr7\Factory {
             return Stream::create($resource);
         }
 
-        public function createUploadedFile(StreamInterface $stream, int $size = null, int $error = \UPLOAD_ERR_OK, string $clientFilename = null, string $clientMediaType = null): UploadedFileInterface
+        public function createUploadedFile(StreamInterface $stream, ?int $size = null, int $error = \UPLOAD_ERR_OK, ?string $clientFilename = null, ?string $clientMediaType = null): UploadedFileInterface
         {
             if (null === $size) {
                 $size = $stream->getSize();
@@ -2000,7 +2000,7 @@ namespace Nyholm\Psr7 {
          * @param string $version Protocol version
          * @param string|null $reason Reason phrase (when empty a default will be used based on the status code)
          */
-        public function __construct(int $status = 200, array $headers = [], $body = null, string $version = '1.1', string $reason = null)
+        public function __construct(int $status = 200, array $headers = [], $body = null, string $version = '1.1', ?string $reason = null)
         {
             // If we got no body, defer initialization of the stream until Response::getBody()
             if ('' !== $body && null !== $body) {
@@ -4736,7 +4736,12 @@ namespace Tqdev\PhpCrudApi\Config {
             'openApiBase' => '{"info":{"title":"PHP-CRUD-API","version":"1.0.0"}}',
             'geometrySrid' => 4326,
         ];
-
+        
+        public function getUID(): string
+        {
+            return md5(json_encode($this->values));
+        }
+        
         private function getDefaultDriver(array $values): string
         {
             if (isset($values['driver'])) {
@@ -12308,7 +12313,7 @@ namespace Tqdev\PhpCrudApi {
                 $config->getPassword(),
                 $config->getGeometrySrid()
             );
-            $prefix = sprintf('phpcrudapi-%s-', substr(md5(__FILE__), 0, 8));
+            $prefix = sprintf('phpcrudapi-%s-', substr($config->getUID(), 0, 8));
             $cache = CacheFactory::create($config->getCacheType(), $prefix, $config->getCachePath());
             $reflection = new ReflectionService($db, $cache, $config->getCacheTime());
             $responder = new JsonResponder($config->getJsonOptions(), $config->getDebug());
