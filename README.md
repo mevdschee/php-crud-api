@@ -738,7 +738,11 @@ You can tune the middleware behavior using middleware specific configuration par
 - "dbAuth.usernameColumn": The users table column that holds usernames ("username")
 - "dbAuth.passwordColumn": The users table column that holds passwords ("password")
 - "dbAuth.returnedColumns": The columns returned on successful login, empty means 'all' ("")
+- "dbAuth.refreshSession": Number of minutes before a session is refreshed via api.php/me endpoint, (0)
 - "dbAuth.usernameFormField": The name of the form field that holds the username ("username")
+- "dbAuth.usernamePattern": Specify regex pattern for username. Defaults to alpha-numeric charactes ("/^[A-Za-z0-9]+$/")
+- "dbAuth.usernameMaxLength": Specify maximum length of username (30)
+- "dbAuth.usernameMinLength": Specify minimum length of username (5)
 - "dbAuth.passwordFormField": The name of the form field that holds the password ("password")
 - "dbAuth.newPasswordFormField": The name of the form field that holds the new password ("newPassword")
 - "dbAuth.registerUser": JSON user data (or "1") in case you want the /register endpoint enabled ("")
@@ -966,10 +970,10 @@ Add a web application to this project and grab the code snippet for later use.
 Then you have to configure the `jwtAuth.secrets` configuration in your `api.php` file. 
 This can be done as follows:
 
-a. Log a user in to your Firebase-based app, get an authentication token for that user
-b. Go to [https://jwt.io/](https://jwt.io/) and paste the token in the decoding field
-c. Read the decoded header information from the token, it will give you the correct `kid`
-d. Grab the public key via this [URL](https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com), which corresponds to your `kid` from previous step
+a. Log a user in to your Firebase-based app, get an authentication token for that user  
+b. Go to [https://jwt.io/](https://jwt.io/) and paste the token in the decoding field  
+c. Read the decoded header information from the token, it will give you the correct `kid`  
+d. Grab the public key via this [URL](https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com), which corresponds to your `kid` from previous step  
 e. Now, just fill `jwtAuth.secrets` with your public key in the `api.php`
 
 Also configure the `jwtAuth.audiences` (fill in the Firebase project ID).
@@ -1033,7 +1037,7 @@ and define a 'authorization.tableHandler' function that returns 'false' for thes
     },
 
 The above example will restrict access to the table 'license_keys' for all operations.
-
+ 
     'authorization.columnHandler' => function ($operation, $tableName, $columnName) {
         return !($tableName == 'users' && $columnName == 'password');
     },

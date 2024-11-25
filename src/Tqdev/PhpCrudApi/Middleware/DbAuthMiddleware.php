@@ -71,6 +71,15 @@ class DbAuthMiddleware extends Middleware
             $usernameColumnName = $this->getProperty('usernameColumn', 'username');
             $usernameColumn = $table->getColumn($usernameColumnName);
             $passwordColumnName = $this->getProperty('passwordColumn', 'password');
+            $usernamePattern = $this->getProperty('usernamePattern','/^\p{L}+$/u'); // specify regex pattern for username, defaults to printable chars only,no punctation or numbers,unicode mode
+            $usernameMinLength = (int)$this->getProperty('usernameMinLength',5);
+            $usernameMaxLength = (int)$this->getProperty('usernameMaxLength',255);
+            if($usernameMinLength > $usernameMaxLength){
+                //obviously, $usernameMinLength should be less than $usernameMaxLength, but we'll still check in case of mis-config then we'll swap the 2 values
+                $lesser = $usernameMaxLength;
+                $usernameMaxLength = $usernameMinLength;
+                $usernameMinLength = $lesser;
+            }
             $passwordLength = $this->getProperty('passwordLength', '12');
             $pkName = $table->getPk()->getName();
             $registerUser = $this->getProperty('registerUser', '');
@@ -95,15 +104,50 @@ class DbAuthMiddleware extends Middleware
                 if (strlen($password) < $passwordLength) {
                     return $this->responder->error(ErrorCode::PASSWORD_TOO_SHORT, $passwordLength);
                 }
+                if(strlen($username) < $usernameMinLength){
+                    return $this->responder->error(ErrorCode::INPUT_VALIDATION_FAILED, $username . " [ Username length must be at least ". $usernameMinLength ." characters.]");
+                }
+                if(strlen($username) > $usernameMaxLength){
+                    return $this->responder->error(ErrorCode::INPUT_VALIDATION_FAILED, $username . " [ Username length must not exceed ". $usernameMaxLength ." characters.]");
+                }
+                if(!preg_match($usernamePattern, $username)){
+                   return $this->responder->error(ErrorCode::INPUT_VALIDATION_FAILED, $username . " [ Username contains disallowed characters.]");
+                }                
                 $users = $this->db->selectAll($table, $columnNames, $condition, $columnOrdering, 0, 1);
                 if (!empty($users)) {
                     return $this->responder->error(ErrorCode::USER_ALREADY_EXIST, $username);
                 }
                 $data = json_decode($registerUser, true);
-                $data = is_array($data) ? $data : [];
-                $data[$usernameColumnName] = $username;
-                $data[$passwordColumnName] = password_hash($password, PASSWORD_DEFAULT);
-                $this->db->createSingle($table, $data);
+                $data = is_array($data) ? $data : (array)$body; 
+                // get the original posted data
+                $userTableColumns = $table->getColumnNames();
+                foreach($data as $key=>$value){
+                      if(in_array($key,$userTableColumns)){ 
+                          // process only posted data if the key exists as users table column
+                          if($key === $usernameColumnName){
+                              $data[$usernameColumnName] = $username; //process the username and password as usual
+                          }else if($key === $passwordColumnName){
+                              $data[$passwordColumnName] = password_hash($password, PASSWORD_DEFAULT);
+                          }else{
+				$data[$key] = htmlspecialchars($value);	
+                          }
+                      }
+                 }
+                try{
+			$this->db->createSingle($table, $data);
+			/* Since we're processing additional data during registration, we need to check if these data were defined in db to be unique. 
+			 * For example, emailAddress are usually used just once in an application. We can query the database to check if the new emailAddress is not yet registered,
+			 * but, in some cases, we may more than 2 or 3 or more unique fields (not common, but possible), hence we would also need to 
+			 * query 2,3 or more times. 
+			 * As a TEMPORARY WORKAROUND, we'll just attempt to register the new user and wait for the db to throw a DUPLICATE KEY EXCEPTION.
+			 */
+		}catch(\PDOException $error){
+			if($error->getCode() ==="23000"){
+				return $this->responder->error(ErrorCode::DUPLICATE_KEY_EXCEPTION,'',$error->getMessage());
+			}else{
+				return $this->responder->error(ErrorCode::INPUT_VALIDATION_FAILED,$error->getMessage());
+			}
+		}
                 $users = $this->db->selectAll($table, $columnNames, $condition, $columnOrdering, 0, 1);
                 foreach ($users as $user) {
                     if ($loginAfterRegistration) {
@@ -111,6 +155,7 @@ class DbAuthMiddleware extends Middleware
                             session_regenerate_id(true);
                         }
                         unset($user[$passwordColumnName]);
+                        $_SESSION['updatedAt'] = time();
                         $_SESSION['user'] = $user;
                         return $this->responder->success($user);
                     } else {
@@ -128,6 +173,7 @@ class DbAuthMiddleware extends Middleware
                             session_regenerate_id(true);
                         }
                         unset($user[$passwordColumnName]);
+                        $_SESSION['updatedAt'] = time();
                         $_SESSION['user'] = $user;
                         return $this->responder->success($user);
                     }
@@ -176,6 +222,25 @@ class DbAuthMiddleware extends Middleware
         }
         if ($method == 'GET' && $path == 'me') {
             if (isset($_SESSION['user'])) {
+                $updateAfter = $this->getProperty('refreshSession',0) * 60;//update session after x minutes
+                if($updateAfter > 0 &&( time() >($_SESSION['user']['updatedAt'] + $updateAfter))){
+                    $tableName = $this->getProperty('loginTable','users');
+                    $table = $this->reflection->getTable($tableName);
+                    $pkName = $table->getPk()->getName();
+                    $passwordColumnName = $this->getProperty('passwordColumn','');
+                    $returnedColumns = $this->getProperty('returnedColumns','');
+                    if(!$returnedColumns){
+                        $columnNames = $table->getColumnNames();
+                    }else{
+                        $columnNames = array_map('trim',explode(',',$returnedColumns));
+                        $columnNames[] = $passwordColumnName;
+                        $columnNames  = array_values(array_unique($columnNames));
+                    }
+                    $user = $this->db->selectSingle($table,$columnNames,$_SESSION['user'][$pkName]);
+                    unset($user[$passwordColumnName]);
+                    $user['updatedAt'] = time();
+                    $_SESSION['user'] = $user;
+                }
                 return $this->responder->success($_SESSION['user']);
             }
             return $this->responder->error(ErrorCode::AUTHENTICATION_REQUIRED, '');
