@@ -25,6 +25,7 @@ use Tqdev\PhpCrudApi\Middleware\BasicAuthMiddleware;
 use Tqdev\PhpCrudApi\Middleware\CorsMiddleware;
 use Tqdev\PhpCrudApi\Middleware\CustomizationMiddleware;
 use Tqdev\PhpCrudApi\Middleware\DbAuthMiddleware;
+use Tqdev\PhpCrudApi\Middleware\EncryptionMiddleware;
 use Tqdev\PhpCrudApi\Middleware\FirewallMiddleware;
 use Tqdev\PhpCrudApi\Middleware\IpAddressMiddleware;
 use Tqdev\PhpCrudApi\Middleware\JoinLimitsMiddleware;
@@ -43,6 +44,7 @@ use Tqdev\PhpCrudApi\Middleware\XmlMiddleware;
 use Tqdev\PhpCrudApi\Middleware\XsrfMiddleware;
 use Tqdev\PhpCrudApi\OpenApi\OpenApiService;
 use Tqdev\PhpCrudApi\Record\RecordService;
+
 
 class Api implements RequestHandlerInterface
 {
@@ -92,6 +94,9 @@ class Api implements RequestHandlerInterface
                     break;
                 case 'dbAuth':
                     new DbAuthMiddleware($router, $responder, $config, $middleware, $reflection, $db);
+                    break;
+                 case 'encryption':
+                    new EncryptionMiddleware($router, $responder, $config, $middleware, $reflection, $db);
                     break;
                 case 'wpAuth':
                     new WpAuthMiddleware($router, $responder, $config, $middleware);
