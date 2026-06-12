@@ -1,0 +1,13 @@
+parameters:
+    level: 5
+    scanFiles:
+        - stubs/wordpress.php
+        - test.php
+        - build.php
+        - install.php
+        - api.php
+        - api.include.php
+    paths:
+        - src
+    fileExtensions:
+        - php
