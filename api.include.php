@@ -177,7 +177,7 @@ namespace Tqdev\PhpCrudApi {
         public function __construct(Config $config)
         {
             $db = new GenericDB($config->getDriver(), $config->getAddress(), $config->getPort(), $config->getDatabase(), $config->getCommand(), $config->getTables(), $config->getMapping(), $config->getUsername(), $config->getPassword(), $config->getGeometrySrid());
-            $prefix = sprintf('phpcrudapi-%s-', substr(md5(__FILE__), 0, 8));
+            $prefix = sprintf('phpcrudapi-%s-', substr($config->getUID(), 0, 8));
             $cache = CacheFactory::create($config->getCacheType(), $prefix, $config->getCachePath());
             $reflection = new ReflectionService($db, $cache, $config->getCacheTime());
             $responder = new JsonResponder($config->getJsonOptions(), $config->getDebug());
@@ -1340,6 +1340,10 @@ namespace Tqdev\PhpCrudApi\Config {
     class Config implements ConfigInterface
     {
         private $values = ['driver' => null, 'address' => null, 'port' => null, 'username' => '', 'password' => '', 'database' => '', 'command' => '', 'tables' => 'all', 'mapping' => '', 'middlewares' => 'cors', 'controllers' => 'records,geojson,openapi,status', 'customControllers' => '', 'customOpenApiBuilders' => '', 'cacheType' => 'TempFile', 'cachePath' => '', 'cacheTime' => 10, 'jsonOptions' => JSON_UNESCAPED_UNICODE, 'debug' => false, 'basePath' => '', 'openApiBase' => '{"info":{"title":"PHP-CRUD-API","version":"1.0.0"}}', 'geometrySrid' => 4326];
+        public function getUID(): string
+        {
+            return md5(json_encode($this->values));
+        }
         private function getDefaultDriver(array $values): string
         {
             if (isset($values['driver'])) {
@@ -6051,6 +6055,33 @@ namespace Tqdev\PhpCrudApi\Middleware {
     use Tqdev\PhpCrudApi\Middleware\Router\Router;
     use Tqdev\PhpCrudApi\Record\ErrorCode;
     use Tqdev\PhpCrudApi\RequestUtils;
+    /**
+     * add stubs for WordPress functions to prevent fatal errors when not running in a WordPress environment
+     * these stubs will be overridden by the actual WordPress functions when running in a WordPress environment
+     */
+    if (!function_exists('wp_signon')) {
+        function wp_signon($credentials)
+        {
+            return (object) ['ID' => 0];
+        }
+    }
+    if (!function_exists('is_user_logged_in')) {
+        function is_user_logged_in()
+        {
+            return false;
+        }
+    }
+    if (!function_exists('wp_logout')) {
+        function wp_logout()
+        {
+        }
+    }
+    if (!function_exists('wp_get_current_user')) {
+        function wp_get_current_user()
+        {
+            return (object) ['data' => (object) ['user_pass' => '']];
+        }
+    }
     class WpAuthMiddleware extends Middleware
     {
         public function __construct(Router $router, Responder $responder, Config $config, string $middleware)

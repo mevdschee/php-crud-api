@@ -29,7 +29,12 @@ class Config implements ConfigInterface
         'openApiBase' => '{"info":{"title":"PHP-CRUD-API","version":"1.0.0"}}',
         'geometrySrid' => 4326,
     ];
-
+    
+    public function getUID(): string
+    {
+        return md5(json_encode($this->values));
+    }
+    
     private function getDefaultDriver(array $values): string
     {
         if (isset($values['driver'])) {
