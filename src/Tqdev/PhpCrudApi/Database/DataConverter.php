@@ -26,7 +26,7 @@ class DataConverter
             case 'float':
                 return (float) $value;
             case 'decimal':
-                return number_format($value, $args[0], '.', '');
+                return number_format($value, (int) $args[0], '.', '');
         }
         return $value;
     }
@@ -71,7 +71,7 @@ class DataConverter
             case 'boolean':
                 return filter_var($value, FILTER_VALIDATE_BOOLEAN) ? 1 : 0;
             case 'base64url_to_base64':
-                return str_pad(strtr($value, '-_', '+/'), ceil(strlen($value) / 4) * 4, '=', STR_PAD_RIGHT);
+                return str_pad(strtr($value, '-_', '+/'), (int) (ceil(strlen($value) / 4) * 4), '=', STR_PAD_RIGHT);
         }
         return $value;
     }

@@ -35,6 +35,7 @@ class GenericReflection
             case 'sqlite':
                 return ['sqlite_sequence'];
         }
+        return [];
     }
 
     private function getTablesSQL(): string
@@ -49,6 +50,7 @@ class GenericReflection
             case 'sqlite':
                 return 'SELECT t.name as "TABLE_NAME", t.type as "TABLE_TYPE" FROM sqlite_master t WHERE t.type IN (\'table\', \'view\') AND \'\' IN (\'\', ?) ORDER BY "TABLE_NAME"';
         }
+        return '';
     }
 
     private function getTableColumnsSQL(): string
@@ -63,6 +65,7 @@ class GenericReflection
             case 'sqlite':
                 return 'SELECT "name" AS "COLUMN_NAME", case when "notnull"==1 then \'no\' else \'yes\' end as "IS_NULLABLE", lower("type") AS "DATA_TYPE", 2147483647 AS "CHARACTER_MAXIMUM_LENGTH", 0 AS "NUMERIC_PRECISION", 0 AS "NUMERIC_SCALE", \'\' AS "COLUMN_TYPE" FROM pragma_table_info(?) WHERE \'\' IN (\'\', ?) ORDER BY "cid"';
         }
+        return '';
     }
 
     private function getTablePrimaryKeysSQL(): string
@@ -77,6 +80,7 @@ class GenericReflection
             case 'sqlite':
                 return 'SELECT "name" as "COLUMN_NAME" FROM pragma_table_info(?) WHERE "pk"=1 AND \'\' IN (\'\', ?)';
         }
+        return '';
     }
 
     private function getTableForeignKeysSQL(): string
@@ -91,6 +95,7 @@ class GenericReflection
             case 'sqlite':
                 return 'SELECT "from" AS "COLUMN_NAME", "table" AS "REFERENCED_TABLE_NAME" FROM pragma_foreign_key_list(?) WHERE \'\' IN (\'\', ?)';
         }
+        return '';
     }
 
     public function getDatabaseName(): string

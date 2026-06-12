@@ -15,7 +15,7 @@ class FirewallMiddleware extends Middleware
     {
         if (strpos($cidr, '/') !== false) {
             list($subnet, $mask) = explode('/', trim($cidr));
-            if ((ip2long($ip) & ~((1 << (32 - $mask)) - 1)) == ip2long($subnet)) {
+            if ((ip2long($ip) & ~((1 << (32 - (int) $mask)) - 1)) == ip2long($subnet)) {
                 return true;
             }
         } else {
@@ -40,7 +40,8 @@ class FirewallMiddleware extends Middleware
     {
         $reverseProxy = $this->getProperty('reverseProxy', '');
         if ($reverseProxy) {
-            $ipAddress = array_pop($request->getHeader('X-Forwarded-For'));
+            $forwardedFor = $request->getHeader('X-Forwarded-For');
+            $ipAddress = array_pop($forwardedFor) ?? '127.0.0.1';
         } else {
             $serverParams = $request->getServerParams();
             $ipAddress = $serverParams['REMOTE_ADDR'] ?? '127.0.0.1';

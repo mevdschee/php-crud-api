@@ -81,6 +81,7 @@ class ConditionsBuilder
         $column = $this->quoteColumnName($condition->getColumn());
         $operator = $condition->getOperator();
         $value = $condition->getValue();
+        $sql = 'FALSE';
         switch ($operator) {
             case 'cs':
                 $sql = "$column LIKE ?";
@@ -128,14 +129,10 @@ class ConditionsBuilder
             case 'in':
                 $parts = explode(',', $value);
                 $count = count($parts);
-                if ($count > 0) {
-                    $qmarks = implode(',', str_split(str_repeat('?', $count)));
-                    $sql = "$column IN ($qmarks)";
-                    for ($i = 0; $i < $count; $i++) {
-                        $arguments[] = $parts[$i];
-                    }
-                } else {
-                    $sql = "FALSE";
+                $qmarks = implode(',', str_split(str_repeat('?', $count)));
+                $sql = "$column IN ($qmarks)";
+                for ($i = 0; $i < $count; $i++) {
+                    $arguments[] = $parts[$i];
                 }
                 break;
             case 'is':
@@ -171,6 +168,7 @@ class ConditionsBuilder
             case 'iv':
                 return 'ST_IsValid';
         }
+        return '';
     }
 
     private function hasSpatialArgument(string $operator): bool
@@ -194,6 +192,7 @@ class ConditionsBuilder
                 $argument = $hasArgument ? '?' : '0';
                 return "$functionName($column, $argument)=1";
         }
+        return '';
     }
 
     private function getSpatialConditionSql(ColumnCondition $condition, array &$arguments): string

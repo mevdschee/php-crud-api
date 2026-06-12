@@ -62,7 +62,7 @@ class GeoJsonService
         if ($tile) {
             $zxy = explode(',', $tile);
             if (count($zxy) == 3) {
-                list($z, $x, $y) = $zxy;
+                list($z, $x, $y) = array_map('intval', $zxy);
                 $c = array();
                 $c = array_merge($c, $this->convertTileToLatLonOfUpperLeftCorner($z, $x, $y));
                 $c = array_merge($c, $this->convertTileToLatLonOfUpperLeftCorner($z, $x + 1, $y + 1));

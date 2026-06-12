@@ -50,6 +50,7 @@ class Config implements ConfigInterface
             case 'sqlite':
                 return 0;
         }
+        return 0;
     }
 
     private function getDefaultAddress(string $driver): string
@@ -64,6 +65,7 @@ class Config implements ConfigInterface
             case 'sqlite':
                 return 'data.db';
         }
+        return 'localhost';
     }
 
     private function getDriverDefaults(string $driver): array

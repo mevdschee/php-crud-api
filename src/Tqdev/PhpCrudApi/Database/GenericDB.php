@@ -39,10 +39,12 @@ class GenericDB
             case 'sqlite':
                 return "$this->driver:$this->address";
         }
+        return '';
     }
 
     private function getCommands(): array
     {
+        $commands = [];
         switch ($this->driver) {
             case 'mysql':
                 $commands = [
@@ -92,6 +94,7 @@ class GenericDB
             case 'sqlite':
                 return $options + [];
         }
+        return $options;
     }
 
     private function initPdo(): bool

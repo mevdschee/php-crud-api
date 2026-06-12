@@ -9,12 +9,10 @@ use Tqdev\PhpCrudApi\Database\GenericDB;
 class DefinitionService
 {
     private $db;
-    private $reflection;
 
-    public function __construct(GenericDB $db, ReflectionService $reflection)
+    public function __construct(GenericDB $db)
     {
         $this->db = $db;
-        $this->reflection = $reflection;
     }
 
     public function updateTable(ReflectedTable $table, /* object */ $changes): bool

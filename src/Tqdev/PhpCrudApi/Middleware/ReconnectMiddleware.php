@@ -5,7 +5,6 @@ namespace Tqdev\PhpCrudApi\Middleware;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
-use Tqdev\PhpCrudApi\Column\ReflectionService;
 use Tqdev\PhpCrudApi\Config\Config;
 use Tqdev\PhpCrudApi\Controller\Responder;
 use Tqdev\PhpCrudApi\Database\GenericDB;
@@ -17,7 +16,7 @@ class ReconnectMiddleware extends Middleware
     private $config;
     private $db;
 
-    public function __construct(Router $router, Responder $responder, Config $config, string $middleware, ReflectionService $reflection, GenericDB $db)
+    public function __construct(Router $router, Responder $responder, Config $config, string $middleware, GenericDB $db)
     {
         parent::__construct($router, $responder, $config, $middleware);
         $this->config = $config;

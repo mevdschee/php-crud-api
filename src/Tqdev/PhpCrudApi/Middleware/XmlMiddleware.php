@@ -86,9 +86,6 @@ class XmlMiddleware extends Middleware
             return '';
         }
         $a = @dom_import_simplexml($o);
-        if (!$a) {
-            return '';
-        }
         $t = function ($v) {
             $t = $v->getAttribute('type');
             $txt = $v->firstChild->nodeType == XML_TEXT_NODE;

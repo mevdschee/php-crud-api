@@ -119,8 +119,7 @@ class DbAuthMiddleware extends Middleware
                     }
                 }
                 return $this->responder->error(ErrorCode::AUTHENTICATION_FAILED, $username);
-            }
-            if ($path == 'login') {
+            } elseif ($path == 'login') {
                 $users = $this->db->selectAll($table, $columnNames, $condition, $columnOrdering, 0, 1);
                 foreach ($users as $user) {
                     if (password_verify($password, $user[$passwordColumnName]) == 1) {
@@ -133,8 +132,7 @@ class DbAuthMiddleware extends Middleware
                     }
                 }
                 return $this->responder->error(ErrorCode::AUTHENTICATION_FAILED, $username);
-            }
-            if ($path == 'password') {
+            } else {
                 if ($username != ($_SESSION['user'][$usernameColumnName] ?? '')) {
                     return $this->responder->error(ErrorCode::AUTHENTICATION_FAILED, $username);
                 }

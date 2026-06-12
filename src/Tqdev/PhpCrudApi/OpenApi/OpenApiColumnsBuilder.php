@@ -49,6 +49,7 @@ class OpenApiColumnsBuilder
         foreach (array_keys($this->operations) as $type) {
             foreach ($this->operations[$type] as $operation => $method) {
                 $parameters = [];
+                $path = '';
                 switch ($type) {
                     case 'database':
                         $path = '/columns';

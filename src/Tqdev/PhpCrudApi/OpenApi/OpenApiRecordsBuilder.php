@@ -179,10 +179,10 @@ class OpenApiRecordsBuilder
     {
         switch ($column->getType()) {
             case 'integer':
-                $n = strlen(pow(2, 31));
+                $n = strlen((string) pow(2, 31));
                 return '^-?[0-9]{1,' . $n . '}$';
             case 'bigint':
-                $n = strlen(pow(2, 63));
+                $n = strlen((string) pow(2, 63));
                 return '^-?[0-9]{1,' . $n . '}$';
             case 'varchar':
                 $l = $column->getLength();
@@ -209,7 +209,6 @@ class OpenApiRecordsBuilder
                 return '^[0-9]{2}:[0-9]{2}:[0-9]{2}$';
             case 'timestamp':
                 return '^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}$';
-                return '';
             case 'geometry':
                 return '^(POINT|LINESTRING|POLYGON|MULTIPOINT|MULTILINESTRING|MULTIPOLYGON)\s*\(.*$';
             case 'boolean':

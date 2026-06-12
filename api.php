@@ -11,6 +11,102 @@
  *   https://github.com/Nyholm
  **/
 
+// file: vendor/phpstan/phpstan/bootstrap.php
+namespace PHPStan {
+    use Composer\Autoload\ClassLoader;
+    use function class_exists;
+    use const PHP_VERSION_ID;
+    final class PharAutoloader
+    {
+        /** @var ClassLoader */
+        private static $composerAutoloader;
+        /** @var bool */
+        private static $polyfillsLoaded = false;
+        final public static function loadClass(string $class): void
+        {
+            if (!extension_loaded('phar') || defined('__PHPSTAN_RUNNING__')) {
+                return;
+            }
+            if (strpos($class, '_PHPStan_') === 0) {
+                if (!in_array('phar', stream_get_wrappers(), true)) {
+                    throw new \Exception('Phar wrapper is not registered. Please review your php.ini settings.');
+                }
+                if (self::$composerAutoloader === null) {
+                    self::$composerAutoloader = require 'phar://' . __DIR__ . '/phpstan.phar/vendor/autoload.php';
+                    require_once 'phar://' . __DIR__ . '/phpstan.phar/vendor/jetbrains/phpstorm-stubs/PhpStormStubsMap.php';
+                    require_once 'phar://' . __DIR__ . '/phpstan.phar/vendor/react/promise/src/functions_include.php';
+                    require_once 'phar://' . __DIR__ . '/phpstan.phar/vendor/ralouphie/getallheaders/src/getallheaders.php';
+                    require_once 'phar://' . __DIR__ . '/phpstan.phar/vendor/guzzlehttp/guzzle/src/functions_include.php';
+                }
+                self::$composerAutoloader->loadClass($class);
+                return;
+            }
+            if (strpos($class, 'PHPStan\\') !== 0 || strpos($class, 'PHPStan\PhpDocParser\\') === 0) {
+                return;
+            }
+            if (!in_array('phar', stream_get_wrappers(), true)) {
+                throw new \Exception('Phar wrapper is not registered. Please review your php.ini settings.');
+            }
+            if (!self::$polyfillsLoaded) {
+                self::$polyfillsLoaded = true;
+                if (PHP_VERSION_ID < 80000 && empty($GLOBALS['__composer_autoload_files']['a4a119a56e50fbb293281d9a48007e0e']) && !class_exists(\Symfony\Polyfill\Php80\Php80::class, false)) {
+                    $GLOBALS['__composer_autoload_files']['a4a119a56e50fbb293281d9a48007e0e'] = true;
+                    require_once 'phar://' . __DIR__ . '/phpstan.phar/vendor/symfony/polyfill-php80/Php80.php';
+                    require_once 'phar://' . __DIR__ . '/phpstan.phar/vendor/symfony/polyfill-php80/bootstrap.php';
+                }
+                if (empty($GLOBALS['__composer_autoload_files']['0e6d7bf4a5811bfa5cf40c5ccd6fae6a']) && !class_exists(\Symfony\Polyfill\Mbstring\Mbstring::class, false)) {
+                    $GLOBALS['__composer_autoload_files']['0e6d7bf4a5811bfa5cf40c5ccd6fae6a'] = true;
+                    require_once 'phar://' . __DIR__ . '/phpstan.phar/vendor/symfony/polyfill-mbstring/Mbstring.php';
+                    require_once 'phar://' . __DIR__ . '/phpstan.phar/vendor/symfony/polyfill-mbstring/bootstrap.php';
+                }
+                if (empty($GLOBALS['__composer_autoload_files']['e69f7f6ee287b969198c3c9d6777bd38']) && !class_exists(\Symfony\Polyfill\Intl\Normalizer\Normalizer::class, false)) {
+                    $GLOBALS['__composer_autoload_files']['e69f7f6ee287b969198c3c9d6777bd38'] = true;
+                    require_once 'phar://' . __DIR__ . '/phpstan.phar/vendor/symfony/polyfill-intl-normalizer/Normalizer.php';
+                    require_once 'phar://' . __DIR__ . '/phpstan.phar/vendor/symfony/polyfill-intl-normalizer/bootstrap.php';
+                }
+                if (!extension_loaded('intl') && empty($GLOBALS['__composer_autoload_files']['8825ede83f2f289127722d4e842cf7e8']) && !class_exists(\Symfony\Polyfill\Intl\Grapheme\Grapheme::class, false)) {
+                    $GLOBALS['__composer_autoload_files']['8825ede83f2f289127722d4e842cf7e8'] = true;
+                    require_once 'phar://' . __DIR__ . '/phpstan.phar/vendor/symfony/polyfill-intl-grapheme/Grapheme.php';
+                    require_once 'phar://' . __DIR__ . '/phpstan.phar/vendor/symfony/polyfill-intl-grapheme/bootstrap.php';
+                }
+                if (PHP_VERSION_ID < 80100 && empty($GLOBALS['__composer_autoload_files']['23c18046f52bef3eea034657bafda50f']) && !class_exists(\Symfony\Polyfill\Php81\Php81::class, false)) {
+                    $GLOBALS['__composer_autoload_files']['23c18046f52bef3eea034657bafda50f'] = true;
+                    require_once 'phar://' . __DIR__ . '/phpstan.phar/vendor/symfony/polyfill-php81/Php81.php';
+                    require_once 'phar://' . __DIR__ . '/phpstan.phar/vendor/symfony/polyfill-php81/bootstrap.php';
+                }
+                if (PHP_VERSION_ID < 80300 && empty($GLOBALS['__composer_autoload_files']['662a729f963d39afe703c9d9b7ab4a8c']) && !class_exists(\Symfony\Polyfill\Php83\Php83::class, false)) {
+                    $GLOBALS['__composer_autoload_files']['662a729f963d39afe703c9d9b7ab4a8c'] = true;
+                    require_once 'phar://' . __DIR__ . '/phpstan.phar/vendor/symfony/polyfill-php83/Php83.php';
+                    require_once 'phar://' . __DIR__ . '/phpstan.phar/vendor/symfony/polyfill-php83/bootstrap.php';
+                }
+                if (PHP_VERSION_ID < 80400 && empty($GLOBALS['__composer_autoload_files']['9d2b9fc6db0f153a0a149fefb182415e']) && !class_exists(\Symfony\Polyfill\Php84\Php84::class, false)) {
+                    $GLOBALS['__composer_autoload_files']['9d2b9fc6db0f153a0a149fefb182415e'] = true;
+                    require_once 'phar://' . __DIR__ . '/phpstan.phar/vendor/symfony/polyfill-php84/Php84.php';
+                    require_once 'phar://' . __DIR__ . '/phpstan.phar/vendor/symfony/polyfill-php84/bootstrap.php';
+                }
+                if (PHP_VERSION_ID < 80500 && empty($GLOBALS['__composer_autoload_files']['606a39d89246991a373564698c2d8383']) && !class_exists(\Symfony\Polyfill\Php85\Php85::class, false)) {
+                    $GLOBALS['__composer_autoload_files']['606a39d89246991a373564698c2d8383'] = true;
+                    require_once 'phar://' . __DIR__ . '/phpstan.phar/vendor/symfony/polyfill-php85/Php85.php';
+                    require_once 'phar://' . __DIR__ . '/phpstan.phar/vendor/symfony/polyfill-php85/bootstrap.php';
+                }
+            }
+            $filename = str_replace('\\', DIRECTORY_SEPARATOR, $class);
+            if (strpos($class, 'PHPStan\BetterReflection\\') === 0) {
+                $filename = substr($filename, strlen('PHPStan\BetterReflection\\'));
+                $filepath = 'phar://' . __DIR__ . '/phpstan.phar/vendor/ondrejmirtes/better-reflection/src/' . $filename . '.php';
+            } else {
+                $filename = substr($filename, strlen('PHPStan\\'));
+                $filepath = 'phar://' . __DIR__ . '/phpstan.phar/src/' . $filename . '.php';
+            }
+            if (!file_exists($filepath)) {
+                return;
+            }
+            require $filepath;
+        }
+    }
+    spl_autoload_register([PharAutoloader::class, 'loadClass']);
+}
+
 // file: vendor/psr/http-server-handler/src/RequestHandlerInterface.php
 namespace Psr\Http\Server {
     use Psr\Http\Message\ResponseInterface;
@@ -116,7 +212,7 @@ namespace Tqdev\PhpCrudApi {
                         new WpAuthMiddleware($router, $responder, $config, $middleware);
                         break;
                     case 'reconnect':
-                        new ReconnectMiddleware($router, $responder, $config, $middleware, $reflection, $db);
+                        new ReconnectMiddleware($router, $responder, $config, $middleware, $db);
                         break;
                     case 'validation':
                         new ValidationMiddleware($router, $responder, $config, $middleware, $reflection);
@@ -137,13 +233,13 @@ namespace Tqdev\PhpCrudApi {
                         new XsrfMiddleware($router, $responder, $config, $middleware);
                         break;
                     case 'pageLimits':
-                        new PageLimitsMiddleware($router, $responder, $config, $middleware, $reflection);
+                        new PageLimitsMiddleware($router, $responder, $config, $middleware);
                         break;
                     case 'joinLimits':
-                        new JoinLimitsMiddleware($router, $responder, $config, $middleware, $reflection);
+                        new JoinLimitsMiddleware($router, $responder, $config, $middleware);
                         break;
                     case 'customization':
-                        new CustomizationMiddleware($router, $responder, $config, $middleware, $reflection);
+                        new CustomizationMiddleware($router, $responder, $config, $middleware);
                         break;
                     case 'textSearch':
                         new TextSearchMiddleware($router, $responder, $config, $middleware, $reflection);
@@ -163,7 +259,7 @@ namespace Tqdev\PhpCrudApi {
                         new RecordController($router, $responder, $records);
                         break;
                     case 'columns':
-                        $definition = new DefinitionService($db, $reflection);
+                        $definition = new DefinitionService($db);
                         new ColumnController($router, $responder, $reflection, $definition);
                         break;
                     case 'cache':
@@ -566,11 +662,9 @@ namespace Tqdev\PhpCrudApi\Column {
     class DefinitionService
     {
         private $db;
-        private $reflection;
-        public function __construct(GenericDB $db, ReflectionService $reflection)
+        public function __construct(GenericDB $db)
         {
             $this->db = $db;
-            $this->reflection = $reflection;
         }
         public function updateTable(
             ReflectedTable $table,
@@ -1265,6 +1359,7 @@ namespace Tqdev\PhpCrudApi\Config {
                 case 'sqlite':
                     return 0;
             }
+            return 0;
         }
         private function getDefaultAddress(string $driver): string
         {
@@ -1278,6 +1373,7 @@ namespace Tqdev\PhpCrudApi\Config {
                 case 'sqlite':
                     return 'data.db';
             }
+            return 'localhost';
         }
         private function getDriverDefaults(string $driver): array
         {
@@ -1527,7 +1623,7 @@ namespace Tqdev\PhpCrudApi\Controller {
         }
         public function addTable(ServerRequestInterface $request): ResponseInterface
         {
-            $tableName = $request->getParsedBody()->name;
+            $tableName = ((object) $request->getParsedBody())->name;
             if ($this->reflection->hasTable($tableName)) {
                 return $this->responder->error(ErrorCode::TABLE_ALREADY_EXISTS, $tableName);
             }
@@ -1543,7 +1639,7 @@ namespace Tqdev\PhpCrudApi\Controller {
             if (!$this->reflection->hasTable($tableName)) {
                 return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $tableName);
             }
-            $columnName = $request->getParsedBody()->name;
+            $columnName = ((object) $request->getParsedBody())->name;
             $table = $this->reflection->getTable($tableName);
             if ($table->hasColumn($columnName)) {
                 return $this->responder->error(ErrorCode::COLUMN_ALREADY_EXISTS, $columnName);
@@ -2074,6 +2170,7 @@ namespace Tqdev\PhpCrudApi\Database {
                 case 'sqlite':
                     return " LIMIT {$limit} OFFSET {$offset}";
             }
+            return '';
         }
         private function quoteColumnName(ReflectedColumn $column): string
         {
@@ -2127,6 +2224,7 @@ namespace Tqdev\PhpCrudApi\Database {
                 case 'sqlite':
                     return "{$columnsSql} VALUES {$valuesSql}";
             }
+            return '';
         }
         public function getUpdate(ReflectedTable $table, array $columnValues): string
         {
@@ -2228,6 +2326,7 @@ namespace Tqdev\PhpCrudApi\Database {
             $column = $this->quoteColumnName($condition->getColumn());
             $operator = $condition->getOperator();
             $value = $condition->getValue();
+            $sql = 'FALSE';
             switch ($operator) {
                 case 'cs':
                     $sql = "{$column} LIKE ?";
@@ -2275,14 +2374,10 @@ namespace Tqdev\PhpCrudApi\Database {
                 case 'in':
                     $parts = explode(',', $value);
                     $count = count($parts);
-                    if ($count > 0) {
-                        $qmarks = implode(',', str_split(str_repeat('?', $count)));
-                        $sql = "{$column} IN ({$qmarks})";
-                        for ($i = 0; $i < $count; $i++) {
-                            $arguments[] = $parts[$i];
-                        }
-                    } else {
-                        $sql = "FALSE";
+                    $qmarks = implode(',', str_split(str_repeat('?', $count)));
+                    $sql = "{$column} IN ({$qmarks})";
+                    for ($i = 0; $i < $count; $i++) {
+                        $arguments[] = $parts[$i];
                     }
                     break;
                 case 'is':
@@ -2317,6 +2412,7 @@ namespace Tqdev\PhpCrudApi\Database {
                 case 'iv':
                     return 'ST_IsValid';
             }
+            return '';
         }
         private function hasSpatialArgument(string $operator): bool
         {
@@ -2338,6 +2434,7 @@ namespace Tqdev\PhpCrudApi\Database {
                     $argument = $hasArgument ? '?' : '0';
                     return "{$functionName}({$column}, {$argument})=1";
             }
+            return '';
         }
         private function getSpatialConditionSql(ColumnCondition $condition, array &$arguments): string
         {
@@ -2385,7 +2482,7 @@ namespace Tqdev\PhpCrudApi\Database {
                 case 'float':
                     return (float) $value;
                 case 'decimal':
-                    return number_format($value, $args[0], '.', '');
+                    return number_format($value, (int) $args[0], '.', '');
             }
             return $value;
         }
@@ -2427,7 +2524,7 @@ namespace Tqdev\PhpCrudApi\Database {
                 case 'boolean':
                     return filter_var($value, FILTER_VALIDATE_BOOLEAN) ? 1 : 0;
                 case 'base64url_to_base64':
-                    return str_pad(strtr($value, '-_', '+/'), ceil(strlen($value) / 4) * 4, '=', STR_PAD_RIGHT);
+                    return str_pad(strtr($value, '-_', '+/'), (int) (ceil(strlen($value) / 4) * 4), '=', STR_PAD_RIGHT);
             }
             return $value;
         }
@@ -2495,9 +2592,11 @@ namespace Tqdev\PhpCrudApi\Database {
                 case 'sqlite':
                     return "{$this->driver}:{$this->address}";
             }
+            return '';
         }
         private function getCommands(): array
         {
+            $commands = [];
             switch ($this->driver) {
                 case 'mysql':
                     $commands = ['SET SESSION sql_warnings=1;', 'SET NAMES utf8mb4;', 'SET SESSION sql_mode = "ANSI,TRADITIONAL";'];
@@ -2530,6 +2629,7 @@ namespace Tqdev\PhpCrudApi\Database {
                 case 'sqlite':
                     return $options + [];
             }
+            return $options;
         }
         private function initPdo(): bool
         {
@@ -2824,14 +2924,12 @@ namespace Tqdev\PhpCrudApi\Database {
     {
         private $pdo;
         private $driver;
-        private $database;
         private $typeConverter;
         private $reflection;
         public function __construct(LazyPdo $pdo, string $driver, string $database, array $tables, RealNameMapper $mapper)
         {
             $this->pdo = $pdo;
             $this->driver = $driver;
-            $this->database = $database;
             $this->typeConverter = new TypeConverter($driver);
             $this->reflection = new GenericReflection($pdo, $driver, $database, $tables, $mapper);
         }
@@ -2884,6 +2982,7 @@ namespace Tqdev\PhpCrudApi\Database {
                 case 'sqlite':
                     return $column->getPk() ? ' AUTOINCREMENT' : '';
             }
+            return '';
         }
         private function getColumnNullType(ReflectedColumn $column, bool $update): string
         {
@@ -2906,6 +3005,7 @@ namespace Tqdev\PhpCrudApi\Database {
                 case 'sqlite':
                     return "ALTER TABLE {$p1} RENAME TO {$p2}";
             }
+            return '';
         }
         private function getColumnRenameSQL(string $tableName, string $columnName, ReflectedColumn $newColumn): string
         {
@@ -2924,6 +3024,7 @@ namespace Tqdev\PhpCrudApi\Database {
                 case 'sqlite':
                     return "ALTER TABLE {$p1} RENAME COLUMN {$p2} TO {$p3}";
             }
+            return '';
         }
         private function getColumnRetypeSQL(string $tableName, string $columnName, ReflectedColumn $newColumn): string
         {
@@ -2939,6 +3040,7 @@ namespace Tqdev\PhpCrudApi\Database {
                 case 'sqlsrv':
                     return "ALTER TABLE {$p1} ALTER COLUMN {$p3} {$p4}";
             }
+            return '';
         }
         private function getSetColumnNullableSQL(string $tableName, string $columnName, ReflectedColumn $newColumn): string
         {
@@ -2955,6 +3057,7 @@ namespace Tqdev\PhpCrudApi\Database {
                 case 'sqlsrv':
                     return "ALTER TABLE {$p1} ALTER COLUMN {$p2} {$p4}";
             }
+            return '';
         }
         private function getSetColumnPkConstraintSQL(string $tableName, string $columnName, ReflectedColumn $newColumn): string
         {
@@ -2970,6 +3073,7 @@ namespace Tqdev\PhpCrudApi\Database {
                     $p4 = $newColumn->getPk() ? "ADD CONSTRAINT {$p3} PRIMARY KEY ({$p2})" : "DROP CONSTRAINT {$p3}";
                     return "ALTER TABLE {$p1} {$p4}";
             }
+            return '';
         }
         private function getSetColumnPkSequenceSQL(string $tableName, string $columnName, ReflectedColumn $newColumn): string
         {
@@ -2984,6 +3088,7 @@ namespace Tqdev\PhpCrudApi\Database {
                 case 'sqlsrv':
                     return $newColumn->getPk() ? "CREATE SEQUENCE {$p3}" : "DROP SEQUENCE {$p3}";
             }
+            return '';
         }
         private function getSetColumnPkSequenceStartSQL(string $tableName, string $columnName, ReflectedColumn $newColumn): string
         {
@@ -3000,6 +3105,7 @@ namespace Tqdev\PhpCrudApi\Database {
                     $p4 = $this->pdo->query("SELECT max({$p2})+1 FROM {$p1}")->fetchColumn();
                     return "ALTER SEQUENCE {$p3} RESTART WITH {$p4}";
             }
+            return '';
         }
         private function getSetColumnPkDefaultSQL(string $tableName, string $columnName, ReflectedColumn $newColumn): string
         {
@@ -3027,6 +3133,7 @@ namespace Tqdev\PhpCrudApi\Database {
                         return "ALTER TABLE {$p1} DROP CONSTRAINT {$p4}";
                     }
             }
+            return '';
         }
         private function getAddColumnFkConstraintSQL(string $tableName, string $columnName, ReflectedColumn $newColumn): string
         {
@@ -3048,6 +3155,7 @@ namespace Tqdev\PhpCrudApi\Database {
                 case 'sqlsrv':
                     return "ALTER TABLE {$p1} DROP CONSTRAINT {$p2}";
             }
+            return '';
         }
         private function getAddTableSQL(ReflectedTable $newTable): string
         {
@@ -3099,6 +3207,7 @@ namespace Tqdev\PhpCrudApi\Database {
                 case 'sqlite':
                     return "ALTER TABLE {$p1} ADD COLUMN {$p2} {$p3}";
             }
+            return '';
         }
         private function getRemoveTableSQL(string $tableName): string
         {
@@ -3112,6 +3221,7 @@ namespace Tqdev\PhpCrudApi\Database {
                 case 'sqlite':
                     return "DROP TABLE {$p1};";
             }
+            return '';
         }
         private function getRemoveColumnSQL(string $tableName, string $columnName): string
         {
@@ -3126,6 +3236,7 @@ namespace Tqdev\PhpCrudApi\Database {
                 case 'sqlite':
                     return "ALTER TABLE {$p1} DROP COLUMN {$p2};";
             }
+            return '';
         }
         public function renameTable(string $tableName, string $newTableName)
         {
@@ -3244,6 +3355,7 @@ namespace Tqdev\PhpCrudApi\Database {
                 case 'sqlite':
                     return ['sqlite_sequence'];
             }
+            return [];
         }
         private function getTablesSQL(): string
         {
@@ -3257,6 +3369,7 @@ namespace Tqdev\PhpCrudApi\Database {
                 case 'sqlite':
                     return 'SELECT t.name as "TABLE_NAME", t.type as "TABLE_TYPE" FROM sqlite_master t WHERE t.type IN (\'table\', \'view\') AND \'\' IN (\'\', ?) ORDER BY "TABLE_NAME"';
             }
+            return '';
         }
         private function getTableColumnsSQL(): string
         {
@@ -3270,6 +3383,7 @@ namespace Tqdev\PhpCrudApi\Database {
                 case 'sqlite':
                     return 'SELECT "name" AS "COLUMN_NAME", case when "notnull"==1 then \'no\' else \'yes\' end as "IS_NULLABLE", lower("type") AS "DATA_TYPE", 2147483647 AS "CHARACTER_MAXIMUM_LENGTH", 0 AS "NUMERIC_PRECISION", 0 AS "NUMERIC_SCALE", \'\' AS "COLUMN_TYPE" FROM pragma_table_info(?) WHERE \'\' IN (\'\', ?) ORDER BY "cid"';
             }
+            return '';
         }
         private function getTablePrimaryKeysSQL(): string
         {
@@ -3283,6 +3397,7 @@ namespace Tqdev\PhpCrudApi\Database {
                 case 'sqlite':
                     return 'SELECT "name" as "COLUMN_NAME" FROM pragma_table_info(?) WHERE "pk"=1 AND \'\' IN (\'\', ?)';
             }
+            return '';
         }
         private function getTableForeignKeysSQL(): string
         {
@@ -3296,6 +3411,7 @@ namespace Tqdev\PhpCrudApi\Database {
                 case 'sqlite':
                     return 'SELECT "from" AS "COLUMN_NAME", "table" AS "REFERENCED_TABLE_NAME" FROM pragma_foreign_key_list(?) WHERE \'\' IN (\'\', ?)';
             }
+            return '';
         }
         public function getDatabaseName(): string
         {
@@ -3838,7 +3954,7 @@ namespace Tqdev\PhpCrudApi\GeoJson {
             if ($tile) {
                 $zxy = explode(',', $tile);
                 if (count($zxy) == 3) {
-                    list($z, $x, $y) = $zxy;
+                    list($z, $x, $y) = array_map('intval', $zxy);
                     $c = array();
                     $c = array_merge($c, $this->convertTileToLatLonOfUpperLeftCorner($z, $x, $y));
                     $c = array_merge($c, $this->convertTileToLatLonOfUpperLeftCorner($z, $x + 1, $y + 1));
@@ -4445,7 +4561,6 @@ namespace Tqdev\PhpCrudApi\Middleware {
     use Psr\Http\Message\ResponseInterface;
     use Psr\Http\Message\ServerRequestInterface;
     use Psr\Http\Server\RequestHandlerInterface;
-    use Tqdev\PhpCrudApi\Column\ReflectionService;
     use Tqdev\PhpCrudApi\Config\Config;
     use Tqdev\PhpCrudApi\Controller\Responder;
     use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
@@ -4453,11 +4568,9 @@ namespace Tqdev\PhpCrudApi\Middleware {
     use Tqdev\PhpCrudApi\RequestUtils;
     class CustomizationMiddleware extends Middleware
     {
-        private $reflection;
-        public function __construct(Router $router, Responder $responder, Config $config, string $middleware, ReflectionService $reflection)
+        public function __construct(Router $router, Responder $responder, Config $config, string $middleware)
         {
             parent::__construct($router, $responder, $config, $middleware);
-            $this->reflection = $reflection;
         }
         public function process(ServerRequestInterface $request, RequestHandlerInterface $next): ResponseInterface
         {
@@ -4596,8 +4709,7 @@ namespace Tqdev\PhpCrudApi\Middleware {
                         }
                     }
                     return $this->responder->error(ErrorCode::AUTHENTICATION_FAILED, $username);
-                }
-                if ($path == 'login') {
+                } elseif ($path == 'login') {
                     $users = $this->db->selectAll($table, $columnNames, $condition, $columnOrdering, 0, 1);
                     foreach ($users as $user) {
                         if (password_verify($password, $user[$passwordColumnName]) == 1) {
@@ -4610,8 +4722,7 @@ namespace Tqdev\PhpCrudApi\Middleware {
                         }
                     }
                     return $this->responder->error(ErrorCode::AUTHENTICATION_FAILED, $username);
-                }
-                if ($path == 'password') {
+                } else {
                     if ($username != ($_SESSION['user'][$usernameColumnName] ?? '')) {
                         return $this->responder->error(ErrorCode::AUTHENTICATION_FAILED, $username);
                     }
@@ -4682,7 +4793,7 @@ namespace Tqdev\PhpCrudApi\Middleware {
         {
             if (strpos($cidr, '/') !== false) {
                 list($subnet, $mask) = explode('/', trim($cidr));
-                if ((ip2long($ip) & ~((1 << 32 - $mask) - 1)) == ip2long($subnet)) {
+                if ((ip2long($ip) & ~((1 << 32 - (int) $mask) - 1)) == ip2long($subnet)) {
                     return true;
                 }
             } else if (ip2long($ip) == ip2long($cidr)) {
@@ -4703,7 +4814,8 @@ namespace Tqdev\PhpCrudApi\Middleware {
         {
             $reverseProxy = $this->getProperty('reverseProxy', '');
             if ($reverseProxy) {
-                $ipAddress = array_pop($request->getHeader('X-Forwarded-For'));
+                $forwardedFor = $request->getHeader('X-Forwarded-For');
+                $ipAddress = array_pop($forwardedFor) ?? '127.0.0.1';
             } else {
                 $serverParams = $request->getServerParams();
                 $ipAddress = $serverParams['REMOTE_ADDR'] ?? '127.0.0.1';
@@ -4765,7 +4877,8 @@ namespace Tqdev\PhpCrudApi\Middleware {
         {
             $reverseProxy = $this->getProperty('reverseProxy', '');
             if ($reverseProxy) {
-                $ipAddress = array_pop($request->getHeader('X-Forwarded-For'));
+                $forwardedFor = $request->getHeader('X-Forwarded-For');
+                $ipAddress = array_pop($forwardedFor) ?? '127.0.0.1';
             } else {
                 $serverParams = $request->getServerParams();
                 $ipAddress = $serverParams['REMOTE_ADDR'] ?? '127.0.0.1';
@@ -4805,7 +4918,6 @@ namespace Tqdev\PhpCrudApi\Middleware {
     use Psr\Http\Message\ResponseInterface;
     use Psr\Http\Message\ServerRequestInterface;
     use Psr\Http\Server\RequestHandlerInterface;
-    use Tqdev\PhpCrudApi\Column\ReflectionService;
     use Tqdev\PhpCrudApi\Config\Config;
     use Tqdev\PhpCrudApi\Controller\Responder;
     use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
@@ -4814,11 +4926,9 @@ namespace Tqdev\PhpCrudApi\Middleware {
     use Tqdev\PhpCrudApi\RequestUtils;
     class JoinLimitsMiddleware extends Middleware
     {
-        private $reflection;
-        public function __construct(Router $router, Responder $responder, Config $config, string $middleware, ReflectionService $reflection)
+        public function __construct(Router $router, Responder $responder, Config $config, string $middleware)
         {
             parent::__construct($router, $responder, $config, $middleware);
-            $this->reflection = $reflection;
         }
         public function process(ServerRequestInterface $request, RequestHandlerInterface $next): ResponseInterface
         {
@@ -5200,7 +5310,6 @@ namespace Tqdev\PhpCrudApi\Middleware {
     use Psr\Http\Message\ResponseInterface;
     use Psr\Http\Message\ServerRequestInterface;
     use Psr\Http\Server\RequestHandlerInterface;
-    use Tqdev\PhpCrudApi\Column\ReflectionService;
     use Tqdev\PhpCrudApi\Config\Config;
     use Tqdev\PhpCrudApi\Controller\Responder;
     use Tqdev\PhpCrudApi\Middleware\Base\Middleware;
@@ -5209,11 +5318,9 @@ namespace Tqdev\PhpCrudApi\Middleware {
     use Tqdev\PhpCrudApi\RequestUtils;
     class PageLimitsMiddleware extends Middleware
     {
-        private $reflection;
-        public function __construct(Router $router, Responder $responder, Config $config, string $middleware, ReflectionService $reflection)
+        public function __construct(Router $router, Responder $responder, Config $config, string $middleware)
         {
             parent::__construct($router, $responder, $config, $middleware);
-            $this->reflection = $reflection;
         }
         public function process(ServerRequestInterface $request, RequestHandlerInterface $next): ResponseInterface
         {
@@ -5249,7 +5356,6 @@ namespace Tqdev\PhpCrudApi\Middleware {
     use Psr\Http\Message\ResponseInterface;
     use Psr\Http\Message\ServerRequestInterface;
     use Psr\Http\Server\RequestHandlerInterface;
-    use Tqdev\PhpCrudApi\Column\ReflectionService;
     use Tqdev\PhpCrudApi\Config\Config;
     use Tqdev\PhpCrudApi\Controller\Responder;
     use Tqdev\PhpCrudApi\Database\GenericDB;
@@ -5259,7 +5365,7 @@ namespace Tqdev\PhpCrudApi\Middleware {
     {
         private $config;
         private $db;
-        public function __construct(Router $router, Responder $responder, Config $config, string $middleware, ReflectionService $reflection, GenericDB $db)
+        public function __construct(Router $router, Responder $responder, Config $config, string $middleware, GenericDB $db)
         {
             parent::__construct($router, $responder, $config, $middleware);
             $this->config = $config;
@@ -6081,9 +6187,6 @@ namespace Tqdev\PhpCrudApi\Middleware {
                 return '';
             }
             $a = @dom_import_simplexml($o);
-            if (!$a) {
-                return '';
-            }
             $t = function ($v) {
                 $t = $v->getAttribute('type');
                 $txt = $v->firstChild->nodeType == XML_TEXT_NODE;
@@ -6280,6 +6383,7 @@ namespace Tqdev\PhpCrudApi\OpenApi {
             foreach (array_keys($this->operations) as $type) {
                 foreach ($this->operations[$type] as $operation => $method) {
                     $parameters = [];
+                    $path = '';
                     switch ($type) {
                         case 'database':
                             $path = '/columns';
@@ -6626,10 +6730,10 @@ namespace Tqdev\PhpCrudApi\OpenApi {
         {
             switch ($column->getType()) {
                 case 'integer':
-                    $n = strlen(pow(2, 31));
+                    $n = strlen((string) pow(2, 31));
                     return '^-?[0-9]{1,' . $n . '}$';
                 case 'bigint':
-                    $n = strlen(pow(2, 63));
+                    $n = strlen((string) pow(2, 63));
                     return '^-?[0-9]{1,' . $n . '}$';
                 case 'varchar':
                     $l = $column->getLength();
@@ -6656,7 +6760,6 @@ namespace Tqdev\PhpCrudApi\OpenApi {
                     return '^[0-9]{2}:[0-9]{2}:[0-9]{2}$';
                 case 'timestamp':
                     return '^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}$';
-                    return '';
                 case 'geometry':
                     return '^(POINT|LINESTRING|POLYGON|MULTIPOINT|MULTILINESTRING|MULTIPOLYGON)\s*\(.*$';
                 case 'boolean':
@@ -7515,7 +7618,7 @@ namespace Tqdev\PhpCrudApi\Record {
         public function get(string $key): PathTree
         {
             if (!isset($this->tree->branches->{$key})) {
-                return null;
+                return new PathTree();
             }
             return new PathTree($this->tree->branches->{$key});
         }
@@ -8174,7 +8277,7 @@ namespace Tqdev\PhpCrudApi {
             $stream->rewind();
             $response = $response->withBody($stream);
             $response = $response->withHeader('Content-Type', $contentType . '; charset=utf-8');
-            $response = $response->withHeader('Content-Length', strlen($content));
+            $response = $response->withHeader('Content-Length', (string) strlen($content));
             return $response;
         }
         public static function fromStatus(int $status): ResponseInterface

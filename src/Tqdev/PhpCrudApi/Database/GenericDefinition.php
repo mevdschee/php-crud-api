@@ -10,7 +10,6 @@ class GenericDefinition
 {
     private $pdo;
     private $driver;
-    private $database;
     private $typeConverter;
     private $reflection;
 
@@ -18,7 +17,6 @@ class GenericDefinition
     {
         $this->pdo = $pdo;
         $this->driver = $driver;
-        $this->database = $database;
         $this->typeConverter = new TypeConverter($driver);
         $this->reflection = new GenericReflection($pdo, $driver, $database, $tables, $mapper);
     }
@@ -76,6 +74,7 @@ class GenericDefinition
             case 'sqlite':
                 return $column->getPk() ? ' AUTOINCREMENT' : '';
         }
+        return '';
     }
 
     private function getColumnNullType(ReflectedColumn $column, bool $update): string
@@ -101,6 +100,7 @@ class GenericDefinition
             case 'sqlite':
                 return "ALTER TABLE $p1 RENAME TO $p2";
         }
+        return '';
     }
 
     private function getColumnRenameSQL(string $tableName, string $columnName, ReflectedColumn $newColumn): string
@@ -121,6 +121,7 @@ class GenericDefinition
             case 'sqlite':
                 return "ALTER TABLE $p1 RENAME COLUMN $p2 TO $p3";
         }
+        return '';
     }
 
     private function getColumnRetypeSQL(string $tableName, string $columnName, ReflectedColumn $newColumn): string
@@ -138,6 +139,7 @@ class GenericDefinition
             case 'sqlsrv':
                 return "ALTER TABLE $p1 ALTER COLUMN $p3 $p4";
         }
+        return '';
     }
 
     private function getSetColumnNullableSQL(string $tableName, string $columnName, ReflectedColumn $newColumn): string
@@ -156,6 +158,7 @@ class GenericDefinition
             case 'sqlsrv':
                 return "ALTER TABLE $p1 ALTER COLUMN $p2 $p4";
         }
+        return '';
     }
 
     private function getSetColumnPkConstraintSQL(string $tableName, string $columnName, ReflectedColumn $newColumn): string
@@ -173,6 +176,7 @@ class GenericDefinition
                 $p4 = $newColumn->getPk() ? "ADD CONSTRAINT $p3 PRIMARY KEY ($p2)" : "DROP CONSTRAINT $p3";
                 return "ALTER TABLE $p1 $p4";
         }
+        return '';
     }
 
     private function getSetColumnPkSequenceSQL(string $tableName, string $columnName, ReflectedColumn $newColumn): string
@@ -189,6 +193,7 @@ class GenericDefinition
             case 'sqlsrv':
                 return $newColumn->getPk() ? "CREATE SEQUENCE $p3" : "DROP SEQUENCE $p3";
         }
+        return '';
     }
 
     private function getSetColumnPkSequenceStartSQL(string $tableName, string $columnName, ReflectedColumn $newColumn): string
@@ -207,6 +212,7 @@ class GenericDefinition
                 $p4 = $this->pdo->query("SELECT max($p2)+1 FROM $p1")->fetchColumn();
                 return "ALTER SEQUENCE $p3 RESTART WITH $p4";
         }
+        return '';
     }
 
     private function getSetColumnPkDefaultSQL(string $tableName, string $columnName, ReflectedColumn $newColumn): string
@@ -236,6 +242,7 @@ class GenericDefinition
                     return "ALTER TABLE $p1 DROP CONSTRAINT $p4";
                 }
         }
+        return '';
     }
 
     private function getAddColumnFkConstraintSQL(string $tableName, string $columnName, ReflectedColumn $newColumn): string
@@ -261,6 +268,7 @@ class GenericDefinition
             case 'sqlsrv':
                 return "ALTER TABLE $p1 DROP CONSTRAINT $p2";
         }
+        return '';
     }
 
     private function getAddTableSQL(ReflectedTable $newTable): string
@@ -316,6 +324,7 @@ class GenericDefinition
             case 'sqlite':
                 return "ALTER TABLE $p1 ADD COLUMN $p2 $p3";
         }
+        return '';
     }
 
     private function getRemoveTableSQL(string $tableName): string
@@ -331,6 +340,7 @@ class GenericDefinition
             case 'sqlite':
                 return "DROP TABLE $p1;";
         }
+        return '';
     }
 
     private function getRemoveColumnSQL(string $tableName, string $columnName): string
@@ -347,6 +357,7 @@ class GenericDefinition
             case 'sqlite':
                 return "ALTER TABLE $p1 DROP COLUMN $p2;";
         }
+        return '';
     }
 
     public function renameTable(string $tableName, string $newTableName)

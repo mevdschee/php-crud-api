@@ -35,7 +35,7 @@ class PathTree implements \JsonSerializable
     public function get(string $key): PathTree
     {
         if (!isset($this->tree->branches->$key)) {
-            return null;
+            return new PathTree();
         }
         return new PathTree($this->tree->branches->$key);
     }

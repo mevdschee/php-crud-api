@@ -53,5 +53,8 @@
     "psr-4": {
       "Tqdev\\PhpCrudApi\\": "src/Tqdev/PhpCrudApi"
     }
+  },
+  "require-dev": {
+    "phpstan/phpstan": "^2.2"
   }
 }

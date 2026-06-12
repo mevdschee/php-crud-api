@@ -48,7 +48,7 @@ class ResponseFactory
         $stream->rewind();
         $response = $response->withBody($stream);
         $response = $response->withHeader('Content-Type', $contentType . '; charset=utf-8');
-        $response = $response->withHeader('Content-Length', strlen($content));
+        $response = $response->withHeader('Content-Length', (string) strlen($content));
         return $response;
     }
 

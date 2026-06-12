@@ -102,7 +102,7 @@ class ColumnController
 
     public function addTable(ServerRequestInterface $request): ResponseInterface
     {
-        $tableName = $request->getParsedBody()->name;
+        $tableName = ((object) $request->getParsedBody())->name;
         if ($this->reflection->hasTable($tableName)) {
             return $this->responder->error(ErrorCode::TABLE_ALREADY_EXISTS, $tableName);
         }
@@ -119,7 +119,7 @@ class ColumnController
         if (!$this->reflection->hasTable($tableName)) {
             return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $tableName);
         }
-        $columnName = $request->getParsedBody()->name;
+        $columnName = ((object) $request->getParsedBody())->name;
         $table = $this->reflection->getTable($tableName);
         if ($table->hasColumn($columnName)) {
             return $this->responder->error(ErrorCode::COLUMN_ALREADY_EXISTS, $columnName);

@@ -31,6 +31,7 @@ class ColumnsBuilder
             case 'sqlite':
                 return " LIMIT $limit OFFSET $offset";
         }
+        return '';
     }
 
     private function quoteColumnName(ReflectedColumn $column): string
@@ -88,6 +89,7 @@ class ColumnsBuilder
             case 'sqlite':
                 return "$columnsSql VALUES $valuesSql";
         }
+        return '';
     }
 
     public function getUpdate(ReflectedTable $table, array $columnValues): string

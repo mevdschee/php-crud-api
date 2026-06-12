@@ -97,7 +97,7 @@ class Api implements RequestHandlerInterface
                     new WpAuthMiddleware($router, $responder, $config, $middleware);
                     break;
                 case 'reconnect':
-                    new ReconnectMiddleware($router, $responder, $config, $middleware, $reflection, $db);
+                    new ReconnectMiddleware($router, $responder, $config, $middleware, $db);
                     break;
                 case 'validation':
                     new ValidationMiddleware($router, $responder, $config, $middleware, $reflection);
@@ -118,13 +118,13 @@ class Api implements RequestHandlerInterface
                     new XsrfMiddleware($router, $responder, $config, $middleware);
                     break;
                 case 'pageLimits':
-                    new PageLimitsMiddleware($router, $responder, $config, $middleware, $reflection);
+                    new PageLimitsMiddleware($router, $responder, $config, $middleware);
                     break;
                 case 'joinLimits':
-                    new JoinLimitsMiddleware($router, $responder, $config, $middleware, $reflection);
+                    new JoinLimitsMiddleware($router, $responder, $config, $middleware);
                     break;
                 case 'customization':
-                    new CustomizationMiddleware($router, $responder, $config, $middleware, $reflection);
+                    new CustomizationMiddleware($router, $responder, $config, $middleware);
                     break;
                 case 'textSearch':
                     new TextSearchMiddleware($router, $responder, $config, $middleware, $reflection);
@@ -144,7 +144,7 @@ class Api implements RequestHandlerInterface
                     new RecordController($router, $responder, $records);
                     break;
                 case 'columns':
-                    $definition = new DefinitionService($db, $reflection);
+                    $definition = new DefinitionService($db);
                     new ColumnController($router, $responder, $reflection, $definition);
                     break;
                 case 'cache':
