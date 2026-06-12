@@ -3,6 +3,7 @@ parameters:
     scanFiles:
         - stubs/wordpress.php
         - test.php
+        - update.php
         - build.php
         - install.php
         - api.php
