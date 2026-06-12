@@ -85,6 +85,7 @@ CREATE TABLE `post_tags` (
   `post_id` int(11) NOT NULL,
   `tag_id` int(11) NOT NULL,
   PRIMARY KEY (`id`),
+  UNIQUE KEY `post_tags_post_id_tag_id_key` (`post_id`, `tag_id`),
   KEY `post_id` (`post_id`),
   KEY `tag_id` (`tag_id`),
   CONSTRAINT `post_tags_post_id_fkey` FOREIGN KEY (`post_id`) REFERENCES `abc_posts` (`abc_id`),
