@@ -12,6 +12,32 @@ use Tqdev\PhpCrudApi\Middleware\Router\Router;
 use Tqdev\PhpCrudApi\Record\ErrorCode;
 use Tqdev\PhpCrudApi\RequestUtils;
 
+/**
+ * add stubs for WordPress functions to prevent fatal errors when not running in a WordPress environment
+ * these stubs will be overridden by the actual WordPress functions when running in a WordPress environment
+ */
+if (!function_exists('wp_signon')) {
+    function wp_signon($credentials)
+    {
+        return (object) ['ID' => 0];
+    }
+}
+if (!function_exists('is_user_logged_in')) {
+    function is_user_logged_in()
+    {
+        return false;
+    }
+}
+if (!function_exists('wp_logout')) {
+    function wp_logout() {}
+}
+if (!function_exists('wp_get_current_user')) {
+    function wp_get_current_user()
+    {
+        return (object) ['data' => (object) ['user_pass' => '']];
+    }
+}
+
 class WpAuthMiddleware extends Middleware
 {
     public function __construct(Router $router, Responder $responder, Config $config, string $middleware)
