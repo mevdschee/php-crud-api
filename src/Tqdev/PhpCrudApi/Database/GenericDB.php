@@ -81,8 +81,11 @@ class GenericDB
         );
         switch ($this->driver) {
             case 'mysql':
+                // PDO::MYSQL_ATTR_FOUND_ROWS is deprecated in PHP 8.5 in favor of
+                // Pdo\Mysql::ATTR_FOUND_ROWS, which only exists as of PHP 8.4.
+                $foundRows = defined('Pdo\\Mysql::ATTR_FOUND_ROWS') ? \Pdo\Mysql::ATTR_FOUND_ROWS : \PDO::MYSQL_ATTR_FOUND_ROWS;
                 return $options + [
-                    \PDO::MYSQL_ATTR_FOUND_ROWS => true,
+                    $foundRows => true,
                     \PDO::ATTR_PERSISTENT => true,
                 ];
             case 'pgsql':

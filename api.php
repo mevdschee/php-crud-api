@@ -2625,7 +2625,10 @@ namespace Tqdev\PhpCrudApi\Database {
             $options = array(\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION, \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC);
             switch ($this->driver) {
                 case 'mysql':
-                    return $options + [\PDO::MYSQL_ATTR_FOUND_ROWS => true, \PDO::ATTR_PERSISTENT => true];
+                    // PDO::MYSQL_ATTR_FOUND_ROWS is deprecated in PHP 8.5 in favor of
+                    // Pdo\Mysql::ATTR_FOUND_ROWS, which only exists as of PHP 8.4.
+                    $foundRows = defined('Pdo\Mysql::ATTR_FOUND_ROWS') ? \Pdo\Mysql::ATTR_FOUND_ROWS : \PDO::MYSQL_ATTR_FOUND_ROWS;
+                    return $options + [$foundRows => true, \PDO::ATTR_PERSISTENT => true];
                 case 'pgsql':
                     return $options + [\PDO::ATTR_PERSISTENT => true];
                 case 'sqlsrv':
