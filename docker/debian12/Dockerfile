@@ -13,4 +13,4 @@ RUN apt-get update && apt-get -y install \
 
 # install run script
 ADD run.sh /usr/sbin/docker-run
-CMD docker-run
+CMD ["docker-run"]

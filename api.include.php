@@ -2592,7 +2592,7 @@ namespace Tqdev\PhpCrudApi\Database {
                 case 'pgsql':
                     return "{$this->driver}:host={$this->address} port={$this->port} dbname={$this->database} options='--client_encoding=UTF8'";
                 case 'sqlsrv':
-                    return "{$this->driver}:Server={$this->address},{$this->port};Database={$this->database}";
+                    return "{$this->driver}:Server={$this->address},{$this->port};Database={$this->database};Encrypt=no";
                 case 'sqlite':
                     return "{$this->driver}:{$this->address}";
             }
@@ -8835,7 +8835,7 @@ namespace Nyholm\Psr7\Factory {
         {
             return Stream::create($resource);
         }
-        public function createUploadedFile(StreamInterface $stream, int $size = null, int $error = \UPLOAD_ERR_OK, string $clientFilename = null, string $clientMediaType = null): UploadedFileInterface
+        public function createUploadedFile(StreamInterface $stream, ?int $size = null, int $error = \UPLOAD_ERR_OK, ?string $clientFilename = null, ?string $clientMediaType = null): UploadedFileInterface
         {
             if (null === $size) {
                 $size = $stream->getSize();
@@ -9582,7 +9582,7 @@ namespace Nyholm\Psr7 {
          * @param string $version Protocol version
          * @param string|null $reason Reason phrase (when empty a default will be used based on the status code)
          */
-        public function __construct(int $status = 200, array $headers = [], $body = null, string $version = '1.1', string $reason = null)
+        public function __construct(int $status = 200, array $headers = [], $body = null, string $version = '1.1', ?string $reason = null)
         {
             // If we got no body, defer initialization of the stream until Response::getBody()
             if ('' !== $body && null !== $body) {

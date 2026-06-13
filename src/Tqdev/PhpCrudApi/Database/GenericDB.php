@@ -35,7 +35,7 @@ class GenericDB
             case 'pgsql':
                 return "$this->driver:host=$this->address port=$this->port dbname=$this->database options='--client_encoding=UTF8'";
             case 'sqlsrv':
-                return "$this->driver:Server=$this->address,$this->port;Database=$this->database";
+                return "$this->driver:Server=$this->address,$this->port;Database=$this->database;Encrypt=no";
             case 'sqlite':
                 return "$this->driver:$this->address";
         }

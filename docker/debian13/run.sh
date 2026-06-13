@@ -1,13 +1,13 @@
 #!/bin/bash
 echo "================================================"
-echo " Debian 10 (PHP 7.3)"
+echo " Debian 13 (PHP 8.4)"
 echo "================================================"
 
-echo -n "[1/4] Starting MariaDB 10.3 ..... "
+echo -n "[1/4] Starting MariaDB 11.8 .... "
 # make sure mysql can create socket and lock
-mkdir /var/run/mysqld && chmod 777 /var/run/mysqld
+mkdir -p /var/run/mysqld && chmod 777 /var/run/mysqld
 # run mysql server
-nohup mysqld > /root/mysql.log 2>&1 &
+nohup mysqld --user=root > /root/mysql.log 2>&1 &
 # wait for mysql to become available
 while ! mysqladmin ping -hlocalhost >/dev/null 2>&1; do
     sleep 1
@@ -21,9 +21,9 @@ FLUSH PRIVILEGES;
 EOF
 echo "done"
 
-echo -n "[2/4] Starting PostgreSQL 11.4 .. "
+echo -n "[2/4] Starting PostgreSQL 17 .... "
 # run postgres server
-nohup su - -c "/usr/lib/postgresql/11/bin/postgres -D /etc/postgresql/11/main" postgres > /root/postgres.log 2>&1 &
+nohup su - -c "/usr/lib/postgresql/17/bin/postgres -D /etc/postgresql/17/main" postgres > /root/postgres.log 2>&1 &
 # wait for postgres to become available
 until su - -c "psql -U postgres -c '\q'" postgres >/dev/null 2>&1; do
    sleep 1;
@@ -31,7 +31,7 @@ done
 # create database and user on postgres
 su - -c "psql -U postgres >/dev/null" postgres << 'EOF'
 CREATE USER "php-crud-api" WITH PASSWORD 'php-crud-api';
-CREATE DATABASE "php-crud-api";
+CREATE DATABASE "php-crud-api" WITH OWNER = "php-crud-api";
 GRANT ALL PRIVILEGES ON DATABASE "php-crud-api" to "php-crud-api";
 \c "php-crud-api";
 CREATE EXTENSION IF NOT EXISTS postgis;
@@ -39,8 +39,23 @@ CREATE EXTENSION IF NOT EXISTS postgis;
 EOF
 echo "done"
 
-echo -n "[3/4] Starting SQLServer 2017 ... "
-echo "skipped"
+echo -n "[3/4] Starting SQLServer 2025 ... "
+# run sqlserver server
+nohup /opt/mssql/bin/sqlservr --accept-eula > /root/mssql.log 2>&1 &
+# create database and user on sql server
+/opt/mssql-tools18/bin/sqlcmd -C -l 30 -S localhost -U SA -P sapwd123! >/dev/null << 'EOF'
+CREATE DATABASE [php-crud-api]
+GO
+CREATE LOGIN [php-crud-api] WITH PASSWORD=N'php-crud-api', DEFAULT_DATABASE=[php-crud-api], CHECK_EXPIRATION=OFF, CHECK_POLICY=OFF
+GO
+USE [php-crud-api]
+GO
+CREATE USER [php-crud-api] FOR LOGIN [php-crud-api] WITH DEFAULT_SCHEMA=[dbo]
+exec sp_addrolemember 'db_owner', 'php-crud-api';
+GO
+exit
+EOF
+echo "done"
 
 echo -n "[4/4] Cloning PHP-CRUD-API v2 ... "
 # install software
