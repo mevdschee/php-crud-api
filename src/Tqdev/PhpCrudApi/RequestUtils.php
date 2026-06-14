@@ -82,6 +82,30 @@ class RequestUtils
         return array_keys($uniqueTableNames);
     }
 
+    private static function getFilterTables(array $parameters, ReflectionService $reflection): array
+    {
+        $uniqueTableNames = array();
+        foreach ($parameters as $key => $values) {
+            if (substr($key, 0, 6) != 'filter' || !is_array($values)) {
+                continue;
+            }
+            foreach ($values as $value) {
+                $columnPath = explode(',', $value, 2)[0];
+                if (strpos($columnPath, '.') === false) {
+                    continue;
+                }
+                $segments = explode('.', $columnPath);
+                array_pop($segments); // last segment is the column name
+                foreach ($segments as $segment) {
+                    if ($reflection->hasTable($segment)) {
+                        $uniqueTableNames[$segment] = true;
+                    }
+                }
+            }
+        }
+        return array_keys($uniqueTableNames);
+    }
+
     public static function getTableNames(ServerRequestInterface $request, ReflectionService $reflection): array
     {
         $path = RequestUtils::getPathSegment($request, 1);
@@ -93,7 +117,16 @@ class RequestUtils
             case 'columns':
                 return $tableName ? [$tableName] : $allTableNames;
             case 'records':
-                return self::getJoinTables($tableName, RequestUtils::getParams($request));
+                $params = RequestUtils::getParams($request);
+                $tableNames = self::getJoinTables($tableName, $params);
+                // tables referenced by filters on related tables must also be
+                // authorized, so they are included here
+                foreach (self::getFilterTables($params, $reflection) as $filterTable) {
+                    if (!in_array($filterTable, $tableNames)) {
+                        $tableNames[] = $filterTable;
+                    }
+                }
+                return $tableNames;
         }
         return $allTableNames;
     }

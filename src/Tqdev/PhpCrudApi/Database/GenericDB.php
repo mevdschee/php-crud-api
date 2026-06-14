@@ -293,7 +293,7 @@ class GenericDB
         $tableRealName = $table->getRealName();
         $condition = $this->addMiddlewareConditions($tableName, $condition);
         $parameters = array();
-        $whereClause = $this->conditions->getWhereClause($condition, $parameters);
+        $whereClause = $this->conditions->getWhereClause($condition, $parameters, '"' . $tableRealName . '"');
         $sql = 'SELECT COUNT(*) FROM "' . $tableRealName . '"' . $whereClause;
         $stmt = $this->query($sql, $parameters);
         return $stmt->fetchColumn(0);
@@ -322,7 +322,7 @@ class GenericDB
         $tableRealName = $table->getRealName();
         $condition = $this->addMiddlewareConditions($tableName, $condition);
         $parameters = array();
-        $whereClause = $this->conditions->getWhereClause($condition, $parameters);
+        $whereClause = $this->conditions->getWhereClause($condition, $parameters, '"' . $tableRealName . '"');
         $orderBy = $this->columns->getOrderBy($table, $columnOrdering);
         $offsetLimit = $this->columns->getOffsetLimit($offset, $limit);
         $sql = 'SELECT ' . $selectColumns . ' FROM "' . $tableRealName . '"' . $whereClause . $orderBy . $offsetLimit;

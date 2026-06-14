@@ -22,7 +22,7 @@ class RecordService
         $this->reflection = $reflection;
         $this->columns = new ColumnIncluder();
         $this->joiner = new RelationJoiner($reflection, $this->columns);
-        $this->filters = new FilterInfo();
+        $this->filters = new FilterInfo($reflection);
         $this->ordering = new OrderingInfo();
         $this->pagination = new PaginationInfo();
     }
