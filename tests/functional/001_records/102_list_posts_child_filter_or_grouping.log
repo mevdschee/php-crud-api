@@ -1,0 +1,8 @@
+===
+GET /records/posts?include=id&filter1=comments.message,cs,great&filter2=categories.name,eq,article
+===
+200
+Content-Type: application/json; charset=utf-8
+Content-Length: 31
+
+{"records":[{"id":1},{"id":2}]}

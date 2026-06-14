@@ -9,66 +9,99 @@ use Tqdev\PhpCrudApi\Record\Condition\Condition;
 use Tqdev\PhpCrudApi\Record\Condition\NoCondition;
 use Tqdev\PhpCrudApi\Record\Condition\NotCondition;
 use Tqdev\PhpCrudApi\Record\Condition\OrCondition;
+use Tqdev\PhpCrudApi\Record\Condition\RelatedCondition;
 use Tqdev\PhpCrudApi\Record\Condition\SpatialCondition;
 
 class ConditionsBuilder
 {
     private $driver;
     private $geometrySrid;
+    private $aliasSeq;
 
     public function __construct(string $driver, int $geometrySrid)
     {
         $this->driver = $driver;
         $this->geometrySrid = $geometrySrid;
+        $this->aliasSeq = 0;
     }
 
-    private function getConditionSql(Condition $condition, array &$arguments): string
+    private function nextAlias(): string
+    {
+        return '_cf' . $this->aliasSeq++;
+    }
+
+    private function getConditionSql(Condition $condition, array &$arguments, string $columnAlias = '', string $correlationRef = ''): string
     {
         if ($condition instanceof AndCondition) {
-            return $this->getAndConditionSql($condition, $arguments);
+            return $this->getAndConditionSql($condition, $arguments, $columnAlias, $correlationRef);
         }
         if ($condition instanceof OrCondition) {
-            return $this->getOrConditionSql($condition, $arguments);
+            return $this->getOrConditionSql($condition, $arguments, $columnAlias, $correlationRef);
         }
         if ($condition instanceof NotCondition) {
-            return $this->getNotConditionSql($condition, $arguments);
+            return $this->getNotConditionSql($condition, $arguments, $columnAlias, $correlationRef);
         }
         if ($condition instanceof SpatialCondition) {
-            return $this->getSpatialConditionSql($condition, $arguments);
+            return $this->getSpatialConditionSql($condition, $arguments, $columnAlias);
+        }
+        if ($condition instanceof RelatedCondition) {
+            return $this->getRelatedConditionSql($condition, $arguments, $correlationRef);
         }
         if ($condition instanceof ColumnCondition) {
-            return $this->getColumnConditionSql($condition, $arguments);
+            return $this->getColumnConditionSql($condition, $arguments, $columnAlias);
         }
         throw new \Exception('Unknown Condition: ' . get_class($condition));
     }
 
-    private function getAndConditionSql(AndCondition $and, array &$arguments): string
+    private function getAndConditionSql(AndCondition $and, array &$arguments, string $columnAlias = '', string $correlationRef = ''): string
     {
         $parts = [];
         foreach ($and->getConditions() as $condition) {
-            $parts[] = $this->getConditionSql($condition, $arguments);
+            $parts[] = $this->getConditionSql($condition, $arguments, $columnAlias, $correlationRef);
         }
         return '(' . implode(' AND ', $parts) . ')';
     }
 
-    private function getOrConditionSql(OrCondition $or, array &$arguments): string
+    private function getOrConditionSql(OrCondition $or, array &$arguments, string $columnAlias = '', string $correlationRef = ''): string
     {
         $parts = [];
         foreach ($or->getConditions() as $condition) {
-            $parts[] = $this->getConditionSql($condition, $arguments);
+            $parts[] = $this->getConditionSql($condition, $arguments, $columnAlias, $correlationRef);
         }
         return '(' . implode(' OR ', $parts) . ')';
     }
 
-    private function getNotConditionSql(NotCondition $not, array &$arguments): string
+    private function getNotConditionSql(NotCondition $not, array &$arguments, string $columnAlias = '', string $correlationRef = ''): string
     {
         $condition = $not->getCondition();
-        return '(NOT ' . $this->getConditionSql($condition, $arguments) . ')';
+        return '(NOT ' . $this->getConditionSql($condition, $arguments, $columnAlias, $correlationRef) . ')';
     }
 
-    private function quoteColumnName(ReflectedColumn $column): string
+    private function quoteColumnName(ReflectedColumn $column, string $alias = ''): string
     {
+        if ($alias !== '') {
+            return '"' . $alias . '"."' . $column->getRealName() . '"';
+        }
         return '"' . $column->getRealName() . '"';
+    }
+
+    private function getRelatedConditionSql(RelatedCondition $condition, array &$arguments, string $correlationRef): string
+    {
+        $relatedTable = '"' . $condition->getRelatedTable()->getRealName() . '"';
+        $outerRef = $correlationRef . '.' . $this->quoteColumnName($condition->getOuterColumn());
+        if ($condition->getKind() === 'habtm') {
+            $junctionAlias = $this->nextAlias();
+            $relatedAlias = $this->nextAlias();
+            $junctionTable = '"' . $condition->getJunctionTable()->getRealName() . '"';
+            $joinOn = $this->quoteColumnName($condition->getRelatedColumn(), $relatedAlias) . ' = ' . $this->quoteColumnName($condition->getJunctionToRelatedColumn(), $junctionAlias);
+            $correlate = $this->quoteColumnName($condition->getJunctionToOuterColumn(), $junctionAlias) . ' = ' . $outerRef;
+            $inner = $this->getConditionSql($condition->getCondition(), $arguments, $relatedAlias, '"' . $relatedAlias . '"');
+            return 'EXISTS (SELECT 1 FROM ' . $junctionTable . ' "' . $junctionAlias . '" JOIN ' . $relatedTable . ' "' . $relatedAlias . '" ON ' . $joinOn . ' WHERE ' . $correlate . ' AND ' . $inner . ')';
+        }
+        $relatedAlias = $this->nextAlias();
+        $correlate = $this->quoteColumnName($condition->getRelatedColumn(), $relatedAlias) . ' = ' . $outerRef;
+        $inner = $this->getConditionSql($condition->getCondition(), $arguments, $relatedAlias, '"' . $relatedAlias . '"');
+        return 'EXISTS (SELECT 1 FROM ' . $relatedTable . ' "' . $relatedAlias . '" WHERE ' . $correlate . ' AND ' . $inner . ')';
     }
 
     private function escapeLikeValue(string $value): string
@@ -76,9 +109,9 @@ class ConditionsBuilder
         return addcslashes($value, '%_');
     }
 
-    private function getColumnConditionSql(ColumnCondition $condition, array &$arguments): string
+    private function getColumnConditionSql(ColumnCondition $condition, array &$arguments, string $columnAlias = ''): string
     {
-        $column = $this->quoteColumnName($condition->getColumn());
+        $column = $this->quoteColumnName($condition->getColumn(), $columnAlias);
         $operator = $condition->getOperator();
         $value = $condition->getValue();
         $sql = 'FALSE';
@@ -195,9 +228,9 @@ class ConditionsBuilder
         return '';
     }
 
-    private function getSpatialConditionSql(ColumnCondition $condition, array &$arguments): string
+    private function getSpatialConditionSql(ColumnCondition $condition, array &$arguments, string $columnAlias = ''): string
     {
-        $column = $this->quoteColumnName($condition->getColumn());
+        $column = $this->quoteColumnName($condition->getColumn(), $columnAlias);
         $operator = $condition->getOperator();
         $value = $condition->getValue();
         $functionName = $this->getSpatialFunctionName($operator);
@@ -209,11 +242,12 @@ class ConditionsBuilder
         return $sql;
     }
 
-    public function getWhereClause(Condition $condition, array &$arguments): string
+    public function getWhereClause(Condition $condition, array &$arguments, string $tableRef = ''): string
     {
         if ($condition instanceof NoCondition) {
             return '';
         }
-        return ' WHERE ' . $this->getConditionSql($condition, $arguments);
+        $this->aliasSeq = 0;
+        return ' WHERE ' . $this->getConditionSql($condition, $arguments, '', $tableRef);
     }
 }

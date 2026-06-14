@@ -387,8 +387,35 @@ instead of "AND" should be applied. Note that you can also repeat "filter1" and
 create an "AND" within an "OR". Since you can also go one level deeper by adding
 a letter (a-f) you can create almost any reasonably complex condition tree.
 
-NB: You can only filter on the requested table (not on it's included tables) and
-filters are only applied on list calls.
+### Filters on related tables
+
+You can also filter on a related table by prefixing the column with the path of
+table names to it, the same names you would use in the "join" parameter. For
+example, to list the posts that have a comment containing the word "great":
+
+    GET /records/posts?filter=comments.message,cs,great
+
+This works for all three relation types (belongsTo, hasMany and
+hasAndBelongsToMany) and the path may be more than one table deep:
+
+    GET /records/posts?filter=categories.name,eq,announcement
+    GET /records/posts?filter=tags.name,eq,funny
+    GET /records/posts?filter=comments.categories.name,eq,comment
+
+A related filter keeps a record when at least one matching related record
+exists (it is translated into an SQL "EXISTS" sub-query), so the result is the
+set of requested records and pagination and counts are applied to that set. The
+related records themselves are not filtered: if you also add the table to the
+"join" parameter, the nested results still contain all related records. The
+related table does not need to be listed in the "join" parameter for the filter
+to work. Related filters can be combined and grouped with normal filters using
+the "filter1"/"filter2" syntax described above.
+
+Authorization and multi-tenancy are respected on the related table: a filter can
+only match records that a direct request on that table would be allowed to see,
+so it does not become a way around your access rules.
+
+NB: Filters are only applied on list calls.
 
 ### Column selection
 

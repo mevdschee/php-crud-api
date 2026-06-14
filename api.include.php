@@ -2267,67 +2267,98 @@ namespace Tqdev\PhpCrudApi\Database {
     use Tqdev\PhpCrudApi\Record\Condition\NoCondition;
     use Tqdev\PhpCrudApi\Record\Condition\NotCondition;
     use Tqdev\PhpCrudApi\Record\Condition\OrCondition;
+    use Tqdev\PhpCrudApi\Record\Condition\RelatedCondition;
     use Tqdev\PhpCrudApi\Record\Condition\SpatialCondition;
     class ConditionsBuilder
     {
         private $driver;
         private $geometrySrid;
+        private $aliasSeq;
         public function __construct(string $driver, int $geometrySrid)
         {
             $this->driver = $driver;
             $this->geometrySrid = $geometrySrid;
+            $this->aliasSeq = 0;
         }
-        private function getConditionSql(Condition $condition, array &$arguments): string
+        private function nextAlias(): string
+        {
+            return '_cf' . $this->aliasSeq++;
+        }
+        private function getConditionSql(Condition $condition, array &$arguments, string $columnAlias = '', string $correlationRef = ''): string
         {
             if ($condition instanceof AndCondition) {
-                return $this->getAndConditionSql($condition, $arguments);
+                return $this->getAndConditionSql($condition, $arguments, $columnAlias, $correlationRef);
             }
             if ($condition instanceof OrCondition) {
-                return $this->getOrConditionSql($condition, $arguments);
+                return $this->getOrConditionSql($condition, $arguments, $columnAlias, $correlationRef);
             }
             if ($condition instanceof NotCondition) {
-                return $this->getNotConditionSql($condition, $arguments);
+                return $this->getNotConditionSql($condition, $arguments, $columnAlias, $correlationRef);
             }
             if ($condition instanceof SpatialCondition) {
-                return $this->getSpatialConditionSql($condition, $arguments);
+                return $this->getSpatialConditionSql($condition, $arguments, $columnAlias);
+            }
+            if ($condition instanceof RelatedCondition) {
+                return $this->getRelatedConditionSql($condition, $arguments, $correlationRef);
             }
             if ($condition instanceof ColumnCondition) {
-                return $this->getColumnConditionSql($condition, $arguments);
+                return $this->getColumnConditionSql($condition, $arguments, $columnAlias);
             }
             throw new \Exception('Unknown Condition: ' . get_class($condition));
         }
-        private function getAndConditionSql(AndCondition $and, array &$arguments): string
+        private function getAndConditionSql(AndCondition $and, array &$arguments, string $columnAlias = '', string $correlationRef = ''): string
         {
             $parts = [];
             foreach ($and->getConditions() as $condition) {
-                $parts[] = $this->getConditionSql($condition, $arguments);
+                $parts[] = $this->getConditionSql($condition, $arguments, $columnAlias, $correlationRef);
             }
             return '(' . implode(' AND ', $parts) . ')';
         }
-        private function getOrConditionSql(OrCondition $or, array &$arguments): string
+        private function getOrConditionSql(OrCondition $or, array &$arguments, string $columnAlias = '', string $correlationRef = ''): string
         {
             $parts = [];
             foreach ($or->getConditions() as $condition) {
-                $parts[] = $this->getConditionSql($condition, $arguments);
+                $parts[] = $this->getConditionSql($condition, $arguments, $columnAlias, $correlationRef);
             }
             return '(' . implode(' OR ', $parts) . ')';
         }
-        private function getNotConditionSql(NotCondition $not, array &$arguments): string
+        private function getNotConditionSql(NotCondition $not, array &$arguments, string $columnAlias = '', string $correlationRef = ''): string
         {
             $condition = $not->getCondition();
-            return '(NOT ' . $this->getConditionSql($condition, $arguments) . ')';
+            return '(NOT ' . $this->getConditionSql($condition, $arguments, $columnAlias, $correlationRef) . ')';
         }
-        private function quoteColumnName(ReflectedColumn $column): string
+        private function quoteColumnName(ReflectedColumn $column, string $alias = ''): string
         {
+            if ($alias !== '') {
+                return '"' . $alias . '"."' . $column->getRealName() . '"';
+            }
             return '"' . $column->getRealName() . '"';
+        }
+        private function getRelatedConditionSql(RelatedCondition $condition, array &$arguments, string $correlationRef): string
+        {
+            $relatedTable = '"' . $condition->getRelatedTable()->getRealName() . '"';
+            $outerRef = $correlationRef . '.' . $this->quoteColumnName($condition->getOuterColumn());
+            if ($condition->getKind() === 'habtm') {
+                $junctionAlias = $this->nextAlias();
+                $relatedAlias = $this->nextAlias();
+                $junctionTable = '"' . $condition->getJunctionTable()->getRealName() . '"';
+                $joinOn = $this->quoteColumnName($condition->getRelatedColumn(), $relatedAlias) . ' = ' . $this->quoteColumnName($condition->getJunctionToRelatedColumn(), $junctionAlias);
+                $correlate = $this->quoteColumnName($condition->getJunctionToOuterColumn(), $junctionAlias) . ' = ' . $outerRef;
+                $inner = $this->getConditionSql($condition->getCondition(), $arguments, $relatedAlias, '"' . $relatedAlias . '"');
+                return 'EXISTS (SELECT 1 FROM ' . $junctionTable . ' "' . $junctionAlias . '" JOIN ' . $relatedTable . ' "' . $relatedAlias . '" ON ' . $joinOn . ' WHERE ' . $correlate . ' AND ' . $inner . ')';
+            }
+            $relatedAlias = $this->nextAlias();
+            $correlate = $this->quoteColumnName($condition->getRelatedColumn(), $relatedAlias) . ' = ' . $outerRef;
+            $inner = $this->getConditionSql($condition->getCondition(), $arguments, $relatedAlias, '"' . $relatedAlias . '"');
+            return 'EXISTS (SELECT 1 FROM ' . $relatedTable . ' "' . $relatedAlias . '" WHERE ' . $correlate . ' AND ' . $inner . ')';
         }
         private function escapeLikeValue(string $value): string
         {
             return addcslashes($value, '%_');
         }
-        private function getColumnConditionSql(ColumnCondition $condition, array &$arguments): string
+        private function getColumnConditionSql(ColumnCondition $condition, array &$arguments, string $columnAlias = ''): string
         {
-            $column = $this->quoteColumnName($condition->getColumn());
+            $column = $this->quoteColumnName($condition->getColumn(), $columnAlias);
             $operator = $condition->getOperator();
             $value = $condition->getValue();
             $sql = 'FALSE';
@@ -2440,9 +2471,9 @@ namespace Tqdev\PhpCrudApi\Database {
             }
             return '';
         }
-        private function getSpatialConditionSql(ColumnCondition $condition, array &$arguments): string
+        private function getSpatialConditionSql(ColumnCondition $condition, array &$arguments, string $columnAlias = ''): string
         {
-            $column = $this->quoteColumnName($condition->getColumn());
+            $column = $this->quoteColumnName($condition->getColumn(), $columnAlias);
             $operator = $condition->getOperator();
             $value = $condition->getValue();
             $functionName = $this->getSpatialFunctionName($operator);
@@ -2453,12 +2484,13 @@ namespace Tqdev\PhpCrudApi\Database {
             }
             return $sql;
         }
-        public function getWhereClause(Condition $condition, array &$arguments): string
+        public function getWhereClause(Condition $condition, array &$arguments, string $tableRef = ''): string
         {
             if ($condition instanceof NoCondition) {
                 return '';
             }
-            return ' WHERE ' . $this->getConditionSql($condition, $arguments);
+            $this->aliasSeq = 0;
+            return ' WHERE ' . $this->getConditionSql($condition, $arguments, '', $tableRef);
         }
     }
 }
@@ -2818,7 +2850,7 @@ namespace Tqdev\PhpCrudApi\Database {
             $tableRealName = $table->getRealName();
             $condition = $this->addMiddlewareConditions($tableName, $condition);
             $parameters = array();
-            $whereClause = $this->conditions->getWhereClause($condition, $parameters);
+            $whereClause = $this->conditions->getWhereClause($condition, $parameters, '"' . $tableRealName . '"');
             $sql = 'SELECT COUNT(*) FROM "' . $tableRealName . '"' . $whereClause;
             $stmt = $this->query($sql, $parameters);
             return $stmt->fetchColumn(0);
@@ -2845,7 +2877,7 @@ namespace Tqdev\PhpCrudApi\Database {
             $tableRealName = $table->getRealName();
             $condition = $this->addMiddlewareConditions($tableName, $condition);
             $parameters = array();
-            $whereClause = $this->conditions->getWhereClause($condition, $parameters);
+            $whereClause = $this->conditions->getWhereClause($condition, $parameters, '"' . $tableRealName . '"');
             $orderBy = $this->columns->getOrderBy($table, $columnOrdering);
             $offsetLimit = $this->columns->getOffsetLimit($offset, $limit);
             $sql = 'SELECT ' . $selectColumns . ' FROM "' . $tableRealName . '"' . $whereClause . $orderBy . $offsetLimit;
@@ -4937,32 +4969,75 @@ namespace Tqdev\PhpCrudApi\Middleware {
         {
             parent::__construct($router, $responder, $config, $middleware);
         }
+        private function hasRelationFilter(array $params): bool
+        {
+            foreach ($params as $key => $values) {
+                if (substr($key, 0, 6) != 'filter' || !is_array($values)) {
+                    continue;
+                }
+                foreach ($values as $value) {
+                    if (strpos(explode(',', $value, 2)[0], '.') !== false) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+        private function limitFilterDepth(array $params, int $maxDepth): array
+        {
+            foreach ($params as $key => $values) {
+                if (substr($key, 0, 6) != 'filter' || !is_array($values)) {
+                    continue;
+                }
+                $kept = array();
+                foreach ($values as $value) {
+                    // the number of dots in the column path equals the number of
+                    // related tables traversed, mirroring the join depth limit
+                    if (substr_count(explode(',', $value, 2)[0], '.') <= $maxDepth) {
+                        $kept[] = $value;
+                    }
+                }
+                if (count($kept) > 0) {
+                    $params[$key] = $kept;
+                } else {
+                    unset($params[$key]);
+                }
+            }
+            return $params;
+        }
         public function process(ServerRequestInterface $request, RequestHandlerInterface $next): ResponseInterface
         {
             $operation = RequestUtils::getOperation($request);
             $params = RequestUtils::getParams($request);
-            if (in_array($operation, ['read', 'list']) && isset($params['join'])) {
+            $hasJoin = isset($params['join']);
+            $hasRelationFilter = $this->hasRelationFilter($params);
+            if (in_array($operation, ['read', 'list']) && ($hasJoin || $hasRelationFilter)) {
                 $maxDepth = (int) $this->getProperty('depth', '3');
                 $maxTables = (int) $this->getProperty('tables', '10');
                 $maxRecords = (int) $this->getProperty('records', '1000');
-                $tableCount = 0;
-                $joinPaths = array();
-                for ($i = 0; $i < count($params['join']); $i++) {
-                    $joinPath = array();
-                    $tables = explode(',', $params['join'][$i]);
-                    for ($depth = 0; $depth < min($maxDepth, count($tables)); $depth++) {
-                        array_push($joinPath, $tables[$depth]);
-                        $tableCount += 1;
+                if ($hasJoin) {
+                    $tableCount = 0;
+                    $joinPaths = array();
+                    for ($i = 0; $i < count($params['join']); $i++) {
+                        $joinPath = array();
+                        $tables = explode(',', $params['join'][$i]);
+                        for ($depth = 0; $depth < min($maxDepth, count($tables)); $depth++) {
+                            array_push($joinPath, $tables[$depth]);
+                            $tableCount += 1;
+                            if ($tableCount == $maxTables) {
+                                break;
+                            }
+                        }
+                        array_push($joinPaths, implode(',', $joinPath));
                         if ($tableCount == $maxTables) {
                             break;
                         }
                     }
-                    array_push($joinPaths, implode(',', $joinPath));
-                    if ($tableCount == $maxTables) {
-                        break;
-                    }
+                    $params['join'] = $joinPaths;
                 }
-                $params['join'] = $joinPaths;
+                if ($hasRelationFilter) {
+                    $params = $this->limitFilterDepth($params, $maxDepth);
+                }
                 $request = RequestUtils::setParams($request, $params);
                 VariableStore::set("joinLimits.maxRecords", $maxRecords);
             }
@@ -7294,6 +7369,102 @@ namespace Tqdev\PhpCrudApi\Record\Condition {
     }
 }
 
+// file: src/Tqdev/PhpCrudApi/Record/Condition/RelatedCondition.php
+namespace Tqdev\PhpCrudApi\Record\Condition {
+    use Tqdev\PhpCrudApi\Column\Reflection\ReflectedColumn;
+    use Tqdev\PhpCrudApi\Column\Reflection\ReflectedTable;
+    /**
+     * Condition that filters the queried (outer) table by a condition on a related
+     * table. It is rendered as a correlated "EXISTS" sub-query so that the outer
+     * record is kept only when at least one matching related record exists. This is
+     * how v3 supports filters on joined/child tables while keeping pagination and
+     * count correct on the outer table.
+     *
+     * Three relation kinds are supported, mirroring the RelationJoiner:
+     * - 'belongsTo': outer table has a foreign key to the related table.
+     * - 'hasMany':   related table has a foreign key to the outer table.
+     * - 'habtm':     outer and related table are linked by a junction table.
+     */
+    class RelatedCondition extends Condition
+    {
+        private $kind;
+        private $outerColumn;
+        private $relatedTable;
+        private $relatedColumn;
+        private $junctionTable;
+        private $junctionToOuterColumn;
+        private $junctionToRelatedColumn;
+        private $condition;
+        private function __construct(
+            string $kind,
+            ReflectedColumn $outerColumn,
+            ReflectedTable $relatedTable,
+            ReflectedColumn $relatedColumn,
+            /* ?ReflectedTable */
+            $junctionTable,
+            /* ?ReflectedColumn */
+            $junctionToOuterColumn,
+            /* ?ReflectedColumn */
+            $junctionToRelatedColumn,
+            Condition $condition
+        )
+        {
+            $this->kind = $kind;
+            $this->outerColumn = $outerColumn;
+            $this->relatedTable = $relatedTable;
+            $this->relatedColumn = $relatedColumn;
+            $this->junctionTable = $junctionTable;
+            $this->junctionToOuterColumn = $junctionToOuterColumn;
+            $this->junctionToRelatedColumn = $junctionToRelatedColumn;
+            $this->condition = $condition;
+        }
+        public static function belongsTo(ReflectedColumn $outerFk, ReflectedTable $relatedTable, ReflectedColumn $relatedPk, Condition $condition): RelatedCondition
+        {
+            return new RelatedCondition('belongsTo', $outerFk, $relatedTable, $relatedPk, null, null, null, $condition);
+        }
+        public static function hasMany(ReflectedColumn $outerPk, ReflectedTable $relatedTable, ReflectedColumn $relatedFk, Condition $condition): RelatedCondition
+        {
+            return new RelatedCondition('hasMany', $outerPk, $relatedTable, $relatedFk, null, null, null, $condition);
+        }
+        public static function habtm(ReflectedColumn $outerPk, ReflectedTable $relatedTable, ReflectedColumn $relatedPk, ReflectedTable $junctionTable, ReflectedColumn $junctionToOuter, ReflectedColumn $junctionToRelated, Condition $condition): RelatedCondition
+        {
+            return new RelatedCondition('habtm', $outerPk, $relatedTable, $relatedPk, $junctionTable, $junctionToOuter, $junctionToRelated, $condition);
+        }
+        public function getKind(): string
+        {
+            return $this->kind;
+        }
+        public function getOuterColumn(): ReflectedColumn
+        {
+            return $this->outerColumn;
+        }
+        public function getRelatedTable(): ReflectedTable
+        {
+            return $this->relatedTable;
+        }
+        public function getRelatedColumn(): ReflectedColumn
+        {
+            return $this->relatedColumn;
+        }
+        public function getJunctionTable()
+        {
+            return $this->junctionTable;
+        }
+        public function getJunctionToOuterColumn()
+        {
+            return $this->junctionToOuterColumn;
+        }
+        public function getJunctionToRelatedColumn()
+        {
+            return $this->junctionToRelatedColumn;
+        }
+        public function getCondition(): Condition
+        {
+            return $this->condition;
+        }
+    }
+}
+
 // file: src/Tqdev/PhpCrudApi/Record/Condition/SpatialCondition.php
 namespace Tqdev\PhpCrudApi\Record\Condition {
     class SpatialCondition extends ColumnCondition
@@ -7456,12 +7627,82 @@ namespace Tqdev\PhpCrudApi\Record {
 // file: src/Tqdev/PhpCrudApi/Record/FilterInfo.php
 namespace Tqdev\PhpCrudApi\Record {
     use Tqdev\PhpCrudApi\Column\Reflection\ReflectedTable;
+    use Tqdev\PhpCrudApi\Column\ReflectionService;
+    use Tqdev\PhpCrudApi\Middleware\Communication\VariableStore;
     use Tqdev\PhpCrudApi\Record\Condition\AndCondition;
     use Tqdev\PhpCrudApi\Record\Condition\Condition;
     use Tqdev\PhpCrudApi\Record\Condition\NoCondition;
     use Tqdev\PhpCrudApi\Record\Condition\OrCondition;
     class FilterInfo
     {
+        private $resolver;
+        public function __construct(ReflectionService $reflection = null)
+        {
+            $this->resolver = $reflection ? new RelationResolver($reflection) : null;
+        }
+        /**
+         * Builds a condition from a single "filter" value. When the column part
+         * contains a relation path (e.g. "comments.message"), it is compiled into a
+         * RelatedCondition (correlated EXISTS) on the related table. Otherwise it is
+         * a plain condition on the queried table, identical to v2.
+         */
+        private function conditionFromString(ReflectedTable $table, string $filter): Condition
+        {
+            $parts = explode(',', $filter, 3);
+            if (count($parts) < 2) {
+                return new NoCondition();
+            }
+            $fieldPath = $parts[0];
+            if ($this->resolver === null || strpos($fieldPath, '.') === false) {
+                return Condition::fromString($table, $filter);
+            }
+            $segments = explode('.', $fieldPath);
+            $columnName = array_pop($segments);
+            // walk the relation path to find the related (leaf) table
+            $tables = array($table);
+            foreach ($segments as $tableName) {
+                $relatedTable = $this->resolver->getRelatedTable($tables[count($tables) - 1], $tableName);
+                if ($relatedTable === null) {
+                    return new NoCondition();
+                }
+                $tables[] = $relatedTable;
+            }
+            $leafTable = $tables[count($tables) - 1];
+            if (!$leafTable->hasColumn($columnName)) {
+                return new NoCondition();
+            }
+            $command = $parts[1];
+            $value = isset($parts[2]) ? $parts[2] : '';
+            $condition = Condition::fromString($leafTable, $columnName . ',' . $command . ',' . $value);
+            if ($condition instanceof NoCondition) {
+                return $condition;
+            }
+            // wrap the leaf condition in a RelatedCondition per hop, from leaf to
+            // root. at each hop the related table's authorization and multi-tenancy
+            // conditions are applied inside the sub-query, just like they are on a
+            // direct query of that table (see GenericDB::addMiddlewareConditions)
+            for ($i = count($segments) - 1; $i >= 0; $i--) {
+                $condition = $this->addMiddlewareConditions($tables[$i + 1], $condition);
+                $condition = $this->resolver->relate($tables[$i], $segments[$i], $condition);
+                if ($condition === null) {
+                    return new NoCondition();
+                }
+            }
+            return $condition;
+        }
+        private function addMiddlewareConditions(ReflectedTable $table, Condition $condition): Condition
+        {
+            $tableName = $table->getName();
+            $authorization = VariableStore::get("authorization.conditions.{$tableName}");
+            if ($authorization) {
+                $condition = $condition->_and($authorization);
+            }
+            $multiTenancy = VariableStore::get("multiTenancy.conditions.{$tableName}");
+            if ($multiTenancy) {
+                $condition = $condition->_and($multiTenancy);
+            }
+            return $condition;
+        }
         private function getConditionsAsPathTree(ReflectedTable $table, array $params): PathTree
         {
             $conditions = new PathTree();
@@ -7470,7 +7711,7 @@ namespace Tqdev\PhpCrudApi\Record {
                     preg_match_all('/\d+|\D+/', substr($key, 6), $matches);
                     $path = $matches[0];
                     foreach ($filters as $filter) {
-                        $condition = Condition::fromString($table, $filter);
+                        $condition = $this->conditionFromString($table, $filter);
                         if ($condition instanceof NoCondition == false) {
                             $conditions->put($path, $condition);
                         }
@@ -7717,7 +7958,7 @@ namespace Tqdev\PhpCrudApi\Record {
             $this->reflection = $reflection;
             $this->columns = new ColumnIncluder();
             $this->joiner = new RelationJoiner($reflection, $this->columns);
-            $this->filters = new FilterInfo();
+            $this->filters = new FilterInfo($reflection);
             $this->ordering = new OrderingInfo();
             $this->pagination = new PaginationInfo();
         }
@@ -8117,6 +8358,95 @@ namespace Tqdev\PhpCrudApi\Record {
     }
 }
 
+// file: src/Tqdev/PhpCrudApi/Record/RelationResolver.php
+namespace Tqdev\PhpCrudApi\Record {
+    use Tqdev\PhpCrudApi\Column\Reflection\ReflectedTable;
+    use Tqdev\PhpCrudApi\Column\ReflectionService;
+    use Tqdev\PhpCrudApi\Record\Condition\Condition;
+    use Tqdev\PhpCrudApi\Record\Condition\RelatedCondition;
+    /**
+     * Resolves a single relation hop from one table to a related table by name,
+     * using the same belongsTo/hasMany/hasAndBelongsToMany detection as the
+     * RelationJoiner. Used to compile filters that target related tables into
+     * RelatedCondition (correlated EXISTS) trees.
+     */
+    class RelationResolver
+    {
+        private $reflection;
+        public function __construct(ReflectionService $reflection)
+        {
+            $this->reflection = $reflection;
+        }
+        private function hasAndBelongsToMany(ReflectedTable $t1, ReflectedTable $t2)
+        {
+            foreach ($this->reflection->getTableNames() as $tableName) {
+                $t3 = $this->reflection->getTable($tableName);
+                if (count($t3->getFksTo($t1->getName())) > 0 && count($t3->getFksTo($t2->getName())) > 0) {
+                    return $t3;
+                }
+            }
+            return null;
+        }
+        /**
+         * Returns the related table reachable from $t1 under the name $t2Name, or
+         * null when there is no such table or no relation between them.
+         */
+        public function getRelatedTable(ReflectedTable $t1, string $t2Name)
+        {
+            if (!$this->reflection->hasTable($t2Name)) {
+                return null;
+            }
+            $t2 = $this->reflection->getTable($t2Name);
+            $belongsTo = count($t1->getFksTo($t2->getName())) > 0;
+            $hasMany = count($t2->getFksTo($t1->getName())) > 0;
+            $habtm = !$belongsTo && !$hasMany ? $this->hasAndBelongsToMany($t1, $t2) != null : false;
+            if (!$belongsTo && !$hasMany && !$habtm) {
+                return null;
+            }
+            return $t2;
+        }
+        /**
+         * Wraps $inner (a condition on the related table) in a RelatedCondition that
+         * correlates the related table $t2Name back to $t1. Returns null when the
+         * relation cannot be resolved or required keys are missing.
+         */
+        public function relate(ReflectedTable $t1, string $t2Name, Condition $inner)
+        {
+            if (!$this->reflection->hasTable($t2Name)) {
+                return null;
+            }
+            $t2 = $this->reflection->getTable($t2Name);
+            $fks1 = $t1->getFksTo($t2->getName());
+            if (count($fks1) > 0) {
+                // belongsTo: t1 has a foreign key referencing t2's primary key
+                if (!$t2->hasPk()) {
+                    return null;
+                }
+                return RelatedCondition::belongsTo($fks1[0], $t2, $t2->getPk(), $inner);
+            }
+            $fks2 = $t2->getFksTo($t1->getName());
+            if (count($fks2) > 0) {
+                // hasMany: t2 has a foreign key referencing t1's primary key
+                if (!$t1->hasPk()) {
+                    return null;
+                }
+                return RelatedCondition::hasMany($t1->getPk(), $t2, $fks2[0], $inner);
+            }
+            $t3 = $this->hasAndBelongsToMany($t1, $t2);
+            if ($t3 != null) {
+                // habtm: junction table t3 references both t1 and t2 primary keys
+                if (!$t1->hasPk() || !$t2->hasPk()) {
+                    return null;
+                }
+                $junctionToOuter = $t3->getFksTo($t1->getName())[0];
+                $junctionToRelated = $t3->getFksTo($t2->getName())[0];
+                return RelatedCondition::habtm($t1->getPk(), $t2, $t2->getPk(), $t3, $junctionToOuter, $junctionToRelated, $inner);
+            }
+            return null;
+        }
+    }
+}
+
 // file: src/Tqdev/PhpCrudApi/RequestFactory.php
 namespace Tqdev\PhpCrudApi {
     use Nyholm\Psr7\Factory\Psr17Factory;
@@ -8232,6 +8562,30 @@ namespace Tqdev\PhpCrudApi {
             }
             return array_keys($uniqueTableNames);
         }
+        private static function getFilterTables(array $parameters, ReflectionService $reflection): array
+        {
+            $uniqueTableNames = array();
+            foreach ($parameters as $key => $values) {
+                if (substr($key, 0, 6) != 'filter' || !is_array($values)) {
+                    continue;
+                }
+                foreach ($values as $value) {
+                    $columnPath = explode(',', $value, 2)[0];
+                    if (strpos($columnPath, '.') === false) {
+                        continue;
+                    }
+                    $segments = explode('.', $columnPath);
+                    array_pop($segments);
+                    // last segment is the column name
+                    foreach ($segments as $segment) {
+                        if ($reflection->hasTable($segment)) {
+                            $uniqueTableNames[$segment] = true;
+                        }
+                    }
+                }
+            }
+            return array_keys($uniqueTableNames);
+        }
         public static function getTableNames(ServerRequestInterface $request, ReflectionService $reflection): array
         {
             $path = RequestUtils::getPathSegment($request, 1);
@@ -8243,7 +8597,16 @@ namespace Tqdev\PhpCrudApi {
                 case 'columns':
                     return $tableName ? [$tableName] : $allTableNames;
                 case 'records':
-                    return self::getJoinTables($tableName, RequestUtils::getParams($request));
+                    $params = RequestUtils::getParams($request);
+                    $tableNames = self::getJoinTables($tableName, $params);
+                    // tables referenced by filters on related tables must also be
+                    // authorized, so they are included here
+                    foreach (self::getFilterTables($params, $reflection) as $filterTable) {
+                        if (!in_array($filterTable, $tableNames)) {
+                            $tableNames[] = $filterTable;
+                        }
+                    }
+                    return $tableNames;
             }
             return $allTableNames;
         }
