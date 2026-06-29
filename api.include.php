@@ -3584,14 +3584,7 @@ namespace Tqdev\PhpCrudApi\Database {
         private $options;
         private $commands;
         private $pdo = null;
-        public function __construct(
-            string $dsn,
-            /*?string*/
-            $user = null,
-            /*?string*/
-            $password = null,
-            array $options = array()
-        )
+        public function __construct(string $dsn, ?string $user = null, ?string $password = null, array $options = array())
         {
             $this->dsn = $dsn;
             $this->user = $user;
@@ -3614,14 +3607,7 @@ namespace Tqdev\PhpCrudApi\Database {
             }
             return $this->pdo;
         }
-        public function reconstruct(
-            string $dsn,
-            /*?string*/
-            $user = null,
-            /*?string*/
-            $password = null,
-            array $options = array()
-        ): bool
+        public function reconstruct(string $dsn, ?string $user = null, ?string $password = null, array $options = array()): bool
         {
             $this->dsn = $dsn;
             $this->user = $user;
@@ -3685,6 +3671,7 @@ namespace Tqdev\PhpCrudApi\Database {
         {
             return $this->pdo()->quote($string, $parameter_type);
         }
+        // param stays untyped: PDO::lastInsertId is untyped on PHP 7.x (only ?string since 8.0)
         public function lastInsertId(
             /* ?string */
             $name = null
@@ -3692,12 +3679,7 @@ namespace Tqdev\PhpCrudApi\Database {
         {
             return $this->pdo()->lastInsertId($name);
         }
-        public function query(
-            $query,
-            /* ?int */
-            $fetchMode = null,
-            ...$fetchModeArgs
-        ): \PDOStatement
+        public function query($query, ?int $fetchMode = null, ...$fetchModeArgs): \PDOStatement
         {
             return call_user_func_array(array($this->pdo(), 'query'), func_get_args());
         }
@@ -3889,12 +3871,7 @@ namespace Tqdev\PhpCrudApi\GeoJson {
         private $id;
         private $properties;
         private $geometry;
-        public function __construct(
-            $id,
-            array $properties,
-            /*?Geometry*/
-            $geometry
-        )
+        public function __construct($id, array $properties, ?Geometry $geometry)
         {
             $this->id = $id;
             $this->properties = $properties;
@@ -7395,19 +7372,7 @@ namespace Tqdev\PhpCrudApi\Record\Condition {
         private $junctionToOuterColumn;
         private $junctionToRelatedColumn;
         private $condition;
-        private function __construct(
-            string $kind,
-            ReflectedColumn $outerColumn,
-            ReflectedTable $relatedTable,
-            ReflectedColumn $relatedColumn,
-            /* ?ReflectedTable */
-            $junctionTable,
-            /* ?ReflectedColumn */
-            $junctionToOuterColumn,
-            /* ?ReflectedColumn */
-            $junctionToRelatedColumn,
-            Condition $condition
-        )
+        private function __construct(string $kind, ReflectedColumn $outerColumn, ReflectedTable $relatedTable, ReflectedColumn $relatedColumn, ?ReflectedTable $junctionTable, ?ReflectedColumn $junctionToOuterColumn, ?ReflectedColumn $junctionToRelatedColumn, Condition $condition)
         {
             $this->kind = $kind;
             $this->outerColumn = $outerColumn;
@@ -7636,7 +7601,7 @@ namespace Tqdev\PhpCrudApi\Record {
     class FilterInfo
     {
         private $resolver;
-        public function __construct(ReflectionService $reflection = null)
+        public function __construct(?ReflectionService $reflection = null)
         {
             $this->resolver = $reflection ? new RelationResolver($reflection) : null;
         }

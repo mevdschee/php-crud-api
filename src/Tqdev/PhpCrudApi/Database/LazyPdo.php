@@ -12,7 +12,7 @@ class LazyPdo extends \PDO
 
     private $pdo = null;
 
-    public function __construct(string $dsn, /*?string*/ $user = null, /*?string*/ $password = null, array $options = array())
+    public function __construct(string $dsn, ?string $user = null, ?string $password = null, array $options = array())
     {
         $this->dsn = $dsn;
         $this->user = $user;
@@ -38,7 +38,7 @@ class LazyPdo extends \PDO
         return $this->pdo;
     }
 
-    public function reconstruct(string $dsn, /*?string*/ $user = null, /*?string*/ $password = null, array $options = array()): bool
+    public function reconstruct(string $dsn, ?string $user = null, ?string $password = null, array $options = array()): bool
     {
         $this->dsn = $dsn;
         $this->user = $user;
@@ -114,12 +114,13 @@ class LazyPdo extends \PDO
         return $this->pdo()->quote($string, $parameter_type);
     }
 
-    public function lastInsertId( /* ?string */$name = null): string
+    // param stays untyped: PDO::lastInsertId is untyped on PHP 7.x (only ?string since 8.0)
+    public function lastInsertId(/* ?string */ $name = null): string
     {
         return $this->pdo()->lastInsertId($name);
     }
 
-    public function query($query, /* ?int */ $fetchMode = null, ...$fetchModeArgs): \PDOStatement
+    public function query($query, ?int $fetchMode = null, ...$fetchModeArgs): \PDOStatement
     {
         return call_user_func_array(array($this->pdo(), 'query'), func_get_args());
     }

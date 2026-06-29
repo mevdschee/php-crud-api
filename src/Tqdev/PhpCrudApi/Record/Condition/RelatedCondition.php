@@ -33,9 +33,9 @@ class RelatedCondition extends Condition
         ReflectedColumn $outerColumn,
         ReflectedTable $relatedTable,
         ReflectedColumn $relatedColumn,
-        /* ?ReflectedTable */ $junctionTable,
-        /* ?ReflectedColumn */ $junctionToOuterColumn,
-        /* ?ReflectedColumn */ $junctionToRelatedColumn,
+        ?ReflectedTable $junctionTable,
+        ?ReflectedColumn $junctionToOuterColumn,
+        ?ReflectedColumn $junctionToRelatedColumn,
         Condition $condition
     ) {
         $this->kind = $kind;

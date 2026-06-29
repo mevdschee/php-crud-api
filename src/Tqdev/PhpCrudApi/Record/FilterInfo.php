@@ -14,7 +14,7 @@ class FilterInfo
 {
     private $resolver;
 
-    public function __construct(ReflectionService $reflection = null)
+    public function __construct(?ReflectionService $reflection = null)
     {
         $this->resolver = $reflection ? new RelationResolver($reflection) : null;
     }
