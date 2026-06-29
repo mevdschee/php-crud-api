@@ -171,6 +171,9 @@ Related projects:
   Add MySQL, phpMyAdmin and PHP-CRUD-API to your dev environment.
 - [VUE-CRUD-UI](https://github.com/nlware/vue-crud-ui): Single file Vue.js
   script that adds a UI to a PHP-CRUD-API project.
+- [awesome-node-auth](https://www.awesomenodeauth.com): Database-agnostic JWT
+  authentication library for Node.js that can use PHP-CRUD-API as its storage
+  layer (see the
 
 There are also ports of this script in:
 
