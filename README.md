@@ -402,14 +402,14 @@ hasAndBelongsToMany) and the path may be more than one table deep:
     GET /records/posts?filter=tags.name,eq,funny
     GET /records/posts?filter=comments.categories.name,eq,comment
 
-A related filter keeps a record when at least one matching related record
-exists (it is translated into an SQL "EXISTS" sub-query), so the result is the
-set of requested records and pagination and counts are applied to that set. The
-related records themselves are not filtered: if you also add the table to the
-"join" parameter, the nested results still contain all related records. The
-related table does not need to be listed in the "join" parameter for the filter
-to work. Related filters can be combined and grouped with normal filters using
-the "filter1"/"filter2" syntax described above.
+A related filter keeps a record when at least one matching related record exists
+(it is translated into an SQL "EXISTS" sub-query), so the result is the set of
+requested records and pagination and counts are applied to that set. The related
+records themselves are not filtered: if you also add the table to the "join"
+parameter, the nested results still contain all related records. The related
+table does not need to be listed in the "join" parameter for the filter to work.
+Related filters can be combined and grouped with normal filters using the
+"filter1"/"filter2" syntax described above.
 
 Authorization and multi-tenancy are respected on the related table: a filter can
 only match records that a direct request on that table would be allowed to see,
@@ -1812,7 +1812,7 @@ I am testing mainly on Debian and I have the following test setups:
 - (Docker) Debian 12 with PHP 8.2, MariaDB 10.11, PostgreSQL 15.3 (PostGIS 3.3)
   and SQLite 3.40
 - (Docker) Debian 13 with PHP 8.4, MariaDB 11.8, PostgreSQL 17.10 (PostGIS 3.5)
-  and SQLite 3.46
+  and SQLite 3.46 (+ SQLServer 2025)
 
 This covers not all environments (yet), so please notify me of failing tests and
 report your environment. I will try to cover most relevant setups in the
