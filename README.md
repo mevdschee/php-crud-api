@@ -175,13 +175,6 @@ Related projects:
   authentication library for Node.js that can use PHP-CRUD-API as its storage
   layer (see the
 
-There are also ports of this script in:
-
-- [Go-CRUD-API](https://github.com/dranih/go-crud-api) (work in progress)
-- [Java JDBC by Ivan Kolchagov](https://github.com/kolchagov/java-crud-api) (v1)
-- [Java Spring Boot + jOOQ](https://github.com/mevdschee/java-crud-api/tree/master/full)
-  (v2: work in progress)
-
 There are also proof-of-concept ports of this script that only support basic
 REST CRUD functionality in:
 [PHP](https://github.com/mevdschee/php-crud-api/blob/master/extras/core.php),
