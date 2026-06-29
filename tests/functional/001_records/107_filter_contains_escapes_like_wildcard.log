@@ -1,0 +1,60 @@
+===
+POST /records/kunsthåndværk
+
+{"id":"account_id","Umlauts ä_ö_ü-COUNT":901,"user_id":1}
+===
+200
+Content-Type: application/json; charset=utf-8
+Content-Length: 12
+
+"account_id"
+===
+POST /records/kunsthåndværk
+
+{"id":"accountXid","Umlauts ä_ö_ü-COUNT":902,"user_id":1}
+===
+200
+Content-Type: application/json; charset=utf-8
+Content-Length: 12
+
+"accountXid"
+===
+GET /records/kunsthåndværk?filter=id,cs,account_id
+===
+200
+Content-Type: application/json; charset=utf-8
+Content-Length: 94
+
+{"records":[{"id":"account_id","Umlauts ä_ö_ü-COUNT":901,"user_id":1,"invisible_id":null}]}
+===
+GET /records/kunsthåndværk?filter=id,sw,account_id
+===
+200
+Content-Type: application/json; charset=utf-8
+Content-Length: 94
+
+{"records":[{"id":"account_id","Umlauts ä_ö_ü-COUNT":901,"user_id":1,"invisible_id":null}]}
+===
+GET /records/kunsthåndværk?filter=id,ew,account_id
+===
+200
+Content-Type: application/json; charset=utf-8
+Content-Length: 94
+
+{"records":[{"id":"account_id","Umlauts ä_ö_ü-COUNT":901,"user_id":1,"invisible_id":null}]}
+===
+DELETE /records/kunsthåndværk/account_id
+===
+200
+Content-Type: application/json; charset=utf-8
+Content-Length: 1
+
+1
+===
+DELETE /records/kunsthåndværk/accountXid
+===
+200
+Content-Type: application/json; charset=utf-8
+Content-Length: 1
+
+1

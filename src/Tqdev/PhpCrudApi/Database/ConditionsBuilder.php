@@ -106,7 +106,25 @@ class ConditionsBuilder
 
     private function escapeLikeValue(string $value): string
     {
-        return addcslashes($value, '%_');
+        // backslash is the declared LIKE escape character (see getLikeConditionSql),
+        // so escape it along with the wildcards; SQL Server also treats '[' as the
+        // start of a character class in LIKE patterns
+        $special = $this->driver == 'sqlsrv' ? '\\%_[' : '\\%_';
+        return addcslashes($value, $special);
+    }
+
+    private function getLikeConditionSql(string $column): string
+    {
+        // SQLite and SQL Server have no default LIKE escape character, so the
+        // backslash added by escapeLikeValue must be declared explicitly; MySQL
+        // and PostgreSQL already use the backslash as their default escape
+        switch ($this->driver) {
+            case 'sqlite':
+            case 'sqlsrv':
+                return "$column LIKE ? ESCAPE '\\'";
+            default:
+                return "$column LIKE ?";
+        }
     }
 
     private function getColumnConditionSql(ColumnCondition $condition, array &$arguments, string $columnAlias = ''): string
@@ -117,15 +135,15 @@ class ConditionsBuilder
         $sql = 'FALSE';
         switch ($operator) {
             case 'cs':
-                $sql = "$column LIKE ?";
+                $sql = $this->getLikeConditionSql($column);
                 $arguments[] = '%' . $this->escapeLikeValue($value) . '%';
                 break;
             case 'sw':
-                $sql = "$column LIKE ?";
+                $sql = $this->getLikeConditionSql($column);
                 $arguments[] = $this->escapeLikeValue($value) . '%';
                 break;
             case 'ew':
-                $sql = "$column LIKE ?";
+                $sql = $this->getLikeConditionSql($column);
                 $arguments[] = '%' . $this->escapeLikeValue($value);
                 break;
             case 'eq':
