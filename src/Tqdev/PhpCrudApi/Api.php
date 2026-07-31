@@ -140,6 +140,9 @@ class Api implements RequestHandlerInterface
                 case 'json':
                     new JsonMiddleware($router, $responder, $config, $middleware);
                     break;
+                case 'encryption':
+                    ew EncryptionMiddleware($router, $responder, $config, $middleware, $reflection, $db);
+                    break;
             }
         }
         foreach ($config->getControllers() as $controller) {
