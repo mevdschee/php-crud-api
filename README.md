@@ -1980,6 +1980,6 @@ Test the script (running in the container) by opening the following URL:
 
 ### Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=mevdschee/php-crud-api&type=Date)](https://star-history.com/#mevdschee/php-crud-api&Date)
+[![Star History Chart](https://star-history.dera.page/svg?repos=mevdschee/php-crud-api&type=Date)](https://star-history.dera.page/#mevdschee/php-crud-api&Date)
 
 Enjoy!
