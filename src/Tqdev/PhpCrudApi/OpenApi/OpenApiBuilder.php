@@ -11,8 +11,12 @@ class OpenApiBuilder
 {
     private $openapi;
     private $middlewares;
+    private $recordParameters;
     private $records;
     private $columns;
+    private $geoJson;
+    private $cache;
+    private $openApi;
     private $status;
     private $dbAuth;
     private $builders;
@@ -35,10 +39,17 @@ class OpenApiBuilder
         $this->middlewares = new OpenApiMiddlewares($config);
         $this->basePath = rtrim($basePath, '/');
         $controllers = $config->getControllers();
-        $this->records = in_array('records', $controllers) ? new OpenApiRecordsBuilder($this->openapi, $reflection, $this->middlewares) : null;
+        $tableNames = new OpenApiTableNames();
+        $this->records = in_array('records', $controllers) ? new OpenApiRecordsBuilder($this->openapi, $reflection, $this->middlewares, $tableNames) : null;
         $this->columns = in_array('columns', $controllers) ? new OpenApiColumnsBuilder($this->openapi, $this->middlewares) : null;
+        $this->geoJson = in_array('geojson', $controllers) ? new OpenApiGeoJsonBuilder($this->openapi, $reflection, $this->middlewares, $tableNames) : null;
+        $this->cache = in_array('cache', $controllers) ? new OpenApiCacheBuilder($this->openapi, $this->middlewares) : null;
+        $this->openApi = in_array('openapi', $controllers) ? new OpenApiOpenApiBuilder($this->openapi, $this->middlewares) : null;
         $this->status = in_array('status', $controllers) ? new OpenApiStatusBuilder($this->openapi, $this->middlewares) : null;
         $this->dbAuth = $this->middlewares->has('dbAuth') ? new OpenApiDbAuthBuilder($this->openapi, $reflection, $this->middlewares) : null;
+        // the geojson controller hands the record parameters to the record
+        // service, so they are needed as soon as either one is enabled
+        $this->recordParameters = ($this->records || $this->geoJson) ? new OpenApiRecordParameters($this->openapi, $this->middlewares) : null;
         $this->builders = array();
         foreach ($config->getCustomOpenApiBuilders() as $className) {
             $this->builders[] = new $className($this->openapi, $reflection);
@@ -82,6 +93,9 @@ class OpenApiBuilder
 
     private function setComponentParameters() /*: void*/
     {
+        if ($this->recordParameters) {
+            $this->recordParameters->set();
+        }
         if ($this->middlewares->hasFormatParameter()) {
             $this->openapi->set("components|parameters|format|name", "format");
             $this->openapi->set("components|parameters|format|in", "query");
@@ -136,6 +150,15 @@ class OpenApiBuilder
         }
         if ($this->columns) {
             $this->columns->build();
+        }
+        if ($this->geoJson) {
+            $this->geoJson->build();
+        }
+        if ($this->cache) {
+            $this->cache->build();
+        }
+        if ($this->openApi) {
+            $this->openApi->build();
         }
         if ($this->dbAuth) {
             $this->dbAuth->build();

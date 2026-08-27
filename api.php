@@ -6371,6 +6371,36 @@ namespace Tqdev\PhpCrudApi\Middleware {
     }
 }
 
+// file: src/Tqdev/PhpCrudApi/OpenApi/OpenApiAuthorization.php
+namespace Tqdev\PhpCrudApi\OpenApi {
+    use Tqdev\PhpCrudApi\Middleware\Communication\VariableStore;
+    /**
+     * The authorization middleware removes the tables and columns that the request
+     * may not touch from the reflection, but the document describes every operation
+     * at once, so it cannot do that here. It leaves its handlers behind in the
+     * variable store instead and the builders ask them per operation.
+     */
+    class OpenApiAuthorization
+    {
+        public function isOperationOnTableAllowed(string $operation, string $tableName): bool
+        {
+            $tableHandler = VariableStore::get('authorization.tableHandler');
+            if (!$tableHandler) {
+                return true;
+            }
+            return (bool) call_user_func($tableHandler, $operation, $tableName);
+        }
+        public function isOperationOnColumnAllowed(string $operation, string $tableName, string $columnName): bool
+        {
+            $columnHandler = VariableStore::get('authorization.columnHandler');
+            if (!$columnHandler) {
+                return true;
+            }
+            return (bool) call_user_func($columnHandler, $operation, $tableName, $columnName);
+        }
+    }
+}
+
 // file: src/Tqdev/PhpCrudApi/OpenApi/OpenApiBuilder.php
 namespace Tqdev\PhpCrudApi\OpenApi {
     use Psr\Http\Message\ServerRequestInterface;
@@ -6381,8 +6411,12 @@ namespace Tqdev\PhpCrudApi\OpenApi {
     {
         private $openapi;
         private $middlewares;
+        private $recordParameters;
         private $records;
         private $columns;
+        private $geoJson;
+        private $cache;
+        private $openApi;
         private $status;
         private $dbAuth;
         private $builders;
@@ -6394,10 +6428,17 @@ namespace Tqdev\PhpCrudApi\OpenApi {
             $this->middlewares = new OpenApiMiddlewares($config);
             $this->basePath = rtrim($basePath, '/');
             $controllers = $config->getControllers();
-            $this->records = in_array('records', $controllers) ? new OpenApiRecordsBuilder($this->openapi, $reflection, $this->middlewares) : null;
+            $tableNames = new OpenApiTableNames();
+            $this->records = in_array('records', $controllers) ? new OpenApiRecordsBuilder($this->openapi, $reflection, $this->middlewares, $tableNames) : null;
             $this->columns = in_array('columns', $controllers) ? new OpenApiColumnsBuilder($this->openapi, $this->middlewares) : null;
+            $this->geoJson = in_array('geojson', $controllers) ? new OpenApiGeoJsonBuilder($this->openapi, $reflection, $this->middlewares, $tableNames) : null;
+            $this->cache = in_array('cache', $controllers) ? new OpenApiCacheBuilder($this->openapi, $this->middlewares) : null;
+            $this->openApi = in_array('openapi', $controllers) ? new OpenApiOpenApiBuilder($this->openapi, $this->middlewares) : null;
             $this->status = in_array('status', $controllers) ? new OpenApiStatusBuilder($this->openapi, $this->middlewares) : null;
             $this->dbAuth = $this->middlewares->has('dbAuth') ? new OpenApiDbAuthBuilder($this->openapi, $reflection, $this->middlewares) : null;
+            // the geojson controller hands the record parameters to the record
+            // service, so they are needed as soon as either one is enabled
+            $this->recordParameters = $this->records || $this->geoJson ? new OpenApiRecordParameters($this->openapi, $this->middlewares) : null;
             $this->builders = array();
             foreach ($config->getCustomOpenApiBuilders() as $className) {
                 $this->builders[] = new $className($this->openapi, $reflection);
@@ -6438,6 +6479,9 @@ namespace Tqdev\PhpCrudApi\OpenApi {
         }
         private function setComponentParameters()
         {
+            if ($this->recordParameters) {
+                $this->recordParameters->set();
+            }
             if ($this->middlewares->hasFormatParameter()) {
                 $this->openapi->set("components|parameters|format|name", "format");
                 $this->openapi->set("components|parameters|format|in", "query");
@@ -6491,6 +6535,15 @@ namespace Tqdev\PhpCrudApi\OpenApi {
             if ($this->columns) {
                 $this->columns->build();
             }
+            if ($this->geoJson) {
+                $this->geoJson->build();
+            }
+            if ($this->cache) {
+                $this->cache->build();
+            }
+            if ($this->openApi) {
+                $this->openApi->build();
+            }
             if ($this->dbAuth) {
                 $this->dbAuth->build();
             }
@@ -6506,6 +6559,59 @@ namespace Tqdev\PhpCrudApi\OpenApi {
                 $this->openapi->copyContentType('application/json', 'application/xml');
             }
             return $this->openapi;
+        }
+    }
+}
+
+// file: src/Tqdev/PhpCrudApi/OpenApi/OpenApiCacheBuilder.php
+namespace Tqdev\PhpCrudApi\OpenApi {
+    use Tqdev\PhpCrudApi\OpenApi\OpenApiDefinition;
+    /**
+     * The cache controller has one end-point that empties the cache and answers
+     * with a boolean.
+     */
+    class OpenApiCacheBuilder
+    {
+        private $openapi;
+        private $middlewares;
+        private $tag = 'cache';
+        public function __construct(OpenApiDefinition $openapi, OpenApiMiddlewares $middlewares)
+        {
+            $this->openapi = $openapi;
+            $this->middlewares = $middlewares;
+        }
+        public function build()
+        {
+            $this->setPath();
+            $this->setComponentResponse();
+            $this->setTag();
+        }
+        private function setPath()
+        {
+            $path = '/cache/clear';
+            $method = 'get';
+            foreach ($this->middlewares->getCommonParameters($method) as $parameter) {
+                $this->openapi->set("paths|{$path}|{$method}|parameters||\$ref", "#/components/parameters/{$parameter}");
+            }
+            $this->openapi->set("paths|{$path}|{$method}|tags|", $this->tag);
+            $this->openapi->set("paths|{$path}|{$method}|operationId", "clear_cache");
+            $this->openapi->set("paths|{$path}|{$method}|description", "clear cache");
+            $this->openapi->set("paths|{$path}|{$method}|responses|200|\$ref", "#/components/responses/clear-cache");
+            $statusCodes = array_merge($this->middlewares->getStatusCodes(), [500]);
+            sort($statusCodes);
+            foreach ($statusCodes as $statusCode) {
+                $this->openapi->set("paths|{$path}|{$method}|responses|{$statusCode}|\$ref", "#/components/responses/error-{$statusCode}");
+            }
+            $this->openapi->set("paths|{$path}|{$method}|responses|default|\$ref", "#/components/responses/error");
+        }
+        private function setComponentResponse()
+        {
+            $this->openapi->set("components|responses|clear-cache|description", "boolean indicating whether the cache was cleared");
+            $this->openapi->set("components|responses|clear-cache|content|application/json|schema|type", "boolean");
+        }
+        private function setTag()
+        {
+            $this->openapi->set("tags|", ['name' => $this->tag, 'description' => "cache operations"]);
         }
     }
 }
@@ -6980,6 +7086,260 @@ namespace Tqdev\PhpCrudApi\OpenApi {
     }
 }
 
+// file: src/Tqdev/PhpCrudApi/OpenApi/OpenApiGeoJsonBuilder.php
+namespace Tqdev\PhpCrudApi\OpenApi {
+    use Tqdev\PhpCrudApi\Column\ReflectionService;
+    use Tqdev\PhpCrudApi\GeoJson\Geometry;
+    use Tqdev\PhpCrudApi\OpenApi\OpenApiDefinition;
+    /**
+     * The geojson controller serves the records of a table as GeoJSON, which only
+     * says something for a table that has a geometry column, so the tables that
+     * have none are left out. The first geometry column is the one that is read,
+     * unless the "geometry" parameter names another one, and it is the one column
+     * that does not end up in the properties of the feature.
+     */
+    class OpenApiGeoJsonBuilder
+    {
+        private $openapi;
+        private $reflection;
+        private $middlewares;
+        private $tableNames;
+        private $authorization;
+        private $columnTypes;
+        private $tag = 'geojson';
+        /**
+         * Status codes that the geojson controller itself can return per operation.
+         * Reading several records at once answers with a feature collection instead
+         * of a list of error documents, so there is no 424 here, and the read is
+         * only emitted for tables, which rules out the 405 that a view would get.
+         */
+        private $errors = ['list' => [404], 'read' => [404]];
+        private $operations = ['list' => 'get', 'read' => 'get'];
+        public function __construct(OpenApiDefinition $openapi, ReflectionService $reflection, OpenApiMiddlewares $middlewares, OpenApiTableNames $tableNames)
+        {
+            $this->openapi = $openapi;
+            $this->reflection = $reflection;
+            $this->middlewares = $middlewares;
+            $this->tableNames = $tableNames;
+            $this->authorization = new OpenApiAuthorization();
+            $this->columnTypes = new OpenApiColumnTypes();
+        }
+        private function getGeometryColumnName(string $tableName): string
+        {
+            $table = $this->reflection->getTable($tableName);
+            foreach ($table->getColumnNames() as $columnName) {
+                if ($table->getColumn($columnName)->isGeometry()) {
+                    return $columnName;
+                }
+            }
+            return '';
+        }
+        private function getTableNames(): array
+        {
+            $tableNames = array();
+            foreach ($this->reflection->getTableNames() as $tableName) {
+                if ($this->getGeometryColumnName($tableName)) {
+                    $tableNames[] = $tableName;
+                }
+            }
+            return $tableNames;
+        }
+        public function build()
+        {
+            $tableNames = $this->getTableNames();
+            if (!$tableNames) {
+                return;
+            }
+            foreach ($tableNames as $tableName) {
+                $this->setPath($tableName);
+            }
+            $this->setComponentGeometrySchema();
+            foreach ($tableNames as $tableName) {
+                $this->setComponentSchema($tableName);
+                $this->setComponentResponse($tableName);
+            }
+            $this->setComponentParameters();
+            $this->setTag();
+        }
+        private function setPath(string $tableName)
+        {
+            $normalizedTableName = $this->tableNames->normalize($tableName);
+            $table = $this->reflection->getTable($tableName);
+            $pk = $table->getPk();
+            foreach ($this->operations as $operation => $method) {
+                if ($operation != 'list' && (!$pk || $table->getType() != 'table')) {
+                    continue;
+                }
+                if (!$this->authorization->isOperationOnTableAllowed($operation, $tableName)) {
+                    continue;
+                }
+                if ($operation == 'list') {
+                    $path = sprintf('/geojson/%s', $tableName);
+                    $parameters = ['filter', 'include', 'exclude', 'order', 'size', 'page', 'join'];
+                    if ($this->middlewares->getTextSearchParameter()) {
+                        $parameters[] = 'search';
+                    }
+                    $parameters = array_merge($parameters, ['geometry', 'bbox', 'tile']);
+                } else {
+                    $path = sprintf('/geojson/%s/{id}', $tableName);
+                    $parameters = ['pk', 'include', 'exclude', 'join', 'geometry'];
+                }
+                $parameters = array_merge($parameters, $this->middlewares->getCommonParameters($method));
+                foreach ($parameters as $parameter) {
+                    $this->openapi->set("paths|{$path}|{$method}|parameters||\$ref", "#/components/parameters/{$parameter}");
+                }
+                $this->openapi->set("paths|{$path}|{$method}|tags|", $this->tag);
+                $this->openapi->set("paths|{$path}|{$method}|operationId", "{$operation}" . "_geojson_" . "{$normalizedTableName}");
+                $this->openapi->set("paths|{$path}|{$method}|description", "{$operation} {$tableName} as geojson");
+                $this->openapi->set("paths|{$path}|{$method}|responses|200|\$ref", "#/components/responses/{$operation}-geojson-{$normalizedTableName}");
+                $statusCodes = array_merge($this->errors[$operation], $this->middlewares->getStatusCodes(), [500]);
+                sort($statusCodes);
+                foreach ($statusCodes as $statusCode) {
+                    $this->openapi->set("paths|{$path}|{$method}|responses|{$statusCode}|\$ref", "#/components/responses/error-{$statusCode}");
+                }
+                $this->openapi->set("paths|{$path}|{$method}|responses|default|\$ref", "#/components/responses/error");
+            }
+        }
+        /**
+         * A position is a pair of numbers and every dimension that a geometry has
+         * nests them one level deeper, which is why the coordinates refer to
+         * themselves. The geometry itself is nullable, as a record that has no
+         * geometry still becomes a feature.
+         */
+        private function setComponentGeometrySchema()
+        {
+            $this->openapi->set("components|schemas|coordinates|type", "array");
+            $this->openapi->set("components|schemas|coordinates|items|oneOf|0|type", "number");
+            $this->openapi->set("components|schemas|coordinates|items|oneOf|1|\$ref", "#/components/schemas/coordinates");
+            $this->openapi->set("components|schemas|geometry|type", "object");
+            $this->openapi->set("components|schemas|geometry|nullable", true);
+            $this->openapi->set("components|schemas|geometry|required", ["type", "coordinates"]);
+            $this->openapi->set("components|schemas|geometry|properties|type|type", "string");
+            $this->openapi->set("components|schemas|geometry|properties|type|enum", Geometry::$types);
+            $this->openapi->set("components|schemas|geometry|properties|coordinates|\$ref", "#/components/schemas/coordinates");
+        }
+        private function setFeatureSchema(string $prefix, string $tableName, string $operation)
+        {
+            $table = $this->reflection->getTable($tableName);
+            $pk = $table->getPk();
+            $pkName = $pk ? $pk->getName() : '';
+            $geometryColumnName = $this->getGeometryColumnName($tableName);
+            $this->openapi->set("{$prefix}|type", "object");
+            $this->openapi->set("{$prefix}|required", ["type", "id", "properties", "geometry"]);
+            $this->openapi->set("{$prefix}|properties|type|type", "string");
+            $this->openapi->set("{$prefix}|properties|type|enum", ["Feature"]);
+            // the id of a feature is the primary key value, or null without one
+            $properties = $pk ? $this->columnTypes->getProperties($pk) : ['nullable' => true];
+            foreach ($properties as $key => $value) {
+                $this->openapi->set("{$prefix}|properties|id|{$key}", $value);
+            }
+            $this->openapi->set("{$prefix}|properties|properties|type", "object");
+            foreach ($table->getColumnNames() as $columnName) {
+                if ($columnName == $pkName || $columnName == $geometryColumnName) {
+                    continue;
+                }
+                if (!$this->authorization->isOperationOnColumnAllowed($operation, $tableName, $columnName)) {
+                    continue;
+                }
+                foreach ($this->columnTypes->getProperties($table->getColumn($columnName)) as $key => $value) {
+                    $this->openapi->set("{$prefix}|properties|properties|properties|{$columnName}|{$key}", $value);
+                }
+            }
+            $this->openapi->set("{$prefix}|properties|geometry|\$ref", "#/components/schemas/geometry");
+        }
+        /**
+         * A feature collection is the answer to a list and to a batch read. The
+         * list counts the records that the page was taken from, which the batch
+         * read has nothing to count, so it reports no "results" at all.
+         */
+        private function setFeatureCollectionSchema(string $prefix, string $features, bool $results)
+        {
+            $this->openapi->set("{$prefix}|type", "object");
+            $this->openapi->set("{$prefix}|required", ["type", "features"]);
+            $this->openapi->set("{$prefix}|properties|type|type", "string");
+            $this->openapi->set("{$prefix}|properties|type|enum", ["FeatureCollection"]);
+            $this->openapi->set("{$prefix}|properties|features|type", "array");
+            if ($features) {
+                $this->openapi->set("{$prefix}|properties|features|items|\$ref", $features);
+            }
+            if ($results) {
+                // only counted when the request asked for a page
+                $this->openapi->set("{$prefix}|properties|results|type", "integer");
+                $this->openapi->set("{$prefix}|properties|results|format", "int64");
+            }
+        }
+        private function setComponentSchema(string $tableName)
+        {
+            $normalizedTableName = $this->tableNames->normalize($tableName);
+            $table = $this->reflection->getTable($tableName);
+            $pk = $table->getPk();
+            foreach (array_keys($this->operations) as $operation) {
+                if ($operation != 'list' && (!$pk || $table->getType() != 'table')) {
+                    continue;
+                }
+                if (!$this->authorization->isOperationOnTableAllowed($operation, $tableName)) {
+                    continue;
+                }
+                $prefix = "components|schemas|{$operation}-geojson-{$normalizedTableName}";
+                if ($operation == 'list') {
+                    $this->setFeatureCollectionSchema($prefix, '', true);
+                    $this->setFeatureSchema("{$prefix}|properties|features|items", $tableName, $operation);
+                } else {
+                    $this->setFeatureSchema($prefix, $tableName, $operation);
+                }
+            }
+        }
+        private function setComponentResponse(string $tableName)
+        {
+            $normalizedTableName = $this->tableNames->normalize($tableName);
+            $table = $this->reflection->getTable($tableName);
+            $pk = $table->getPk();
+            foreach (array_keys($this->operations) as $operation) {
+                if ($operation != 'list' && (!$pk || $table->getType() != 'table')) {
+                    continue;
+                }
+                if (!$this->authorization->isOperationOnTableAllowed($operation, $tableName)) {
+                    continue;
+                }
+                $schema = "#/components/schemas/{$operation}-geojson-{$normalizedTableName}";
+                $prefix = "components|responses|{$operation}-geojson-{$normalizedTableName}";
+                if ($operation == 'list') {
+                    $this->openapi->set("{$prefix}|description", "list of {$tableName} records as a feature collection");
+                    $this->openapi->set("{$prefix}|content|application/json|schema|\$ref", $schema);
+                } else {
+                    $this->openapi->set("{$prefix}|description", "single {$tableName} record as a feature, or a feature collection for a batch");
+                    $this->openapi->set("{$prefix}|content|application/json|schema|oneOf|0|\$ref", $schema);
+                    $this->setFeatureCollectionSchema("{$prefix}|content|application/json|schema|oneOf|1", $schema, false);
+                }
+            }
+        }
+        private function setComponentParameters()
+        {
+            $this->openapi->set("components|parameters|geometry|name", "geometry");
+            $this->openapi->set("components|parameters|geometry|in", "query");
+            $this->openapi->set("components|parameters|geometry|schema|type", "string");
+            $this->openapi->set("components|parameters|geometry|description", "Name of the geometry column to read, the first geometry column of the table is used when it is not given. Example: location");
+            $this->openapi->set("components|parameters|geometry|required", false);
+            $this->openapi->set("components|parameters|bbox|name", "bbox");
+            $this->openapi->set("components|parameters|bbox|in", "query");
+            $this->openapi->set("components|parameters|bbox|schema|type", "string");
+            $this->openapi->set("components|parameters|bbox|schema|pattern", '^-?\d+(\.\d+)?(,-?\d+(\.\d+)?){3}$');
+            $this->openapi->set("components|parameters|bbox|description", "Bounding box to filter on: minimum longitude, minimum latitude, maximum longitude and maximum latitude (comma separated). Example: 3.3,50.7,7.2,53.6");
+            $this->openapi->set("components|parameters|bbox|required", false);
+            $this->openapi->set("components|parameters|tile|name", "tile");
+            $this->openapi->set("components|parameters|tile|in", "query");
+            $this->openapi->set("components|parameters|tile|schema|type", "string");
+            $this->openapi->set("components|parameters|tile|schema|pattern", '^\d+,\d+,\d+$');
+            $this->openapi->set("components|parameters|tile|description", "Map tile to filter on: zoom, x and y (comma separated). Example: 9,265,170");
+            $this->openapi->set("components|parameters|tile|required", false);
+        }
+        private function setTag()
+        {
+            $this->openapi->set("tags|", ['name' => $this->tag, 'description' => "geojson operations"]);
+        }
+    }
+}
+
 // file: src/Tqdev/PhpCrudApi/OpenApi/OpenApiMiddlewares.php
 namespace Tqdev\PhpCrudApi\OpenApi {
     use Tqdev\PhpCrudApi\Config\Config;
@@ -7098,16 +7458,149 @@ namespace Tqdev\PhpCrudApi\OpenApi {
     }
 }
 
+// file: src/Tqdev/PhpCrudApi/OpenApi/OpenApiOpenApiBuilder.php
+namespace Tqdev\PhpCrudApi\OpenApi {
+    use Tqdev\PhpCrudApi\OpenApi\OpenApiDefinition;
+    /**
+     * The openapi controller serves the document that this class writes a part of.
+     * It is wired on the "openapi" controller like the other builders are wired on
+     * theirs, which means that the end-point describes itself whenever it answers
+     * at all.
+     */
+    class OpenApiOpenApiBuilder
+    {
+        private $openapi;
+        private $middlewares;
+        private $tag = 'openapi';
+        public function __construct(OpenApiDefinition $openapi, OpenApiMiddlewares $middlewares)
+        {
+            $this->openapi = $openapi;
+            $this->middlewares = $middlewares;
+        }
+        public function build()
+        {
+            $this->setPath();
+            $this->setComponentResponse();
+            $this->setTag();
+        }
+        private function setPath()
+        {
+            $path = '/openapi';
+            $method = 'get';
+            foreach ($this->middlewares->getCommonParameters($method) as $parameter) {
+                $this->openapi->set("paths|{$path}|{$method}|parameters||\$ref", "#/components/parameters/{$parameter}");
+            }
+            $this->openapi->set("paths|{$path}|{$method}|tags|", $this->tag);
+            $this->openapi->set("paths|{$path}|{$method}|operationId", "read_openapi");
+            $this->openapi->set("paths|{$path}|{$method}|description", "read openapi document");
+            $this->openapi->set("paths|{$path}|{$method}|responses|200|\$ref", "#/components/responses/read-openapi");
+            $statusCodes = array_merge($this->middlewares->getStatusCodes(), [500]);
+            sort($statusCodes);
+            foreach ($statusCodes as $statusCode) {
+                $this->openapi->set("paths|{$path}|{$method}|responses|{$statusCode}|\$ref", "#/components/responses/error-{$statusCode}");
+            }
+            $this->openapi->set("paths|{$path}|{$method}|responses|default|\$ref", "#/components/responses/error");
+        }
+        private function setComponentResponse()
+        {
+            $this->openapi->set("components|responses|read-openapi|description", "the openapi document that describes this API");
+            $this->openapi->set("components|responses|read-openapi|content|application/json|schema|type", "object");
+        }
+        private function setTag()
+        {
+            $this->openapi->set("tags|", ['name' => $this->tag, 'description' => "openapi operations"]);
+        }
+    }
+}
+
+// file: src/Tqdev/PhpCrudApi/OpenApi/OpenApiRecordParameters.php
+namespace Tqdev\PhpCrudApi\OpenApi {
+    use Tqdev\PhpCrudApi\OpenApi\OpenApiDefinition;
+    /**
+     * The parameters that select and shape the records of a table. The record
+     * controller reads them and the geojson controller hands them to it unchanged,
+     * so they are declared here instead of in one of the two builders, which would
+     * leave a dangling reference as soon as the other controller is enabled on its
+     * own.
+     */
+    class OpenApiRecordParameters
+    {
+        private $openapi;
+        private $middlewares;
+        public function __construct(OpenApiDefinition $openapi, OpenApiMiddlewares $middlewares)
+        {
+            $this->openapi = $openapi;
+            $this->middlewares = $middlewares;
+        }
+        public function set()
+        {
+            $this->openapi->set("components|parameters|pk|name", "id");
+            $this->openapi->set("components|parameters|pk|in", "path");
+            $this->openapi->set("components|parameters|pk|schema|type", "string");
+            $this->openapi->set("components|parameters|pk|description", "Primary key value, or several of them (comma separated) to run the operation as a batch. Example: 1,2");
+            $this->openapi->set("components|parameters|pk|required", true);
+            $this->openapi->set("components|parameters|filter|name", "filter");
+            $this->openapi->set("components|parameters|filter|in", "query");
+            $this->openapi->set("components|parameters|filter|schema|type", "array");
+            $this->openapi->set("components|parameters|filter|schema|items|type", "string");
+            $this->openapi->set("components|parameters|filter|description", "Filters to be applied. Each filter consists of a column, an operator and a value (comma separated). Example: id,eq,1");
+            $this->openapi->set("components|parameters|filter|required", false);
+            $this->openapi->set("components|parameters|include|name", "include");
+            $this->openapi->set("components|parameters|include|in", "query");
+            $this->openapi->set("components|parameters|include|schema|type", "string");
+            $this->openapi->set("components|parameters|include|description", "Columns you want to include in the output (comma separated). Example: posts.*,categories.name");
+            $this->openapi->set("components|parameters|include|required", false);
+            $this->openapi->set("components|parameters|exclude|name", "exclude");
+            $this->openapi->set("components|parameters|exclude|in", "query");
+            $this->openapi->set("components|parameters|exclude|schema|type", "string");
+            $this->openapi->set("components|parameters|exclude|description", "Columns you want to exclude from the output (comma separated). Example: posts.content");
+            $this->openapi->set("components|parameters|exclude|required", false);
+            $this->openapi->set("components|parameters|order|name", "order");
+            $this->openapi->set("components|parameters|order|in", "query");
+            $this->openapi->set("components|parameters|order|schema|type", "array");
+            $this->openapi->set("components|parameters|order|schema|items|type", "string");
+            $this->openapi->set("components|parameters|order|description", "Column you want to sort on and the sort direction (comma separated). Example: id,desc");
+            $this->openapi->set("components|parameters|order|required", false);
+            $this->openapi->set("components|parameters|size|name", "size");
+            $this->openapi->set("components|parameters|size|in", "query");
+            $this->openapi->set("components|parameters|size|schema|type", "integer");
+            $this->openapi->set("components|parameters|size|description", "Maximum number of results (for top lists). Example: 10");
+            $this->openapi->set("components|parameters|size|required", false);
+            $this->openapi->set("components|parameters|page|name", "page");
+            $this->openapi->set("components|parameters|page|in", "query");
+            $this->openapi->set("components|parameters|page|schema|type", "string");
+            $this->openapi->set("components|parameters|page|schema|pattern", '^\d+(,\d+)?$');
+            $this->openapi->set("components|parameters|page|description", "Page number and page size (comma separated). Example: 1,10");
+            $this->openapi->set("components|parameters|page|required", false);
+            $this->openapi->set("components|parameters|join|name", "join");
+            $this->openapi->set("components|parameters|join|in", "query");
+            $this->openapi->set("components|parameters|join|schema|type", "array");
+            $this->openapi->set("components|parameters|join|schema|items|type", "string");
+            $this->openapi->set("components|parameters|join|description", "Paths (comma separated) to related entities that you want to include. Example: comments,users");
+            $this->openapi->set("components|parameters|join|required", false);
+            $textSearch = $this->middlewares->getTextSearchParameter();
+            if ($textSearch) {
+                $this->openapi->set("components|parameters|search|name", $textSearch);
+                $this->openapi->set("components|parameters|search|in", "query");
+                $this->openapi->set("components|parameters|search|schema|type", "string");
+                $this->openapi->set("components|parameters|search|description", "Text to search for in all text columns of the table. Example: hello");
+                $this->openapi->set("components|parameters|search|required", false);
+            }
+        }
+    }
+}
+
 // file: src/Tqdev/PhpCrudApi/OpenApi/OpenApiRecordsBuilder.php
 namespace Tqdev\PhpCrudApi\OpenApi {
     use Tqdev\PhpCrudApi\Column\ReflectionService;
-    use Tqdev\PhpCrudApi\Middleware\Communication\VariableStore;
     use Tqdev\PhpCrudApi\OpenApi\OpenApiDefinition;
     class OpenApiRecordsBuilder
     {
         private $openapi;
         private $reflection;
         private $middlewares;
+        private $tableNames;
+        private $authorization;
         private $columnTypes;
         /**
          * Status codes that the record controller itself can return per operation.
@@ -7116,35 +7609,13 @@ namespace Tqdev\PhpCrudApi\OpenApi {
          */
         private $errors = ['list' => [404], 'create' => [404, 409, 422, 424], 'read' => [404, 424], 'update' => [404, 409, 422, 424], 'delete' => [404, 409, 424], 'increment' => [404, 409, 422, 424]];
         private $operations = ['list' => 'get', 'create' => 'post', 'read' => 'get', 'update' => 'put', 'delete' => 'delete', 'increment' => 'patch'];
-        private $normalized = [];
-        /**
-         * Component keys and operation ids have to match "^[a-zA-Z0-9._-]+$", so the
-         * table name is transliterated to ASCII and whatever is still not allowed is
-         * replaced. That can make two table names collide, which is reported instead
-         * of resolved, as any name this generates would be a guess at what the table
-         * should have been called.
-         */
-        private function normalize(string $tableName): string
-        {
-            if (!isset($this->normalized[$tableName])) {
-                $key = iconv('UTF-8', 'ASCII//TRANSLIT', $tableName);
-                $key = (string) preg_replace('/[^a-zA-Z0-9._-]+/', '_', $key === false ? $tableName : $key);
-                if ($key === '') {
-                    throw new \Exception("Table '{$tableName}' has no characters that are allowed in an OpenAPI component key, alias it using the 'mapping' setting");
-                }
-                $other = array_search($key, $this->normalized, true);
-                if ($other !== false) {
-                    throw new \Exception("Tables '{$other}' and '{$tableName}' both become '{$key}' in the OpenAPI document, alias one of them using the 'mapping' setting");
-                }
-                $this->normalized[$tableName] = $key;
-            }
-            return $this->normalized[$tableName];
-        }
-        public function __construct(OpenApiDefinition $openapi, ReflectionService $reflection, OpenApiMiddlewares $middlewares)
+        public function __construct(OpenApiDefinition $openapi, ReflectionService $reflection, OpenApiMiddlewares $middlewares, OpenApiTableNames $tableNames)
         {
             $this->openapi = $openapi;
             $this->reflection = $reflection;
             $this->middlewares = $middlewares;
+            $this->tableNames = $tableNames;
+            $this->authorization = new OpenApiAuthorization();
             $this->columnTypes = new OpenApiColumnTypes();
         }
         private function getAllTableReferences(): array
@@ -7181,7 +7652,6 @@ namespace Tqdev\PhpCrudApi\OpenApi {
                 $this->setComponentResponse($tableName);
                 $this->setComponentRequestBody($tableName);
             }
-            $this->setComponentParameters();
             foreach ($tableNames as $tableName) {
                 $this->setTag($tableName);
             }
@@ -7211,25 +7681,9 @@ namespace Tqdev\PhpCrudApi\OpenApi {
                 $this->openapi->set("{$prefix}|1|items|{$key}", $value);
             }
         }
-        private function isOperationOnTableAllowed(string $operation, string $tableName): bool
-        {
-            $tableHandler = VariableStore::get('authorization.tableHandler');
-            if (!$tableHandler) {
-                return true;
-            }
-            return (bool) call_user_func($tableHandler, $operation, $tableName);
-        }
-        private function isOperationOnColumnAllowed(string $operation, string $tableName, string $columnName): bool
-        {
-            $columnHandler = VariableStore::get('authorization.columnHandler');
-            if (!$columnHandler) {
-                return true;
-            }
-            return (bool) call_user_func($columnHandler, $operation, $tableName, $columnName);
-        }
         private function setPath(string $tableName)
         {
-            $normalizedTableName = $this->normalize($tableName);
+            $normalizedTableName = $this->tableNames->normalize($tableName);
             $table = $this->reflection->getTable($tableName);
             $type = $table->getType();
             $pk = $table->getPk();
@@ -7241,7 +7695,7 @@ namespace Tqdev\PhpCrudApi\OpenApi {
                 if ($type != 'table' && $operation != 'list') {
                     continue;
                 }
-                if (!$this->isOperationOnTableAllowed($operation, $tableName)) {
+                if (!$this->authorization->isOperationOnTableAllowed($operation, $tableName)) {
                     continue;
                 }
                 $parameters = [];
@@ -7301,7 +7755,7 @@ namespace Tqdev\PhpCrudApi\OpenApi {
         }
         private function setComponentSchema(string $tableName, array $references)
         {
-            $normalizedTableName = $this->normalize($tableName);
+            $normalizedTableName = $this->tableNames->normalize($tableName);
             $table = $this->reflection->getTable($tableName);
             $type = $table->getType();
             $pk = $table->getPk();
@@ -7319,7 +7773,7 @@ namespace Tqdev\PhpCrudApi\OpenApi {
                 if ($operation == 'delete') {
                     continue;
                 }
-                if (!$this->isOperationOnTableAllowed($operation, $tableName)) {
+                if (!$this->authorization->isOperationOnTableAllowed($operation, $tableName)) {
                     continue;
                 }
                 if ($operation == 'list') {
@@ -7334,7 +7788,7 @@ namespace Tqdev\PhpCrudApi\OpenApi {
                 }
                 $this->openapi->set("{$prefix}|type", "object");
                 foreach ($table->getColumnNames() as $columnName) {
-                    if (!$this->isOperationOnColumnAllowed($operation, $tableName, $columnName)) {
+                    if (!$this->authorization->isOperationOnColumnAllowed($operation, $tableName, $columnName)) {
                         continue;
                     }
                     $column = $table->getColumn($columnName);
@@ -7361,7 +7815,7 @@ namespace Tqdev\PhpCrudApi\OpenApi {
         }
         private function setComponentResponse(string $tableName)
         {
-            $normalizedTableName = $this->normalize($tableName);
+            $normalizedTableName = $this->tableNames->normalize($tableName);
             $table = $this->reflection->getTable($tableName);
             $type = $table->getType();
             $pk = $table->getPk();
@@ -7373,7 +7827,7 @@ namespace Tqdev\PhpCrudApi\OpenApi {
                 if ($type != 'table' && $operation != 'list') {
                     continue;
                 }
-                if (!$this->isOperationOnTableAllowed($operation, $tableName)) {
+                if (!$this->authorization->isOperationOnTableAllowed($operation, $tableName)) {
                     continue;
                 }
                 $schema = "#/components/schemas/{$operation}-{$normalizedTableName}";
@@ -7389,14 +7843,14 @@ namespace Tqdev\PhpCrudApi\OpenApi {
         }
         private function setComponentRequestBody(string $tableName)
         {
-            $normalizedTableName = $this->normalize($tableName);
+            $normalizedTableName = $this->tableNames->normalize($tableName);
             $table = $this->reflection->getTable($tableName);
             $type = $table->getType();
             $pk = $table->getPk();
             $pkName = $pk ? $pk->getName() : '';
             if ($pkName && $type == 'table') {
                 foreach (['create', 'update', 'increment'] as $operation) {
-                    if (!$this->isOperationOnTableAllowed($operation, $tableName)) {
+                    if (!$this->authorization->isOperationOnTableAllowed($operation, $tableName)) {
                         continue;
                     }
                     $schema = "#/components/schemas/{$operation}-{$normalizedTableName}";
@@ -7404,61 +7858,6 @@ namespace Tqdev\PhpCrudApi\OpenApi {
                     $this->openapi->set("{$prefix}|description", "single {$tableName} record, or a list of them for a batch");
                     $this->setSingleOrBatchSchema($prefix, $schema);
                 }
-            }
-        }
-        private function setComponentParameters()
-        {
-            $this->openapi->set("components|parameters|pk|name", "id");
-            $this->openapi->set("components|parameters|pk|in", "path");
-            $this->openapi->set("components|parameters|pk|schema|type", "string");
-            $this->openapi->set("components|parameters|pk|description", "Primary key value, or several of them (comma separated) to run the operation as a batch. Example: 1,2");
-            $this->openapi->set("components|parameters|pk|required", true);
-            $this->openapi->set("components|parameters|filter|name", "filter");
-            $this->openapi->set("components|parameters|filter|in", "query");
-            $this->openapi->set("components|parameters|filter|schema|type", "array");
-            $this->openapi->set("components|parameters|filter|schema|items|type", "string");
-            $this->openapi->set("components|parameters|filter|description", "Filters to be applied. Each filter consists of a column, an operator and a value (comma separated). Example: id,eq,1");
-            $this->openapi->set("components|parameters|filter|required", false);
-            $this->openapi->set("components|parameters|include|name", "include");
-            $this->openapi->set("components|parameters|include|in", "query");
-            $this->openapi->set("components|parameters|include|schema|type", "string");
-            $this->openapi->set("components|parameters|include|description", "Columns you want to include in the output (comma separated). Example: posts.*,categories.name");
-            $this->openapi->set("components|parameters|include|required", false);
-            $this->openapi->set("components|parameters|exclude|name", "exclude");
-            $this->openapi->set("components|parameters|exclude|in", "query");
-            $this->openapi->set("components|parameters|exclude|schema|type", "string");
-            $this->openapi->set("components|parameters|exclude|description", "Columns you want to exclude from the output (comma separated). Example: posts.content");
-            $this->openapi->set("components|parameters|exclude|required", false);
-            $this->openapi->set("components|parameters|order|name", "order");
-            $this->openapi->set("components|parameters|order|in", "query");
-            $this->openapi->set("components|parameters|order|schema|type", "array");
-            $this->openapi->set("components|parameters|order|schema|items|type", "string");
-            $this->openapi->set("components|parameters|order|description", "Column you want to sort on and the sort direction (comma separated). Example: id,desc");
-            $this->openapi->set("components|parameters|order|required", false);
-            $this->openapi->set("components|parameters|size|name", "size");
-            $this->openapi->set("components|parameters|size|in", "query");
-            $this->openapi->set("components|parameters|size|schema|type", "integer");
-            $this->openapi->set("components|parameters|size|description", "Maximum number of results (for top lists). Example: 10");
-            $this->openapi->set("components|parameters|size|required", false);
-            $this->openapi->set("components|parameters|page|name", "page");
-            $this->openapi->set("components|parameters|page|in", "query");
-            $this->openapi->set("components|parameters|page|schema|type", "string");
-            $this->openapi->set("components|parameters|page|schema|pattern", '^\d+(,\d+)?$');
-            $this->openapi->set("components|parameters|page|description", "Page number and page size (comma separated). Example: 1,10");
-            $this->openapi->set("components|parameters|page|required", false);
-            $this->openapi->set("components|parameters|join|name", "join");
-            $this->openapi->set("components|parameters|join|in", "query");
-            $this->openapi->set("components|parameters|join|schema|type", "array");
-            $this->openapi->set("components|parameters|join|schema|items|type", "string");
-            $this->openapi->set("components|parameters|join|description", "Paths (comma separated) to related entities that you want to include. Example: comments,users");
-            $this->openapi->set("components|parameters|join|required", false);
-            $textSearch = $this->middlewares->getTextSearchParameter();
-            if ($textSearch) {
-                $this->openapi->set("components|parameters|search|name", $textSearch);
-                $this->openapi->set("components|parameters|search|in", "query");
-                $this->openapi->set("components|parameters|search|schema|type", "string");
-                $this->openapi->set("components|parameters|search|description", "Text to search for in all text columns of the table. Example: hello");
-                $this->openapi->set("components|parameters|search|required", false);
             }
         }
         private function setTag(string $tableName)
@@ -7561,6 +7960,38 @@ namespace Tqdev\PhpCrudApi\OpenApi {
         private function setTag(string $type)
         {
             $this->openapi->set("tags|", ['name' => $type, 'description' => "{$type} operations"]);
+        }
+    }
+}
+
+// file: src/Tqdev/PhpCrudApi/OpenApi/OpenApiTableNames.php
+namespace Tqdev\PhpCrudApi\OpenApi {
+    /**
+     * Component keys and operation ids have to match "^[a-zA-Z0-9._-]+$", so the
+     * table name is transliterated to ASCII and whatever is still not allowed is
+     * replaced. That can make two table names collide, which is reported instead of
+     * resolved, as any name this generates would be a guess at what the table should
+     * have been called. The builders that name a component after a table share one
+     * instance, so that a collision is found no matter which of them ran first.
+     */
+    class OpenApiTableNames
+    {
+        private $normalized = [];
+        public function normalize(string $tableName): string
+        {
+            if (!isset($this->normalized[$tableName])) {
+                $key = iconv('UTF-8', 'ASCII//TRANSLIT', $tableName);
+                $key = (string) preg_replace('/[^a-zA-Z0-9._-]+/', '_', $key === false ? $tableName : $key);
+                if ($key === '') {
+                    throw new \Exception("Table '{$tableName}' has no characters that are allowed in an OpenAPI component key, alias it using the 'mapping' setting");
+                }
+                $other = array_search($key, $this->normalized, true);
+                if ($other !== false) {
+                    throw new \Exception("Tables '{$other}' and '{$tableName}' both become '{$key}' in the OpenAPI document, alias one of them using the 'mapping' setting");
+                }
+                $this->normalized[$tableName] = $key;
+            }
+            return $this->normalized[$tableName];
         }
     }
 }
