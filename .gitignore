@@ -2,3 +2,4 @@ composer.phar
 vendor/
 data.db
 phpfilemerger.php
+github-data
