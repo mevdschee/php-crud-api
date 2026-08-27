@@ -1,4 +1,11 @@
 #!/bin/bash
+set -e
+
+# Publish the latest release as a docker image on docker hub.
+
+# Run from the root of the repository, whatever the current directory is, the
+# Dockerfile and the files it copies are there
+cd "$(dirname "$0")/.."
 
 # Get new tags from remote
 git fetch --tags

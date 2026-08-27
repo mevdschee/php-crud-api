@@ -218,6 +218,11 @@ the dependencies.
 NB: The update script will patch the dependencies in the vendor directory for
 PHP 7.0 compatibility.
 
+### Releasing
+
+The scripts that publish a new version and the docker image are in the "scripts"
+directory, see "scripts/README.md" for how to use them.
+
 ## TreeQL, a pragmatic GraphQL
 
 [TreeQL](https://treeql.org) allows you to create a "tree" of JSON objects based
