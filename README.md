@@ -1825,6 +1825,14 @@ This runs the functional tests from the "tests" directory. It uses the database
 dumps (fixtures) and database configuration (config) from the corresponding
 subdirectories.
 
+You may limit a run to a driver and a directory, for instance:
+
+    php test.php sqlite 006_openapi
+
+The expected output of a test is recorded the first time it runs, so a new test
+file only has to contain the request. To record the expected output again, after
+an intentional change in the output, add "--record" to the command.
+
 ## Pretty URL
 
 You may "rewrite" the URL to remove the "api.php" from the URL.
