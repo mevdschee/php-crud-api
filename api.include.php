@@ -1339,7 +1339,7 @@ namespace Tqdev\PhpCrudApi\Config {
     use Tqdev\PhpCrudApi\Config\Base\ConfigInterface;
     class Config implements ConfigInterface
     {
-        private $values = ['driver' => null, 'address' => null, 'port' => null, 'username' => '', 'password' => '', 'database' => '', 'command' => '', 'tables' => 'all', 'mapping' => '', 'middlewares' => 'cors', 'controllers' => 'records,geojson,openapi,status', 'customControllers' => '', 'customOpenApiBuilders' => '', 'cacheType' => 'TempFile', 'cachePath' => '', 'cacheTime' => 10, 'jsonOptions' => JSON_UNESCAPED_UNICODE, 'debug' => false, 'basePath' => '', 'openApiBase' => '{"info":{"title":"PHP-CRUD-API","version":"1.0.0"}}', 'geometrySrid' => 4326];
+        private $values = ['driver' => null, 'address' => null, 'port' => null, 'username' => '', 'password' => '', 'database' => '', 'command' => '', 'tables' => 'all', 'mapping' => '', 'middlewares' => 'cors', 'controllers' => 'records,geojson,openapi,status', 'customControllers' => '', 'customOpenApiBuilders' => '', 'cacheType' => 'TempFile', 'cachePath' => '', 'cacheTime' => 10, 'jsonOptions' => JSON_UNESCAPED_UNICODE, 'debug' => false, 'basePath' => '', 'openApiBase' => '{"info":{"title":"PHP-CRUD-API","version":"1.0.0"}}', 'openApiFilterCount' => 3, 'openApiSubFilterCount' => 0, 'geometrySrid' => 4326];
         public function getUID(): string
         {
             return md5(json_encode($this->values));
@@ -1502,6 +1502,14 @@ namespace Tqdev\PhpCrudApi\Config {
         public function getOpenApiBase(): array
         {
             return json_decode($this->values['openApiBase'], true);
+        }
+        public function getOpenApiFilterCount(): int
+        {
+            return max(0, (int) $this->values['openApiFilterCount']);
+        }
+        public function getOpenApiSubFilterCount(): int
+        {
+            return min(26, max(0, (int) $this->values['openApiSubFilterCount']));
         }
         public function getGeometrySrid(): int
         {
@@ -6429,16 +6437,16 @@ namespace Tqdev\PhpCrudApi\OpenApi {
             $this->basePath = rtrim($basePath, '/');
             $controllers = $config->getControllers();
             $tableNames = new OpenApiTableNames();
-            $this->records = in_array('records', $controllers) ? new OpenApiRecordsBuilder($this->openapi, $reflection, $this->middlewares, $tableNames) : null;
+            // the geojson controller hands the record parameters to the record
+            // service, so they are needed as soon as either one is enabled
+            $this->recordParameters = array_intersect(['records', 'geojson'], $controllers) ? new OpenApiRecordParameters($this->openapi, $this->middlewares, $config) : null;
+            $this->records = in_array('records', $controllers) ? new OpenApiRecordsBuilder($this->openapi, $reflection, $this->middlewares, $tableNames, $this->recordParameters) : null;
             $this->columns = in_array('columns', $controllers) ? new OpenApiColumnsBuilder($this->openapi, $this->middlewares) : null;
-            $this->geoJson = in_array('geojson', $controllers) ? new OpenApiGeoJsonBuilder($this->openapi, $reflection, $this->middlewares, $tableNames) : null;
+            $this->geoJson = in_array('geojson', $controllers) ? new OpenApiGeoJsonBuilder($this->openapi, $reflection, $this->middlewares, $tableNames, $this->recordParameters) : null;
             $this->cache = in_array('cache', $controllers) ? new OpenApiCacheBuilder($this->openapi, $this->middlewares) : null;
             $this->openApi = in_array('openapi', $controllers) ? new OpenApiOpenApiBuilder($this->openapi, $this->middlewares) : null;
             $this->status = in_array('status', $controllers) ? new OpenApiStatusBuilder($this->openapi, $this->middlewares) : null;
             $this->dbAuth = $this->middlewares->has('dbAuth') ? new OpenApiDbAuthBuilder($this->openapi, $reflection, $this->middlewares) : null;
-            // the geojson controller hands the record parameters to the record
-            // service, so they are needed as soon as either one is enabled
-            $this->recordParameters = $this->records || $this->geoJson ? new OpenApiRecordParameters($this->openapi, $this->middlewares) : null;
             $this->builders = array();
             foreach ($config->getCustomOpenApiBuilders() as $className) {
                 $this->builders[] = new $className($this->openapi, $reflection);
@@ -7104,6 +7112,7 @@ namespace Tqdev\PhpCrudApi\OpenApi {
         private $reflection;
         private $middlewares;
         private $tableNames;
+        private $recordParameters;
         private $authorization;
         private $columnTypes;
         private $tag = 'geojson';
@@ -7115,12 +7124,13 @@ namespace Tqdev\PhpCrudApi\OpenApi {
          */
         private $errors = ['list' => [404], 'read' => [404]];
         private $operations = ['list' => 'get', 'read' => 'get'];
-        public function __construct(OpenApiDefinition $openapi, ReflectionService $reflection, OpenApiMiddlewares $middlewares, OpenApiTableNames $tableNames)
+        public function __construct(OpenApiDefinition $openapi, ReflectionService $reflection, OpenApiMiddlewares $middlewares, OpenApiTableNames $tableNames, OpenApiRecordParameters $recordParameters)
         {
             $this->openapi = $openapi;
             $this->reflection = $reflection;
             $this->middlewares = $middlewares;
             $this->tableNames = $tableNames;
+            $this->recordParameters = $recordParameters;
             $this->authorization = new OpenApiAuthorization();
             $this->columnTypes = new OpenApiColumnTypes();
         }
@@ -7175,11 +7185,7 @@ namespace Tqdev\PhpCrudApi\OpenApi {
                 }
                 if ($operation == 'list') {
                     $path = sprintf('/geojson/%s', $tableName);
-                    $parameters = ['filter', 'include', 'exclude', 'order', 'size', 'page', 'join'];
-                    if ($this->middlewares->getTextSearchParameter()) {
-                        $parameters[] = 'search';
-                    }
-                    $parameters = array_merge($parameters, ['geometry', 'bbox', 'tile']);
+                    $parameters = array_merge($this->recordParameters->getListParameters(), ['geometry', 'bbox', 'tile']);
                 } else {
                     $path = sprintf('/geojson/%s/{id}', $tableName);
                     $parameters = ['pk', 'include', 'exclude', 'join', 'geometry'];
@@ -7515,6 +7521,7 @@ namespace Tqdev\PhpCrudApi\OpenApi {
 
 // file: src/Tqdev/PhpCrudApi/OpenApi/OpenApiRecordParameters.php
 namespace Tqdev\PhpCrudApi\OpenApi {
+    use Tqdev\PhpCrudApi\Config\Config;
     use Tqdev\PhpCrudApi\OpenApi\OpenApiDefinition;
     /**
      * The parameters that select and shape the records of a table. The record
@@ -7527,10 +7534,85 @@ namespace Tqdev\PhpCrudApi\OpenApi {
     {
         private $openapi;
         private $middlewares;
-        public function __construct(OpenApiDefinition $openapi, OpenApiMiddlewares $middlewares)
+        private $filterCount;
+        private $subFilterCount;
+        private $operators = ['cs' => 'contain string', 'sw' => 'start with', 'ew' => 'end with', 'eq' => 'equal', 'lt' => 'lower than', 'le' => 'lower or equal', 'ge' => 'greater or equal', 'gt' => 'greater than', 'bt' => 'between two comma separated values', 'in' => 'in a comma separated list of values', 'is' => 'is null, takes no value'];
+        private $spatialOperators = ['sco' => 'contains another geometry', 'scr' => 'crosses another geometry', 'sdi' => 'is disjoint from another geometry', 'seq' => 'is equal to another geometry', 'sin' => 'intersects another geometry', 'sov' => 'overlaps another geometry', 'sto' => 'touches another geometry', 'swi' => 'is within another geometry', 'sic' => 'is closed and simple, takes no value', 'sis' => 'is simple, takes no value', 'siv' => 'is valid, takes no value'];
+        public function __construct(OpenApiDefinition $openapi, OpenApiMiddlewares $middlewares, Config $config)
         {
             $this->openapi = $openapi;
             $this->middlewares = $middlewares;
+            $this->filterCount = $config->getOpenApiFilterCount();
+            $this->subFilterCount = $config->getOpenApiSubFilterCount();
+        }
+        /**
+         * The names of the numbered (and lettered) filter parameters, in the order
+         * in which they are referenced from an operation. The filter tree that
+         * "FilterInfo" reads has no depth limit, but every level has to be spelled
+         * out as a parameter of its own, so how much of it is described is a
+         * setting.
+         */
+        private function getFilterNames(): array
+        {
+            $names = array();
+            for ($number = 1; $number <= $this->filterCount; $number++) {
+                $names[] = "filter{$number}";
+                for ($i = 0; $i < $this->subFilterCount; $i++) {
+                    $names[] = "filter{$number}" . chr(ord('a') + $i);
+                }
+            }
+            return $names;
+        }
+        /**
+         * The parameters of a list operation, in the order in which they are
+         * referenced. The ones that were added later are appended rather than
+         * inserted in the place where they belong, as a client generated from the
+         * document may pass them by position.
+         */
+        public function getListParameters(): array
+        {
+            $parameters = ['filter', 'include', 'exclude', 'order', 'size', 'page', 'join'];
+            if ($this->middlewares->getTextSearchParameter()) {
+                $parameters[] = 'search';
+            }
+            return array_merge($parameters, $this->getFilterNames());
+        }
+        private function getFilterDescription(): string
+        {
+            $operators = array();
+            foreach ($this->operators as $operator => $description) {
+                $operators[] = "\"{$operator}\" ({$description})";
+            }
+            $spatialOperators = array();
+            foreach ($this->spatialOperators as $operator => $description) {
+                $spatialOperators[] = "\"{$operator}\" ({$description})";
+            }
+            return implode(' ', ['Filters to be applied. Each filter consists of a column, an operator and a value (comma separated).', 'The operators are: ' . implode(', ', $operators) . '.', 'Prepend an "n" to an operator to negate it, so that "eq" becomes "neq".', 'On a geometry column there are spatial operators as well, which take their value in WKT: ' . implode(', ', $spatialOperators) . '.', 'Prefix the column with the path of table names to a related table (dot separated) to filter on a column of that table,', 'which keeps the records that have at least one matching related record.', 'Repeating the parameter combines the filters with "and".', 'Example: id,eq,1']);
+        }
+        private function setFilters()
+        {
+            $this->openapi->set("components|parameters|filter|name", "filter");
+            $this->openapi->set("components|parameters|filter|in", "query");
+            $this->openapi->set("components|parameters|filter|schema|type", "array");
+            $this->openapi->set("components|parameters|filter|schema|items|type", "string");
+            $this->openapi->set("components|parameters|filter|description", $this->getFilterDescription());
+            $this->openapi->set("components|parameters|filter|required", false);
+            foreach ($this->getFilterNames() as $name) {
+                $group = substr($name, 6);
+                if (strlen($group) == 1) {
+                    $description = "Filters of group \"{$group}\". Same syntax as \"filter\". The filters of a group are combined with \"and\", the groups are combined with \"or\" and the result is combined with \"and\" with the filters of \"filter\". Example: id,eq,1";
+                } else {
+                    $number = substr($group, 0, -1);
+                    $letter = substr($group, -1);
+                    $description = "Filters of subgroup \"{$letter}\" of group \"{$number}\". Same syntax as \"filter\". The filters of a subgroup are combined with \"and\", the subgroups are combined with \"or\" and the result is combined with \"and\" with the filters of \"filter{$number}\". Example: id,eq,1";
+                }
+                $this->openapi->set("components|parameters|{$name}|name", $name);
+                $this->openapi->set("components|parameters|{$name}|in", "query");
+                $this->openapi->set("components|parameters|{$name}|schema|type", "array");
+                $this->openapi->set("components|parameters|{$name}|schema|items|type", "string");
+                $this->openapi->set("components|parameters|{$name}|description", $description);
+                $this->openapi->set("components|parameters|{$name}|required", false);
+            }
         }
         public function set()
         {
@@ -7539,12 +7621,7 @@ namespace Tqdev\PhpCrudApi\OpenApi {
             $this->openapi->set("components|parameters|pk|schema|type", "string");
             $this->openapi->set("components|parameters|pk|description", "Primary key value, or several of them (comma separated) to run the operation as a batch. Example: 1,2");
             $this->openapi->set("components|parameters|pk|required", true);
-            $this->openapi->set("components|parameters|filter|name", "filter");
-            $this->openapi->set("components|parameters|filter|in", "query");
-            $this->openapi->set("components|parameters|filter|schema|type", "array");
-            $this->openapi->set("components|parameters|filter|schema|items|type", "string");
-            $this->openapi->set("components|parameters|filter|description", "Filters to be applied. Each filter consists of a column, an operator and a value (comma separated). Example: id,eq,1");
-            $this->openapi->set("components|parameters|filter|required", false);
+            $this->setFilters();
             $this->openapi->set("components|parameters|include|name", "include");
             $this->openapi->set("components|parameters|include|in", "query");
             $this->openapi->set("components|parameters|include|schema|type", "string");
@@ -7600,6 +7677,7 @@ namespace Tqdev\PhpCrudApi\OpenApi {
         private $reflection;
         private $middlewares;
         private $tableNames;
+        private $recordParameters;
         private $authorization;
         private $columnTypes;
         /**
@@ -7609,12 +7687,13 @@ namespace Tqdev\PhpCrudApi\OpenApi {
          */
         private $errors = ['list' => [404], 'create' => [404, 409, 422, 424], 'read' => [404, 424], 'update' => [404, 409, 422, 424], 'delete' => [404, 409, 424], 'increment' => [404, 409, 422, 424]];
         private $operations = ['list' => 'get', 'create' => 'post', 'read' => 'get', 'update' => 'put', 'delete' => 'delete', 'increment' => 'patch'];
-        public function __construct(OpenApiDefinition $openapi, ReflectionService $reflection, OpenApiMiddlewares $middlewares, OpenApiTableNames $tableNames)
+        public function __construct(OpenApiDefinition $openapi, ReflectionService $reflection, OpenApiMiddlewares $middlewares, OpenApiTableNames $tableNames, OpenApiRecordParameters $recordParameters)
         {
             $this->openapi = $openapi;
             $this->reflection = $reflection;
             $this->middlewares = $middlewares;
             $this->tableNames = $tableNames;
+            $this->recordParameters = $recordParameters;
             $this->authorization = new OpenApiAuthorization();
             $this->columnTypes = new OpenApiColumnTypes();
         }
@@ -7702,10 +7781,7 @@ namespace Tqdev\PhpCrudApi\OpenApi {
                 if (in_array($operation, ['list', 'create'])) {
                     $path = sprintf('/records/%s', $tableName);
                     if ($operation == 'list') {
-                        $parameters = ['filter', 'include', 'exclude', 'order', 'size', 'page', 'join'];
-                        if ($this->middlewares->getTextSearchParameter()) {
-                            $parameters[] = 'search';
-                        }
+                        $parameters = $this->recordParameters->getListParameters();
                     }
                 } else {
                     $path = sprintf('/records/%s/{id}', $tableName);

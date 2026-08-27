@@ -19,6 +19,7 @@ class OpenApiGeoJsonBuilder
     private $reflection;
     private $middlewares;
     private $tableNames;
+    private $recordParameters;
     private $authorization;
     private $columnTypes;
     private $tag = 'geojson';
@@ -38,12 +39,13 @@ class OpenApiGeoJsonBuilder
         'read' => 'get',
     ];
 
-    public function __construct(OpenApiDefinition $openapi, ReflectionService $reflection, OpenApiMiddlewares $middlewares, OpenApiTableNames $tableNames)
+    public function __construct(OpenApiDefinition $openapi, ReflectionService $reflection, OpenApiMiddlewares $middlewares, OpenApiTableNames $tableNames, OpenApiRecordParameters $recordParameters)
     {
         $this->openapi = $openapi;
         $this->reflection = $reflection;
         $this->middlewares = $middlewares;
         $this->tableNames = $tableNames;
+        $this->recordParameters = $recordParameters;
         $this->authorization = new OpenApiAuthorization();
         $this->columnTypes = new OpenApiColumnTypes();
     }
@@ -102,11 +104,7 @@ class OpenApiGeoJsonBuilder
             }
             if ($operation == 'list') {
                 $path = sprintf('/geojson/%s', $tableName);
-                $parameters = ['filter', 'include', 'exclude', 'order', 'size', 'page', 'join'];
-                if ($this->middlewares->getTextSearchParameter()) {
-                    $parameters[] = 'search';
-                }
-                $parameters = array_merge($parameters, ['geometry', 'bbox', 'tile']);
+                $parameters = array_merge($this->recordParameters->getListParameters(), ['geometry', 'bbox', 'tile']);
             } else {
                 $path = sprintf('/geojson/%s/{id}', $tableName);
                 $parameters = ['pk', 'include', 'exclude', 'join', 'geometry'];
