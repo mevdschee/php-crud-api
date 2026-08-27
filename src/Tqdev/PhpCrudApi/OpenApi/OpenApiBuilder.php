@@ -13,10 +13,12 @@ class OpenApiBuilder
     private $columns;
     private $status;
     private $builders;
+    private $basePath;
 
-    public function __construct(ReflectionService $reflection, array $base, array $controllers, array $builders)
+    public function __construct(ReflectionService $reflection, array $base, array $controllers, array $builders, string $basePath)
     {
         $this->openapi = new OpenApiDefinition($base);
+        $this->basePath = rtrim($basePath, '/');
         $this->records = in_array('records', $controllers) ? new OpenApiRecordsBuilder($this->openapi, $reflection) : null;
         $this->columns = in_array('columns', $controllers) ? new OpenApiColumnsBuilder($this->openapi) : null;
         $this->status = in_array('status', $controllers) ? new OpenApiStatusBuilder($this->openapi) : null;
@@ -26,12 +28,20 @@ class OpenApiBuilder
         }
     }
 
+    /**
+     * The router strips the base path from the request before it reaches the
+     * controller, so the path of the request is just "/openapi". To report the
+     * URL that the API is actually served on, the base path is prepended again.
+     */
     private function getServerUrl(ServerRequestInterface $request): string
     {
         $uri = $request->getUri();
         $path = $uri->getPath();
-        $uri = $uri->withPath(trim(substr($path, 0, strpos($path, '/openapi')), '/'));
-        return $uri->__toString();
+        $position = strpos($path, '/openapi');
+        $prefix = $position === false ? '' : substr($path, 0, $position);
+        $uri = $uri->withPath(rtrim($this->basePath . $prefix, '/'))->withQuery('')->withFragment('');
+        $url = $uri->__toString();
+        return $url === '' ? '/' : $url;
     }
 
     public function build(ServerRequestInterface $request): OpenApiDefinition
