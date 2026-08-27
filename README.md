@@ -754,8 +754,10 @@ The "`/geojson`" endpoint uses the "`/records`" endpoint internally and inherits
 all functionality, such as joins and filters. It also supports a "geometry"
 parameter to indicate the name of the geometry column in case the table has more
 than one. For map views it supports the "bbox" parameter in which you can
-specify upper-left and lower-right coordinates (comma separated). The following
-Geometry types are supported by the GeoJSON implementation:
+specify upper-left and lower-right coordinates (comma separated). Alternatively
+you can specify a map tile with the "tile" parameter, which takes a zoom level,
+an x and a y (comma separated). The following Geometry types are supported by
+the GeoJSON implementation:
 
 - Point
 - MultiPoint

@@ -3,7 +3,6 @@
 namespace Tqdev\PhpCrudApi\OpenApi;
 
 use Tqdev\PhpCrudApi\Column\ReflectionService;
-use Tqdev\PhpCrudApi\Middleware\Communication\VariableStore;
 use Tqdev\PhpCrudApi\OpenApi\OpenApiDefinition;
 
 class OpenApiRecordsBuilder
@@ -11,6 +10,8 @@ class OpenApiRecordsBuilder
     private $openapi;
     private $reflection;
     private $middlewares;
+    private $tableNames;
+    private $authorization;
     private $columnTypes;
     /**
      * Status codes that the record controller itself can return per operation.
@@ -33,37 +34,14 @@ class OpenApiRecordsBuilder
         'delete' => 'delete',
         'increment' => 'patch',
     ];
-    private $normalized = [];
 
-    /**
-     * Component keys and operation ids have to match "^[a-zA-Z0-9._-]+$", so the
-     * table name is transliterated to ASCII and whatever is still not allowed is
-     * replaced. That can make two table names collide, which is reported instead
-     * of resolved, as any name this generates would be a guess at what the table
-     * should have been called.
-     */
-    private function normalize(string $tableName): string
-    {
-        if (!isset($this->normalized[$tableName])) {
-            $key = iconv('UTF-8', 'ASCII//TRANSLIT', $tableName);
-            $key = (string) preg_replace('/[^a-zA-Z0-9._-]+/', '_', $key === false ? $tableName : $key);
-            if ($key === '') {
-                throw new \Exception("Table '$tableName' has no characters that are allowed in an OpenAPI component key, alias it using the 'mapping' setting");
-            }
-            $other = array_search($key, $this->normalized, true);
-            if ($other !== false) {
-                throw new \Exception("Tables '$other' and '$tableName' both become '$key' in the OpenAPI document, alias one of them using the 'mapping' setting");
-            }
-            $this->normalized[$tableName] = $key;
-        }
-        return $this->normalized[$tableName];
-    }
-
-    public function __construct(OpenApiDefinition $openapi, ReflectionService $reflection, OpenApiMiddlewares $middlewares)
+    public function __construct(OpenApiDefinition $openapi, ReflectionService $reflection, OpenApiMiddlewares $middlewares, OpenApiTableNames $tableNames)
     {
         $this->openapi = $openapi;
         $this->reflection = $reflection;
         $this->middlewares = $middlewares;
+        $this->tableNames = $tableNames;
+        $this->authorization = new OpenApiAuthorization();
         $this->columnTypes = new OpenApiColumnTypes();
     }
 
@@ -102,7 +80,6 @@ class OpenApiRecordsBuilder
             $this->setComponentResponse($tableName);
             $this->setComponentRequestBody($tableName);
         }
-        $this->setComponentParameters();
         foreach ($tableNames as $tableName) {
             $this->setTag($tableName);
         }
@@ -135,27 +112,9 @@ class OpenApiRecordsBuilder
         }
     }
 
-    private function isOperationOnTableAllowed(string $operation, string $tableName): bool
-    {
-        $tableHandler = VariableStore::get('authorization.tableHandler');
-        if (!$tableHandler) {
-            return true;
-        }
-        return (bool) call_user_func($tableHandler, $operation, $tableName);
-    }
-
-    private function isOperationOnColumnAllowed(string $operation, string $tableName, string $columnName): bool
-    {
-        $columnHandler = VariableStore::get('authorization.columnHandler');
-        if (!$columnHandler) {
-            return true;
-        }
-        return (bool) call_user_func($columnHandler, $operation, $tableName, $columnName);
-    }
-
     private function setPath(string $tableName) /*: void*/
     {
-        $normalizedTableName = $this->normalize($tableName);
+        $normalizedTableName = $this->tableNames->normalize($tableName);
         $table = $this->reflection->getTable($tableName);
         $type = $table->getType();
         $pk = $table->getPk();
@@ -167,7 +126,7 @@ class OpenApiRecordsBuilder
             if ($type != 'table' && $operation != 'list') {
                 continue;
             }
-            if (!$this->isOperationOnTableAllowed($operation, $tableName)) {
+            if (!$this->authorization->isOperationOnTableAllowed($operation, $tableName)) {
                 continue;
             }
             $parameters = [];
@@ -228,7 +187,7 @@ class OpenApiRecordsBuilder
 
     private function setComponentSchema(string $tableName, array $references) /*: void*/
     {
-        $normalizedTableName = $this->normalize($tableName);
+        $normalizedTableName = $this->tableNames->normalize($tableName);
         $table = $this->reflection->getTable($tableName);
         $type = $table->getType();
         $pk = $table->getPk();
@@ -246,7 +205,7 @@ class OpenApiRecordsBuilder
             if ($operation == 'delete') {
                 continue;
             }
-            if (!$this->isOperationOnTableAllowed($operation, $tableName)) {
+            if (!$this->authorization->isOperationOnTableAllowed($operation, $tableName)) {
                 continue;
             }
             if ($operation == 'list') {
@@ -261,7 +220,7 @@ class OpenApiRecordsBuilder
             }
             $this->openapi->set("$prefix|type", "object");
             foreach ($table->getColumnNames() as $columnName) {
-                if (!$this->isOperationOnColumnAllowed($operation, $tableName, $columnName)) {
+                if (!$this->authorization->isOperationOnColumnAllowed($operation, $tableName, $columnName)) {
                     continue;
                 }
                 $column = $table->getColumn($columnName);
@@ -289,7 +248,7 @@ class OpenApiRecordsBuilder
 
     private function setComponentResponse(string $tableName) /*: void*/
     {
-        $normalizedTableName = $this->normalize($tableName);
+        $normalizedTableName = $this->tableNames->normalize($tableName);
         $table = $this->reflection->getTable($tableName);
         $type = $table->getType();
         $pk = $table->getPk();
@@ -301,7 +260,7 @@ class OpenApiRecordsBuilder
             if ($type != 'table' && $operation != 'list') {
                 continue;
             }
-            if (!$this->isOperationOnTableAllowed($operation, $tableName)) {
+            if (!$this->authorization->isOperationOnTableAllowed($operation, $tableName)) {
                 continue;
             }
             $schema = "#/components/schemas/$operation-$normalizedTableName";
@@ -318,14 +277,14 @@ class OpenApiRecordsBuilder
 
     private function setComponentRequestBody(string $tableName) /*: void*/
     {
-        $normalizedTableName = $this->normalize($tableName);
+        $normalizedTableName = $this->tableNames->normalize($tableName);
         $table = $this->reflection->getTable($tableName);
         $type = $table->getType();
         $pk = $table->getPk();
         $pkName = $pk ? $pk->getName() : '';
         if ($pkName && $type == 'table') {
             foreach (['create', 'update', 'increment'] as $operation) {
-                if (!$this->isOperationOnTableAllowed($operation, $tableName)) {
+                if (!$this->authorization->isOperationOnTableAllowed($operation, $tableName)) {
                     continue;
                 }
                 $schema = "#/components/schemas/$operation-$normalizedTableName";
@@ -333,70 +292,6 @@ class OpenApiRecordsBuilder
                 $this->openapi->set("$prefix|description", "single $tableName record, or a list of them for a batch");
                 $this->setSingleOrBatchSchema($prefix, $schema);
             }
-        }
-    }
-
-    private function setComponentParameters() /*: void*/
-    {
-        $this->openapi->set("components|parameters|pk|name", "id");
-        $this->openapi->set("components|parameters|pk|in", "path");
-        $this->openapi->set("components|parameters|pk|schema|type", "string");
-        $this->openapi->set("components|parameters|pk|description", "Primary key value, or several of them (comma separated) to run the operation as a batch. Example: 1,2");
-        $this->openapi->set("components|parameters|pk|required", true);
-
-        $this->openapi->set("components|parameters|filter|name", "filter");
-        $this->openapi->set("components|parameters|filter|in", "query");
-        $this->openapi->set("components|parameters|filter|schema|type", "array");
-        $this->openapi->set("components|parameters|filter|schema|items|type", "string");
-        $this->openapi->set("components|parameters|filter|description", "Filters to be applied. Each filter consists of a column, an operator and a value (comma separated). Example: id,eq,1");
-        $this->openapi->set("components|parameters|filter|required", false);
-
-        $this->openapi->set("components|parameters|include|name", "include");
-        $this->openapi->set("components|parameters|include|in", "query");
-        $this->openapi->set("components|parameters|include|schema|type", "string");
-        $this->openapi->set("components|parameters|include|description", "Columns you want to include in the output (comma separated). Example: posts.*,categories.name");
-        $this->openapi->set("components|parameters|include|required", false);
-
-        $this->openapi->set("components|parameters|exclude|name", "exclude");
-        $this->openapi->set("components|parameters|exclude|in", "query");
-        $this->openapi->set("components|parameters|exclude|schema|type", "string");
-        $this->openapi->set("components|parameters|exclude|description", "Columns you want to exclude from the output (comma separated). Example: posts.content");
-        $this->openapi->set("components|parameters|exclude|required", false);
-
-        $this->openapi->set("components|parameters|order|name", "order");
-        $this->openapi->set("components|parameters|order|in", "query");
-        $this->openapi->set("components|parameters|order|schema|type", "array");
-        $this->openapi->set("components|parameters|order|schema|items|type", "string");
-        $this->openapi->set("components|parameters|order|description", "Column you want to sort on and the sort direction (comma separated). Example: id,desc");
-        $this->openapi->set("components|parameters|order|required", false);
-
-        $this->openapi->set("components|parameters|size|name", "size");
-        $this->openapi->set("components|parameters|size|in", "query");
-        $this->openapi->set("components|parameters|size|schema|type", "integer");
-        $this->openapi->set("components|parameters|size|description", "Maximum number of results (for top lists). Example: 10");
-        $this->openapi->set("components|parameters|size|required", false);
-
-        $this->openapi->set("components|parameters|page|name", "page");
-        $this->openapi->set("components|parameters|page|in", "query");
-        $this->openapi->set("components|parameters|page|schema|type", "string");
-        $this->openapi->set("components|parameters|page|schema|pattern", '^\d+(,\d+)?$');
-        $this->openapi->set("components|parameters|page|description", "Page number and page size (comma separated). Example: 1,10");
-        $this->openapi->set("components|parameters|page|required", false);
-
-        $this->openapi->set("components|parameters|join|name", "join");
-        $this->openapi->set("components|parameters|join|in", "query");
-        $this->openapi->set("components|parameters|join|schema|type", "array");
-        $this->openapi->set("components|parameters|join|schema|items|type", "string");
-        $this->openapi->set("components|parameters|join|description", "Paths (comma separated) to related entities that you want to include. Example: comments,users");
-        $this->openapi->set("components|parameters|join|required", false);
-
-        $textSearch = $this->middlewares->getTextSearchParameter();
-        if ($textSearch) {
-            $this->openapi->set("components|parameters|search|name", $textSearch);
-            $this->openapi->set("components|parameters|search|in", "query");
-            $this->openapi->set("components|parameters|search|schema|type", "string");
-            $this->openapi->set("components|parameters|search|description", "Text to search for in all text columns of the table. Example: hello");
-            $this->openapi->set("components|parameters|search|required", false);
         }
     }
 
