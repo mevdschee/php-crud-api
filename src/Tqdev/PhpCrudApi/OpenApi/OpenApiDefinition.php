@@ -42,6 +42,33 @@ class OpenApiDefinition implements \JsonSerializable
         return true;
     }
 
+    /**
+     * The xml middleware accepts and returns the same documents as xml when the
+     * "format" parameter asks for it, which the document reports by listing the
+     * xml content type next to the json one on every request and response.
+     */
+    public function copyContentType(string $from, string $to) /*: void*/
+    {
+        $this->copyContentTypeIn($this->root, $from, $to);
+    }
+
+    private function copyContentTypeIn(array &$node, string $from, string $to) /*: void*/
+    {
+        foreach ($node as $key => &$value) {
+            if (!is_array($value)) {
+                continue;
+            }
+            if ($key === 'content' && isset($value[$from])) {
+                if (!isset($value[$to])) {
+                    $value[$to] = $value[$from];
+                }
+            } else {
+                $this->copyContentTypeIn($value, $from, $to);
+            }
+        }
+        unset($value);
+    }
+
     #[\ReturnTypeWillChange]
     public function jsonSerialize()
     {

@@ -4,26 +4,43 @@ namespace Tqdev\PhpCrudApi\OpenApi;
 
 use Psr\Http\Message\ServerRequestInterface;
 use Tqdev\PhpCrudApi\Column\ReflectionService;
+use Tqdev\PhpCrudApi\Config\Config;
 use Tqdev\PhpCrudApi\OpenApi\OpenApiDefinition;
 
 class OpenApiBuilder
 {
     private $openapi;
+    private $middlewares;
     private $records;
     private $columns;
     private $status;
+    private $dbAuth;
     private $builders;
     private $basePath;
 
-    public function __construct(ReflectionService $reflection, array $base, array $controllers, array $builders, string $basePath)
+    private $errors = [
+        401 => "authentication required",
+        403 => "operation forbidden",
+        404 => "table, column or record not found",
+        405 => "operation not supported",
+        409 => "duplicate key or data integrity violation",
+        422 => "input could not be processed",
+        424 => "one or more operations of the batch failed",
+        500 => "internal server error",
+    ];
+
+    public function __construct(ReflectionService $reflection, Config $config, string $basePath)
     {
-        $this->openapi = new OpenApiDefinition($base);
+        $this->openapi = new OpenApiDefinition($config->getOpenApiBase());
+        $this->middlewares = new OpenApiMiddlewares($config);
         $this->basePath = rtrim($basePath, '/');
-        $this->records = in_array('records', $controllers) ? new OpenApiRecordsBuilder($this->openapi, $reflection) : null;
-        $this->columns = in_array('columns', $controllers) ? new OpenApiColumnsBuilder($this->openapi) : null;
-        $this->status = in_array('status', $controllers) ? new OpenApiStatusBuilder($this->openapi) : null;
+        $controllers = $config->getControllers();
+        $this->records = in_array('records', $controllers) ? new OpenApiRecordsBuilder($this->openapi, $reflection, $this->middlewares) : null;
+        $this->columns = in_array('columns', $controllers) ? new OpenApiColumnsBuilder($this->openapi, $this->middlewares) : null;
+        $this->status = in_array('status', $controllers) ? new OpenApiStatusBuilder($this->openapi, $this->middlewares) : null;
+        $this->dbAuth = $this->middlewares->has('dbAuth') ? new OpenApiDbAuthBuilder($this->openapi, $reflection, $this->middlewares) : null;
         $this->builders = array();
-        foreach ($builders as $className) {
+        foreach ($config->getCustomOpenApiBuilders() as $className) {
             $this->builders[] = new $className($this->openapi, $reflection);
         }
     }
@@ -44,6 +61,67 @@ class OpenApiBuilder
         return $url === '' ? '/' : $url;
     }
 
+    private function setSecurity() /*: void*/
+    {
+        $schemes = $this->middlewares->getSecuritySchemes();
+        if (!$schemes) {
+            return;
+        }
+        foreach ($schemes as $name => $scheme) {
+            $this->openapi->set("components|securitySchemes|$name", $scheme);
+        }
+        foreach (array_keys($schemes) as $name) {
+            $this->openapi->set("security||$name", []);
+        }
+        if ($this->middlewares->isAuthenticationOptional()) {
+            // an empty requirement next to the named ones means that an
+            // unauthenticated request is accepted as well
+            $this->openapi->set("security|", new \stdClass());
+        }
+    }
+
+    private function setComponentParameters() /*: void*/
+    {
+        if ($this->middlewares->hasFormatParameter()) {
+            $this->openapi->set("components|parameters|format|name", "format");
+            $this->openapi->set("components|parameters|format|in", "query");
+            $this->openapi->set("components|parameters|format|schema|type", "string");
+            $this->openapi->set("components|parameters|format|schema|enum", ["xml"]);
+            $this->openapi->set("components|parameters|format|description", "Set to 'xml' to send and receive XML instead of JSON. Example: xml");
+            $this->openapi->set("components|parameters|format|required", false);
+        }
+        $xsrfHeader = $this->middlewares->getXsrfHeader();
+        if ($xsrfHeader) {
+            $this->openapi->set("components|parameters|xsrf|name", $xsrfHeader);
+            $this->openapi->set("components|parameters|xsrf|in", "header");
+            $this->openapi->set("components|parameters|xsrf|schema|type", "string");
+            $this->openapi->set("components|parameters|xsrf|description", "Value of the XSRF-TOKEN cookie, echoed back to prove the request is not cross site.");
+            $this->openapi->set("components|parameters|xsrf|required", true);
+        }
+    }
+
+    private function setComponentErrors() /*: void*/
+    {
+        $this->openapi->set("components|schemas|error|type", "object");
+        $this->openapi->set("components|schemas|error|required", ["code", "message"]);
+        $this->openapi->set("components|schemas|error|properties|code|type", "integer");
+        $this->openapi->set("components|schemas|error|properties|code|format", "int32");
+        $this->openapi->set("components|schemas|error|properties|message|type", "string");
+        $this->openapi->set("components|schemas|error|properties|details|description", "what was wrong with the input, per column");
+        $this->openapi->set("components|responses|error|description", "unexpected error");
+        $this->openapi->set("components|responses|error|content|application/json|schema|\$ref", "#/components/schemas/error");
+        foreach ($this->errors as $status => $description) {
+            $this->openapi->set("components|responses|error-$status|description", $description);
+            if ($status == 424) {
+                // the batch response carries one error document per operation
+                $this->openapi->set("components|responses|error-$status|content|application/json|schema|type", "array");
+                $this->openapi->set("components|responses|error-$status|content|application/json|schema|items|\$ref", "#/components/schemas/error");
+            } else {
+                $this->openapi->set("components|responses|error-$status|content|application/json|schema|\$ref", "#/components/schemas/error");
+            }
+        }
+    }
+
     public function build(ServerRequestInterface $request): OpenApiDefinition
     {
         if (!$this->openapi->has("openapi")) {
@@ -52,17 +130,26 @@ class OpenApiBuilder
         if (!$this->openapi->has("servers")) {
             $this->openapi->set("servers||url", $this->getServerUrl($request));
         }
+        $this->setSecurity();
         if ($this->records) {
             $this->records->build();
         }
         if ($this->columns) {
             $this->columns->build();
         }
+        if ($this->dbAuth) {
+            $this->dbAuth->build();
+        }
         if ($this->status) {
             $this->status->build();
         }
         foreach ($this->builders as $builder) {
             $builder->build();
+        }
+        $this->setComponentParameters();
+        $this->setComponentErrors();
+        if ($this->middlewares->hasFormatParameter()) {
+            $this->openapi->copyContentType('application/json', 'application/xml');
         }
         return $this->openapi;
     }

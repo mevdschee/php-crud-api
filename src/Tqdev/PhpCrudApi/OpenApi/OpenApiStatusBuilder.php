@@ -7,15 +7,17 @@ use Tqdev\PhpCrudApi\OpenApi\OpenApiDefinition;
 class OpenApiStatusBuilder
 {
     private $openapi;
+    private $middlewares;
     private $operations = [
         'status' => [
             'ping' => 'get',
         ],
     ];
 
-    public function __construct(OpenApiDefinition $openapi)
+    public function __construct(OpenApiDefinition $openapi, OpenApiMiddlewares $middlewares)
     {
         $this->openapi = $openapi;
+        $this->middlewares = $middlewares;
     }
 
     public function build() /*: void*/
@@ -33,11 +35,19 @@ class OpenApiStatusBuilder
         foreach ($this->operations as $type => $operationPair) {
             foreach ($operationPair as $operation => $method) {
                 $path = "/$type/$operation";
+                foreach ($this->middlewares->getCommonParameters($method) as $parameter) {
+                    $this->openapi->set("paths|$path|$method|parameters||\$ref", "#/components/parameters/$parameter");
+                }
                 $this->openapi->set("paths|$path|$method|tags|", "$type");
                 $this->openapi->set("paths|$path|$method|operationId", "$operation" . "_" . "$type");
                 $this->openapi->set("paths|$path|$method|description", "Request API '$operation' status");
                 $this->openapi->set("paths|$path|$method|responses|200|\$ref", "#/components/responses/$operation-$type");
-
+                $statusCodes = array_merge($this->middlewares->getStatusCodes(), [500]);
+                sort($statusCodes);
+                foreach ($statusCodes as $statusCode) {
+                    $this->openapi->set("paths|$path|$method|responses|$statusCode|\$ref", "#/components/responses/error-$statusCode");
+                }
+                $this->openapi->set("paths|$path|$method|responses|default|\$ref", "#/components/responses/error");
             }
         }
     }
