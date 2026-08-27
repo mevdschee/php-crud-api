@@ -6413,7 +6413,9 @@ namespace Tqdev\PhpCrudApi\OpenApi {
         }
         public function build(ServerRequestInterface $request): OpenApiDefinition
         {
-            $this->openapi->set("openapi", "3.0.0");
+            if (!$this->openapi->has("openapi")) {
+                $this->openapi->set("openapi", "3.0.0");
+            }
             if (!$this->openapi->has("servers")) {
                 $this->openapi->set("servers||url", $this->getServerUrl($request));
             }
@@ -6680,9 +6682,35 @@ namespace Tqdev\PhpCrudApi\OpenApi {
             //custom format
             'boolean' => ['type' => 'boolean'],
         ];
-        private function normalize(string $value): string
+        private $ranges = ['integer' => ['minimum' => -2147483648, 'maximum' => 2147483647], 'bigint' => ['minimum' => -9223372036854775807 - 1, 'maximum' => 9223372036854775807]];
+        private $numericTypes = ['integer', 'bigint', 'decimal', 'float', 'double'];
+        private $normalized = [];
+        private $componentKeys = [];
+        /**
+         * Component keys and operation ids have to match "^[a-zA-Z0-9._-]+$", so the
+         * table name is transliterated to ASCII and whatever is still not allowed is
+         * replaced. Two table names may end up as the same key, the second one then
+         * gets a number appended.
+         */
+        private function normalize(string $tableName): string
         {
-            return iconv('UTF-8', 'ASCII//TRANSLIT', $value);
+            if (!isset($this->normalized[$tableName])) {
+                $key = iconv('UTF-8', 'ASCII//TRANSLIT', $tableName);
+                $key = (string) preg_replace('/[^a-zA-Z0-9._-]+/', '_', $key === false ? $tableName : $key);
+                if ($key === '') {
+                    $key = 'table';
+                }
+                if (isset($this->componentKeys[$key])) {
+                    $i = 2;
+                    while (isset($this->componentKeys["{$key}-{$i}"])) {
+                        $i++;
+                    }
+                    $key = "{$key}-{$i}";
+                }
+                $this->componentKeys[$key] = true;
+                $this->normalized[$tableName] = $key;
+            }
+            return $this->normalized[$tableName];
         }
         public function __construct(OpenApiDefinition $openapi, ReflectionService $reflection)
         {
@@ -6815,12 +6843,6 @@ namespace Tqdev\PhpCrudApi\OpenApi {
         private function getPattern(ReflectedColumn $column): string
         {
             switch ($column->getType()) {
-                case 'integer':
-                    $n = strlen((string) pow(2, 31));
-                    return '^-?[0-9]{1,' . $n . '}$';
-                case 'bigint':
-                    $n = strlen((string) pow(2, 63));
-                    return '^-?[0-9]{1,' . $n . '}$';
                 case 'varchar':
                     $l = $column->getLength();
                     return '^.{0,' . $l . '}$';
@@ -6836,10 +6858,6 @@ namespace Tqdev\PhpCrudApi\OpenApi {
                     $p = $column->getPrecision();
                     $s = $column->getScale();
                     return '^-?[0-9]{1,' . ($p - $s) . '}(\.[0-9]{1,' . $s . '})?$';
-                case 'float':
-                    return '^-?[0-9]+(\.[0-9]+)?([eE]-?[0-9]+)?$';
-                case 'double':
-                    return '^-?[0-9]+(\.[0-9]+)?([eE]-?[0-9]+)?$';
                 case 'date':
                     return '^[0-9]{4}-[0-9]{2}-[0-9]{2}$';
                 case 'time':
@@ -6848,10 +6866,30 @@ namespace Tqdev\PhpCrudApi\OpenApi {
                     return '^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}$';
                 case 'geometry':
                     return '^(POINT|LINESTRING|POLYGON|MULTIPOINT|MULTILINESTRING|MULTIPOLYGON)\s*\(.*$';
-                case 'boolean':
-                    return '^(true|false)$';
             }
             return '';
+        }
+        private function getProperties(ReflectedColumn $column): array
+        {
+            $properties = $this->types[$column->getType()];
+            switch ($properties['type']) {
+                case 'string':
+                    if ($column->hasLength()) {
+                        $properties['maxLength'] = $column->getLength();
+                    }
+                    $pattern = $this->getPattern($column);
+                    if ($pattern) {
+                        $properties['pattern'] = $pattern;
+                    }
+                    break;
+                case 'integer':
+                    $properties = array_merge($properties, $this->ranges[$column->getType()]);
+                    break;
+            }
+            if ($column->getNullable()) {
+                $properties['nullable'] = true;
+            }
+            return $properties;
         }
         private function setComponentSchema(string $tableName, array $references)
         {
@@ -6878,6 +6916,7 @@ namespace Tqdev\PhpCrudApi\OpenApi {
                 }
                 if ($operation == 'list') {
                     $this->openapi->set("components|schemas|{$operation}-{$normalizedTableName}|type", "object");
+                    $this->openapi->set("components|schemas|{$operation}-{$normalizedTableName}|required", ["records"]);
                     $this->openapi->set("components|schemas|{$operation}-{$normalizedTableName}|properties|results|type", "integer");
                     $this->openapi->set("components|schemas|{$operation}-{$normalizedTableName}|properties|results|format", "int64");
                     $this->openapi->set("components|schemas|{$operation}-{$normalizedTableName}|properties|records|type", "array");
@@ -6891,14 +6930,15 @@ namespace Tqdev\PhpCrudApi\OpenApi {
                         continue;
                     }
                     $column = $table->getColumn($columnName);
-                    $properties = $this->types[$column->getType()];
-                    $properties['maxLength'] = $column->hasLength() ? $column->getLength() : 0;
-                    $properties['nullable'] = $column->getNullable();
-                    $properties['pattern'] = $this->getPattern($column);
+                    if ($operation == 'increment' && !in_array($column->getType(), $this->numericTypes)) {
+                        continue;
+                    }
+                    $properties = $this->getProperties($column);
+                    if ($operation == 'create' && $column->getPk() && $column->getType() == 'integer') {
+                        $properties['readOnly'] = true;
+                    }
                     foreach ($properties as $key => $value) {
-                        if ($value) {
-                            $this->openapi->set("{$prefix}|properties|{$columnName}|{$key}", $value);
-                        }
+                        $this->openapi->set("{$prefix}|properties|{$columnName}|{$key}", $value);
                     }
                     if ($column->getPk()) {
                         $this->openapi->set("{$prefix}|properties|{$columnName}|x-primary-key", true);
@@ -6984,12 +7024,13 @@ namespace Tqdev\PhpCrudApi\OpenApi {
             $this->openapi->set("components|parameters|order|required", false);
             $this->openapi->set("components|parameters|size|name", "size");
             $this->openapi->set("components|parameters|size|in", "query");
-            $this->openapi->set("components|parameters|size|schema|type", "string");
+            $this->openapi->set("components|parameters|size|schema|type", "integer");
             $this->openapi->set("components|parameters|size|description", "Maximum number of results (for top lists). Example: 10");
             $this->openapi->set("components|parameters|size|required", false);
             $this->openapi->set("components|parameters|page|name", "page");
             $this->openapi->set("components|parameters|page|in", "query");
             $this->openapi->set("components|parameters|page|schema|type", "string");
+            $this->openapi->set("components|parameters|page|schema|pattern", '^\d+(,\d+)?$');
             $this->openapi->set("components|parameters|page|description", "Page number and page size (comma separated). Example: 1,10");
             $this->openapi->set("components|parameters|page|required", false);
             $this->openapi->set("components|parameters|join|name", "join");

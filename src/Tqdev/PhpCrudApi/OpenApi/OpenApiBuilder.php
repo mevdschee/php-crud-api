@@ -46,7 +46,9 @@ class OpenApiBuilder
 
     public function build(ServerRequestInterface $request): OpenApiDefinition
     {
-        $this->openapi->set("openapi", "3.0.0");
+        if (!$this->openapi->has("openapi")) {
+            $this->openapi->set("openapi", "3.0.0");
+        }
         if (!$this->openapi->has("servers")) {
             $this->openapi->set("servers||url", $this->getServerUrl($request));
         }
