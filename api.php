@@ -266,7 +266,7 @@ namespace Tqdev\PhpCrudApi {
                         new CacheController($router, $responder, $cache);
                         break;
                     case 'openapi':
-                        $openApi = new OpenApiService($reflection, $config->getOpenApiBase(), $config->getControllers(), $config->getCustomOpenApiBuilders(), $router->getBasePath());
+                        $openApi = new OpenApiService($reflection, $config, $router->getBasePath());
                         new OpenApiController($router, $responder, $openApi);
                         break;
                     case 'geojson':
@@ -6375,24 +6375,31 @@ namespace Tqdev\PhpCrudApi\Middleware {
 namespace Tqdev\PhpCrudApi\OpenApi {
     use Psr\Http\Message\ServerRequestInterface;
     use Tqdev\PhpCrudApi\Column\ReflectionService;
+    use Tqdev\PhpCrudApi\Config\Config;
     use Tqdev\PhpCrudApi\OpenApi\OpenApiDefinition;
     class OpenApiBuilder
     {
         private $openapi;
+        private $middlewares;
         private $records;
         private $columns;
         private $status;
+        private $dbAuth;
         private $builders;
         private $basePath;
-        public function __construct(ReflectionService $reflection, array $base, array $controllers, array $builders, string $basePath)
+        private $errors = [401 => "authentication required", 403 => "operation forbidden", 404 => "table, column or record not found", 405 => "operation not supported", 409 => "duplicate key or data integrity violation", 422 => "input could not be processed", 424 => "one or more operations of the batch failed", 500 => "internal server error"];
+        public function __construct(ReflectionService $reflection, Config $config, string $basePath)
         {
-            $this->openapi = new OpenApiDefinition($base);
+            $this->openapi = new OpenApiDefinition($config->getOpenApiBase());
+            $this->middlewares = new OpenApiMiddlewares($config);
             $this->basePath = rtrim($basePath, '/');
-            $this->records = in_array('records', $controllers) ? new OpenApiRecordsBuilder($this->openapi, $reflection) : null;
-            $this->columns = in_array('columns', $controllers) ? new OpenApiColumnsBuilder($this->openapi) : null;
-            $this->status = in_array('status', $controllers) ? new OpenApiStatusBuilder($this->openapi) : null;
+            $controllers = $config->getControllers();
+            $this->records = in_array('records', $controllers) ? new OpenApiRecordsBuilder($this->openapi, $reflection, $this->middlewares) : null;
+            $this->columns = in_array('columns', $controllers) ? new OpenApiColumnsBuilder($this->openapi, $this->middlewares) : null;
+            $this->status = in_array('status', $controllers) ? new OpenApiStatusBuilder($this->openapi, $this->middlewares) : null;
+            $this->dbAuth = $this->middlewares->has('dbAuth') ? new OpenApiDbAuthBuilder($this->openapi, $reflection, $this->middlewares) : null;
             $this->builders = array();
-            foreach ($builders as $className) {
+            foreach ($config->getCustomOpenApiBuilders() as $className) {
                 $this->builders[] = new $className($this->openapi, $reflection);
             }
         }
@@ -6411,6 +6418,64 @@ namespace Tqdev\PhpCrudApi\OpenApi {
             $url = $uri->__toString();
             return $url === '' ? '/' : $url;
         }
+        private function setSecurity()
+        {
+            $schemes = $this->middlewares->getSecuritySchemes();
+            if (!$schemes) {
+                return;
+            }
+            foreach ($schemes as $name => $scheme) {
+                $this->openapi->set("components|securitySchemes|{$name}", $scheme);
+            }
+            foreach (array_keys($schemes) as $name) {
+                $this->openapi->set("security||{$name}", []);
+            }
+            if ($this->middlewares->isAuthenticationOptional()) {
+                // an empty requirement next to the named ones means that an
+                // unauthenticated request is accepted as well
+                $this->openapi->set("security|", new \stdClass());
+            }
+        }
+        private function setComponentParameters()
+        {
+            if ($this->middlewares->hasFormatParameter()) {
+                $this->openapi->set("components|parameters|format|name", "format");
+                $this->openapi->set("components|parameters|format|in", "query");
+                $this->openapi->set("components|parameters|format|schema|type", "string");
+                $this->openapi->set("components|parameters|format|schema|enum", ["xml"]);
+                $this->openapi->set("components|parameters|format|description", "Set to 'xml' to send and receive XML instead of JSON. Example: xml");
+                $this->openapi->set("components|parameters|format|required", false);
+            }
+            $xsrfHeader = $this->middlewares->getXsrfHeader();
+            if ($xsrfHeader) {
+                $this->openapi->set("components|parameters|xsrf|name", $xsrfHeader);
+                $this->openapi->set("components|parameters|xsrf|in", "header");
+                $this->openapi->set("components|parameters|xsrf|schema|type", "string");
+                $this->openapi->set("components|parameters|xsrf|description", "Value of the XSRF-TOKEN cookie, echoed back to prove the request is not cross site.");
+                $this->openapi->set("components|parameters|xsrf|required", true);
+            }
+        }
+        private function setComponentErrors()
+        {
+            $this->openapi->set("components|schemas|error|type", "object");
+            $this->openapi->set("components|schemas|error|required", ["code", "message"]);
+            $this->openapi->set("components|schemas|error|properties|code|type", "integer");
+            $this->openapi->set("components|schemas|error|properties|code|format", "int32");
+            $this->openapi->set("components|schemas|error|properties|message|type", "string");
+            $this->openapi->set("components|schemas|error|properties|details|description", "what was wrong with the input, per column");
+            $this->openapi->set("components|responses|error|description", "unexpected error");
+            $this->openapi->set("components|responses|error|content|application/json|schema|\$ref", "#/components/schemas/error");
+            foreach ($this->errors as $status => $description) {
+                $this->openapi->set("components|responses|error-{$status}|description", $description);
+                if ($status == 424) {
+                    // the batch response carries one error document per operation
+                    $this->openapi->set("components|responses|error-{$status}|content|application/json|schema|type", "array");
+                    $this->openapi->set("components|responses|error-{$status}|content|application/json|schema|items|\$ref", "#/components/schemas/error");
+                } else {
+                    $this->openapi->set("components|responses|error-{$status}|content|application/json|schema|\$ref", "#/components/schemas/error");
+                }
+            }
+        }
         public function build(ServerRequestInterface $request): OpenApiDefinition
         {
             if (!$this->openapi->has("openapi")) {
@@ -6419,11 +6484,15 @@ namespace Tqdev\PhpCrudApi\OpenApi {
             if (!$this->openapi->has("servers")) {
                 $this->openapi->set("servers||url", $this->getServerUrl($request));
             }
+            $this->setSecurity();
             if ($this->records) {
                 $this->records->build();
             }
             if ($this->columns) {
                 $this->columns->build();
+            }
+            if ($this->dbAuth) {
+                $this->dbAuth->build();
             }
             if ($this->status) {
                 $this->status->build();
@@ -6431,7 +6500,103 @@ namespace Tqdev\PhpCrudApi\OpenApi {
             foreach ($this->builders as $builder) {
                 $builder->build();
             }
+            $this->setComponentParameters();
+            $this->setComponentErrors();
+            if ($this->middlewares->hasFormatParameter()) {
+                $this->openapi->copyContentType('application/json', 'application/xml');
+            }
             return $this->openapi;
+        }
+    }
+}
+
+// file: src/Tqdev/PhpCrudApi/OpenApi/OpenApiColumnTypes.php
+namespace Tqdev\PhpCrudApi\OpenApi {
+    use Tqdev\PhpCrudApi\Column\Reflection\ReflectedColumn;
+    /**
+     * Turns a reflected column into the properties of a JSON Schema. Shared by the
+     * builders that describe a record, the records of a table and the user that the
+     * dbAuth end-points return.
+     */
+    class OpenApiColumnTypes
+    {
+        private $types = [
+            'integer' => ['type' => 'integer', 'format' => 'int32'],
+            'bigint' => ['type' => 'integer', 'format' => 'int64'],
+            'varchar' => ['type' => 'string'],
+            'clob' => ['type' => 'string', 'format' => 'large-string'],
+            //custom format
+            'varbinary' => ['type' => 'string', 'format' => 'byte'],
+            'blob' => ['type' => 'string', 'format' => 'large-byte'],
+            //custom format
+            'decimal' => ['type' => 'string', 'format' => 'decimal'],
+            //custom format
+            'float' => ['type' => 'number', 'format' => 'float'],
+            'double' => ['type' => 'number', 'format' => 'double'],
+            'date' => ['type' => 'string', 'format' => 'date'],
+            'time' => ['type' => 'string', 'format' => 'time'],
+            //custom format
+            'timestamp' => ['type' => 'string', 'format' => 'date-time'],
+            'geometry' => ['type' => 'string', 'format' => 'geometry'],
+            //custom format
+            'boolean' => ['type' => 'boolean'],
+        ];
+        private $ranges = ['integer' => ['minimum' => -2147483648, 'maximum' => 2147483647], 'bigint' => ['minimum' => -9223372036854775807 - 1, 'maximum' => 9223372036854775807]];
+        private $numericTypes = ['integer', 'bigint', 'decimal', 'float', 'double'];
+        private function getPattern(ReflectedColumn $column): string
+        {
+            switch ($column->getType()) {
+                case 'varchar':
+                    $l = $column->getLength();
+                    return '^.{0,' . $l . '}$';
+                case 'clob':
+                    return '^.*$';
+                case 'varbinary':
+                    $l = $column->getLength();
+                    $b = (int) 4 * ceil($l / 3);
+                    return '^[A-Za-z0-9+/]{0,' . $b . '}=*$';
+                case 'blob':
+                    return '^[A-Za-z0-9+/]*=*$';
+                case 'decimal':
+                    $p = $column->getPrecision();
+                    $s = $column->getScale();
+                    return '^-?[0-9]{1,' . ($p - $s) . '}(\.[0-9]{1,' . $s . '})?$';
+                case 'date':
+                    return '^[0-9]{4}-[0-9]{2}-[0-9]{2}$';
+                case 'time':
+                    return '^[0-9]{2}:[0-9]{2}:[0-9]{2}$';
+                case 'timestamp':
+                    return '^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}$';
+                case 'geometry':
+                    return '^(POINT|LINESTRING|POLYGON|MULTIPOINT|MULTILINESTRING|MULTIPOLYGON)\s*\(.*$';
+            }
+            return '';
+        }
+        public function getProperties(ReflectedColumn $column): array
+        {
+            $properties = $this->types[$column->getType()];
+            switch ($properties['type']) {
+                case 'string':
+                    if ($column->hasLength()) {
+                        $properties['maxLength'] = $column->getLength();
+                    }
+                    $pattern = $this->getPattern($column);
+                    if ($pattern) {
+                        $properties['pattern'] = $pattern;
+                    }
+                    break;
+                case 'integer':
+                    $properties = array_merge($properties, $this->ranges[$column->getType()]);
+                    break;
+            }
+            if ($column->getNullable()) {
+                $properties['nullable'] = true;
+            }
+            return $properties;
+        }
+        public function isNumeric(ReflectedColumn $column): bool
+        {
+            return in_array($column->getType(), $this->numericTypes);
         }
     }
 }
@@ -6442,6 +6607,8 @@ namespace Tqdev\PhpCrudApi\OpenApi {
     class OpenApiColumnsBuilder
     {
         private $openapi;
+        private $middlewares;
+        private $errors = ['database' => ['read' => []], 'table' => ['create' => [409], 'read' => [404], 'update' => [404], 'delete' => [404]], 'column' => ['create' => [404, 409], 'read' => [404], 'update' => [404], 'delete' => [404]]];
         private $operations = ['database' => ['read' => 'get'], 'table' => [
             'create' => 'post',
             'read' => 'get',
@@ -6449,9 +6616,10 @@ namespace Tqdev\PhpCrudApi\OpenApi {
             //rename
             'delete' => 'delete',
         ], 'column' => ['create' => 'post', 'read' => 'get', 'update' => 'put', 'delete' => 'delete']];
-        public function __construct(OpenApiDefinition $openapi)
+        public function __construct(OpenApiDefinition $openapi, OpenApiMiddlewares $middlewares)
         {
             $this->openapi = $openapi;
+            $this->middlewares = $middlewares;
         }
         public function build()
         {
@@ -6489,6 +6657,7 @@ namespace Tqdev\PhpCrudApi\OpenApi {
                     if (strpos($path, '{column}')) {
                         $parameters[] = 'column';
                     }
+                    $parameters = array_merge($parameters, $this->middlewares->getCommonParameters($method));
                     foreach ($parameters as $parameter) {
                         $this->openapi->set("paths|{$path}|{$method}|parameters||\$ref", "#/components/parameters/{$parameter}");
                     }
@@ -6512,6 +6681,12 @@ namespace Tqdev\PhpCrudApi\OpenApi {
                             $this->openapi->set("paths|{$path}|{$method}|responses|200|\$ref", "#/components/responses/bool-success");
                             break;
                     }
+                    $statusCodes = array_merge($this->errors[$type][$operation], $this->middlewares->getStatusCodes(), [500]);
+                    sort($statusCodes);
+                    foreach ($statusCodes as $statusCode) {
+                        $this->openapi->set("paths|{$path}|{$method}|responses|{$statusCode}|\$ref", "#/components/responses/error-{$statusCode}");
+                    }
+                    $this->openapi->set("paths|{$path}|{$method}|responses|default|\$ref", "#/components/responses/error");
                 }
             }
         }
@@ -6604,6 +6779,136 @@ namespace Tqdev\PhpCrudApi\OpenApi {
     }
 }
 
+// file: src/Tqdev/PhpCrudApi/OpenApi/OpenApiDbAuthBuilder.php
+namespace Tqdev\PhpCrudApi\OpenApi {
+    use Tqdev\PhpCrudApi\Column\ReflectionService;
+    use Tqdev\PhpCrudApi\OpenApi\OpenApiDefinition;
+    /**
+     * The dbAuth middleware answers five end-points of its own, before the request
+     * reaches a controller, so they are described here rather than in one of the
+     * controller builders. The record they return is the users table, limited to
+     * "dbAuth.returnedColumns" and without the password column, which the
+     * middleware removes before it responds.
+     */
+    class OpenApiDbAuthBuilder
+    {
+        private $openapi;
+        private $reflection;
+        private $middlewares;
+        private $columnTypes;
+        private $tag = 'dbAuth';
+        private $operations = ['login' => ['post', 'log a user in with a username and a password', [403]], 'logout' => ['post', 'log the current user out', [401]], 'register' => ['post', 'register a new user', [403, 409, 422]], 'password' => ['post', 'change the password of the current user', [403, 422]], 'me' => ['get', 'read the user that is currently logged in', [401]]];
+        public function __construct(OpenApiDefinition $openapi, ReflectionService $reflection, OpenApiMiddlewares $middlewares)
+        {
+            $this->openapi = $openapi;
+            $this->reflection = $reflection;
+            $this->middlewares = $middlewares;
+            $this->columnTypes = new OpenApiColumnTypes();
+        }
+        private function getProperty(string $key, string $default): string
+        {
+            return $this->middlewares->getProperty('dbAuth', $key, $default);
+        }
+        private function getFormFields(): array
+        {
+            $username = $this->getProperty('usernameFormField', 'username');
+            $password = $this->getProperty('passwordFormField', 'password');
+            $newPassword = $this->getProperty('newPasswordFormField', 'newPassword');
+            return ['login' => [$username => false, $password => true], 'register' => [$username => false, $password => true], 'password' => [$username => false, $password => true, $newPassword => true]];
+        }
+        private function isEnabled(string $operation): bool
+        {
+            if ($operation == 'register') {
+                return (bool) $this->getProperty('registerUser', '');
+            }
+            return true;
+        }
+        public function build()
+        {
+            $tableName = $this->getProperty('usersTable', 'users');
+            if (!$this->reflection->hasTable($tableName)) {
+                return;
+            }
+            $this->setComponentSchema($tableName);
+            $this->setComponentResponse();
+            $this->setComponentRequestBodies();
+            $this->setPaths();
+            $this->setTag();
+        }
+        private function setComponentSchema(string $tableName)
+        {
+            $table = $this->reflection->getTable($tableName);
+            $passwordColumnName = $this->getProperty('passwordColumn', 'password');
+            $returnedColumns = $this->getProperty('returnedColumns', '');
+            $columnNames = $returnedColumns ? array_map('trim', explode(',', $returnedColumns)) : $table->getColumnNames();
+            $this->openapi->set("components|schemas|user|type", "object");
+            foreach ($columnNames as $columnName) {
+                if ($columnName == $passwordColumnName || !$table->hasColumn($columnName)) {
+                    continue;
+                }
+                $properties = $this->columnTypes->getProperties($table->getColumn($columnName));
+                foreach ($properties as $key => $value) {
+                    $this->openapi->set("components|schemas|user|properties|{$columnName}|{$key}", $value);
+                }
+            }
+        }
+        private function setComponentResponse()
+        {
+            $this->openapi->set("components|responses|user|description", "the user record, without the password");
+            $this->openapi->set("components|responses|user|content|application/json|schema|\$ref", "#/components/schemas/user");
+        }
+        private function setComponentRequestBodies()
+        {
+            foreach ($this->getFormFields() as $operation => $fields) {
+                if (!$this->isEnabled($operation)) {
+                    continue;
+                }
+                $prefix = "components|requestBodies|{$operation}";
+                $this->openapi->set("{$prefix}|description", "credentials");
+                $this->openapi->set("{$prefix}|content|application/json|schema|type", "object");
+                $this->openapi->set("{$prefix}|content|application/json|schema|required", array_keys($fields));
+                foreach ($fields as $field => $isPassword) {
+                    $this->openapi->set("{$prefix}|content|application/json|schema|properties|{$field}|type", "string");
+                    if ($isPassword) {
+                        $this->openapi->set("{$prefix}|content|application/json|schema|properties|{$field}|format", "password");
+                    }
+                }
+            }
+        }
+        private function setPaths()
+        {
+            $formFields = $this->getFormFields();
+            foreach ($this->operations as $operation => $definition) {
+                if (!$this->isEnabled($operation)) {
+                    continue;
+                }
+                list($method, $description, $statusCodes) = $definition;
+                $path = "/{$operation}";
+                foreach ($this->middlewares->getCommonParameters($method) as $parameter) {
+                    $this->openapi->set("paths|{$path}|{$method}|parameters||\$ref", "#/components/parameters/{$parameter}");
+                }
+                if (isset($formFields[$operation])) {
+                    $this->openapi->set("paths|{$path}|{$method}|requestBody|\$ref", "#/components/requestBodies/{$operation}");
+                }
+                $this->openapi->set("paths|{$path}|{$method}|tags|", $this->tag);
+                $this->openapi->set("paths|{$path}|{$method}|operationId", $operation . "_user");
+                $this->openapi->set("paths|{$path}|{$method}|description", $description);
+                $this->openapi->set("paths|{$path}|{$method}|responses|200|\$ref", "#/components/responses/user");
+                $statusCodes = array_unique(array_merge($statusCodes, $this->middlewares->getStatusCodes(), [500]));
+                sort($statusCodes);
+                foreach ($statusCodes as $statusCode) {
+                    $this->openapi->set("paths|{$path}|{$method}|responses|{$statusCode}|\$ref", "#/components/responses/error-{$statusCode}");
+                }
+                $this->openapi->set("paths|{$path}|{$method}|responses|default|\$ref", "#/components/responses/error");
+            }
+        }
+        private function setTag()
+        {
+            $this->openapi->set("tags|", ['name' => $this->tag, 'description' => "authentication operations"]);
+        }
+    }
+}
+
 // file: src/Tqdev/PhpCrudApi/OpenApi/OpenApiDefinition.php
 namespace Tqdev\PhpCrudApi\OpenApi {
     class OpenApiDefinition implements \JsonSerializable
@@ -6642,6 +6947,31 @@ namespace Tqdev\PhpCrudApi\OpenApi {
             }
             return true;
         }
+        /**
+         * The xml middleware accepts and returns the same documents as xml when the
+         * "format" parameter asks for it, which the document reports by listing the
+         * xml content type next to the json one on every request and response.
+         */
+        public function copyContentType(string $from, string $to)
+        {
+            $this->copyContentTypeIn($this->root, $from, $to);
+        }
+        private function copyContentTypeIn(array &$node, string $from, string $to)
+        {
+            foreach ($node as $key => &$value) {
+                if (!is_array($value)) {
+                    continue;
+                }
+                if ($key === 'content' && isset($value[$from])) {
+                    if (!isset($value[$to])) {
+                        $value[$to] = $value[$from];
+                    }
+                } else {
+                    $this->copyContentTypeIn($value, $from, $to);
+                }
+            }
+            unset($value);
+        }
         #[\ReturnTypeWillChange]
         public function jsonSerialize()
         {
@@ -6650,47 +6980,149 @@ namespace Tqdev\PhpCrudApi\OpenApi {
     }
 }
 
+// file: src/Tqdev/PhpCrudApi/OpenApi/OpenApiMiddlewares.php
+namespace Tqdev\PhpCrudApi\OpenApi {
+    use Tqdev\PhpCrudApi\Config\Config;
+    /**
+     * The document depends on the enabled middlewares for the security schemes, the
+     * parameters they read and the status codes they can return. Middlewares are
+     * constructed before the controllers, so the config is complete by the time the
+     * builders run.
+     */
+    class OpenApiMiddlewares
+    {
+        private $config;
+        private $middlewares;
+        private $authMiddlewares = ['apiKeyAuth', 'apiKeyDbAuth', 'basicAuth', 'jwtAuth', 'dbAuth', 'wpAuth'];
+        private $forbiddingMiddlewares = ['authorization', 'xsrf', 'pageLimits', 'joinLimits', 'firewall', 'cors'];
+        public function __construct(Config $config)
+        {
+            $this->config = $config;
+            $this->middlewares = $config->getMiddlewares();
+        }
+        public function has(string $middleware): bool
+        {
+            return in_array($middleware, $this->middlewares);
+        }
+        public function getProperty(string $middleware, string $key, string $default): string
+        {
+            return (string) $this->config->getProperty("{$middleware}.{$key}", $default);
+        }
+        public function hasFormatParameter(): bool
+        {
+            return $this->has('xml');
+        }
+        public function getTextSearchParameter(): string
+        {
+            return $this->has('textSearch') ? $this->getProperty('textSearch', 'parameter', 'search') : '';
+        }
+        public function getXsrfHeader(): string
+        {
+            return $this->has('xsrf') ? $this->getProperty('xsrf', 'headerName', 'X-XSRF-TOKEN') : '';
+        }
+        public function getXsrfExcludedMethods(): array
+        {
+            return array_map('trim', explode(',', $this->getProperty('xsrf', 'excludeMethods', 'OPTIONS,GET')));
+        }
+        /**
+         * Parameters that any operation has because a middleware reads them, as
+         * component names to be referenced from the operation.
+         */
+        public function getCommonParameters(string $method): array
+        {
+            $parameters = array();
+            if ($this->hasFormatParameter()) {
+                $parameters[] = 'format';
+            }
+            if ($this->getXsrfHeader() && !in_array(strtoupper($method), $this->getXsrfExcludedMethods())) {
+                $parameters[] = 'xsrf';
+            }
+            return $parameters;
+        }
+        /**
+         * Status codes that any operation can return because a middleware is in
+         * front of it, as opposed to the ones the controller itself produces.
+         */
+        public function getStatusCodes(): array
+        {
+            $statusCodes = array();
+            if (array_filter($this->authMiddlewares, array($this, 'has'))) {
+                $statusCodes[] = 401;
+            }
+            if (array_filter(array_merge($this->authMiddlewares, $this->forbiddingMiddlewares), array($this, 'has'))) {
+                $statusCodes[] = 403;
+            }
+            return $statusCodes;
+        }
+        public function getSecuritySchemes(): array
+        {
+            $schemes = array();
+            if ($this->has('basicAuth')) {
+                $schemes['basicAuth'] = ['type' => 'http', 'scheme' => 'basic'];
+            }
+            if ($this->has('jwtAuth')) {
+                $header = $this->getProperty('jwtAuth', 'header', 'X-Authorization');
+                if (strtolower($header) == 'authorization') {
+                    $schemes['jwtAuth'] = ['type' => 'http', 'scheme' => 'bearer', 'bearerFormat' => 'JWT'];
+                } else {
+                    // a bearer token on a header other than "Authorization" is not
+                    // an http security scheme, describe the header instead
+                    $schemes['jwtAuth'] = ['type' => 'apiKey', 'in' => 'header', 'name' => $header, 'description' => 'JWT, prefixed with "Bearer "'];
+                }
+            }
+            if ($this->has('apiKeyAuth')) {
+                $schemes['apiKeyAuth'] = ['type' => 'apiKey', 'in' => 'header', 'name' => $this->getProperty('apiKeyAuth', 'header', 'X-API-Key')];
+            }
+            if ($this->has('apiKeyDbAuth')) {
+                $schemes['apiKeyDbAuth'] = ['type' => 'apiKey', 'in' => 'header', 'name' => $this->getProperty('apiKeyDbAuth', 'header', 'X-API-Key')];
+            }
+            if ($this->has('dbAuth')) {
+                $schemes['dbAuth'] = ['type' => 'apiKey', 'in' => 'cookie', 'name' => $this->getProperty('dbAuth', 'sessionName', 'PHPSESSID')];
+            }
+            return $schemes;
+        }
+        /**
+         * Authentication is optional when every enabled auth middleware lets an
+         * unauthenticated request through, which OpenAPI expresses as an empty
+         * requirement next to the named ones.
+         */
+        public function isAuthenticationOptional(): bool
+        {
+            foreach ($this->authMiddlewares as $middleware) {
+                if ($this->has($middleware) && $this->getProperty($middleware, 'mode', 'required') == 'required') {
+                    return false;
+                }
+            }
+            return true;
+        }
+    }
+}
+
 // file: src/Tqdev/PhpCrudApi/OpenApi/OpenApiRecordsBuilder.php
 namespace Tqdev\PhpCrudApi\OpenApi {
     use Tqdev\PhpCrudApi\Column\ReflectionService;
-    use Tqdev\PhpCrudApi\Column\Reflection\ReflectedColumn;
     use Tqdev\PhpCrudApi\Middleware\Communication\VariableStore;
     use Tqdev\PhpCrudApi\OpenApi\OpenApiDefinition;
     class OpenApiRecordsBuilder
     {
         private $openapi;
         private $reflection;
+        private $middlewares;
+        private $columnTypes;
+        /**
+         * Status codes that the record controller itself can return per operation.
+         * A 405 is not in here, the operations that could return it are only
+         * emitted for tables and never for views.
+         */
+        private $errors = ['list' => [404], 'create' => [404, 409, 422, 424], 'read' => [404, 424], 'update' => [404, 409, 422, 424], 'delete' => [404, 409, 424], 'increment' => [404, 409, 422, 424]];
         private $operations = ['list' => 'get', 'create' => 'post', 'read' => 'get', 'update' => 'put', 'delete' => 'delete', 'increment' => 'patch'];
-        private $types = [
-            'integer' => ['type' => 'integer', 'format' => 'int32'],
-            'bigint' => ['type' => 'integer', 'format' => 'int64'],
-            'varchar' => ['type' => 'string'],
-            'clob' => ['type' => 'string', 'format' => 'large-string'],
-            //custom format
-            'varbinary' => ['type' => 'string', 'format' => 'byte'],
-            'blob' => ['type' => 'string', 'format' => 'large-byte'],
-            //custom format
-            'decimal' => ['type' => 'string', 'format' => 'decimal'],
-            //custom format
-            'float' => ['type' => 'number', 'format' => 'float'],
-            'double' => ['type' => 'number', 'format' => 'double'],
-            'date' => ['type' => 'string', 'format' => 'date'],
-            'time' => ['type' => 'string', 'format' => 'time'],
-            //custom format
-            'timestamp' => ['type' => 'string', 'format' => 'date-time'],
-            'geometry' => ['type' => 'string', 'format' => 'geometry'],
-            //custom format
-            'boolean' => ['type' => 'boolean'],
-        ];
-        private $ranges = ['integer' => ['minimum' => -2147483648, 'maximum' => 2147483647], 'bigint' => ['minimum' => -9223372036854775807 - 1, 'maximum' => 9223372036854775807]];
-        private $numericTypes = ['integer', 'bigint', 'decimal', 'float', 'double'];
         private $normalized = [];
-        private $componentKeys = [];
         /**
          * Component keys and operation ids have to match "^[a-zA-Z0-9._-]+$", so the
          * table name is transliterated to ASCII and whatever is still not allowed is
-         * replaced. Two table names may end up as the same key, the second one then
-         * gets a number appended.
+         * replaced. That can make two table names collide, which is reported instead
+         * of resolved, as any name this generates would be a guess at what the table
+         * should have been called.
          */
         private function normalize(string $tableName): string
         {
@@ -6698,24 +7130,22 @@ namespace Tqdev\PhpCrudApi\OpenApi {
                 $key = iconv('UTF-8', 'ASCII//TRANSLIT', $tableName);
                 $key = (string) preg_replace('/[^a-zA-Z0-9._-]+/', '_', $key === false ? $tableName : $key);
                 if ($key === '') {
-                    $key = 'table';
+                    throw new \Exception("Table '{$tableName}' has no characters that are allowed in an OpenAPI component key, alias it using the 'mapping' setting");
                 }
-                if (isset($this->componentKeys[$key])) {
-                    $i = 2;
-                    while (isset($this->componentKeys["{$key}-{$i}"])) {
-                        $i++;
-                    }
-                    $key = "{$key}-{$i}";
+                $other = array_search($key, $this->normalized, true);
+                if ($other !== false) {
+                    throw new \Exception("Tables '{$other}' and '{$tableName}' both become '{$key}' in the OpenAPI document, alias one of them using the 'mapping' setting");
                 }
-                $this->componentKeys[$key] = true;
                 $this->normalized[$tableName] = $key;
             }
             return $this->normalized[$tableName];
         }
-        public function __construct(OpenApiDefinition $openapi, ReflectionService $reflection)
+        public function __construct(OpenApiDefinition $openapi, ReflectionService $reflection, OpenApiMiddlewares $middlewares)
         {
             $this->openapi = $openapi;
             $this->reflection = $reflection;
+            $this->middlewares = $middlewares;
+            $this->columnTypes = new OpenApiColumnTypes();
         }
         private function getAllTableReferences(): array
         {
@@ -6741,15 +7171,9 @@ namespace Tqdev\PhpCrudApi\OpenApi {
             foreach ($tableNames as $tableName) {
                 $this->setPath($tableName);
             }
-            $this->openapi->set("components|responses|pk_integer|description", "inserted primary key value (integer)");
-            $this->openapi->set("components|responses|pk_integer|content|application/json|schema|type", "integer");
-            $this->openapi->set("components|responses|pk_integer|content|application/json|schema|format", "int64");
-            $this->openapi->set("components|responses|pk_string|description", "inserted primary key value (string)");
-            $this->openapi->set("components|responses|pk_string|content|application/json|schema|type", "string");
-            $this->openapi->set("components|responses|pk_string|content|application/json|schema|format", "uuid");
-            $this->openapi->set("components|responses|rows_affected|description", "number of rows affected (integer)");
-            $this->openapi->set("components|responses|rows_affected|content|application/json|schema|type", "integer");
-            $this->openapi->set("components|responses|rows_affected|content|application/json|schema|format", "int64");
+            $this->setBatchableResponse("pk_integer", "inserted primary key value (integer)", ["type" => "integer", "format" => "int64"]);
+            $this->setBatchableResponse("pk_string", "inserted primary key value (string)", ["type" => "string", "format" => "uuid"]);
+            $this->setBatchableResponse("rows_affected", "number of rows affected (integer)", ["type" => "integer", "format" => "int64"]);
             $tableReferences = $this->getAllTableReferences();
             foreach ($tableNames as $tableName) {
                 $references = isset($tableReferences[$tableName]) ? $tableReferences[$tableName] : array();
@@ -6760,6 +7184,31 @@ namespace Tqdev\PhpCrudApi\OpenApi {
             $this->setComponentParameters();
             foreach ($tableNames as $tableName) {
                 $this->setTag($tableName);
+            }
+        }
+        /**
+         * A single record and a list of them are both accepted and returned, which
+         * is what makes an operation addressable as a batch.
+         */
+        private function setSingleOrBatchSchema(string $prefix, string $schema)
+        {
+            $this->openapi->set("{$prefix}|content|application/json|schema|oneOf|0|\$ref", $schema);
+            $this->openapi->set("{$prefix}|content|application/json|schema|oneOf|1|type", "array");
+            $this->openapi->set("{$prefix}|content|application/json|schema|oneOf|1|items|\$ref", $schema);
+        }
+        /**
+         * A batch request repeats the operation for every primary key value in the
+         * path or every record in the body, and then answers with a list instead of
+         * a single value.
+         */
+        private function setBatchableResponse(string $name, string $description, array $schema)
+        {
+            $this->openapi->set("components|responses|{$name}|description", "{$description}, one per record for a batch");
+            $prefix = "components|responses|{$name}|content|application/json|schema|oneOf";
+            $this->openapi->set("{$prefix}|1|type", "array");
+            foreach ($schema as $key => $value) {
+                $this->openapi->set("{$prefix}|0|{$key}", $value);
+                $this->openapi->set("{$prefix}|1|items|{$key}", $value);
             }
         }
         private function isOperationOnTableAllowed(string $operation, string $tableName): bool
@@ -6800,6 +7249,9 @@ namespace Tqdev\PhpCrudApi\OpenApi {
                     $path = sprintf('/records/%s', $tableName);
                     if ($operation == 'list') {
                         $parameters = ['filter', 'include', 'exclude', 'order', 'size', 'page', 'join'];
+                        if ($this->middlewares->getTextSearchParameter()) {
+                            $parameters[] = 'search';
+                        }
                     }
                 } else {
                     $path = sprintf('/records/%s/{id}', $tableName);
@@ -6809,6 +7261,7 @@ namespace Tqdev\PhpCrudApi\OpenApi {
                         $parameters = ['pk'];
                     }
                 }
+                $parameters = array_merge($parameters, $this->middlewares->getCommonParameters($method));
                 foreach ($parameters as $parameter) {
                     $this->openapi->set("paths|{$path}|{$method}|parameters||\$ref", "#/components/parameters/{$parameter}");
                 }
@@ -6838,58 +7291,13 @@ namespace Tqdev\PhpCrudApi\OpenApi {
                         $this->openapi->set("paths|{$path}|{$method}|responses|200|\$ref", "#/components/responses/rows_affected");
                         break;
                 }
+                $statusCodes = array_merge($this->errors[$operation], $this->middlewares->getStatusCodes(), [500]);
+                sort($statusCodes);
+                foreach ($statusCodes as $statusCode) {
+                    $this->openapi->set("paths|{$path}|{$method}|responses|{$statusCode}|\$ref", "#/components/responses/error-{$statusCode}");
+                }
+                $this->openapi->set("paths|{$path}|{$method}|responses|default|\$ref", "#/components/responses/error");
             }
-        }
-        private function getPattern(ReflectedColumn $column): string
-        {
-            switch ($column->getType()) {
-                case 'varchar':
-                    $l = $column->getLength();
-                    return '^.{0,' . $l . '}$';
-                case 'clob':
-                    return '^.*$';
-                case 'varbinary':
-                    $l = $column->getLength();
-                    $b = (int) 4 * ceil($l / 3);
-                    return '^[A-Za-z0-9+/]{0,' . $b . '}=*$';
-                case 'blob':
-                    return '^[A-Za-z0-9+/]*=*$';
-                case 'decimal':
-                    $p = $column->getPrecision();
-                    $s = $column->getScale();
-                    return '^-?[0-9]{1,' . ($p - $s) . '}(\.[0-9]{1,' . $s . '})?$';
-                case 'date':
-                    return '^[0-9]{4}-[0-9]{2}-[0-9]{2}$';
-                case 'time':
-                    return '^[0-9]{2}:[0-9]{2}:[0-9]{2}$';
-                case 'timestamp':
-                    return '^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}$';
-                case 'geometry':
-                    return '^(POINT|LINESTRING|POLYGON|MULTIPOINT|MULTILINESTRING|MULTIPOLYGON)\s*\(.*$';
-            }
-            return '';
-        }
-        private function getProperties(ReflectedColumn $column): array
-        {
-            $properties = $this->types[$column->getType()];
-            switch ($properties['type']) {
-                case 'string':
-                    if ($column->hasLength()) {
-                        $properties['maxLength'] = $column->getLength();
-                    }
-                    $pattern = $this->getPattern($column);
-                    if ($pattern) {
-                        $properties['pattern'] = $pattern;
-                    }
-                    break;
-                case 'integer':
-                    $properties = array_merge($properties, $this->ranges[$column->getType()]);
-                    break;
-            }
-            if ($column->getNullable()) {
-                $properties['nullable'] = true;
-            }
-            return $properties;
         }
         private function setComponentSchema(string $tableName, array $references)
         {
@@ -6930,10 +7338,10 @@ namespace Tqdev\PhpCrudApi\OpenApi {
                         continue;
                     }
                     $column = $table->getColumn($columnName);
-                    if ($operation == 'increment' && !in_array($column->getType(), $this->numericTypes)) {
+                    if ($operation == 'increment' && !$this->columnTypes->isNumeric($column)) {
                         continue;
                     }
-                    $properties = $this->getProperties($column);
+                    $properties = $this->columnTypes->getProperties($column);
                     if ($operation == 'create' && $column->getPk() && $column->getType() == 'integer') {
                         $properties['readOnly'] = true;
                     }
@@ -6968,12 +7376,15 @@ namespace Tqdev\PhpCrudApi\OpenApi {
                 if (!$this->isOperationOnTableAllowed($operation, $tableName)) {
                     continue;
                 }
+                $schema = "#/components/schemas/{$operation}-{$normalizedTableName}";
+                $prefix = "components|responses|{$operation}-{$normalizedTableName}";
                 if ($operation == 'list') {
-                    $this->openapi->set("components|responses|{$operation}-{$normalizedTableName}|description", "list of {$tableName} records");
+                    $this->openapi->set("{$prefix}|description", "list of {$tableName} records");
+                    $this->openapi->set("{$prefix}|content|application/json|schema|\$ref", $schema);
                 } else {
-                    $this->openapi->set("components|responses|{$operation}-{$normalizedTableName}|description", "single {$tableName} record");
+                    $this->openapi->set("{$prefix}|description", "single {$tableName} record, or a list of them for a batch");
+                    $this->setSingleOrBatchSchema($prefix, $schema);
                 }
-                $this->openapi->set("components|responses|{$operation}-{$normalizedTableName}|content|application/json|schema|\$ref", "#/components/schemas/{$operation}-{$normalizedTableName}");
             }
         }
         private function setComponentRequestBody(string $tableName)
@@ -6988,8 +7399,10 @@ namespace Tqdev\PhpCrudApi\OpenApi {
                     if (!$this->isOperationOnTableAllowed($operation, $tableName)) {
                         continue;
                     }
-                    $this->openapi->set("components|requestBodies|{$operation}-{$normalizedTableName}|description", "single {$tableName} record");
-                    $this->openapi->set("components|requestBodies|{$operation}-{$normalizedTableName}|content|application/json|schema|\$ref", "#/components/schemas/{$operation}-{$normalizedTableName}");
+                    $schema = "#/components/schemas/{$operation}-{$normalizedTableName}";
+                    $prefix = "components|requestBodies|{$operation}-{$normalizedTableName}";
+                    $this->openapi->set("{$prefix}|description", "single {$tableName} record, or a list of them for a batch");
+                    $this->setSingleOrBatchSchema($prefix, $schema);
                 }
             }
         }
@@ -6998,7 +7411,7 @@ namespace Tqdev\PhpCrudApi\OpenApi {
             $this->openapi->set("components|parameters|pk|name", "id");
             $this->openapi->set("components|parameters|pk|in", "path");
             $this->openapi->set("components|parameters|pk|schema|type", "string");
-            $this->openapi->set("components|parameters|pk|description", "primary key value");
+            $this->openapi->set("components|parameters|pk|description", "Primary key value, or several of them (comma separated) to run the operation as a batch. Example: 1,2");
             $this->openapi->set("components|parameters|pk|required", true);
             $this->openapi->set("components|parameters|filter|name", "filter");
             $this->openapi->set("components|parameters|filter|in", "query");
@@ -7039,6 +7452,14 @@ namespace Tqdev\PhpCrudApi\OpenApi {
             $this->openapi->set("components|parameters|join|schema|items|type", "string");
             $this->openapi->set("components|parameters|join|description", "Paths (comma separated) to related entities that you want to include. Example: comments,users");
             $this->openapi->set("components|parameters|join|required", false);
+            $textSearch = $this->middlewares->getTextSearchParameter();
+            if ($textSearch) {
+                $this->openapi->set("components|parameters|search|name", $textSearch);
+                $this->openapi->set("components|parameters|search|in", "query");
+                $this->openapi->set("components|parameters|search|schema|type", "string");
+                $this->openapi->set("components|parameters|search|description", "Text to search for in all text columns of the table. Example: hello");
+                $this->openapi->set("components|parameters|search|required", false);
+            }
         }
         private function setTag(string $tableName)
         {
@@ -7051,13 +7472,14 @@ namespace Tqdev\PhpCrudApi\OpenApi {
 namespace Tqdev\PhpCrudApi\OpenApi {
     use Psr\Http\Message\ServerRequestInterface;
     use Tqdev\PhpCrudApi\Column\ReflectionService;
+    use Tqdev\PhpCrudApi\Config\Config;
     use Tqdev\PhpCrudApi\OpenApi\OpenApiBuilder;
     class OpenApiService
     {
         private $builder;
-        public function __construct(ReflectionService $reflection, array $base, array $controllers, array $customBuilders, string $basePath)
+        public function __construct(ReflectionService $reflection, Config $config, string $basePath)
         {
-            $this->builder = new OpenApiBuilder($reflection, $base, $controllers, $customBuilders, $basePath);
+            $this->builder = new OpenApiBuilder($reflection, $config, $basePath);
         }
         public function get(ServerRequestInterface $request): OpenApiDefinition
         {
@@ -7072,10 +7494,12 @@ namespace Tqdev\PhpCrudApi\OpenApi {
     class OpenApiStatusBuilder
     {
         private $openapi;
+        private $middlewares;
         private $operations = ['status' => ['ping' => 'get']];
-        public function __construct(OpenApiDefinition $openapi)
+        public function __construct(OpenApiDefinition $openapi, OpenApiMiddlewares $middlewares)
         {
             $this->openapi = $openapi;
+            $this->middlewares = $middlewares;
         }
         public function build()
         {
@@ -7091,10 +7515,19 @@ namespace Tqdev\PhpCrudApi\OpenApi {
             foreach ($this->operations as $type => $operationPair) {
                 foreach ($operationPair as $operation => $method) {
                     $path = "/{$type}/{$operation}";
+                    foreach ($this->middlewares->getCommonParameters($method) as $parameter) {
+                        $this->openapi->set("paths|{$path}|{$method}|parameters||\$ref", "#/components/parameters/{$parameter}");
+                    }
                     $this->openapi->set("paths|{$path}|{$method}|tags|", "{$type}");
                     $this->openapi->set("paths|{$path}|{$method}|operationId", "{$operation}" . "_" . "{$type}");
                     $this->openapi->set("paths|{$path}|{$method}|description", "Request API '{$operation}' status");
                     $this->openapi->set("paths|{$path}|{$method}|responses|200|\$ref", "#/components/responses/{$operation}-{$type}");
+                    $statusCodes = array_merge($this->middlewares->getStatusCodes(), [500]);
+                    sort($statusCodes);
+                    foreach ($statusCodes as $statusCode) {
+                        $this->openapi->set("paths|{$path}|{$method}|responses|{$statusCode}|\$ref", "#/components/responses/error-{$statusCode}");
+                    }
+                    $this->openapi->set("paths|{$path}|{$method}|responses|default|\$ref", "#/components/responses/error");
                 }
             }
         }

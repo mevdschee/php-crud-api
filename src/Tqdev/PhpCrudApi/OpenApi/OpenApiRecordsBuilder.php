@@ -3,7 +3,6 @@
 namespace Tqdev\PhpCrudApi\OpenApi;
 
 use Tqdev\PhpCrudApi\Column\ReflectionService;
-use Tqdev\PhpCrudApi\Column\Reflection\ReflectedColumn;
 use Tqdev\PhpCrudApi\Middleware\Communication\VariableStore;
 use Tqdev\PhpCrudApi\OpenApi\OpenApiDefinition;
 
@@ -11,6 +10,21 @@ class OpenApiRecordsBuilder
 {
     private $openapi;
     private $reflection;
+    private $middlewares;
+    private $columnTypes;
+    /**
+     * Status codes that the record controller itself can return per operation.
+     * A 405 is not in here, the operations that could return it are only
+     * emitted for tables and never for views.
+     */
+    private $errors = [
+        'list' => [404],
+        'create' => [404, 409, 422, 424],
+        'read' => [404, 424],
+        'update' => [404, 409, 422, 424],
+        'delete' => [404, 409, 424],
+        'increment' => [404, 409, 422, 424],
+    ];
     private $operations = [
         'list' => 'get',
         'create' => 'post',
@@ -19,35 +33,14 @@ class OpenApiRecordsBuilder
         'delete' => 'delete',
         'increment' => 'patch',
     ];
-    private $types = [
-        'integer' => ['type' => 'integer', 'format' => 'int32'],
-        'bigint' => ['type' => 'integer', 'format' => 'int64'],
-        'varchar' => ['type' => 'string'],
-        'clob' => ['type' => 'string', 'format' => 'large-string'], //custom format
-        'varbinary' => ['type' => 'string', 'format' => 'byte'],
-        'blob' => ['type' => 'string', 'format' => 'large-byte'], //custom format
-        'decimal' => ['type' => 'string', 'format' => 'decimal'], //custom format
-        'float' => ['type' => 'number', 'format' => 'float'],
-        'double' => ['type' => 'number', 'format' => 'double'],
-        'date' => ['type' => 'string', 'format' => 'date'],
-        'time' => ['type' => 'string', 'format' => 'time'], //custom format
-        'timestamp' => ['type' => 'string', 'format' => 'date-time'],
-        'geometry' => ['type' => 'string', 'format' => 'geometry'], //custom format
-        'boolean' => ['type' => 'boolean'],
-    ];
-    private $ranges = [
-        'integer' => ['minimum' => -2147483648, 'maximum' => 2147483647],
-        'bigint' => ['minimum' => -9223372036854775807 - 1, 'maximum' => 9223372036854775807],
-    ];
-    private $numericTypes = ['integer', 'bigint', 'decimal', 'float', 'double'];
     private $normalized = [];
-    private $componentKeys = [];
 
     /**
      * Component keys and operation ids have to match "^[a-zA-Z0-9._-]+$", so the
      * table name is transliterated to ASCII and whatever is still not allowed is
-     * replaced. Two table names may end up as the same key, the second one then
-     * gets a number appended.
+     * replaced. That can make two table names collide, which is reported instead
+     * of resolved, as any name this generates would be a guess at what the table
+     * should have been called.
      */
     private function normalize(string $tableName): string
     {
@@ -55,25 +48,23 @@ class OpenApiRecordsBuilder
             $key = iconv('UTF-8', 'ASCII//TRANSLIT', $tableName);
             $key = (string) preg_replace('/[^a-zA-Z0-9._-]+/', '_', $key === false ? $tableName : $key);
             if ($key === '') {
-                $key = 'table';
+                throw new \Exception("Table '$tableName' has no characters that are allowed in an OpenAPI component key, alias it using the 'mapping' setting");
             }
-            if (isset($this->componentKeys[$key])) {
-                $i = 2;
-                while (isset($this->componentKeys["$key-$i"])) {
-                    $i++;
-                }
-                $key = "$key-$i";
+            $other = array_search($key, $this->normalized, true);
+            if ($other !== false) {
+                throw new \Exception("Tables '$other' and '$tableName' both become '$key' in the OpenAPI document, alias one of them using the 'mapping' setting");
             }
-            $this->componentKeys[$key] = true;
             $this->normalized[$tableName] = $key;
         }
         return $this->normalized[$tableName];
     }
 
-    public function __construct(OpenApiDefinition $openapi, ReflectionService $reflection)
+    public function __construct(OpenApiDefinition $openapi, ReflectionService $reflection, OpenApiMiddlewares $middlewares)
     {
         $this->openapi = $openapi;
         $this->reflection = $reflection;
+        $this->middlewares = $middlewares;
+        $this->columnTypes = new OpenApiColumnTypes();
     }
 
     private function getAllTableReferences(): array
@@ -101,15 +92,9 @@ class OpenApiRecordsBuilder
         foreach ($tableNames as $tableName) {
             $this->setPath($tableName);
         }
-        $this->openapi->set("components|responses|pk_integer|description", "inserted primary key value (integer)");
-        $this->openapi->set("components|responses|pk_integer|content|application/json|schema|type", "integer");
-        $this->openapi->set("components|responses|pk_integer|content|application/json|schema|format", "int64");
-        $this->openapi->set("components|responses|pk_string|description", "inserted primary key value (string)");
-        $this->openapi->set("components|responses|pk_string|content|application/json|schema|type", "string");
-        $this->openapi->set("components|responses|pk_string|content|application/json|schema|format", "uuid");
-        $this->openapi->set("components|responses|rows_affected|description", "number of rows affected (integer)");
-        $this->openapi->set("components|responses|rows_affected|content|application/json|schema|type", "integer");
-        $this->openapi->set("components|responses|rows_affected|content|application/json|schema|format", "int64");
+        $this->setBatchableResponse("pk_integer", "inserted primary key value (integer)", ["type" => "integer", "format" => "int64"]);
+        $this->setBatchableResponse("pk_string", "inserted primary key value (string)", ["type" => "string", "format" => "uuid"]);
+        $this->setBatchableResponse("rows_affected", "number of rows affected (integer)", ["type" => "integer", "format" => "int64"]);
         $tableReferences = $this->getAllTableReferences();
         foreach ($tableNames as $tableName) {
             $references = isset($tableReferences[$tableName]) ? $tableReferences[$tableName] : array();
@@ -120,6 +105,33 @@ class OpenApiRecordsBuilder
         $this->setComponentParameters();
         foreach ($tableNames as $tableName) {
             $this->setTag($tableName);
+        }
+    }
+
+    /**
+     * A single record and a list of them are both accepted and returned, which
+     * is what makes an operation addressable as a batch.
+     */
+    private function setSingleOrBatchSchema(string $prefix, string $schema) /*: void*/
+    {
+        $this->openapi->set("$prefix|content|application/json|schema|oneOf|0|\$ref", $schema);
+        $this->openapi->set("$prefix|content|application/json|schema|oneOf|1|type", "array");
+        $this->openapi->set("$prefix|content|application/json|schema|oneOf|1|items|\$ref", $schema);
+    }
+
+    /**
+     * A batch request repeats the operation for every primary key value in the
+     * path or every record in the body, and then answers with a list instead of
+     * a single value.
+     */
+    private function setBatchableResponse(string $name, string $description, array $schema) /*: void*/
+    {
+        $this->openapi->set("components|responses|$name|description", "$description, one per record for a batch");
+        $prefix = "components|responses|$name|content|application/json|schema|oneOf";
+        $this->openapi->set("$prefix|1|type", "array");
+        foreach ($schema as $key => $value) {
+            $this->openapi->set("$prefix|0|$key", $value);
+            $this->openapi->set("$prefix|1|items|$key", $value);
         }
     }
 
@@ -163,6 +175,9 @@ class OpenApiRecordsBuilder
                 $path = sprintf('/records/%s', $tableName);
                 if ($operation == 'list') {
                     $parameters = ['filter', 'include', 'exclude', 'order', 'size', 'page', 'join'];
+                    if ($this->middlewares->getTextSearchParameter()) {
+                        $parameters[] = 'search';
+                    }
                 }
             } else {
                 $path = sprintf('/records/%s/{id}', $tableName);
@@ -172,6 +187,7 @@ class OpenApiRecordsBuilder
                     $parameters = ['pk'];
                 }
             }
+            $parameters = array_merge($parameters, $this->middlewares->getCommonParameters($method));
             foreach ($parameters as $parameter) {
                 $this->openapi->set("paths|$path|$method|parameters||\$ref", "#/components/parameters/$parameter");
             }
@@ -201,60 +217,13 @@ class OpenApiRecordsBuilder
                     $this->openapi->set("paths|$path|$method|responses|200|\$ref", "#/components/responses/rows_affected");
                     break;
             }
+            $statusCodes = array_merge($this->errors[$operation], $this->middlewares->getStatusCodes(), [500]);
+            sort($statusCodes);
+            foreach ($statusCodes as $statusCode) {
+                $this->openapi->set("paths|$path|$method|responses|$statusCode|\$ref", "#/components/responses/error-$statusCode");
+            }
+            $this->openapi->set("paths|$path|$method|responses|default|\$ref", "#/components/responses/error");
         }
-    }
-
-    private function getPattern(ReflectedColumn $column): string
-    {
-        switch ($column->getType()) {
-            case 'varchar':
-                $l = $column->getLength();
-                return '^.{0,' . $l . '}$';
-            case 'clob':
-                return '^.*$';
-            case 'varbinary':
-                $l = $column->getLength();
-                $b = (int) 4 * ceil($l / 3);
-                return '^[A-Za-z0-9+/]{0,' . $b . '}=*$';
-            case 'blob':
-                return '^[A-Za-z0-9+/]*=*$';
-            case 'decimal':
-                $p = $column->getPrecision();
-                $s = $column->getScale();
-                return '^-?[0-9]{1,' . ($p - $s) . '}(\.[0-9]{1,' . $s . '})?$';
-            case 'date':
-                return '^[0-9]{4}-[0-9]{2}-[0-9]{2}$';
-            case 'time':
-                return '^[0-9]{2}:[0-9]{2}:[0-9]{2}$';
-            case 'timestamp':
-                return '^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}$';
-            case 'geometry':
-                return '^(POINT|LINESTRING|POLYGON|MULTIPOINT|MULTILINESTRING|MULTIPOLYGON)\s*\(.*$';
-        }
-        return '';
-    }
-
-    private function getProperties(ReflectedColumn $column): array
-    {
-        $properties = $this->types[$column->getType()];
-        switch ($properties['type']) {
-            case 'string':
-                if ($column->hasLength()) {
-                    $properties['maxLength'] = $column->getLength();
-                }
-                $pattern = $this->getPattern($column);
-                if ($pattern) {
-                    $properties['pattern'] = $pattern;
-                }
-                break;
-            case 'integer':
-                $properties = array_merge($properties, $this->ranges[$column->getType()]);
-                break;
-        }
-        if ($column->getNullable()) {
-            $properties['nullable'] = true;
-        }
-        return $properties;
     }
 
     private function setComponentSchema(string $tableName, array $references) /*: void*/
@@ -296,10 +265,10 @@ class OpenApiRecordsBuilder
                     continue;
                 }
                 $column = $table->getColumn($columnName);
-                if ($operation == 'increment' && !in_array($column->getType(), $this->numericTypes)) {
+                if ($operation == 'increment' && !$this->columnTypes->isNumeric($column)) {
                     continue;
                 }
-                $properties = $this->getProperties($column);
+                $properties = $this->columnTypes->getProperties($column);
                 if ($operation == 'create' && $column->getPk() && $column->getType() == 'integer') {
                     $properties['readOnly'] = true;
                 }
@@ -335,12 +304,15 @@ class OpenApiRecordsBuilder
             if (!$this->isOperationOnTableAllowed($operation, $tableName)) {
                 continue;
             }
+            $schema = "#/components/schemas/$operation-$normalizedTableName";
+            $prefix = "components|responses|$operation-$normalizedTableName";
             if ($operation == 'list') {
-                $this->openapi->set("components|responses|$operation-$normalizedTableName|description", "list of $tableName records");
+                $this->openapi->set("$prefix|description", "list of $tableName records");
+                $this->openapi->set("$prefix|content|application/json|schema|\$ref", $schema);
             } else {
-                $this->openapi->set("components|responses|$operation-$normalizedTableName|description", "single $tableName record");
+                $this->openapi->set("$prefix|description", "single $tableName record, or a list of them for a batch");
+                $this->setSingleOrBatchSchema($prefix, $schema);
             }
-            $this->openapi->set("components|responses|$operation-$normalizedTableName|content|application/json|schema|\$ref", "#/components/schemas/$operation-$normalizedTableName");
         }
     }
 
@@ -356,8 +328,10 @@ class OpenApiRecordsBuilder
                 if (!$this->isOperationOnTableAllowed($operation, $tableName)) {
                     continue;
                 }
-                $this->openapi->set("components|requestBodies|$operation-$normalizedTableName|description", "single $tableName record");
-                $this->openapi->set("components|requestBodies|$operation-$normalizedTableName|content|application/json|schema|\$ref", "#/components/schemas/$operation-$normalizedTableName");
+                $schema = "#/components/schemas/$operation-$normalizedTableName";
+                $prefix = "components|requestBodies|$operation-$normalizedTableName";
+                $this->openapi->set("$prefix|description", "single $tableName record, or a list of them for a batch");
+                $this->setSingleOrBatchSchema($prefix, $schema);
             }
         }
     }
@@ -367,7 +341,7 @@ class OpenApiRecordsBuilder
         $this->openapi->set("components|parameters|pk|name", "id");
         $this->openapi->set("components|parameters|pk|in", "path");
         $this->openapi->set("components|parameters|pk|schema|type", "string");
-        $this->openapi->set("components|parameters|pk|description", "primary key value");
+        $this->openapi->set("components|parameters|pk|description", "Primary key value, or several of them (comma separated) to run the operation as a batch. Example: 1,2");
         $this->openapi->set("components|parameters|pk|required", true);
 
         $this->openapi->set("components|parameters|filter|name", "filter");
@@ -415,6 +389,15 @@ class OpenApiRecordsBuilder
         $this->openapi->set("components|parameters|join|schema|items|type", "string");
         $this->openapi->set("components|parameters|join|description", "Paths (comma separated) to related entities that you want to include. Example: comments,users");
         $this->openapi->set("components|parameters|join|required", false);
+
+        $textSearch = $this->middlewares->getTextSearchParameter();
+        if ($textSearch) {
+            $this->openapi->set("components|parameters|search|name", $textSearch);
+            $this->openapi->set("components|parameters|search|in", "query");
+            $this->openapi->set("components|parameters|search|schema|type", "string");
+            $this->openapi->set("components|parameters|search|description", "Text to search for in all text columns of the table. Example: hello");
+            $this->openapi->set("components|parameters|search|required", false);
+        }
     }
 
     private function setTag(string $tableName) /*: void*/
