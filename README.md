@@ -75,6 +75,8 @@ brackets:
 - "middlewares": List of middlewares to load (`cors`)
 - "controllers": List of controllers to load (`records,geojson,openapi,status`)
 - "customControllers": List of user custom controllers to load (no default)
+- "customOpenApiBuilders": List of user custom OpenAPI builders to load (no
+  default)
 - "openApiBase": OpenAPI info
   (`{"info":{"title":"PHP-CRUD-API","version":"1.0.0"}}`)
 - "openApiFilterCount": Number of "filter1" to "filterN" parameters described in
@@ -1646,6 +1648,10 @@ work, they are just not in the specification. They are appended after the other
 parameters of the operation, as a client generated from the specification may
 pass them by position.
 
+The end-points of a custom controller are not described automatically. You can
+write their documentation by hand in a custom OpenAPI builder, see
+["Documenting a custom controller"](#documenting-a-custom-controller) below.
+
 ## Cache
 
 There are 4 cache engines that can be configured by the "cacheType" config
@@ -1820,6 +1826,126 @@ $config = new Config([
 
 The `customControllers` config supports a comma separated list of custom
 controller classes.
+
+### Documenting a custom controller
+
+The end-points that a custom controller registers are not added to the OpenAPI
+specification automatically. The router knows the method and the path, but not
+the parameters that the end-point reads or the document that it answers with, so
+there is nothing to generate the description from. You can write that
+description by hand in a custom OpenAPI builder class. The class must provide a
+constructor that accepts four parameters and a "build" method that writes into
+the OpenAPI definition it was handed.
+
+Here is an example of a custom OpenAPI builder that documents the "/hello"
+end-point of the controller above:
+
+```
+use Tqdev\PhpCrudApi\Column\ReflectionService;
+use Tqdev\PhpCrudApi\Config\Config;
+use Tqdev\PhpCrudApi\OpenApi\OpenApiDefinition;
+use Tqdev\PhpCrudApi\OpenApi\OpenApiMiddlewares;
+
+class MyHelloOpenApiBuilder {
+
+    private $openapi;
+    private $middlewares;
+
+    public function __construct(OpenApiDefinition $openapi, ReflectionService $reflection, OpenApiMiddlewares $middlewares, Config $config)
+    {
+        $this->openapi = $openapi;
+        $this->middlewares = $middlewares;
+    }
+
+    public function build() /*: void*/
+    {
+        $path = 'paths|/hello|get';
+        foreach ($this->middlewares->getCommonParameters('get') as $parameter) {
+            $this->openapi->set("$path|parameters||\$ref", "#/components/parameters/$parameter");
+        }
+        $this->openapi->set("$path|tags|", 'hello');
+        $this->openapi->set("$path|operationId", 'get_hello');
+        $this->openapi->set("$path|description", 'Say hello');
+        $this->openapi->set("$path|responses|200|description", 'the greeting');
+        $this->openapi->set("$path|responses|200|content|application/json|schema|type", 'object');
+        $this->openapi->set("$path|responses|200|content|application/json|schema|properties|message|type", 'string');
+        $statusCodes = array_merge($this->middlewares->getStatusCodes(), [500]);
+        sort($statusCodes);
+        foreach ($statusCodes as $statusCode) {
+            $this->openapi->set("$path|responses|$statusCode|\$ref", "#/components/responses/error-$statusCode");
+        }
+        $this->openapi->set('tags|', ['name' => 'hello', 'description' => 'hello operations']);
+    }
+}
+```
+
+The last two parameters describe the API that the end-point is served behind, so
+that a hand written operation does not have to guess at it. "OpenApiMiddlewares"
+answers what the enabled middlewares mean for the document: "getCommonParameters"
+gives the parameters that every operation has because a middleware reads them,
+such as "format" for the XML middleware and the header of the XSRF middleware,
+and "getStatusCodes" gives the errors that a middleware can return before the
+end-point is ever reached, such as 401 and 403 for the authentication and
+authorization middlewares. Both change with the "middlewares" config, and the
+example above follows along instead of hardcoding a list that goes stale.
+
+The two parameters were added later and are appended, so a builder that was
+written against the earlier constructor, which took only the definition and the
+reflection class, keeps working unchanged.
+
+And then you may register your custom OpenAPI builder class in the config object
+like this:
+
+```
+$config = new Config([
+    ...
+    'customOpenApiBuilders' => 'MyHelloOpenApiBuilder',
+    ...
+]);
+```
+
+The `customOpenApiBuilders` config supports a comma separated list of custom
+builder classes. They only run when the "openapi" controller is enabled, but
+they do not depend on the controller that serves the end-point they describe.
+The class has to be defined before the "Api" object is constructed, so include
+the file that holds it at the top of "api.php", as a class name that cannot be
+found here is a fatal error.
+
+The "set" method takes a path into the document and the value to write there.
+The parts of the path are separated by a "|" and an empty part appends to a
+list, so `'tags|'` adds an entry to the top level "tags" list and
+`"$path|tags|"` adds one to the "tags" list of the operation. Any part of the
+path that does not exist yet is created. Note that "$ref" has to be escaped as
+`"\$ref"` in a double quoted string, as PHP reads it as a variable otherwise.
+
+Custom builders run after everything that is built in, so a component that the
+built in builders define is there to be referenced, such as
+"#/components/responses/error-500" for the error document of a failing request.
+It also means that a custom builder has the last word: what it writes wins over
+what a built in builder wrote at the same path, which is how you correct a
+description that you disagree with. The one step that runs after the custom
+builders is the copy of every "application/json" content type to
+"application/xml" that the XML middleware asks for, so an end-point that a
+custom builder describes gets that for free.
+
+A builder is not limited to the "paths" section, it can write anywhere in the
+document. Describing an authentication scheme of your own, next to the ones that
+the enabled authentication middlewares describe, works like this:
+
+```
+$this->openapi->set('components|securitySchemes|oauth2|type', 'oauth2');
+$this->openapi->set('components|securitySchemes|oauth2|flows|implicit|authorizationUrl', 'https://example.com/authorize');
+$this->openapi->set('components|securitySchemes|oauth2|flows|implicit|scopes', new \stdClass());
+$this->openapi->set('security||oauth2', []);
+```
+
+The "security" list holds one object per accepted way to authenticate, so the
+empty part in `'security||oauth2'` appends a new object and "oauth2" is the
+scheme it requires.
+
+If all you want to change is the "info" section or another fixed part of the
+document, then the "openApiBase" config option is the shorter way to do it, as
+it takes the JSON that the document is built on top of.
 
 ## Tests
 

@@ -6449,7 +6449,9 @@ namespace Tqdev\PhpCrudApi\OpenApi {
             $this->dbAuth = $this->middlewares->has('dbAuth') ? new OpenApiDbAuthBuilder($this->openapi, $reflection, $this->middlewares) : null;
             $this->builders = array();
             foreach ($config->getCustomOpenApiBuilders() as $className) {
-                $this->builders[] = new $className($this->openapi, $reflection);
+                // the middlewares and the config are appended, so that a builder
+                // written against the older two argument constructor keeps working
+                $this->builders[] = new $className($this->openapi, $reflection, $this->middlewares, $config);
             }
         }
         /**
@@ -6558,11 +6560,14 @@ namespace Tqdev\PhpCrudApi\OpenApi {
             if ($this->status) {
                 $this->status->build();
             }
+            $this->setComponentParameters();
+            $this->setComponentErrors();
+            // the custom builders run after everything that is built in, so that
+            // they have the last word on any part of the document, the shared
+            // components included
             foreach ($this->builders as $builder) {
                 $builder->build();
             }
-            $this->setComponentParameters();
-            $this->setComponentErrors();
             if ($this->middlewares->hasFormatParameter()) {
                 $this->openapi->copyContentType('application/json', 'application/xml');
             }

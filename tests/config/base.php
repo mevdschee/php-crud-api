@@ -1,6 +1,7 @@
 <?php
 
 include_once 'controller.php';
+include_once 'builder.php';
 
 $settings = [
     'database' => 'incorrect_database',
@@ -70,5 +71,6 @@ $settings = [
     'json.tables' => 'products',
     'json.columns' => 'properties',
     'customControllers' => 'MyHelloController',
+    'customOpenApiBuilders' => 'MyHelloOpenApiBuilder,MyLegacyOpenApiBuilder',
     'debug' => false,
 ];
