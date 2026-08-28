@@ -11,6 +11,7 @@ class OpenApiRecordsBuilder
     private $reflection;
     private $middlewares;
     private $tableNames;
+    private $recordParameters;
     private $authorization;
     private $columnTypes;
     /**
@@ -35,12 +36,13 @@ class OpenApiRecordsBuilder
         'increment' => 'patch',
     ];
 
-    public function __construct(OpenApiDefinition $openapi, ReflectionService $reflection, OpenApiMiddlewares $middlewares, OpenApiTableNames $tableNames)
+    public function __construct(OpenApiDefinition $openapi, ReflectionService $reflection, OpenApiMiddlewares $middlewares, OpenApiTableNames $tableNames, OpenApiRecordParameters $recordParameters)
     {
         $this->openapi = $openapi;
         $this->reflection = $reflection;
         $this->middlewares = $middlewares;
         $this->tableNames = $tableNames;
+        $this->recordParameters = $recordParameters;
         $this->authorization = new OpenApiAuthorization();
         $this->columnTypes = new OpenApiColumnTypes();
     }
@@ -133,10 +135,7 @@ class OpenApiRecordsBuilder
             if (in_array($operation, ['list', 'create'])) {
                 $path = sprintf('/records/%s', $tableName);
                 if ($operation == 'list') {
-                    $parameters = ['filter', 'include', 'exclude', 'order', 'size', 'page', 'join'];
-                    if ($this->middlewares->getTextSearchParameter()) {
-                        $parameters[] = 'search';
-                    }
+                    $parameters = $this->recordParameters->getListParameters();
                 }
             } else {
                 $path = sprintf('/records/%s/{id}', $tableName);

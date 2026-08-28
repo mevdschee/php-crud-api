@@ -27,6 +27,8 @@ class Config implements ConfigInterface
         'debug' => false,
         'basePath' => '',
         'openApiBase' => '{"info":{"title":"PHP-CRUD-API","version":"1.0.0"}}',
+        'openApiFilterCount' => 3,
+        'openApiSubFilterCount' => 0,
         'geometrySrid' => 4326,
     ];
     
@@ -224,6 +226,16 @@ class Config implements ConfigInterface
     public function getOpenApiBase(): array
     {
         return json_decode($this->values['openApiBase'], true);
+    }
+
+    public function getOpenApiFilterCount(): int
+    {
+        return max(0, (int) $this->values['openApiFilterCount']);
+    }
+
+    public function getOpenApiSubFilterCount(): int
+    {
+        return min(26, max(0, (int) $this->values['openApiSubFilterCount']));
     }
 
     public function getGeometrySrid(): int

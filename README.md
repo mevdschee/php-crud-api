@@ -77,6 +77,10 @@ brackets:
 - "customControllers": List of user custom controllers to load (no default)
 - "openApiBase": OpenAPI info
   (`{"info":{"title":"PHP-CRUD-API","version":"1.0.0"}}`)
+- "openApiFilterCount": Number of "filter1" to "filterN" parameters described in
+  the OpenAPI specification (`3`)
+- "openApiSubFilterCount": Number of lettered filter parameters, such as
+  "filter1a", described per numbered filter (`0`)
 - "cacheType": `TempFile`, `Redis`, `Memcache`, `Memcached` or `NoCache`
   (`TempFile`)
 - "cachePath": Path/address of the cache (defaults to system's temp directory)
@@ -1630,6 +1634,17 @@ API. To learn more, check out these links:
   creating an OpenAPI specification.
 - [Swagger Petstore](https://petstore.swagger.io/) is an example documentation
   that is generated using OpenAPI.
+
+The "filter" parameter can be repeated any number of times and so can the
+numbered and lettered variants of it, but OpenAPI has no way to say that, every
+parameter has to be named. How many of them are described is therefore a
+setting: "openApiFilterCount" (3 by default) is the number of "filter1" to
+"filterN" parameters and "openApiSubFilterCount" (0 by default) is the number of
+lettered parameters described per numbered one, so setting it to 2 adds
+"filter1a" and "filter1b" to "filter1". The filters that are not described still
+work, they are just not in the specification. They are appended after the other
+parameters of the operation, as a client generated from the specification may
+pass them by position.
 
 ## Cache
 
