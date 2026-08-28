@@ -1834,7 +1834,7 @@ specification automatically. The router knows the method and the path, but not
 the parameters that the end-point reads or the document that it answers with, so
 there is nothing to generate the description from. You can write that
 description by hand in a custom OpenAPI builder class. The class must provide a
-constructor that accepts four parameters and a "build" method that writes into
+constructor that accepts three parameters and a "build" method that writes into
 the OpenAPI definition it was handed.
 
 Here is an example of a custom OpenAPI builder that documents the "/hello"
@@ -1842,7 +1842,6 @@ end-point of the controller above:
 
 ```
 use Tqdev\PhpCrudApi\Column\ReflectionService;
-use Tqdev\PhpCrudApi\Config\Config;
 use Tqdev\PhpCrudApi\OpenApi\OpenApiDefinition;
 use Tqdev\PhpCrudApi\OpenApi\OpenApiMiddlewares;
 
@@ -1851,7 +1850,7 @@ class MyHelloOpenApiBuilder {
     private $openapi;
     private $middlewares;
 
-    public function __construct(OpenApiDefinition $openapi, ReflectionService $reflection, OpenApiMiddlewares $middlewares, Config $config)
+    public function __construct(OpenApiDefinition $openapi, ReflectionService $reflection, OpenApiMiddlewares $middlewares)
     {
         $this->openapi = $openapi;
         $this->middlewares = $middlewares;
@@ -1879,18 +1878,18 @@ class MyHelloOpenApiBuilder {
 }
 ```
 
-The last two parameters describe the API that the end-point is served behind, so
-that a hand written operation does not have to guess at it. "OpenApiMiddlewares"
-answers what the enabled middlewares mean for the document: "getCommonParameters"
-gives the parameters that every operation has because a middleware reads them,
-such as "format" for the XML middleware and the header of the XSRF middleware,
-and "getStatusCodes" gives the errors that a middleware can return before the
+The third parameter describes the API that the end-point is served behind, so
+that a hand written operation does not have to guess at it. It answers what the
+enabled middlewares mean for the document: "getCommonParameters" gives the
+parameters that every operation has because a middleware reads them, such as
+"format" for the XML middleware and the header of the XSRF middleware, and
+"getStatusCodes" gives the errors that a middleware can return before the
 end-point is ever reached, such as 401 and 403 for the authentication and
 authorization middlewares. Both change with the "middlewares" config, and the
 example above follows along instead of hardcoding a list that goes stale.
 
-The two parameters were added later and are appended, so a builder that was
-written against the earlier constructor, which took only the definition and the
+The parameter was added later and is appended, so a builder that was written
+against the earlier constructor, which took only the definition and the
 reflection class, keeps working unchanged.
 
 And then you may register your custom OpenAPI builder class in the config object
@@ -1943,9 +1942,21 @@ The "security" list holds one object per accepted way to authenticate, so the
 empty part in `'security||oauth2'` appends a new object and "oauth2" is the
 scheme it requires.
 
-If all you want to change is the "info" section or another fixed part of the
-document, then the "openApiBase" config option is the shorter way to do it, as
-it takes the JSON that the document is built on top of.
+A scheme that is the same on every request does not need a builder at all. The
+"openApiBase" config option takes the JSON that the document is built on top of,
+so it can carry "components" and "security" as well as the "info" section:
+
+```
+$config = new Config([
+    ...
+    'openApiBase' => '{"info":{"title":"My API","version":"1.0.0"},"components":{"securitySchemes":{"tokenAuth":{"type":"apiKey","in":"header","name":"X-Token"}}},"security":[{"tokenAuth":[]}]}',
+    ...
+]);
+```
+
+What the enabled authentication middlewares describe is added next to that
+rather than in place of it, so a scheme of your own and the built in ones can
+both be in the document.
 
 ## Tests
 

@@ -52,9 +52,9 @@ class OpenApiBuilder
         $this->dbAuth = $this->middlewares->has('dbAuth') ? new OpenApiDbAuthBuilder($this->openapi, $reflection, $this->middlewares) : null;
         $this->builders = array();
         foreach ($config->getCustomOpenApiBuilders() as $className) {
-            // the middlewares and the config are appended, so that a builder
-            // written against the older two argument constructor keeps working
-            $this->builders[] = new $className($this->openapi, $reflection, $this->middlewares, $config);
+            // the middlewares are appended, so that a builder written against
+            // the older two argument constructor keeps working
+            $this->builders[] = new $className($this->openapi, $reflection, $this->middlewares);
         }
     }
 

@@ -1,7 +1,6 @@
 <?php
 
 use Tqdev\PhpCrudApi\Column\ReflectionService;
-use Tqdev\PhpCrudApi\Config\Config;
 use Tqdev\PhpCrudApi\OpenApi\OpenApiDefinition;
 use Tqdev\PhpCrudApi\OpenApi\OpenApiMiddlewares;
 
@@ -10,7 +9,7 @@ class MyHelloOpenApiBuilder {
     private $openapi;
     private $middlewares;
 
-    public function __construct(OpenApiDefinition $openapi, ReflectionService $reflection, OpenApiMiddlewares $middlewares, Config $config)
+    public function __construct(OpenApiDefinition $openapi, ReflectionService $reflection, OpenApiMiddlewares $middlewares)
     {
         $this->openapi = $openapi;
         $this->middlewares = $middlewares;
