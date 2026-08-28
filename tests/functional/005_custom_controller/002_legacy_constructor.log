@@ -1,8 +1,8 @@
 ===
-GET /hello
+GET /legacy
 ===
 200
 Content-Type: application/json; charset=utf-8
 Content-Length: 27
 
-{"message":"Hello Config!"}
+{"message":"Hello Legacy!"}

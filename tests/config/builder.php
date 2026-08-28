@@ -1,6 +1,7 @@
 <?php
 
 use Tqdev\PhpCrudApi\Column\ReflectionService;
+use Tqdev\PhpCrudApi\Config\CustomSettings;
 use Tqdev\PhpCrudApi\OpenApi\OpenApiDefinition;
 use Tqdev\PhpCrudApi\OpenApi\OpenApiMiddlewares;
 
@@ -8,11 +9,13 @@ class MyHelloOpenApiBuilder {
 
     private $openapi;
     private $middlewares;
+    private $description;
 
-    public function __construct(OpenApiDefinition $openapi, ReflectionService $reflection, OpenApiMiddlewares $middlewares)
+    public function __construct(OpenApiDefinition $openapi, ReflectionService $reflection, OpenApiMiddlewares $middlewares, CustomSettings $settings)
     {
         $this->openapi = $openapi;
         $this->middlewares = $middlewares;
+        $this->description = $settings->get('description', 'Say hello');
     }
 
     public function build() /*: void*/
@@ -23,7 +26,7 @@ class MyHelloOpenApiBuilder {
         }
         $this->openapi->set("$path|tags|", 'hello');
         $this->openapi->set("$path|operationId", 'get_hello');
-        $this->openapi->set("$path|description", 'Say hello');
+        $this->openapi->set("$path|description", $this->description);
         $this->openapi->set("$path|responses|200|description", 'the greeting');
         $this->openapi->set("$path|responses|200|content|application/json|schema|type", 'object');
         $this->openapi->set("$path|responses|200|content|application/json|schema|properties|message|type", 'string');
