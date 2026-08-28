@@ -1780,7 +1780,7 @@ from the database and the cache.
 ## Custom controller
 
 You can add your own custom REST API endpoints by writing your own custom
-controller class. The class must provide a constructor that accepts five
+controller class. The class must provide a constructor that accepts six
 parameters. With these parameters you can register your own endpoint to the
 existing router. This endpoint may use the database and/or the reflection class
 of the database.
@@ -1792,6 +1792,7 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Tqdev\PhpCrudApi\Cache\Cache;
 use Tqdev\PhpCrudApi\Column\ReflectionService;
+use Tqdev\PhpCrudApi\Config\CustomSettings;
 use Tqdev\PhpCrudApi\Controller\Responder;
 use Tqdev\PhpCrudApi\Database\GenericDB;
 use Tqdev\PhpCrudApi\Middleware\Router\Router;
@@ -1799,16 +1800,18 @@ use Tqdev\PhpCrudApi\Middleware\Router\Router;
 class MyHelloController {
 
     private $responder;
+    private $greeting;
 
-    public function __construct(Router $router, Responder $responder, GenericDB $db, ReflectionService $reflection, Cache $cache)
+    public function __construct(Router $router, Responder $responder, GenericDB $db, ReflectionService $reflection, Cache $cache, CustomSettings $settings)
     {
         $router->register('GET', '/hello', array($this, 'getHello'));
         $this->responder = $responder;
+        $this->greeting = $settings->get('greeting', 'Hello World!');
     }
 
     public function getHello(ServerRequestInterface $request): ResponseInterface
     {
-        return $this->responder->success(['message' => "Hello World!"]);
+        return $this->responder->success(['message' => $this->greeting]);
     }
 }
 ```
@@ -1827,6 +1830,37 @@ $config = new Config([
 The `customControllers` config supports a comma separated list of custom
 controller classes.
 
+### Settings of a custom class
+
+The last parameter holds the settings of the class itself. A middleware reads
+the config keys that start with its own name, and a custom controller or a
+custom OpenAPI builder reads the keys that start with the short name of its
+class, which is the class name without the namespace:
+
+```
+$config = new Config([
+    ...
+    'customControllers' => 'MyHelloController',
+    'MyHelloController.greeting' => 'Hello Config!',
+    ...
+]);
+```
+
+`$settings->get('greeting', 'Hello World!')` then answers "Hello Config!", and
+the second argument is what it answers when the key is not set. As with every
+other config option, the environment variable wins over the value in the file,
+so the setting above is also:
+
+```
+PHP_CRUD_API_MY_HELLO_CONTROLLER_GREETING="Hello Config!"
+```
+
+The short name is what keeps that environment variable readable, which is why
+the namespace is left out of it. The class does have to be listed in
+"customControllers" or "customOpenApiBuilders" before it can carry a setting, as
+a key with an unknown prefix is a typo rather than a setting and is refused. For
+the same reason two listed classes may not share a short name.
+
 ### Documenting a custom controller
 
 The end-points that a custom controller registers are not added to the OpenAPI
@@ -1834,7 +1868,7 @@ specification automatically. The router knows the method and the path, but not
 the parameters that the end-point reads or the document that it answers with, so
 there is nothing to generate the description from. You can write that
 description by hand in a custom OpenAPI builder class. The class must provide a
-constructor that accepts three parameters and a "build" method that writes into
+constructor that accepts four parameters and a "build" method that writes into
 the OpenAPI definition it was handed.
 
 Here is an example of a custom OpenAPI builder that documents the "/hello"
@@ -1842,6 +1876,7 @@ end-point of the controller above:
 
 ```
 use Tqdev\PhpCrudApi\Column\ReflectionService;
+use Tqdev\PhpCrudApi\Config\CustomSettings;
 use Tqdev\PhpCrudApi\OpenApi\OpenApiDefinition;
 use Tqdev\PhpCrudApi\OpenApi\OpenApiMiddlewares;
 
@@ -1849,11 +1884,13 @@ class MyHelloOpenApiBuilder {
 
     private $openapi;
     private $middlewares;
+    private $description;
 
-    public function __construct(OpenApiDefinition $openapi, ReflectionService $reflection, OpenApiMiddlewares $middlewares)
+    public function __construct(OpenApiDefinition $openapi, ReflectionService $reflection, OpenApiMiddlewares $middlewares, CustomSettings $settings)
     {
         $this->openapi = $openapi;
         $this->middlewares = $middlewares;
+        $this->description = $settings->get('description', 'Say hello');
     }
 
     public function build() /*: void*/
@@ -1864,7 +1901,7 @@ class MyHelloOpenApiBuilder {
         }
         $this->openapi->set("$path|tags|", 'hello');
         $this->openapi->set("$path|operationId", 'get_hello');
-        $this->openapi->set("$path|description", 'Say hello');
+        $this->openapi->set("$path|description", $this->description);
         $this->openapi->set("$path|responses|200|description", 'the greeting');
         $this->openapi->set("$path|responses|200|content|application/json|schema|type", 'object');
         $this->openapi->set("$path|responses|200|content|application/json|schema|properties|message|type", 'string');
@@ -1888,9 +1925,13 @@ end-point is ever reached, such as 401 and 403 for the authentication and
 authorization middlewares. Both change with the "middlewares" config, and the
 example above follows along instead of hardcoding a list that goes stale.
 
-The parameter was added later and is appended, so a builder that was written
-against the earlier constructor, which took only the definition and the
-reflection class, keeps working unchanged.
+The fourth parameter holds the settings of the builder itself, described in
+["Settings of a custom class"](#settings-of-a-custom-class) above.
+
+Both were added later and are appended, so a builder that was written against
+the earlier constructor, which took only the definition and the reflection
+class, keeps working unchanged. The same holds for a custom controller written
+against the five parameter constructor.
 
 And then you may register your custom OpenAPI builder class in the config object
 like this:

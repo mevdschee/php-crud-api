@@ -137,6 +137,7 @@ namespace Tqdev\PhpCrudApi {
     use Tqdev\PhpCrudApi\Column\DefinitionService;
     use Tqdev\PhpCrudApi\Column\ReflectionService;
     use Tqdev\PhpCrudApi\Config\Config;
+    use Tqdev\PhpCrudApi\Config\CustomSettings;
     use Tqdev\PhpCrudApi\Controller\CacheController;
     use Tqdev\PhpCrudApi\Controller\ColumnController;
     use Tqdev\PhpCrudApi\Controller\GeoJsonController;
@@ -281,7 +282,10 @@ namespace Tqdev\PhpCrudApi {
             }
             foreach ($config->getCustomControllers() as $className) {
                 if (class_exists($className)) {
-                    new $className($router, $responder, $db, $reflection, $cache);
+                    // the settings are appended, so that a controller written
+                    // against the older five argument constructor keeps working
+                    $settings = new CustomSettings($config, Config::getShortClassName($className));
+                    new $className($router, $responder, $db, $reflection, $cache, $settings);
                 }
             }
             $this->router = $router;
@@ -1397,6 +1401,36 @@ namespace Tqdev\PhpCrudApi\Config {
             $variableName = $this->getEnvironmentVariableName($key);
             return getenv($variableName, true) ?: $this->values[$key] ?? $default;
         }
+        /**
+         * The name a custom class is known by in the config, which is its class
+         * name without the namespace.
+         */
+        public static function getShortClassName(string $className): string
+        {
+            $position = strrpos($className, '\\');
+            return $position === false ? $className : substr($className, $position + 1);
+        }
+        /**
+         * The short names of the custom controllers and the custom openapi
+         * builders, which may carry settings of their own the way a middleware
+         * does. The short name is used rather than the class name, as a namespaced
+         * class name has no legal environment variable to go with it. Two listed
+         * classes that share a short name are refused, so that a setting is never
+         * read by the class it was not meant for.
+         */
+        private function getCustomClassNames(): array
+        {
+            $names = array();
+            $classNames = array_merge($this->getCustomControllers(), $this->getCustomOpenApiBuilders());
+            foreach ($classNames as $className) {
+                $name = self::getShortClassName($className);
+                if (in_array($name, $names)) {
+                    throw new \Exception("Config has two custom classes named '{$name}'");
+                }
+                $names[] = $name;
+            }
+            return $names;
+        }
         public function __construct(array $values)
         {
             $defaults = array_merge($this->values, $this->getDriverDefaults($this->getDefaultDriver($values)));
@@ -1405,15 +1439,16 @@ namespace Tqdev\PhpCrudApi\Config {
                 $this->values[$key] = $this->getProperty($key);
             }
             $this->values['middlewares'] = array_map('trim', explode(',', $this->values['middlewares']));
+            $prefixes = array_merge($this->values['middlewares'], $this->getCustomClassNames());
             foreach ($values as $key => $value) {
                 if (strpos($key, '.') === false) {
                     if (!isset($defaults[$key])) {
                         throw new \Exception("Config has invalid key '{$key}'");
                     }
                 } else {
-                    $middleware = substr($key, 0, strpos($key, '.'));
-                    if (!in_array($middleware, $this->values['middlewares'])) {
-                        throw new \Exception("Config has invalid middleware key '{$key}'");
+                    $prefix = substr($key, 0, strpos($key, '.'));
+                    if (!in_array($prefix, $prefixes)) {
+                        throw new \Exception("Config has invalid middleware or custom class key '{$key}'");
                     } else {
                         $this->values[$key] = $value;
                     }
@@ -1514,6 +1549,31 @@ namespace Tqdev\PhpCrudApi\Config {
         public function getGeometrySrid(): int
         {
             return $this->values['geometrySrid'];
+        }
+    }
+}
+
+// file: src/Tqdev/PhpCrudApi/Config/CustomSettings.php
+namespace Tqdev\PhpCrudApi\Config {
+    /**
+     * The settings of a custom controller or a custom openapi builder, which are
+     * the config keys that start with the short name of its class, the way a
+     * middleware reads the keys that start with its own name. It is handed over
+     * instead of the config itself, as a class that documents or serves an
+     * end-point has no use for the database credentials.
+     */
+    class CustomSettings
+    {
+        private $config;
+        private $prefix;
+        public function __construct(Config $config, string $prefix)
+        {
+            $this->config = $config;
+            $this->prefix = $prefix;
+        }
+        public function get(string $key, string $default = ''): string
+        {
+            return (string) $this->config->getProperty($this->prefix . '.' . $key, $default);
         }
     }
 }
@@ -6414,6 +6474,7 @@ namespace Tqdev\PhpCrudApi\OpenApi {
     use Psr\Http\Message\ServerRequestInterface;
     use Tqdev\PhpCrudApi\Column\ReflectionService;
     use Tqdev\PhpCrudApi\Config\Config;
+    use Tqdev\PhpCrudApi\Config\CustomSettings;
     use Tqdev\PhpCrudApi\OpenApi\OpenApiDefinition;
     class OpenApiBuilder
     {
@@ -6449,9 +6510,10 @@ namespace Tqdev\PhpCrudApi\OpenApi {
             $this->dbAuth = $this->middlewares->has('dbAuth') ? new OpenApiDbAuthBuilder($this->openapi, $reflection, $this->middlewares) : null;
             $this->builders = array();
             foreach ($config->getCustomOpenApiBuilders() as $className) {
-                // the middlewares are appended, so that a builder written against
-                // the older two argument constructor keeps working
-                $this->builders[] = new $className($this->openapi, $reflection, $this->middlewares);
+                // the middlewares and the settings are appended, so that a builder
+                // written against the older two argument constructor keeps working
+                $settings = new CustomSettings($config, Config::getShortClassName($className));
+                $this->builders[] = new $className($this->openapi, $reflection, $this->middlewares, $settings);
             }
         }
         /**

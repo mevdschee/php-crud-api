@@ -5,6 +5,7 @@ namespace Tqdev\PhpCrudApi\OpenApi;
 use Psr\Http\Message\ServerRequestInterface;
 use Tqdev\PhpCrudApi\Column\ReflectionService;
 use Tqdev\PhpCrudApi\Config\Config;
+use Tqdev\PhpCrudApi\Config\CustomSettings;
 use Tqdev\PhpCrudApi\OpenApi\OpenApiDefinition;
 
 class OpenApiBuilder
@@ -52,9 +53,10 @@ class OpenApiBuilder
         $this->dbAuth = $this->middlewares->has('dbAuth') ? new OpenApiDbAuthBuilder($this->openapi, $reflection, $this->middlewares) : null;
         $this->builders = array();
         foreach ($config->getCustomOpenApiBuilders() as $className) {
-            // the middlewares are appended, so that a builder written against
-            // the older two argument constructor keeps working
-            $this->builders[] = new $className($this->openapi, $reflection, $this->middlewares);
+            // the middlewares and the settings are appended, so that a builder
+            // written against the older two argument constructor keeps working
+            $settings = new CustomSettings($config, Config::getShortClassName($className));
+            $this->builders[] = new $className($this->openapi, $reflection, $this->middlewares, $settings);
         }
     }
 

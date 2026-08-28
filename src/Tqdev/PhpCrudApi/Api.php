@@ -9,6 +9,7 @@ use Tqdev\PhpCrudApi\Cache\CacheFactory;
 use Tqdev\PhpCrudApi\Column\DefinitionService;
 use Tqdev\PhpCrudApi\Column\ReflectionService;
 use Tqdev\PhpCrudApi\Config\Config;
+use Tqdev\PhpCrudApi\Config\CustomSettings;
 use Tqdev\PhpCrudApi\Controller\CacheController;
 use Tqdev\PhpCrudApi\Controller\ColumnController;
 use Tqdev\PhpCrudApi\Controller\GeoJsonController;
@@ -166,7 +167,10 @@ class Api implements RequestHandlerInterface
         }
         foreach ($config->getCustomControllers() as $className) {
             if (class_exists($className)) {
-                new $className($router, $responder, $db, $reflection, $cache);
+                // the settings are appended, so that a controller written
+                // against the older five argument constructor keeps working
+                $settings = new CustomSettings($config, Config::getShortClassName($className));
+                new $className($router, $responder, $db, $reflection, $cache, $settings);
             }
         }
         $this->router = $router;

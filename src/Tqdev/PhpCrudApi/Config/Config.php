@@ -100,6 +100,38 @@ class Config implements ConfigInterface
         return getenv($variableName, true) ?: ($this->values[$key] ?? $default);
     }
 
+    /**
+     * The name a custom class is known by in the config, which is its class
+     * name without the namespace.
+     */
+    public static function getShortClassName(string $className): string
+    {
+        $position = strrpos($className, '\\');
+        return $position === false ? $className : substr($className, $position + 1);
+    }
+
+    /**
+     * The short names of the custom controllers and the custom openapi
+     * builders, which may carry settings of their own the way a middleware
+     * does. The short name is used rather than the class name, as a namespaced
+     * class name has no legal environment variable to go with it. Two listed
+     * classes that share a short name are refused, so that a setting is never
+     * read by the class it was not meant for.
+     */
+    private function getCustomClassNames(): array
+    {
+        $names = array();
+        $classNames = array_merge($this->getCustomControllers(), $this->getCustomOpenApiBuilders());
+        foreach ($classNames as $className) {
+            $name = self::getShortClassName($className);
+            if (in_array($name, $names)) {
+                throw new \Exception("Config has two custom classes named '$name'");
+            }
+            $names[] = $name;
+        }
+        return $names;
+    }
+
     public function __construct(array $values)
     {
         $defaults = array_merge($this->values, $this->getDriverDefaults($this->getDefaultDriver($values)));
@@ -108,15 +140,16 @@ class Config implements ConfigInterface
             $this->values[$key] = $this->getProperty($key);
         }
         $this->values['middlewares'] = array_map('trim', explode(',', $this->values['middlewares']));
+        $prefixes = array_merge($this->values['middlewares'], $this->getCustomClassNames());
         foreach ($values as $key => $value) {
             if (strpos($key, '.') === false) {
                 if (!isset($defaults[$key])) {
                     throw new \Exception("Config has invalid key '$key'");
                 }
             } else {
-                $middleware = substr($key, 0, strpos($key, '.'));
-                if (!in_array($middleware, $this->values['middlewares'])) {
-                    throw new \Exception("Config has invalid middleware key '$key'");
+                $prefix = substr($key, 0, strpos($key, '.'));
+                if (!in_array($prefix, $prefixes)) {
+                    throw new \Exception("Config has invalid middleware or custom class key '$key'");
                 } else {
                     $this->values[$key] = $value;
                 }

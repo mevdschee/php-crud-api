@@ -70,7 +70,9 @@ $settings = [
     'json.controllers' => 'records',
     'json.tables' => 'products',
     'json.columns' => 'properties',
-    'customControllers' => 'MyHelloController',
+    'customControllers' => 'MyHelloController,MyLegacyController',
+    'MyHelloController.greeting' => 'Hello Config!',
     'customOpenApiBuilders' => 'MyHelloOpenApiBuilder,MyLegacyOpenApiBuilder',
+    'MyHelloOpenApiBuilder.description' => 'Say hello, as the config asked',
     'debug' => false,
 ];
