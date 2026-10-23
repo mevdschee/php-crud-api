@@ -34,7 +34,8 @@ Publishes a new version. It takes the part of the version to increase:
 
 It reads the latest tag from the remote, calculates the new tag from it, updates
 the dependencies with "update.php", compiles "api.php" and "api.include.php"
-with "build.php", commits and pushes whatever that changed, and creates the
+with "build.php" (passing the new tag, so it ends up in the header of both
+files), commits and pushes whatever that changed, and creates the
 github release with both compiled files attached. The tag is created by the
 release.
 

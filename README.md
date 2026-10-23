@@ -224,6 +224,12 @@ the dependencies.
 NB: The update script will patch the dependencies in the vendor directory for
 PHP 7.0 compatibility.
 
+### Version
+
+The version of the release is in the header at the top of "api.php" (and
+"api.include.php"), for instance "PHP-CRUD-API v2.16.7". When you build the
+file yourself it gets the version of the latest release tag in your checkout.
+
 ### Releasing
 
 The scripts that publish a new version and the docker image are in the "scripts"

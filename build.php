@@ -5,10 +5,18 @@
 $mergerUrl = 'https://raw.githubusercontent.com/mevdschee/phpfilemerger/refs/heads/main/phpfilemerger.php';
 $mergerFile = __DIR__ . '/phpfilemerger.php';
 
+// the version is passed by the release script, a development build gets the
+// version of the latest release tag
+$version = $argv[1] ?? trim((string) shell_exec('git -C ' . escapeshellarg(__DIR__) . ' describe --tags --abbrev=0 2>/dev/null'));
+if (!preg_match('/^v\d+\.\d+\.\d+$/', $version)) {
+    $version = 'v2';
+}
+$title = str_pad("PHP-CRUD-API $version", 28);
+
 $header = <<<EOF
 <?php
 /**
- * PHP-CRUD-API v2              License: MIT
+ * $title License: MIT
  * Maurits van der Schee: maurits@vdschee.nl
  * https://github.com/mevdschee/php-crud-api
  *
