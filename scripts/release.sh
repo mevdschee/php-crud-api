@@ -53,12 +53,12 @@ case $step in
 esac
 # Constuct new tag
 newTag=v${version[0]}.${version[1]}.${version[2]}
-# Build all files
+# Build all files, with the new version in the header
 php update.php
-php build.php
+php build.php $newTag
 # Commit the rebuilt files, there is nothing to commit when they did not change
 if [ -n "$(git status --porcelain --untracked-files=no)" ]; then
-  git commit -am "update dependencies"
+  git commit -am "build $newTag"
 fi
 git push
 # Publish the release
