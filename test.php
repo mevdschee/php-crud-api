@@ -3,6 +3,7 @@
 use Tqdev\PhpCrudApi\Api;
 use Tqdev\PhpCrudApi\Config\Config;
 use Tqdev\PhpCrudApi\Database\GenericDB;
+use Tqdev\PhpCrudApi\Middleware\Communication\VariableStore;
 use Tqdev\PhpCrudApi\RequestFactory;
 use Tqdev\PhpCrudApi\ResponseUtils;
 
@@ -84,6 +85,8 @@ function runTest(Config $config, string $file, string $category, bool $record): 
             }
             $in = $parts[$i];
             $exp = $parts[$i + 1];
+            // every request starts with an empty store, as it does in production
+            VariableStore::$values = array();
             $api = new Api($config);
             $out = ResponseUtils::toString($api->handle(RequestFactory::fromString($in)));
             if ($recording) {

@@ -116,6 +116,7 @@ class RequestUtils
                 return $allTableNames;
             case 'columns':
                 return $tableName ? [$tableName] : $allTableNames;
+            case 'geojson':
             case 'records':
                 $params = RequestUtils::getParams($request);
                 $tableNames = self::getJoinTables($tableName, $params);

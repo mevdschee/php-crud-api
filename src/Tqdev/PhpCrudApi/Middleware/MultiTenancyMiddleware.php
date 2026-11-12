@@ -76,7 +76,7 @@ class MultiTenancyMiddleware extends Middleware
         $handler = $this->getProperty('handler', '');
         if ($handler !== '') {
             $path = RequestUtils::getPathSegment($request, 1);
-            if ($path == 'records') {
+            if ($path == 'records' || $path == 'geojson') {
                 $operation = RequestUtils::getOperation($request);
                 $tableNames = RequestUtils::getTableNames($request, $this->reflection);
                 foreach ($tableNames as $i => $tableName) {

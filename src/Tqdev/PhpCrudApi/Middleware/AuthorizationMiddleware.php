@@ -91,7 +91,7 @@ class AuthorizationMiddleware extends Middleware
         $tableNames = RequestUtils::getTableNames($request, $this->reflection);
         foreach ($tableNames as $tableName) {
             $this->handleTable($operation, $tableName);
-            if ($path == 'records') {
+            if ($path == 'records' || $path == 'geojson') {
                 $this->handleRecords($operation, $tableName);
             }
         }

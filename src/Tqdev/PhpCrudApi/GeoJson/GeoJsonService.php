@@ -117,11 +117,14 @@ class GeoJsonService
         return new FeatureCollection($features, $records->getResults());
     }
 
-    public function read(string $tableName, string $id, array $params): Feature
+    public function read(string $tableName, string $id, array $params) /*: ?Feature*/
     {
         $geometryColumnName = $this->getGeometryColumnName($tableName, $params);
         $primaryKeyColumnName = $this->getPrimaryKeyColumnName($tableName, $params);
         $record = $this->records->read($tableName, $id, $params);
+        if ($record === null) {
+            return null;
+        }
         return $this->convertRecordToFeature($record, $primaryKeyColumnName, $geometryColumnName);
     }
 }

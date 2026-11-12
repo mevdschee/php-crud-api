@@ -4110,11 +4110,14 @@ namespace Tqdev\PhpCrudApi\GeoJson {
             }
             return new FeatureCollection($features, $records->getResults());
         }
-        public function read(string $tableName, string $id, array $params): Feature
+        public function read(string $tableName, string $id, array $params)
         {
             $geometryColumnName = $this->getGeometryColumnName($tableName, $params);
             $primaryKeyColumnName = $this->getPrimaryKeyColumnName($tableName, $params);
             $record = $this->records->read($tableName, $id, $params);
+            if ($record === null) {
+                return null;
+            }
             return $this->convertRecordToFeature($record, $primaryKeyColumnName, $geometryColumnName);
         }
     }
@@ -4408,7 +4411,7 @@ namespace Tqdev\PhpCrudApi\Middleware {
             $tableNames = RequestUtils::getTableNames($request, $this->reflection);
             foreach ($tableNames as $tableName) {
                 $this->handleTable($operation, $tableName);
-                if ($path == 'records') {
+                if ($path == 'records' || $path == 'geojson') {
                     $this->handleRecords($operation, $tableName);
                 }
             }
@@ -5426,7 +5429,7 @@ namespace Tqdev\PhpCrudApi\Middleware {
             $handler = $this->getProperty('handler', '');
             if ($handler !== '') {
                 $path = RequestUtils::getPathSegment($request, 1);
-                if ($path == 'records') {
+                if ($path == 'records' || $path == 'geojson') {
                     $operation = RequestUtils::getOperation($request);
                     $tableNames = RequestUtils::getTableNames($request, $this->reflection);
                     foreach ($tableNames as $i => $tableName) {
@@ -9608,6 +9611,7 @@ namespace Tqdev\PhpCrudApi {
                     return $allTableNames;
                 case 'columns':
                     return $tableName ? [$tableName] : $allTableNames;
+                case 'geojson':
                 case 'records':
                     $params = RequestUtils::getParams($request);
                     $tableNames = self::getJoinTables($tableName, $params);
