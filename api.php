@@ -1,6 +1,6 @@
 <?php
 /**
- * PHP-CRUD-API v2.16.7         License: MIT
+ * PHP-CRUD-API v2.16.8         License: MIT
  * Maurits van der Schee: maurits@vdschee.nl
  * https://github.com/mevdschee/php-crud-api
  *
