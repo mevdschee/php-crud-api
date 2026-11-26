@@ -1,6 +1,6 @@
 <?php
 /**
- * PHP-CRUD-API v2.16.8         License: MIT
+ * PHP-CRUD-API v2.16.9         License: MIT
  * Maurits van der Schee: maurits@vdschee.nl
  * https://github.com/mevdschee/php-crud-api
  *
@@ -5214,6 +5214,11 @@ namespace Tqdev\PhpCrudApi\Middleware {
     use Tqdev\PhpCrudApi\RequestUtils;
     class JwtAuthMiddleware extends Middleware
     {
+        private function isPublicKey(string $secret): bool
+        {
+            $secret = ltrim($secret);
+            return strpos($secret, '-----BEGIN') === 0 || strpos($secret, 'file://') === 0;
+        }
         private function getVerifiedClaims(string $token, int $time, int $leeway, int $ttl, array $secrets, array $requirements): array
         {
             $algorithms = array('HS256' => 'sha256', 'HS384' => 'sha384', 'HS512' => 'sha512', 'RS256' => 'sha256', 'RS384' => 'sha384', 'RS512' => 'sha512');
@@ -5230,7 +5235,10 @@ namespace Tqdev\PhpCrudApi\Middleware {
                 return array();
             }
             $secret = $secrets[$kid];
-            if ($header['typ'] != 'JWT') {
+            if (!isset($header['typ']) || $header['typ'] != 'JWT') {
+                return array();
+            }
+            if (!isset($header['alg']) || !is_string($header['alg'])) {
                 return array();
             }
             $algorithm = $header['alg'];
@@ -5238,6 +5246,11 @@ namespace Tqdev\PhpCrudApi\Middleware {
                 return array();
             }
             if (!empty($requirements['alg']) && !in_array($algorithm, $requirements['alg'])) {
+                return array();
+            }
+            // the type of the key determines the algorithm family, not the token,
+            // as a public key must never be accepted as a HMAC shared secret
+            if ($this->isPublicKey($secret) != ($algorithm[0] == 'R')) {
                 return array();
             }
             $hmac = $algorithms[$algorithm];
@@ -10267,9 +10280,7 @@ namespace Nyholm\Psr7 {
          */
         public function withProtocolVersion($version): MessageInterface
         {
-            if (!\is_scalar($version)) {
-                throw new \InvalidArgumentException('Protocol version must be a string');
-            }
+            $this->assertProtocolVersion($version);
             if ($this->protocol === $version) {
                 return $this;
             }
@@ -10364,6 +10375,12 @@ namespace Nyholm\Psr7 {
             $new->stream = $body;
             return $new;
         }
+        private function assertProtocolVersion($version): void
+        {
+            if (!\is_scalar($version) || 1 !== \preg_match('@^[0-9]+(?:\.[0-9]+)?$@D', (string) $version)) {
+                throw new \InvalidArgumentException('Protocol version must be a valid HTTP version number');
+            }
+        }
         private function setHeaders(array $headers): void
         {
             foreach ($headers as $header => $value) {
@@ -10408,7 +10425,7 @@ namespace Nyholm\Psr7 {
             }
             if (!\is_array($values)) {
                 // This is simple, just one value.
-                if (!\is_numeric($values) && !\is_string($values) || 1 !== \preg_match("@^[ \t!-~\x80-\xff]*\$@", (string) $values)) {
+                if (!\is_numeric($values) && !\is_string($values) || 1 !== \preg_match("@^[ \t!-~\x80-\xff]*\$@D", (string) $values)) {
                     throw new \InvalidArgumentException('Header values must be RFC 7230 compatible strings');
                 }
                 return [\trim((string) $values, " \t")];
@@ -10789,6 +10806,7 @@ namespace Nyholm\Psr7 {
             if (!\is_string($method)) {
                 throw new \InvalidArgumentException('Method must be a string');
             }
+            $this->assertMethod($method);
             $new = clone $this;
             $new->method = $method;
             return $new;
@@ -10812,6 +10830,12 @@ namespace Nyholm\Psr7 {
             }
             return $new;
         }
+        private function assertMethod(string $method): void
+        {
+            if (1 !== \preg_match("@^[!#\$%&'*+.^_`|~0-9A-Za-z-]+\$@D", $method)) {
+                throw new \InvalidArgumentException('Method must be a valid HTTP token');
+            }
+        }
         private function updateHostFromUri(): void
         {
             if ('' === $host = $this->uri->getHost()) {
@@ -10820,6 +10844,7 @@ namespace Nyholm\Psr7 {
             if (null !== $port = $this->uri->getPort()) {
                 $host .= ':' . $port;
             }
+            $host = $this->validateAndTrimHeader('Host', $host)[0];
             if (isset($this->headerNames['host'])) {
                 $header = $this->headerNames['host'];
             } else {
@@ -10857,9 +10882,11 @@ namespace Nyholm\Psr7 {
             if (!$uri instanceof UriInterface) {
                 $uri = new Uri($uri);
             }
+            $this->assertMethod($method);
             $this->method = $method;
             $this->uri = $uri;
             $this->setHeaders($headers);
+            $this->assertProtocolVersion($version);
             $this->protocol = $version;
             if (!$this->hasHeader('Host')) {
                 $this->updateHostFromUri();
@@ -10977,6 +11004,8 @@ namespace Nyholm\Psr7 {
             } else {
                 $this->reasonPhrase = $reason ?? '';
             }
+            $this->assertReasonPhrase($this->reasonPhrase);
+            $this->assertProtocolVersion($version);
             $this->protocol = $version;
         }
         public function getStatusCode(): int
@@ -11004,8 +11033,16 @@ namespace Nyholm\Psr7 {
             if ((null === $reasonPhrase || '' === $reasonPhrase) && isset(self::PHRASES[$new->statusCode])) {
                 $reasonPhrase = self::PHRASES[$new->statusCode];
             }
+            $reasonPhrase = (string) $reasonPhrase;
+            $this->assertReasonPhrase($reasonPhrase);
             $new->reasonPhrase = $reasonPhrase;
             return $new;
+        }
+        private function assertReasonPhrase(string $reasonPhrase): void
+        {
+            if (1 !== \preg_match("@^[ \t!-~\x80-\xff]*\$@D", $reasonPhrase)) {
+                throw new \InvalidArgumentException('Reason phrase must be a valid HTTP reason phrase');
+            }
         }
     }
 }
@@ -11299,9 +11336,11 @@ namespace Nyholm\Psr7 {
             if (!$uri instanceof UriInterface) {
                 $uri = new Uri($uri);
             }
+            $this->assertMethod($method);
             $this->method = $method;
             $this->uri = $uri;
             $this->setHeaders($headers);
+            $this->assertProtocolVersion($version);
             $this->protocol = $version;
             \parse_str($uri->getQuery(), $this->queryParams);
             if (!$this->hasHeader('Host')) {
@@ -12643,6 +12682,9 @@ namespace Nyholm\Psr7 {
         {
             if (!\is_string($host)) {
                 throw new \InvalidArgumentException('Host must be a string');
+            }
+            if (1 === \preg_match('/[\x00-\x1F\x7F]/', $host)) {
+                throw new \InvalidArgumentException('Host must not contain control characters');
             }
             if ($this->host === $host = \strtr($host, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')) {
                 return $this;
