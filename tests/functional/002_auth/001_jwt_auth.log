@@ -26,6 +26,24 @@ Content-Length: 57
 {"code":1012,"message":"Authentication failed for 'JWT'"}
 ===
 GET /records/invisibles/e42c77c6-06a4-4502-816c-d112c7142e6d
+X-Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6InJzYSJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTUzODIwNzYwNSwiZXhwIjoxNTM4MjA3NjM1fQ.nhfgFX3dRrLUwP4jQ_3C3YvIoYp6C7hAEEDiyRjMtf91Ro2PZ-c2rSKodxoM3rAWjmL5LxeucCLDnJg0GxGDjKCI0nIP0YR8YID5OQd5MjOftyGv16mPtmRWVKjHLkbDzYD3gQs8_C_501p_s3dJX1uTulE_Ucj8fV-SzDpc5PlzUO_Rj0ZSxlxP-lC2_8Fy9sOQnPcCw5DFtZ3zpsO7NDTQldqPdOwwnLbPB4DtlTkHfPqnrBH_qsKYtlahm7zbGypqRieWOyUwM57uSFf_rPQrKv9k5XPTv8AjGOpvkcx7PF9hfGmV51CTBVWLl4S35cY-r2E9Dl_KkodXrlfLtg
+===
+200
+Content-Type: application/json; charset=utf-8
+Content-Length: 45
+
+{"id":"e42c77c6-06a4-4502-816c-d112c7142e6d"}
+===
+GET /records/invisibles/e42c77c6-06a4-4502-816c-d112c7142e6d
+X-Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiIsImtpZCI6InJzYSJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTUzODIwNzYwNSwiZXhwIjoxNTM4MjA3NjM1fQ.d6OiD2gpzEDOHoQNW2Tnywt9Wttd4Ov6lGCJ08KSs_4
+===
+403
+Content-Type: application/json; charset=utf-8
+Content-Length: 57
+
+{"code":1012,"message":"Authentication failed for 'JWT'"}
+===
+GET /records/invisibles/e42c77c6-06a4-4502-816c-d112c7142e6d
 ===
 404
 Content-Type: application/json; charset=utf-8

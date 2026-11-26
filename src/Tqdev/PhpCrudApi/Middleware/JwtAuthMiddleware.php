@@ -11,6 +11,12 @@ use Tqdev\PhpCrudApi\RequestUtils;
 
 class JwtAuthMiddleware extends Middleware
 {
+    private function isPublicKey(string $secret): bool
+    {
+        $secret = ltrim($secret);
+        return strpos($secret, '-----BEGIN') === 0 || strpos($secret, 'file://') === 0;
+    }
+
     private function getVerifiedClaims(string $token, int $time, int $leeway, int $ttl, array $secrets, array $requirements): array
     {
         $algorithms = array(
@@ -34,7 +40,10 @@ class JwtAuthMiddleware extends Middleware
             return array();
         }
         $secret = $secrets[$kid];
-        if ($header['typ'] != 'JWT') {
+        if (!isset($header['typ']) || $header['typ'] != 'JWT') {
+            return array();
+        }
+        if (!isset($header['alg']) || !is_string($header['alg'])) {
             return array();
         }
         $algorithm = $header['alg'];
@@ -42,6 +51,11 @@ class JwtAuthMiddleware extends Middleware
             return array();
         }
         if (!empty($requirements['alg']) && !in_array($algorithm, $requirements['alg'])) {
+            return array();
+        }
+        // the type of the key determines the algorithm family, not the token,
+        // as a public key must never be accepted as a HMAC shared secret
+        if ($this->isPublicKey($secret) != ($algorithm[0] == 'R')) {
             return array();
         }
         $hmac = $algorithms[$algorithm];

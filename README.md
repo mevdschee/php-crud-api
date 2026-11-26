@@ -900,8 +900,10 @@ configuration parameters:
   ("X-Authorization")
 - "jwtAuth.leeway": The acceptable number of seconds of clock skew ("5")
 - "jwtAuth.ttl": The number of seconds the token is valid ("30")
-- "jwtAuth.secrets": The shared secret(s) used to sign the JWT token with ("")
-- "jwtAuth.algorithms": The algorithms that are allowed, empty means 'all' ("")
+- "jwtAuth.secrets": The shared secret(s) or public key(s) used to verify the
+  JWT token with ("")
+- "jwtAuth.algorithms": The algorithms that are allowed, empty means 'all' that
+  match the type of the key ("")
 - "jwtAuth.audiences": The audiences that are allowed, empty means 'all' ("")
 - "jwtAuth.issuers": The issuers that are allowed, empty means 'all' ("")
 - "jwtAuth.sessionName": The name of the PHP session that is started ("")
@@ -1131,7 +1133,11 @@ This example sends the signed claims:
       "exp": 1538207635
     }
 
-NB: The JWT implementation only supports the RSA and HMAC based algorithms.
+NB: The JWT implementation only supports the RSA and HMAC based algorithms. The
+type of the configured key determines which of the two is accepted: a key in PEM
+format (starting with "-----BEGIN") only verifies RSA signatures (RS256, RS384
+and RS512), any other value is a shared secret that only verifies HMAC
+signatures (HS256, HS384 and HS512).
 
 ##### Configure and test JWT authentication with Auth0
 
@@ -1158,7 +1164,8 @@ these three variables:
 Note that if you don't fill the audience parameter, it will not work because you
 won't get a valid JWT. Also note that you should fill `jwtAuth.audiences` (with
 the value of the `audience`) to ensure the tokens are validated to be generated
-for your application.
+for your application. It is also recommended to set `jwtAuth.algorithms` to
+`RS256`, the algorithm that Auth0 signs the tokens with.
 
 You can also change the `url` variable, used to test the API with
 authentication.
@@ -1190,6 +1197,7 @@ Here is an example of what it should look like in the configuration:
 ...,
 'middlewares' => 'cors, jwtAuth, authorization',
         'jwtAuth.secrets' => "ce5ced6e40dcd1eff407048867b1ed1e706686a0:-----BEGIN CERTIFICATE-----\nMIIDHDCCAgSgAwIBAgIIExun9bJSK1wwDQYJKoZIhvcNAQEFBQAwMTEvMC0GA1UE\nAxMmc2VjdXJldG9rZW4uc3lzdGVtLmdzZXJ2aWNlYWNjb3VudC5jb20wHhcNMTkx\nMjIyMjEyMTA3WhcNMjAwMTA4MDkzNjA3WjAxMS8wLQYDVQQDEyZzZWN1cmV0b2tl\nbi5zeXN0ZW0uZ3NlcnZpY2VhY2NvdW50LmNvbTCCASIwDQYJKoZIhvcNAQEBBQAD\nggEPADCCAQoCggEBAKsvVDUwXeYQtySNvyI1/tZAk0sj7Zx4/1+YLUomwlK6vmEd\nyl2IXOYOj3VR7FBA24A9//nnrp+mV8YOYEOdaWX7PQo0PIPFPqdA0r7CqBUWHPfQ\n1WVHVRQY3G0c7upM97UfMes9xOrMqyvecMRk1e5S6eT12Zh2og7yiVs8gP83M1EB\nGqseUaltaadjyT35w5B0Ny0/7NdLYiv2G6Z0S821SxvSo1/wfmilnBBKYYluP0PA\n9NPznWFP6uXnX7gKxyJT9//cYVxTO6+b1TT13Yvrpm1a4EuCOhLrZH6ErHQTccAM\nhAx8mdNtbROsp0dlPKrSfqO82uFz45RXZYmSeP0CAwEAAaM4MDYwDAYDVR0TAQH/\nBAIwADAOBgNVHQ8BAf8EBAMCB4AwFgYDVR0lAQH/BAwwCgYIKwYBBQUHAwIwDQYJ\nKoZIhvcNAQEFBQADggEBACNsJ5m00gdTvD6j6ahURsGrNZ0VJ0YREVQ5U2Jtubr8\nn2fuhMxkB8147ISzfi6wZR+yNwPGjlr8JkAHAC0i+Nam9SqRyfZLqsm+tHdgFT8h\npa+R/FoGrrLzxJNRiv0Trip8hZjgz3PClz6KxBQzqL+rfGV2MbwTXuBoEvLU1mYA\no3/UboJT7cNGjZ8nHXeoKMsec1/H55lUdconbTm5iMU1sTDf+3StGYzTwC+H6yc2\nY3zIq3/cQUCrETkALrqzyCnLjRrLYZu36ITOaKUbtmZhwrP99i2f+H4Ab2i8jeMu\nk61HD29mROYjl95Mko2BxL+76To7+pmn73U9auT+xfA=\n-----END CERTIFICATE-----\n",
+        'jwtAuth.algorithms' => 'RS256',
         'jwtAuth.audiences' => 'your-project-id',
         'cors.allowedOrigins' => '*',
         'cors.allowHeaders' => 'X-Authorization'
